@@ -10,7 +10,7 @@ export function NotFoundPage() {
         <div className="space-y-4">
           <p className="text-2xl font-semibold tracking-wide text-foreground">Page Not Found</p>
           <p className="text-muted-foreground">
-            Sorry, we couldn't find the page you're looking for.
+            Sorry, we couldn&apos;t find the page you&apos;re looking for.
           </p>
         </div>
       </div>

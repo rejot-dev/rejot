@@ -1,0 +1,10 @@
+#   Refer for explanation to following link:
+#   https://lefthook.dev/configuration/
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: eslint
+      run: bunx eslint --fix --no-warn-ignored {staged_files}
+    - name: prettier
+      run: bunx prettier --ignore-unknown --write {staged_files}
