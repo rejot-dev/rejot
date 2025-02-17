@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { test, expect } from "bun:test";
 import { SchemaService } from "./schema-service.ts";
 import type {

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import {
   Panel,
   ReactFlow,
@@ -16,7 +18,7 @@ import {
   forceY,
   type SimulationNodeDatum,
 } from "d3-force";
-import { type HTMLAttributes, useCallback, useMemo, useRef } from "react";
+import { type HTMLAttributes, useMemo, useRef } from "react";
 
 import { ControlPlaneNode, DatabaseNode, SyncEngineNode, TableNode } from "./custom-nodes.tsx";
 import type { SystemOverview } from "@/data/system/system.data.ts";
@@ -70,7 +72,7 @@ const useLayoutedElements = (): [
   );
 
   return useMemo(() => {
-    let nodes = getNodes().map((node) => ({
+    const nodes = getNodes().map((node) => ({
       ...node,
       id: node.id,
       x: node.position.x,
@@ -78,7 +80,7 @@ const useLayoutedElements = (): [
       data: node.data,
       type: node.type,
     })) as SimNode[];
-    let edges = getEdges();
+    const edges = getEdges();
 
     if (!initialized || nodes.length === 0) {
       return [false, dragEvents] as const;
@@ -145,14 +147,14 @@ export type ArchitectureDiagramProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 export function LayoutFlow(
-  { className, systemOverview, disableSimulation = false, ...props }: ArchitectureDiagramProps,
+  { systemOverview, disableSimulation = false }: ArchitectureDiagramProps,
 ) {
   const architectureData = systemOverviewToArchitectureNode(systemOverview);
   const { nodes: initialNodes, edges: initialEdges } = generateNodesAndEdges(architectureData);
 
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
-  const [initialized, dragEvents] = useLayoutedElements();
+  const [_initialized, dragEvents] = useLayoutedElements();
 
   // If simulation is disabled, use the initial layout directly
   const effectiveNodes = disableSimulation ? initialNodes : nodes;

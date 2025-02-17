@@ -4,7 +4,6 @@ import { logger } from "hono/logger";
 import { cors } from "hono/cors";
 import { swaggerUI } from "@hono/swagger-ui";
 
-import publish from "./publish.ts";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import type { OrganizationRoutes } from "../organization/organization-routes.ts";
 import { appInjector } from "../injector.ts";
@@ -75,7 +74,7 @@ export class ApiServer {
             context: err.context,
           });
 
-          // @ts-ignore we might give a wrong http status code.
+          // @ts-expect-error we might give a wrong http status code.
           return c.json({ message: err.message }, err.httpStatus);
         }
 

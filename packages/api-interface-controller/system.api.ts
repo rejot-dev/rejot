@@ -1,29 +1,39 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
 
-export const SystemResponse = z.object({
-  name: z.string(),
-  slug: z.string(),
-  code: z.string(),
-  organization: z.object({
+export const SystemResponse = z
+  .object({
     name: z.string(),
+    slug: z.string(),
     code: z.string(),
-  }),
-  dataStores: z.array(z.object({
-    connectionSlug: z.string(),
-    tables: z.array(z.string()),
-  })),
-}).openapi("System");
+    organization: z.object({
+      name: z.string(),
+      code: z.string(),
+    }),
+    dataStores: z.array(
+      z.object({
+        connectionSlug: z.string(),
+        tables: z.array(z.string()),
+      }),
+    ),
+  })
+  .openapi("System");
 
-export const SystemListResponse = z.array(z.object({
-  name: z.string(),
-  slug: z.string(),
-  code: z.string(),
-})).openapi("SystemList");
+export const SystemListResponse = z
+  .array(
+    z.object({
+      name: z.string(),
+      slug: z.string(),
+      code: z.string(),
+    }),
+  )
+  .openapi("SystemList");
 
-export const CreateSystem = z.object({
-  name: z.string(),
-  slug: z.string(),
-}).openapi("CreateSystem");
+export const CreateSystem = z
+  .object({
+    name: z.string(),
+    slug: z.string(),
+  })
+  .openapi("CreateSystem");
 
 export type CreateSystem = z.infer<typeof CreateSystem>;
 
@@ -116,18 +126,22 @@ export const systemListApi = {
   description: "List all systems for an organization",
 } satisfies RouteConfig;
 
-export const DataStoreRequest = z.object({
-  connectionSlug: z.string(),
-  tables: z.array(z.string()),
-}).openapi("DataStoreRequest");
+export const DataStoreRequest = z
+  .object({
+    connectionSlug: z.string(),
+    tables: z.array(z.string()),
+  })
+  .openapi("DataStoreRequest");
 
 export type DataStoreRequest = z.infer<typeof DataStoreRequest>;
 
-export const DataStoreResponse = z.object({
-  id: z.string(),
-  connectionSlug: z.string(),
-  tables: z.array(z.string()),
-}).openapi("DataStoreResponse");
+export const DataStoreResponse = z
+  .object({
+    id: z.string(),
+    connectionSlug: z.string(),
+    tables: z.array(z.string()),
+  })
+  .openapi("DataStoreResponse");
 
 export const systemDataStorePutApi = {
   method: "put",

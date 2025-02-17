@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { useEffect } from "react";
-import { useSystems } from "../../data/system/system.data";
 import { useLocation } from "react-router";
 
 interface SystemState {

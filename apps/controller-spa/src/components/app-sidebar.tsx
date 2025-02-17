@@ -1,5 +1,4 @@
 import * as React from "react";
-import { GalleryVerticalEnd } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -16,16 +15,6 @@ import { NavOnboarding } from "./nav-onboarding";
 import { useClerkPublicMetadata } from "@/data/clerk/clerk-meta.data";
 import { useOrganizations } from "@/data/organizations/organizations.data";
 
-// This is sample data.
-const data = {
-  teams: [
-    {
-      name: "ReJot, Inc.",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-  ],
-};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const metadata = useClerkPublicMetadata();

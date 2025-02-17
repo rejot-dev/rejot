@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ChevronsUpDown, GalleryVerticalEnd } from "lucide-react";
 
 import {
@@ -65,7 +64,7 @@ export function OrganizationSwitcher({
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               Organizations
             </DropdownMenuLabel>
-            {organizations.map((organization, index) => (
+            {organizations.map((organization) => (
               <DropdownMenuItem
                 key={organization.name}
                 className="gap-2 p-2"

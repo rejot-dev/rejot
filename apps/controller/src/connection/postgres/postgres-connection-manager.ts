@@ -1,4 +1,4 @@
-import pg from "pg";
+import { Client } from "pg";
 import { tokens } from "typed-inject";
 
 import { ConnectionError, ConnectionErrors } from "@/connection/connection.error.ts";
@@ -13,25 +13,21 @@ import type { ConfigManager } from "@/app-config/config.ts";
 import type { IConnectionRepository } from "@/connection/connection-repository.ts";
 import type { OrganizationRepository } from "@/organization/organization-repository.ts";
 
-const { Client } = pg;
-
-const postgresConnections = new Map<string, typeof Client>();
+const postgresConnections = new Map<string, Client>();
 
 export class PostgresConnectionManager implements IConnectionManager {
   static inject = tokens("connectionRepository", "organizationRepository", "config");
 
   #connectionRepository: IConnectionRepository;
   #organizationRepository: OrganizationRepository;
-  #configManager: ConfigManager;
 
   constructor(
     connectionRepository: IConnectionRepository,
     organizationRepository: OrganizationRepository,
-    configManager: ConfigManager,
+    _configManager: ConfigManager,
   ) {
     this.#connectionRepository = connectionRepository;
     this.#organizationRepository = organizationRepository;
-    this.#configManager = configManager;
   }
 
   async checkHealth(organizationId: string, connectionSlug: string): Promise<ConnectionHealth> {
@@ -80,9 +76,7 @@ export class PostgresConnectionManager implements IConnectionManager {
     } catch (error) {
       return {
         status: "unhealthy",
-        message: `Failed to connect to ${connectionSlug}: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
+        message: `Failed to connect to ${connectionSlug}: ${error instanceof Error ? error.message : "Unknown error"}`,
       };
     }
 
@@ -168,18 +162,15 @@ export class PostgresConnectionManager implements IConnectionManager {
     );
 
     return result.rows.map((column: { [x: string]: unknown }) => ({
-      columnName: column["column_name"],
-      dataType: column["data_type"],
+      columnName: column["column_name"] as string,
+      dataType: column["data_type"] as string,
       isNullable: column["is_nullable"] === "YES",
-      columnDefault: column["column_default"],
-      tableSchema: column["table_schema"],
+      columnDefault: column["column_default"] as string | null,
+      tableSchema: column["table_schema"] as string,
     }));
   }
 
-  async getPublications(
-    organizationId: string,
-    connectionSlug: string,
-  ): Promise<ConnectionPublication[]> {
+  async getPublications(organizationId: string, connectionSlug: string): Promise<ConnectionPublication[]> {
     const organization = await this.#organizationRepository.get(organizationId);
     const connection = await this.#connectionRepository.findBySlug(organization.id, connectionSlug);
 
@@ -219,11 +210,14 @@ export class PostgresConnectionManager implements IConnectionManager {
       ORDER BY pub.pubname;
     `);
 
-    const publications = new Map<string, {
-      name: string;
-      allTables: boolean;
-      tables: ConnectionTable[];
-    }>();
+    const publications = new Map<
+      string,
+      {
+        name: string;
+        allTables: boolean;
+        tables: ConnectionTable[];
+      }
+    >();
 
     for (const row of result.rows) {
       const pubName = row["pubname"];

@@ -1,5 +1,4 @@
 import React from "react";
-import Counter from "../misc/Counter";
 
 export default function Error404() {
   return (

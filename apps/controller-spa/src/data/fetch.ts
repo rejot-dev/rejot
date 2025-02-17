@@ -18,10 +18,6 @@ type SafeRouteConfig = {
   };
 };
 
-type ExtractSuccessStatus<T> = T extends { [K in SuccessStatusCode]?: unknown }
-  ? keyof T & SuccessStatusCode
-  : never;
-
 type ExtractResponseType<T extends SafeRouteConfig> = T["responses"][200] extends {
   content: { "application/json": { schema: z.ZodSchema } };
 } ? z.infer<T["responses"][200]["content"]["application/json"]["schema"]>

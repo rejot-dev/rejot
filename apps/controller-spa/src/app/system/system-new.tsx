@@ -84,7 +84,7 @@ export function SystemNew() {
       });
 
       navigate(`/systems/${data.slug}`);
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",

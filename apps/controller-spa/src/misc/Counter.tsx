@@ -10,9 +10,7 @@ async function loader() {
 }
 
 export default function Counter() {
-  const [count, setCount] = useState(0);
-
-  const [loaderData, setLoaderData] = useState("");
+  const [, setLoaderData] = useState("");
   useEffect(() => {
     async function loadData() {
       const l = await loader();

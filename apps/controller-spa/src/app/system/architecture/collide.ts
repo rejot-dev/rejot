@@ -10,7 +10,7 @@ interface QuadtreeNode {
 
 export function collide() {
   let nodes: QuadtreeNode[] = [];
-  let force = (alpha: number) => {
+  const force = (alpha: number) => {
     const tree = quadtree<QuadtreeNode>(
       nodes,
       (d) => d.x,
@@ -24,6 +24,7 @@ export function collide() {
       const ny1 = node.y - r;
       const ny2 = node.y + r;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tree.visit((quad: any, x1, y1, x2, y2) => {
         if (!quad.length) {
           do {

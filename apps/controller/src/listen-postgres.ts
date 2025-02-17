@@ -1,10 +1,8 @@
 import { appInjector } from "@/injector.ts";
 import { ConfigManager } from "@/app-config/config.ts";
-import pg from "pg";
+import { Client } from "pg";
 import { LogicalReplicationService, PgoutputPlugin } from "pg-logical-replication";
 import process from "node:process";
-
-const { Client } = pg;
 
 const configManager = appInjector.injectClass(ConfigManager);
 
@@ -20,15 +18,11 @@ const logicalReplicationService = new LogicalReplicationService(connectionConfig
 });
 
 class WilcoPlugin extends PgoutputPlugin {
-  constructor(options: {
-    protoVersion: 1 | 2;
-    publicationNames: string[];
-    messages?: boolean;
-  }) {
+  constructor(options: { protoVersion: 1 | 2; publicationNames: string[]; messages?: boolean }) {
     super(options);
   }
 
-  override start(client: typeof Client, slotName: string, lastLsn: string) {
+  override start(client: Client, slotName: string, lastLsn: string) {
     console.log("start", slotName, lastLsn);
     return super.start(client, slotName, lastLsn);
   }
@@ -50,38 +44,29 @@ logicalReplicationService.on("data", (lsn: string, log) => {
       oldData: log.old,
     };
 
-    // Process change directly
-    processChange(change);
+    console.log("change", change);
 
     console.log("acknowledging", lsn);
     logicalReplicationService.acknowledge(lsn);
   }
 });
 
-function processChange(change: any) {
-  // Send change to your destination
-  console.log("Change:", change);
-}
-
 // Handle error events
 logicalReplicationService.on("error", (err: Error) => {
   console.error("[ERROR] Logical replication error:", err);
 });
 
-logicalReplicationService.on(
-  "heartbeat",
-  (lsn: string, timestamp: number, shouldRespond: boolean) => {
-    if (shouldRespond) {
-      console.log("[HEARTBEAT]", {
-        lsn,
-        timestamp,
-        shouldRespond,
-      });
+logicalReplicationService.on("heartbeat", (lsn: string, timestamp: number, shouldRespond: boolean) => {
+  if (shouldRespond) {
+    console.log("[HEARTBEAT]", {
+      lsn,
+      timestamp,
+      shouldRespond,
+    });
 
-      // logicalReplicationService.acknowledge(lsn);
-    }
-  },
-);
+    // logicalReplicationService.acknowledge(lsn);
+  }
+});
 
 console.log("Subscribing to slot");
 
@@ -97,11 +82,14 @@ process.on("SIGINT", async () => {
 });
 
 try {
-  logicalReplicationService.subscribe(plugin, "wilco_slot_pgoutput_2").then(() => {
-    console.log("Subscribed to slot");
-  }).catch((error) => {
-    console.error("error happened", error);
-  });
+  logicalReplicationService
+    .subscribe(plugin, "wilco_slot_pgoutput_2")
+    .then(() => {
+      console.log("Subscribed to slot");
+    })
+    .catch((error) => {
+      console.error("error happened", error);
+    });
 } catch (error) {
   console.error("error happened", error);
 }

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocalFirst } from "@/first/LocalFirstContext";
 import { useLocalStorage } from "@/lib/useLocalStorage";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { useWebSocket } from "@/first/use-web-socket";
 

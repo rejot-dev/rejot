@@ -66,10 +66,10 @@ export const systemOverviewToArchitectureNode = (system: SystemOverview): Archit
 
 export const generateNodesAndEdges = (
   node: ArchitectureNode,
-  parentId: string | null = null,
+  _parentId: string | null = null,
   x = 0,
   y = 0,
-  level = 0,
+  _level = 0,
 ): { nodes: Node[]; edges: Edge[] } => {
   const nodes: Node[] = [];
   const edges: Edge[] = [];

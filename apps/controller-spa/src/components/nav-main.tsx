@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Database, FolderKanban, Home, Settings2 } from "lucide-react";
+import { ChevronRight, Database, FolderKanban, Home } from "lucide-react";
 import { NavLink, useMatch } from "react-router";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";

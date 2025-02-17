@@ -32,14 +32,9 @@ test("generateCode - generates unique codes", () => {
       const code = generateCode(prefix);
       assertEquals(codes.has(code), false, "Generated duplicate code");
       codes.add(code);
-      assert(
-        code.length <= 30,
-        `Generated code should be <30 characters long, was ${code.length}`,
-      );
+      assert(code.length <= 30, `Generated code should be <30 characters long, was ${code.length}`);
     }
   }
-
-  assertEquals;
 });
 
 test("generateCode - generates codes without hyphens", () => {
@@ -49,15 +44,8 @@ test("generateCode - generates codes without hyphens", () => {
   for (const prefix of prefixes) {
     for (let i = 0; i < iterations; i++) {
       const code = generateCode(prefix);
-      assertEquals(
-        code.includes("-"),
-        false,
-        "Generated code should not contain hyphens",
-      );
-      assert(
-        code.length <= 30,
-        `Generated code should be <30 characters long, was ${code.length}`,
-      );
+      assertEquals(code.includes("-"), false, "Generated code should not contain hyphens");
+      assert(code.length <= 30, `Generated code should be <30 characters long, was ${code.length}`);
     }
   }
 });

@@ -1,13 +1,12 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ClerkProvider, SignedIn, SignedOut, useUser } from "@clerk/clerk-react";
+import { ClerkProvider, SignedOut } from "@clerk/clerk-react";
 import { dark } from "@clerk/themes";
 
 // Css
 import "./app.css";
 
 // Other local code
-import { LocalFirstProvider } from "./first/LocalFirstContext.tsx";
 import { DashboardLayout } from "./app/dashboard/dashboard-layout.tsx";
 import { DashboardHome } from "./app/dashboard/dashboard-home.tsx";
 import { SystemHome } from "./app/system/system-home.tsx";
@@ -82,47 +81,45 @@ export function App() {
   return (
     <ThemeProvider>
       <ClerkProviderWithTheme>
-        <LocalFirstProvider schema={{}}>
-          <QueryClientProvider client={queryClient}>
-            <SignedOut>
-              <LoginHome />
-            </SignedOut>
-            <SignedInAndOnboarded>
-              <BrowserRouter>
-                <Routes>
-                  <Route element={<DashboardLayout />}>
-                    <Route index element={<DashboardHome />} />
-                    <Route path="/systems/new" element={<SystemNew />} />
-                    <Route path="/systems/:systemSlug" element={<SystemHome />} />
-                    <Route path="/systems/:systemSlug/data-stores">
-                      <Route path="new" element={<Navigate to="select-connection" replace />} />
-                      <Route path="new/:step" element={<DataStoreNew />} />
-                    </Route>
-                    <Route path="/connections" element={<ConnectionOverview />} />
-                    <Route path="/connections/new" element={<ConnectionNew />} />
-                    <Route path="/connections/new/postgres" element={<ConnectionNewPostgres />} />
-                    <Route path="/connections/:connectionSlug" element={<ConnectionDetail />} />
-                    <Route
-                      path="/connections/:connectionSlug/tables/:tableId"
-                      element={<SchemaTableDetail />}
-                    />
-                    <Route path="*" element={<NotFoundPage />} />
+        <QueryClientProvider client={queryClient}>
+          <SignedOut>
+            <LoginHome />
+          </SignedOut>
+          <SignedInAndOnboarded>
+            <BrowserRouter>
+              <Routes>
+                <Route element={<DashboardLayout />}>
+                  <Route index element={<DashboardHome />} />
+                  <Route path="/systems/new" element={<SystemNew />} />
+                  <Route path="/systems/:systemSlug" element={<SystemHome />} />
+                  <Route path="/systems/:systemSlug/data-stores">
+                    <Route path="new" element={<Navigate to="select-connection" replace />} />
+                    <Route path="new/:step" element={<DataStoreNew />} />
                   </Route>
-                </Routes>
-              </BrowserRouter>
-            </SignedInAndOnboarded>
-            <SignedInAndNotOnboarded>
-              <BrowserRouter>
-                <Routes>
-                  <Route element={<DashboardLayout />}>
-                    <Route index element={<OnboardingHome />} />
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Route>
-                </Routes>
-              </BrowserRouter>
-            </SignedInAndNotOnboarded>
-          </QueryClientProvider>
-        </LocalFirstProvider>
+                  <Route path="/connections" element={<ConnectionOverview />} />
+                  <Route path="/connections/new" element={<ConnectionNew />} />
+                  <Route path="/connections/new/postgres" element={<ConnectionNewPostgres />} />
+                  <Route path="/connections/:connectionSlug" element={<ConnectionDetail />} />
+                  <Route
+                    path="/connections/:connectionSlug/tables/:tableId"
+                    element={<SchemaTableDetail />}
+                  />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </SignedInAndOnboarded>
+          <SignedInAndNotOnboarded>
+            <BrowserRouter>
+              <Routes>
+                <Route element={<DashboardLayout />}>
+                  <Route index element={<OnboardingHome />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </SignedInAndNotOnboarded>
+        </QueryClientProvider>
       </ClerkProviderWithTheme>
     </ThemeProvider>
   );

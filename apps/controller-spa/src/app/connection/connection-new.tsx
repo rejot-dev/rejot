@@ -1,49 +1,14 @@
 import { useNavigate } from "react-router";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useCreateConnectionMutation } from "@/data/connection/connection.data";
-import { useQueryClient } from "@tanstack/react-query";
 import { useSelectedOrganizationCode } from "@/data/clerk/clerk-meta.data";
 import { Database } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-const formSchema = z.object({
-  slug: z.string().min(1, "Name is required"),
-  host: z.string().min(1, "Host is required"),
-  port: z.coerce.number().min(1, "Port is required"),
-  database: z.string().min(1, "Database name is required"),
-  user: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-});
+
 
 export function ConnectionNew() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const organizationId = useSelectedOrganizationCode();
-  const createMutation = useCreateConnectionMutation();
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      slug: "",
-      host: "",
-      port: 5432,
-      database: "",
-      user: "",
-      password: "",
-    },
-  });
 
   if (!organizationId) {
     return null;

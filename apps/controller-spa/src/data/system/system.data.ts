@@ -14,7 +14,6 @@ import type { SyncServiceStatus } from "../sync-service/sync-service.data";
 import { z } from "zod";
 import { useSelectedOrganizationCode as useSelectedOrganizationId } from "../clerk/clerk-meta.data";
 import {
-  getConnectionTableSchema,
   getConnectionTableSchemaChanges,
 } from "@/data/connection/connection-health.data";
 
