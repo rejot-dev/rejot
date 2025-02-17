@@ -45,7 +45,7 @@ export function PublicationSelector({ form, organizationId }: PublicationSelecto
               <RadioGroup
                 onValueChange={field.onChange}
                 value={field.value}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
               >
                 {isLoading ? (
                   <>
@@ -53,8 +53,8 @@ export function PublicationSelector({ form, organizationId }: PublicationSelecto
                       <Card key={index} className="relative p-4">
                         <div className="space-y-2">
                           <div className="flex items-start gap-3">
-                            <Skeleton className="h-5 w-5 rounded shrink-0 mt-1" />
-                            <div className="space-y-2 flex-1">
+                            <Skeleton className="mt-1 h-5 w-5 shrink-0 rounded" />
+                            <div className="flex-1 space-y-2">
                               <Skeleton className="h-5 w-3/4" />
                               <div className="flex items-center gap-2">
                                 <Skeleton className="h-4 w-4" />
@@ -77,16 +77,16 @@ export function PublicationSelector({ form, organizationId }: PublicationSelecto
                       <label htmlFor={publication.name} className="block cursor-pointer">
                         <Card
                           className={cn(
-                            "relative p-4 hover:border-primary transition-colors",
+                            "hover:border-primary relative p-4 transition-colors",
                             field.value === publication.name && "border-primary bg-primary/5",
                           )}
                         >
                           <div className="space-y-2">
                             <div className="flex items-start gap-3">
-                              <Database className="h-5 w-5 text-primary shrink-0 mt-1" />
+                              <Database className="text-primary mt-1 h-5 w-5 shrink-0" />
                               <div>
-                                <h4 className="font-medium text-base">{publication.name}</h4>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                <h4 className="text-base font-medium">{publication.name}</h4>
+                                <div className="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
                                   <TableProperties className="h-4 w-4" />
                                   {publication.allTables ? (
                                     <span>All Tables</span>
@@ -98,7 +98,7 @@ export function PublicationSelector({ form, organizationId }: PublicationSelecto
                             </div>
                           </div>
                           {field.value === publication.name && (
-                            <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-primary" />
+                            <div className="bg-primary absolute right-4 top-4 h-2 w-2 rounded-full" />
                           )}
                         </Card>
                       </label>
@@ -112,28 +112,28 @@ export function PublicationSelector({ form, organizationId }: PublicationSelecto
       />
 
       <Card className="p-4">
-        <h4 className="text-sm font-medium mb-3">Included Tables</h4>
+        <h4 className="mb-3 text-sm font-medium">Included Tables</h4>
         {!selectedPublication ? (
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             Select a publication to see included tables
           </div>
         ) : selectedPublication.allTables ? (
-          <div className="text-sm text-muted-foreground flex items-center gap-2">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <TableIcon className="h-4 w-4" />
             <span>All tables in the database will be included</span>
           </div>
         ) : !selectedPublication.tables?.length ? (
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             No tables included in this publication
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
             {selectedPublication.tables.map((table: ConnectionTable) => (
               <div
                 key={`${table.schema}.${table.name}`}
-                className="flex items-center gap-2 text-sm p-2 rounded-md bg-muted"
+                className="bg-muted flex items-center gap-2 rounded-md p-2 text-sm"
               >
-                <TableIcon className="h-4 w-4 text-muted-foreground" />
+                <TableIcon className="text-muted-foreground h-4 w-4" />
                 <span className="truncate">
                   {table.schema}.{table.name}
                 </span>

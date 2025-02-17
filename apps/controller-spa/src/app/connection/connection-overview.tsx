@@ -83,7 +83,7 @@ export function ConnectionOverview() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="mb-2 text-3xl font-bold tracking-tight">Connections</h1>
-            <p className="text-lg text-muted-foreground">Manage your database connections</p>
+            <p className="text-muted-foreground text-lg">Manage your database connections</p>
           </div>
           <Button onClick={() => navigate("new")}>Create Connection</Button>
         </div>

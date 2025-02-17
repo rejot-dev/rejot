@@ -11,14 +11,14 @@ interface ProgressBarProps {
 
 export function ProgressBar({ steps, currentStep }: ProgressBarProps) {
   return (
-    <div className="flex items-center relative">
+    <div className="relative flex items-center">
       {/* Connecting lines */}
-      <div className="absolute top-5 left-0 right-0 h-[2px] bg-gray-200 dark:bg-gray-700" />
+      <div className="absolute left-0 right-0 top-5 h-[2px] bg-gray-200 dark:bg-gray-700" />
       <div className="w-1" /> {/* Left spacer */}
       {steps.map((step, index) => (
-        <div key={step.label} className="flex-1 flex flex-col items-center relative z-10">
+        <div key={step.label} className="relative z-10 flex flex-1 flex-col items-center">
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+            className={`flex h-10 w-10 items-center justify-center rounded-full ${
               index <= currentStep ? "bg-blue-500 text-white" : "bg-gray-300 dark:bg-gray-700"
             }`}
           >
@@ -28,7 +28,7 @@ export function ProgressBar({ steps, currentStep }: ProgressBarProps) {
             <span
               className={`text-sm ${
                 index <= currentStep
-                  ? "text-blue-500 font-medium"
+                  ? "font-medium text-blue-500"
                   : "text-gray-500 dark:text-gray-400"
               }`}
             >

@@ -13,14 +13,14 @@ export function ConnectionNew() {
   }
 
   return (
-    <div className="p-4 max-w-4xl mx-auto space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="mx-auto max-w-4xl space-y-4 p-4">
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">New Connection</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card
-          className="cursor-pointer hover:bg-accent transition-colors"
+          className="hover:bg-accent cursor-pointer transition-colors"
           onClick={() => navigate("postgres")}
         >
           <CardHeader>

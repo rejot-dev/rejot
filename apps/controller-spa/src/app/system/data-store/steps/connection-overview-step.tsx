@@ -43,13 +43,13 @@ export function ConnectionOverviewStep({
         <CardHeader className="space-y-1 pb-4">
           <div className="flex items-center justify-between">
             <CardTitle>Connection Details</CardTitle>
-            <DatabaseIcon className="h-5 w-5 text-muted-foreground" />
+            <DatabaseIcon className="text-muted-foreground h-5 w-5" />
           </div>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
             <div className="grid gap-4 text-sm">
-              <div className="space-y-1 col-span-2">
+              <div className="col-span-2 space-y-1">
                 <div className="text-muted-foreground">Connection ID</div>
                 <div className="font-medium">{connection.slug}</div>
               </div>
@@ -69,7 +69,7 @@ export function ConnectionOverviewStep({
                 <div className="text-muted-foreground">Username</div>
                 <div>{connection.config.user}</div>
               </div>
-              <div className="space-y-1 col-span-2 pt-2">
+              <div className="col-span-2 space-y-1 pt-2">
                 <div className="text-muted-foreground">Connection Status</div>
                 <div className="flex items-center gap-2">
                   <Badge

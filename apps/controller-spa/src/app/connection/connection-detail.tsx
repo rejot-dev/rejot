@@ -27,7 +27,7 @@ export function ConnectionDetail() {
       <div className="flex flex-col gap-6 p-6">
         <div>
           <h1 className="mb-2 text-3xl font-bold tracking-tight">{connection.slug}</h1>
-          <p className="text-lg text-muted-foreground">Connection details and database tables</p>
+          <p className="text-muted-foreground text-lg">Connection details and database tables</p>
         </div>
 
         <div className="grid gap-6">

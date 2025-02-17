@@ -75,7 +75,14 @@ export class ClerkRepository implements IClerkRepository {
         .insert(schema.clerkUser)
         .values({
           clerkUserId: params.clerkUserId,
-          personId: sql`(SELECT id FROM person)`,
+          personId: sql`
+            (
+              SELECT
+                id
+              FROM
+                person
+            )
+          `,
         })
         .returning();
 

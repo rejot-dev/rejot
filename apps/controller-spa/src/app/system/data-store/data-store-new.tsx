@@ -78,17 +78,17 @@ export function DataStoreNew() {
   const steps = [
     {
       label: "Select Connection",
-      children: <DatabaseIcon className="w-5 h-5" />,
+      children: <DatabaseIcon className="h-5 w-5" />,
       description: "Choose a data source",
     },
     {
       label: "Connection Overview",
-      children: <CheckIcon className="w-5 h-5" />,
+      children: <CheckIcon className="h-5 w-5" />,
       description: "Review connection details",
     },
     {
       label: "Select Publication",
-      children: <BookOpenIcon className="w-5 h-5" />,
+      children: <BookOpenIcon className="h-5 w-5" />,
       description: "Choose a publication to sync",
     },
   ];
@@ -160,7 +160,7 @@ export function DataStoreNew() {
       <DataStoreNewHeader systemSlug={systemSlug} />
       <div className="container space-y-6">
         <ProgressBar steps={steps} currentStep={currentStep} />
-        <Card className="max-w-2xl mx-auto">
+        <Card className="mx-auto max-w-2xl">
           <CardHeader className="space-y-1">
             <CardTitle>
               {currentStep === 0 && "Select a Connection"}

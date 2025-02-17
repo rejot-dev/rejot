@@ -98,7 +98,14 @@ export class SystemRepository implements ISystemRepository {
       .with(org)
       .insert(schema.system)
       .values({
-        organizationId: sql`(SELECT id FROM org)`,
+        organizationId: sql`
+          (
+            SELECT
+              id
+            FROM
+              org
+          )
+        `,
         name: system.name,
         code: system.code,
         slug: system.slug,
@@ -108,9 +115,30 @@ export class SystemRepository implements ISystemRepository {
         code: schema.system.code,
         name: schema.system.name,
         slug: schema.system.slug,
-        organizationId: sql`(SELECT id FROM org)`,
-        organizationCode: sql`(SELECT code FROM org)`,
-        organizationName: sql`(SELECT name FROM org)`,
+        organizationId: sql`
+          (
+            SELECT
+              id
+            FROM
+              org
+          )
+        `,
+        organizationCode: sql`
+          (
+            SELECT
+              code
+            FROM
+              org
+          )
+        `,
+        organizationName: sql`
+          (
+            SELECT
+              name
+            FROM
+              org
+          )
+        `,
       });
 
     if (res.length === 0) {
@@ -208,12 +236,45 @@ export class SystemRepository implements ISystemRepository {
         code: schema.system.code,
         name: schema.system.name,
         slug: schema.system.slug,
-        organizationId: sql`(SELECT id FROM org)`,
-        organizationCode: sql`(SELECT code FROM org)`,
-        organizationName: sql`(SELECT name FROM org)`,
+        organizationId: sql`
+          (
+            SELECT
+              id
+            FROM
+              org
+          )
+        `,
+        organizationCode: sql`
+          (
+            SELECT
+              code
+            FROM
+              org
+          )
+        `,
+        organizationName: sql`
+          (
+            SELECT
+              name
+            FROM
+              org
+          )
+        `,
       })
       .from(schema.system)
-      .where(eq(schema.system.organizationId, sql`(SELECT id FROM org)`));
+      .where(
+        eq(
+          schema.system.organizationId,
+          sql`
+            (
+              SELECT
+                id
+              FROM
+                org
+            )
+          `,
+        ),
+      );
 
     return res.map((system) => ({
       id: system.id,

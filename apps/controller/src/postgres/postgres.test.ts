@@ -13,7 +13,10 @@ import { dbDescribe } from "./db-test.ts";
 dbDescribe("test", (ctx) => {
   test("PSQL - SELECT 1", async () => {
     const db = ctx.db;
-    const [res] = await db.execute(sql`SELECT 1`);
+    const [res] = await db.execute(sql`
+      SELECT
+        1
+    `);
 
     assertEquals(Object.values(res)[0], 1);
   });
@@ -21,7 +24,10 @@ dbDescribe("test", (ctx) => {
   test("PSQL - SELECT 1 - Again, make sure database is still available", async () => {
     const db = ctx.db;
 
-    const [res] = await db.execute(sql`SELECT 1`);
+    const [res] = await db.execute(sql`
+      SELECT
+        1
+    `);
 
     assertEquals(Object.values(res)[0], 1);
   });
@@ -29,12 +35,22 @@ dbDescribe("test", (ctx) => {
   test("PSQL - create table", async () => {
     const db = ctx.db;
 
-    await db.execute(
-      sql`CREATE TABLE some_new_table_to_test (id SERIAL PRIMARY KEY, name VARCHAR(255))`,
-    );
-    await db.execute(sql`INSERT INTO some_new_table_to_test (name) VALUES ('test')`);
+    await db.execute(sql`
+      CREATE TABLE some_new_table_to_test (id SERIAL PRIMARY KEY, name VARCHAR(255))
+    `);
+    await db.execute(sql`
+      INSERT INTO
+        some_new_table_to_test (name)
+      VALUES
+        ('test')
+    `);
 
-    const [res] = await db.execute(sql`SELECT * FROM some_new_table_to_test`);
+    const [res] = await db.execute(sql`
+      SELECT
+        *
+      FROM
+        some_new_table_to_test
+    `);
 
     assertEquals(Object.values(res)[0], 1);
   });
@@ -42,12 +58,22 @@ dbDescribe("test", (ctx) => {
   test("PSQL - create table - Again, make sure test changes are isolated.", async () => {
     const db = ctx.db;
 
-    await db.execute(
-      sql`CREATE TABLE some_new_table_to_test (id SERIAL PRIMARY KEY, name VARCHAR(255))`,
-    );
-    await db.execute(sql`INSERT INTO some_new_table_to_test (name) VALUES ('test')`);
+    await db.execute(sql`
+      CREATE TABLE some_new_table_to_test (id SERIAL PRIMARY KEY, name VARCHAR(255))
+    `);
+    await db.execute(sql`
+      INSERT INTO
+        some_new_table_to_test (name)
+      VALUES
+        ('test')
+    `);
 
-    const [res] = await db.execute(sql`SELECT * FROM some_new_table_to_test`);
+    const [res] = await db.execute(sql`
+      SELECT
+        *
+      FROM
+        some_new_table_to_test
+    `);
 
     assertEquals(Object.values(res)[0], 1);
   });
@@ -80,7 +106,10 @@ dbDescribe("test", (ctx) => {
     const db = ctx.db;
 
     await db.transaction(async (tx) => {
-      const [res] = await tx.execute(sql`SELECT 1`);
+      const [res] = await tx.execute(sql`
+        SELECT
+          1
+      `);
 
       assertEquals(Object.values(res)[0], 1);
     });
@@ -91,7 +120,10 @@ dbDescribe("test", (ctx) => {
 
     const error = await assertRejects(async () => {
       await db.transaction(async (tx) => {
-        const [res] = await tx.execute(sql`SELECT 1`);
+        const [res] = await tx.execute(sql`
+          SELECT
+            1
+        `);
 
         assertEquals(Object.values(res)[0], 1);
 

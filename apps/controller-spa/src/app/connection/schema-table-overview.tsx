@@ -68,7 +68,7 @@ export function SchemaTableOverview() {
       <div className="flex flex-col gap-6 p-6">
         <div>
           <h1 className="mb-2 text-3xl font-bold tracking-tight">Database Tables</h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-muted-foreground text-lg">
             View and manage tables in your database connection
           </p>
         </div>
@@ -85,7 +85,7 @@ export function SchemaTableOverview() {
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={2} className="text-center">
-                    <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                    <Loader2 className="mx-auto h-4 w-4 animate-spin" />
                   </TableCell>
                 </TableRow>
               ) : !tables || tables.length === 0 ? (

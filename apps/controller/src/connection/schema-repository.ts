@@ -87,7 +87,14 @@ export class SchemaRepository implements ISchemaRepository {
       .with(connectionCte)
       .insert(schema.schemaSnapshot)
       .values({
-        connectionId: sql`(SELECT id FROM connection)`,
+        connectionId: sql`
+          (
+            SELECT
+              id
+            FROM
+              connection
+          )
+        `,
         schemaName: params.schemaName,
         tableName: params.tableName,
         schema: params.schema,

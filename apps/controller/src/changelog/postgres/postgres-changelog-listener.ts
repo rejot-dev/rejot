@@ -44,18 +44,25 @@ export class PostgresChangelogListener {
             };
 
       const result = await sql`
-        WITH pub AS (
-          SELECT pubname, puballtables
-          FROM pg_publication 
-          WHERE pubname = ${publicationName}
-          LIMIT 1
-        )
-        SELECT 
+        WITH
+          pub AS (
+            SELECT
+              pubname,
+              puballtables
+            FROM
+              pg_publication
+            WHERE
+              pubname = ${publicationName}
+            LIMIT
+              1
+          )
+        SELECT
           pub.puballtables,
           pt.schemaname,
           pt.tablename
-        FROM pub
-        LEFT JOIN pg_publication_tables pt ON pt.pubname = pub.pubname;
+        FROM
+          pub
+          LEFT JOIN pg_publication_tables pt ON pt.pubname = pub.pubname;
       `;
 
       const databaseAllTables = result.length > 0 ? result[0]["puballtables"] : undefined;

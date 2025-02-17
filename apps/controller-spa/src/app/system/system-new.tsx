@@ -97,7 +97,7 @@ export function SystemNew() {
   };
 
   return (
-    <div className="container max-w-2xl py-8 mx-auto">
+    <div className="container mx-auto max-w-2xl py-8">
       <Card className="bg-sidebar">
         <CardHeader>
           <CardTitle className="text-gray-900 dark:text-gray-100">Create New System</CardTitle>

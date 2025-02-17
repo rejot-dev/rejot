@@ -21,7 +21,7 @@ export default function Counter() {
 
   return (
     <div>
-      <div className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4">
+      <div className="mx-auto flex max-w-sm items-center space-x-4 rounded-xl bg-white p-6 shadow-lg">
         <Button>Click me!</Button>
       </div>
     </div>

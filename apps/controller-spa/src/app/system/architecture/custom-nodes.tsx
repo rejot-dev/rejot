@@ -44,14 +44,14 @@ const AllHandles = ({
 );
 
 export const ControlPlaneNode = ({ id, data }: { id: string; data: NodeData }) => (
-  <div className="bg-red-300 rounded-md p-2 border border-red-600 text-center w-72 dark:bg-red-900 dark:border-red-600">
+  <div className="w-72 rounded-md border border-red-600 bg-red-300 p-2 text-center dark:border-red-600 dark:bg-red-900">
     <AllHandles type="source" active={data.sourcePosition} nodeId={id} />
     <div>{data.label}</div>
   </div>
 );
 
 export const SyncEngineNode = ({ id, data }: { id: string; data: NodeData }) => (
-  <div className="bg-green-300 rounded-md p-2 border border-green-600 text-center dark:bg-green-900 dark:border-green-600">
+  <div className="rounded-md border border-green-600 bg-green-300 p-2 text-center dark:border-green-600 dark:bg-green-900">
     <AllHandles type="target" active={data.targetPosition} nodeId={id} />
     <div>{data.label}</div>
     <AllHandles type="source" active={data.sourcePosition} nodeId={id} />
@@ -59,7 +59,7 @@ export const SyncEngineNode = ({ id, data }: { id: string; data: NodeData }) => 
 );
 
 export const DatabaseNode = ({ id, data }: { id: string; data: NodeData }) => (
-  <div className="bg-blue-300 rounded-md p-2 border border-blue-600 text-center dark:bg-blue-900 dark:border-blue-600">
+  <div className="rounded-md border border-blue-600 bg-blue-300 p-2 text-center dark:border-blue-600 dark:bg-blue-900">
     <AllHandles type="target" active={data.targetPosition} nodeId={id} />
     <div>{data.label}</div>
     <AllHandles type="source" active={data.sourcePosition} nodeId={id} />
@@ -67,7 +67,7 @@ export const DatabaseNode = ({ id, data }: { id: string; data: NodeData }) => (
 );
 
 export const TableNode = ({ id, data }: { id: string; data: NodeData }) => (
-  <div className="bg-purple-300 rounded-md p-2 border border-purple-600 text-center w-40 dark:bg-purple-900 dark:border-purple-600">
+  <div className="w-40 rounded-md border border-purple-600 bg-purple-300 p-2 text-center dark:border-purple-600 dark:bg-purple-900">
     <AllHandles type="target" active={data.targetPosition} nodeId={id} />
     <div className="text-sm">{data.label}</div>
   </div>

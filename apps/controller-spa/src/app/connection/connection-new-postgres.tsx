@@ -74,8 +74,8 @@ export function ConnectionNewPostgres() {
   }
 
   return (
-    <div className="p-4 max-w-prose min-w-96 mx-auto space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="mx-auto min-w-96 max-w-prose space-y-4 p-4">
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">New PostgreSQL Connection</h1>
       </div>
 

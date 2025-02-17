@@ -93,19 +93,19 @@ export function SystemHome() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="mb-2 text-3xl font-bold tracking-tight">System Overview</h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-muted-foreground text-lg">
               View system details and configuration for &apos;{system.name}&apos;.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 p-4">
+      <div className="min-h-0 flex-1 p-4">
         <div className="h-full w-full">
           {
             <ArchitectureDiagram
               systemOverview={system}
-              className="w-full h-full shadow-md"
+              className="h-full w-full shadow-md"
               disableSimulation={false}
             />
           }

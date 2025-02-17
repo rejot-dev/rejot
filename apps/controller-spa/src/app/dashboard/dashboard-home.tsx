@@ -48,23 +48,23 @@ export function DashboardHome() {
       <div className="flex flex-col gap-6 p-6">
         <div className="max-w-2xl">
           <h1 className="mb-2 text-3xl font-bold tracking-tight">Welcome to ReJot</h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-muted-foreground text-lg">
             Synchronization engine to enable reactive backends for cross-team integrations
           </p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-lg border bg-card p-4">
+          <div className="bg-card rounded-lg border p-4">
             <h3 className="mb-2 font-semibold">Quick Start Guide</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Learn the basics of ReJot and get up to speed with our core features.
             </p>
           </div>
         </div>
 
-        <div className="rounded-xl border bg-card">
-          <div className="p-6 flex flex-col gap-4">
-            <div className="flex justify-between items-center">
+        <div className="bg-card rounded-xl border">
+          <div className="flex flex-col gap-4 p-6">
+            <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Your Systems</h2>
               <Button asChild>
                 <Link to="/systems/new" className="gap-2">
@@ -91,7 +91,7 @@ export function DashboardHome() {
                         <Link
                           onClick={() => setSelectedSystemSlug(system.slug)}
                           to={`/systems/${system.slug}`}
-                          className="text-blue-600 hover:underline font-medium"
+                          className="font-medium text-blue-600 hover:underline"
                         >
                           {system.name}
                         </Link>
@@ -102,7 +102,7 @@ export function DashboardHome() {
                   ))}
                   {!systems?.length && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-muted-foreground">
+                      <TableCell colSpan={3} className="text-muted-foreground text-center">
                         No systems found. Get started by onboarding your first system.
                       </TableCell>
                     </TableRow>

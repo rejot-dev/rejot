@@ -81,7 +81,7 @@ export function SchemaTableDetail() {
           <h1 className="mb-2 text-3xl font-bold tracking-tight">
             {schema}.{tableName}
           </h1>
-          <p className="text-lg text-muted-foreground">View table schema and column information</p>
+          <p className="text-muted-foreground text-lg">View table schema and column information</p>
         </div>
 
         <div className="rounded-md border">
@@ -98,7 +98,7 @@ export function SchemaTableDetail() {
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center">
-                    <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                    <Loader2 className="mx-auto h-4 w-4 animate-spin" />
                   </TableCell>
                 </TableRow>
               ) : !columns || columns.length === 0 ? (

@@ -37,7 +37,7 @@ export function ConnectionTables({ organizationId, connectionSlug }: ConnectionT
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={2} className="text-center">
-                  <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                  <Loader2 className="mx-auto h-4 w-4 animate-spin" />
                 </TableCell>
               </TableRow>
             ) : !tables || tables.length === 0 ? (
