@@ -66,6 +66,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSystems />
       </SidebarContent>
       <SidebarFooter>
+        <div className="flex justify-center">
+          <span className="text-muted-foreground text-xs">{__APP_VERSION__}</span>
+        </div>
         <NavUser />
       </SidebarFooter>
       <SidebarRail />

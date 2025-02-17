@@ -6,6 +6,7 @@ import process from "node:process";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const app_version = env["APP_VERSION"] || "dev";
 
   if (env["VITEST_VSCODE"]) {
     return {
@@ -33,6 +34,9 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/_ws/, ""),
         },
       },
+    },
+    define: {
+      __APP_VERSION__: JSON.stringify(app_version),
     },
   };
 });
