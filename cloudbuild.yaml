@@ -8,18 +8,18 @@ steps:
       [
         "tag",
         "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller",
-        "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:$SHORT_SHA",
+        "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${TAG_NAME:-$SHORT_SHA}",
       ]
   - name: "gcr.io/cloud-builders/docker"
     args: ["push", "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller"]
   - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:$SHORT_SHA"]
+    args: ["push", "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${TAG_NAME:-$SHORT_SHA}"]
 
   # Build controller-spa
   - name: "oven/bun:1.2.1"
     dir: "apps/controller-spa"
     entrypoint: bun
-    args: ["install"]
+    args: ["install", "--production"]
 
   - name: "oven/bun:1.2.1"
     dir: "apps/controller-spa"
@@ -41,12 +41,12 @@ steps:
       - "deploy"
       - "${_CLOUD_RUN_SERVICE_NAME}"
       - "--image"
-      - "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:$SHORT_SHA"
+      - "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${TAG_NAME:-$SHORT_SHA}"
       - "--region"
       - "$LOCATION"
 
 images:
   - "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller"
-  - "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:$SHORT_SHA"
+  - "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${TAG_NAME:-$SHORT_SHA}"
 options:
   logging: CLOUD_LOGGING_ONLY
