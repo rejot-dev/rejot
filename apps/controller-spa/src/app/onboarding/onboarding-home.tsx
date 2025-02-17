@@ -29,10 +29,13 @@ export function OnboardingHome() {
         if (!user?.firstName || !user?.lastName) {
           throw new Error("Missing user information");
         }
-        setCompletedItems((prev) => [...prev, {
-          title: "Account Created",
-          description: `Welcome, ${user.firstName} ${user.lastName}!`,
-        }]);
+        setCompletedItems((prev) => [
+          ...prev,
+          {
+            title: "Account Created",
+            description: `Welcome, ${user.firstName} ${user.lastName}!`,
+          },
+        ]);
 
         // Step 2: Check for organizations
         setStatus("Checking for organizations...");
@@ -51,18 +54,24 @@ export function OnboardingHome() {
             throw new Error("Failed to create organization");
           }
           organizationCode = orgResult.data.code;
-          setCompletedItems((prev) => [...prev, {
-            title: "Organization Created",
-            description: orgName,
-          }]);
+          setCompletedItems((prev) => [
+            ...prev,
+            {
+              title: "Organization Created",
+              description: orgName,
+            },
+          ]);
         } else if (organizationsResponse.data[0]?.code) {
           organizationCode = organizationsResponse.data[0].code;
           const orgName = organizationsResponse.data[0].name ?? "Unknown Organization";
           setStatus(`Using existing organization: ${orgName}`);
-          setCompletedItems((prev) => [...prev, {
-            title: "Organization Connected",
-            description: `You've been connected to the existing organization: ${orgName}`,
-          }]);
+          setCompletedItems((prev) => [
+            ...prev,
+            {
+              title: "Organization Connected",
+              description: `You've been connected to the existing organization: ${orgName}`,
+            },
+          ]);
         } else {
           throw new Error("Invalid organization data");
         }
@@ -77,10 +86,13 @@ export function OnboardingHome() {
         if (metadataResult.status === "error") {
           throw new Error("Failed to update metadata");
         }
-        setCompletedItems((prev) => [...prev, {
-          title: "Setup Completed",
-          description: "Your account is ready to use",
-        }]);
+        setCompletedItems((prev) => [
+          ...prev,
+          {
+            title: "Setup Completed",
+            description: "Your account is ready to use",
+          },
+        ]);
         setStatus("Setup complete! Redirecting you to your dashboard...");
         setIsDone(true);
 

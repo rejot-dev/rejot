@@ -19,25 +19,29 @@ export class PostgresChangelogListener {
   }
 
   async verifyConnections() {
-    for (
-      const { sql, slug, publicationName, publicationTables } of this
-        .#connectionManager.connections.values()
-    ) {
-      const configPublicationTables = publicationTables == undefined
-        ? undefined
-        : publicationTables.map((table) => normalizePostgresTable(table));
+    for (const {
+      sql,
+      slug,
+      publicationName,
+      publicationTables,
+    } of this.#connectionManager.connections.values()) {
+      const configPublicationTables =
+        publicationTables == undefined
+          ? undefined
+          : publicationTables.map((table) => normalizePostgresTable(table));
 
-      const configPublication: PostgresPublication = configPublicationTables === undefined
-        ? {
-          name: publicationName,
-          allTables: true,
-          tables: undefined,
-        }
-        : {
-          name: publicationName,
-          allTables: false,
-          tables: configPublicationTables,
-        };
+      const configPublication: PostgresPublication =
+        configPublicationTables === undefined
+          ? {
+              name: publicationName,
+              allTables: true,
+              tables: undefined,
+            }
+          : {
+              name: publicationName,
+              allTables: false,
+              tables: configPublicationTables,
+            };
 
       const result = await sql`
         WITH pub AS (
@@ -62,13 +66,14 @@ export class PostgresChangelogListener {
           name: table["tablename"] + "",
         }));
 
-      const databasePublication: PostgresPublication | null = result.length > 0
-        ? {
-          name: publicationName,
-          allTables: databaseAllTables,
-          tables: databaseTables,
-        }
-        : null;
+      const databasePublication: PostgresPublication | null =
+        result.length > 0
+          ? {
+              name: publicationName,
+              allTables: databaseAllTables,
+              tables: databaseTables,
+            }
+          : null;
 
       const publicationState = new PostgresPublicationState(
         slug,

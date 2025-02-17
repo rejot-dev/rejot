@@ -18,13 +18,15 @@ interface PostgresPublicationDetailsProps {
   connectionSlug: string;
 }
 
-export function PostgresPublicationDetails(
-  { organizationId, connectionSlug }: PostgresPublicationDetailsProps,
-) {
-  const { data: publications, isLoading, error } = useConnectionPublications(
-    organizationId,
-    connectionSlug,
-  );
+export function PostgresPublicationDetails({
+  organizationId,
+  connectionSlug,
+}: PostgresPublicationDetailsProps) {
+  const {
+    data: publications,
+    isLoading,
+    error,
+  } = useConnectionPublications(organizationId, connectionSlug);
 
   if (isLoading) {
     return (
@@ -81,33 +83,32 @@ export function PostgresPublicationDetails(
               <TableRow key={publication.name}>
                 <TableCell className="font-medium">{publication.name}</TableCell>
                 <TableCell>
-                  {publication.allTables
-                    ? <Badge>All Tables</Badge>
-                    : publication.tables?.length
-                    ? <Badge variant="secondary">Selected Tables</Badge>
-                    : <Badge variant="destructive">No Tables</Badge>}
+                  {publication.allTables ? (
+                    <Badge>All Tables</Badge>
+                  ) : publication.tables?.length ? (
+                    <Badge variant="secondary">Selected Tables</Badge>
+                  ) : (
+                    <Badge variant="destructive">No Tables</Badge>
+                  )}
                 </TableCell>
                 <TableCell>
-                  {publication.allTables
-                    ? <span className="text-muted-foreground">N/A</span>
-                    : (
-                      <div className="flex flex-wrap gap-1">
-                        {publication.tables?.length
-                          ? (
-                            publication.tables.map((table: ConnectionTable) => (
-                              <Badge
-                                key={`${table.schema}.${table.name}`}
-                                variant="outline"
-                              >
-                                {table.schema !== "public" && table.schema
-                                  ? `${table.schema}.${table.name}`
-                                  : table.name}
-                              </Badge>
-                            ))
-                          )
-                          : <span className="text-muted-foreground">No tables selected</span>}
-                      </div>
-                    )}
+                  {publication.allTables ? (
+                    <span className="text-muted-foreground">N/A</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {publication.tables?.length ? (
+                        publication.tables.map((table: ConnectionTable) => (
+                          <Badge key={`${table.schema}.${table.name}`} variant="outline">
+                            {table.schema !== "public" && table.schema
+                              ? `${table.schema}.${table.name}`
+                              : table.name}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground">No tables selected</span>
+                      )}
+                    </div>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

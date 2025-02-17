@@ -31,11 +31,7 @@ export interface ISchemaService {
 }
 
 export class SchemaService implements ISchemaService {
-  static inject = tokens(
-    "connectionService",
-    "postgresConnectionManager",
-    "schemaRepository",
-  );
+  static inject = tokens("connectionService", "postgresConnectionManager", "schemaRepository");
 
   constructor(
     private connectionService: IConnectionService,
@@ -81,10 +77,7 @@ export class SchemaService implements ISchemaService {
       };
     }
 
-    const changes = this.compareSchemas(
-      snapshot.schema,
-      this.convertToTableSchema(currentSchema),
-    );
+    const changes = this.compareSchemas(snapshot.schema, this.convertToTableSchema(currentSchema));
 
     // If there are changes, create a new snapshot
     if (changes.changes.length > 0) {
@@ -101,10 +94,13 @@ export class SchemaService implements ISchemaService {
   }
 
   private convertToTableSchema(columns: ColumnSchema[]): Record<string, ColumnSchema> {
-    return columns.reduce((acc, column) => {
-      acc[column.columnName] = column;
-      return acc;
-    }, {} as Record<string, ColumnSchema>);
+    return columns.reduce(
+      (acc, column) => {
+        acc[column.columnName] = column;
+        return acc;
+      },
+      {} as Record<string, ColumnSchema>,
+    );
   }
 
   private compareSchemas(
@@ -134,8 +130,7 @@ export class SchemaService implements ISchemaService {
       if (oldColumn.dataType !== newColumn.dataType) {
         changes.push({
           changeType: "type_changed" as const,
-          details:
-            `Column "${columnName}" type changed from ${oldColumn.dataType} to ${newColumn.dataType}`,
+          details: `Column "${columnName}" type changed from ${oldColumn.dataType} to ${newColumn.dataType}`,
           timestamp,
           column: columnName,
           oldValue: oldColumn.dataType,
@@ -147,8 +142,7 @@ export class SchemaService implements ISchemaService {
       if (oldColumn.isNullable !== newColumn.isNullable) {
         changes.push({
           changeType: "nullability_changed" as const,
-          details:
-            `Column "${columnName}" nullability changed from ${oldColumn.isNullable} to ${newColumn.isNullable}`,
+          details: `Column "${columnName}" nullability changed from ${oldColumn.isNullable} to ${newColumn.isNullable}`,
           timestamp,
           column: columnName,
           oldValue: String(oldColumn.isNullable),
@@ -160,8 +154,7 @@ export class SchemaService implements ISchemaService {
       if (oldColumn.columnDefault !== newColumn.columnDefault) {
         changes.push({
           changeType: "default_changed" as const,
-          details:
-            `Column "${columnName}" default value changed from ${oldColumn.columnDefault} to ${newColumn.columnDefault}`,
+          details: `Column "${columnName}" default value changed from ${oldColumn.columnDefault} to ${newColumn.columnDefault}`,
           timestamp,
           column: columnName,
           oldValue: oldColumn.columnDefault ?? "null",

@@ -146,9 +146,10 @@ export type ArchitectureDiagramProps = HTMLAttributes<HTMLDivElement> & {
   disableSimulation?: boolean;
 };
 
-export function LayoutFlow(
-  { systemOverview, disableSimulation = false }: ArchitectureDiagramProps,
-) {
+export function LayoutFlow({
+  systemOverview,
+  disableSimulation = false,
+}: ArchitectureDiagramProps) {
   const architectureData = systemOverviewToArchitectureNode(systemOverview);
   const { nodes: initialNodes, edges: initialEdges } = generateNodesAndEdges(architectureData);
 

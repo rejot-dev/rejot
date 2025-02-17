@@ -1,5 +1,3 @@
- 
-
 import { defineConfig, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import react from "@vitejs/plugin-react";
@@ -19,9 +17,7 @@ export default defineConfig(({ mode }) => {
     throw new Error("CONTROLLER_API_URL or VITE_CLERK_PUBLISHABLE_KEY env var not set.");
   }
 
-  console.info(
-    `Proxying websocket to -> ws://${env["CONTROLLER_API_URL"]}/_ws`,
-  );
+  console.info(`Proxying websocket to -> ws://${env["CONTROLLER_API_URL"]}/_ws`);
 
   return {
     plugins: [react(), tsconfigPaths()],

@@ -73,9 +73,13 @@ export function ConnectionOverviewStep({
                 <div className="text-muted-foreground">Connection Status</div>
                 <div className="flex items-center gap-2">
                   <Badge
-                    variant={isLoading
-                      ? "outline"
-                      : (health?.status === "healthy" ? "secondary" : "destructive")}
+                    variant={
+                      isLoading
+                        ? "outline"
+                        : health?.status === "healthy"
+                          ? "secondary"
+                          : "destructive"
+                    }
                     className="capitalize"
                   >
                     {isLoading ? "checking" : (health?.status ?? "unknown")}
@@ -88,18 +92,10 @@ export function ConnectionOverviewStep({
       </Card>
 
       <div className="flex justify-end gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onBack}
-        >
+        <Button type="button" variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button
-          type="button"
-          onClick={onContinue}
-          disabled={isLoading || !isHealthy}
-        >
+        <Button type="button" onClick={onContinue} disabled={isLoading || !isHealthy}>
           Continue
         </Button>
       </div>

@@ -8,11 +8,9 @@ dbDescribe("SystemService tests", async (ctx) => {
   test("Create Org - Create System - Get System", async () => {
     const systemService = ctx.injector.resolve("systemService");
 
-    const organization = await ctx
-      .resolve("organizationService")
-      .createOrganization({
-        name: "Test Organization",
-      });
+    const organization = await ctx.resolve("organizationService").createOrganization({
+      name: "Test Organization",
+    });
 
     assertExists(organization);
     assertEquals(organization.name, "Test Organization");
@@ -31,10 +29,7 @@ dbDescribe("SystemService tests", async (ctx) => {
     assertEquals(system.organization.code, organization.code);
     assertEquals(system.organization.name, "Test Organization");
 
-    const retrievedSystem = await systemService.getSystem(
-      organization.code,
-      system.slug
-    );
+    const retrievedSystem = await systemService.getSystem(organization.code, system.slug);
 
     assertEquals(retrievedSystem.code, system.code);
     assertEquals(retrievedSystem.name, system.name);

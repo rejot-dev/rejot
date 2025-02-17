@@ -56,10 +56,13 @@ export class ConnectionHealthRoutes {
             return c.json(health);
           }
 
-          return c.json({
-            status: "unhealthy",
-            message: `Unsupported connection type: ${connection.type}`,
-          }, 500);
+          return c.json(
+            {
+              status: "unhealthy",
+              message: `Unsupported connection type: ${connection.type}`,
+            },
+            500,
+          );
         },
       )
       .openapi(
@@ -88,9 +91,12 @@ export class ConnectionHealthRoutes {
             return c.json(tables);
           }
 
-          return c.json({
-            error: `Unsupported connection type: ${connection.type}`,
-          }, 500);
+          return c.json(
+            {
+              error: `Unsupported connection type: ${connection.type}`,
+            },
+            500,
+          );
         },
       )
       .openapi(
@@ -120,9 +126,12 @@ export class ConnectionHealthRoutes {
             return c.json(schema);
           }
 
-          return c.json({
-            error: `Unsupported connection type: ${connection.type}`,
-          }, 500);
+          return c.json(
+            {
+              error: `Unsupported connection type: ${connection.type}`,
+            },
+            500,
+          );
         },
       )
       .openapi(
@@ -152,9 +161,12 @@ export class ConnectionHealthRoutes {
             return c.json(publications);
           }
 
-          return c.json({
-            error: `Unsupported connection type: ${connection.type}`,
-          }, 500);
+          return c.json(
+            {
+              error: `Unsupported connection type: ${connection.type}`,
+            },
+            500,
+          );
         },
       )
       .openapi(

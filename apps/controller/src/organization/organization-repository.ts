@@ -34,13 +34,13 @@ export class OrganizationRepository implements IOrganizationRepository {
   }
 
   async get(organizationCode: string): Promise<OrganizationEntity> {
-    const res = await this.#db.select().from(schema.organization).where(
-      eq(schema.organization.code, organizationCode),
-    );
+    const res = await this.#db
+      .select()
+      .from(schema.organization)
+      .where(eq(schema.organization.code, organizationCode));
 
     if (res.length === 0) {
-      throw new OrganizationError(OrganizationErrors.NOT_FOUND)
-        .withContext({ organizationCode });
+      throw new OrganizationError(OrganizationErrors.NOT_FOUND).withContext({ organizationCode });
     }
 
     return res[0];
@@ -58,28 +58,25 @@ export class OrganizationRepository implements IOrganizationRepository {
         schema.personOrganization,
         eq(schema.organization.id, schema.personOrganization.organizationId),
       )
-      .innerJoin(
-        schema.person,
-        eq(schema.personOrganization.personId, schema.person.id),
-      )
-      .innerJoin(
-        schema.clerkUser,
-        eq(schema.person.id, schema.clerkUser.personId),
-      )
+      .innerJoin(schema.person, eq(schema.personOrganization.personId, schema.person.id))
+      .innerJoin(schema.clerkUser, eq(schema.person.id, schema.clerkUser.personId))
       .where(eq(schema.clerkUser.clerkUserId, clerkUserId));
 
     return res;
   }
 
   async create(organization: CreateOrganizationEntity): Promise<OrganizationEntity> {
-    const res = await this.#db.insert(schema.organization).values({
-      name: organization.name,
-      code: organization.code,
-    }).returning({
-      id: schema.organization.id,
-      code: schema.organization.code,
-      name: schema.organization.name,
-    });
+    const res = await this.#db
+      .insert(schema.organization)
+      .values({
+        name: organization.name,
+        code: organization.code,
+      })
+      .returning({
+        id: schema.organization.id,
+        code: schema.organization.code,
+        name: schema.organization.name,
+      });
 
     return res[0];
   }
@@ -95,8 +92,9 @@ export class OrganizationRepository implements IOrganizationRepository {
       .where(eq(schema.clerkUser.clerkUserId, clerkUserId));
 
     if (clerkUser.length === 0) {
-      throw new OrganizationError(OrganizationErrors.PERSON_ONBOARDING_NOT_COMPLETED)
-        .withContext({ clerkUserId });
+      throw new OrganizationError(OrganizationErrors.PERSON_ONBOARDING_NOT_COMPLETED).withContext({
+        clerkUserId,
+      });
     }
 
     const personId = clerkUser[0].personId;

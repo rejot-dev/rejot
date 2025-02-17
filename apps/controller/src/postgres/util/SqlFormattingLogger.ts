@@ -41,14 +41,10 @@ export class SqlFormattingLogger implements Logger {
       // Normalize and uppercase SQL keywords as before
       const queryNormalized = interpolatedQuery
         .replace(/\s+/g, " ") // Normalize whitespace
-        .replace(
-          new RegExp(`\\b(${keywordsToInsertNewline.join("|")})\\b`, "gi"),
-          (match) => match.toUpperCase(),
+        .replace(new RegExp(`\\b(${keywordsToInsertNewline.join("|")})\\b`, "gi"), (match) =>
+          match.toUpperCase(),
         )
-        .replace(
-          new RegExp(`\\s*(${keywordsToInsertNewline.join("|")})\\s+`, "gi"),
-          "\n$1 ",
-        );
+        .replace(new RegExp(`\\s*(${keywordsToInsertNewline.join("|")})\\s+`, "gi"), "\n$1 ");
 
       const lines = queryNormalized.split("\n");
       let indentLevel = 0;

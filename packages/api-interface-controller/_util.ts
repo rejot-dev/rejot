@@ -16,7 +16,8 @@ export type InferRouteConfig<T> = {
         };
       };
     };
-  } ? z.infer<B>
+  }
+    ? z.infer<B>
     : never;
   response: T extends {
     responses: {
@@ -28,7 +29,8 @@ export type InferRouteConfig<T> = {
         };
       };
     };
-  } ? z.infer<R>
+  }
+    ? z.infer<R>
     : never;
   method: T extends { method: infer M } ? M : never;
   path: T extends { path: infer P } ? P : never;

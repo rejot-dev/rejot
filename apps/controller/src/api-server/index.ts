@@ -36,14 +36,15 @@ export class ApiServer {
     connectionRoutes: ConnectionRoutes,
     connectionHealthRoutes: ConnectionHealthRoutes,
   ) {
-    this.#app = new OpenAPIHono().doc("api", {
-      openapi: "3.1.1",
-      info: {
-        title: "Controller",
-        version: "v1",
-        description: "Control Plane API for ReJot",
-      },
-    })
+    this.#app = new OpenAPIHono()
+      .doc("api", {
+        openapi: "3.1.1",
+        info: {
+          title: "Controller",
+          version: "v1",
+          description: "Control Plane API for ReJot",
+        },
+      })
       // Middleware
       .use("*", logger())
       .use("*", cors())

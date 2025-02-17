@@ -12,20 +12,23 @@ export const OrganizationIdPathParamSchema = z
     description: "ID of the organization",
   });
 
-export const OrganizationGetResponse = z.object({
-  code: z.string().min(1),
-  name: z.string().min(1).max(255),
-}).openapi("Organization");
+export const OrganizationGetResponse = z
+  .object({
+    code: z.string().min(1),
+    name: z.string().min(1).max(255),
+  })
+  .openapi("Organization");
 
 export type OrganizationGetResponse = z.infer<typeof OrganizationGetResponse>;
 
-export const OrganizationPostRequest = z.object({
-  name: z.string().min(1).max(255)
-    .openapi({
+export const OrganizationPostRequest = z
+  .object({
+    name: z.string().min(1).max(255).openapi({
       description: "Name of the organization",
       example: "My Organization",
     }),
-}).openapi("NewOrganization");
+  })
+  .openapi("NewOrganization");
 
 export type OrganizationPostRequest = z.infer<typeof OrganizationPostRequest>;
 

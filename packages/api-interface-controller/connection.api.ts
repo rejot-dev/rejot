@@ -1,31 +1,37 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
 
-const ConnectionPostgresConfig = z.object({
-  host: z.string(),
-  port: z.number(),
-  user: z.string(),
-  password: z.string(),
-  database: z.string(),
-}).openapi("ConnectionPostgresConfig");
+const ConnectionPostgresConfig = z
+  .object({
+    host: z.string(),
+    port: z.number(),
+    user: z.string(),
+    password: z.string(),
+    database: z.string(),
+  })
+  .openapi("ConnectionPostgresConfig");
 
 const ConnectionPostgresConfigWithoutPassword = ConnectionPostgresConfig.omit({
   password: true,
 });
 
-const ConnectionBase = z.object({
-  slug: z.string(),
-  type: z.enum(["postgres"]),
-}).openapi("ConnectionBase");
+const ConnectionBase = z
+  .object({
+    slug: z.string(),
+    type: z.enum(["postgres"]),
+  })
+  .openapi("ConnectionBase");
 
 export const ConnectionResponse = ConnectionBase.extend({
   config: ConnectionPostgresConfigWithoutPassword,
 }).openapi("Connection");
 
-export const ConnectionCreateRequest = z.object({
-  slug: z.string(),
-  type: z.literal("postgres"),
-  config: ConnectionPostgresConfig,
-}).openapi("ConnectionCreateRequest");
+export const ConnectionCreateRequest = z
+  .object({
+    slug: z.string(),
+    type: z.literal("postgres"),
+    config: ConnectionPostgresConfig,
+  })
+  .openapi("ConnectionCreateRequest");
 
 export const connectionListApi = {
   method: "get",

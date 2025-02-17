@@ -4,8 +4,6 @@ import { useSelectedOrganizationCode } from "@/data/clerk/clerk-meta.data";
 import { Database } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-
-
 export function ConnectionNew() {
   const navigate = useNavigate();
   const organizationId = useSelectedOrganizationCode();
@@ -30,9 +28,7 @@ export function ConnectionNew() {
               <Database className="h-5 w-5" />
               <CardTitle>PostgreSQL</CardTitle>
             </div>
-            <CardDescription>
-              Connect to a PostgreSQL database to sync data
-            </CardDescription>
+            <CardDescription>Connect to a PostgreSQL database to sync data</CardDescription>
           </CardHeader>
         </Card>
 

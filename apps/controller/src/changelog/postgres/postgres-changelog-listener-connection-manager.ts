@@ -31,11 +31,9 @@ export class PostgresChangelogListenerConnectionManager implements Disposable {
 
   connect(): void {
     const connections = this.#config.connections;
-    for (
-      const { publicationName, publicationTables, connectionSlug } of Object.values(
-        this.#config.dataStores,
-      )
-    ) {
+    for (const { publicationName, publicationTables, connectionSlug } of Object.values(
+      this.#config.dataStores,
+    )) {
       const connection = connections[connectionSlug];
 
       if (!connection) {

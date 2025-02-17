@@ -24,9 +24,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
-function ConnectionHealthStatus(
-  { organizationId, connectionSlug }: { organizationId: string; connectionSlug: string },
-) {
+function ConnectionHealthStatus({
+  organizationId,
+  connectionSlug,
+}: {
+  organizationId: string;
+  connectionSlug: string;
+}) {
   const { data: health, isLoading } = useConnectionHealth(organizationId, connectionSlug);
 
   if (isLoading) {
@@ -79,13 +83,9 @@ export function ConnectionOverview() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="mb-2 text-3xl font-bold tracking-tight">Connections</h1>
-            <p className="text-lg text-muted-foreground">
-              Manage your database connections
-            </p>
+            <p className="text-lg text-muted-foreground">Manage your database connections</p>
           </div>
-          <Button onClick={() => navigate("new")}>
-            Create Connection
-          </Button>
+          <Button onClick={() => navigate("new")}>Create Connection</Button>
         </div>
 
         <div className="rounded-md border">
@@ -114,9 +114,7 @@ export function ConnectionOverview() {
                     />
                   </TableCell>
                   <TableCell>
-                    <Link to={`/connections/${connection.slug}`}>
-                      More Info
-                    </Link>
+                    <Link to={`/connections/${connection.slug}`}>More Info</Link>
                   </TableCell>
                 </TableRow>
               ))}

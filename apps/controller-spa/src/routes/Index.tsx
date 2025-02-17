@@ -19,10 +19,7 @@ export default function Index() {
         <h1 className="text-3xl font-semibold">Hello World</h1>
       </div>
       <div className="mx-auto grid w-full max-w-6xl items-start gap-6 md:grid-cols-[180px_1fr] lg:grid-cols-[250px_1fr]">
-        <nav
-          className="grid gap-4 text-sm text-muted-foreground"
-          x-chunk="dashboard-04-chunk-0"
-        >
+        <nav className="grid gap-4 text-sm text-muted-foreground" x-chunk="dashboard-04-chunk-0">
           <Link href="#" className="font-semibold text-primary">
             General
           </Link>
@@ -32,9 +29,7 @@ export default function Index() {
           <Card x-chunk="dashboard-04-chunk-1">
             <CardHeader>
               <CardTitle>Some Card</CardTitle>
-              <CardDescription>
-                Used to identify your store in the marketplace.
-              </CardDescription>
+              <CardDescription>Used to identify your store in the marketplace.</CardDescription>
             </CardHeader>
             <CardContent>
               <form>

@@ -9,18 +9,16 @@ interface SelectPublicationStepProps {
   onBack: () => void;
 }
 
-export function SelectPublicationStep(
-  { form, organizationId, onBack }: SelectPublicationStepProps,
-) {
+export function SelectPublicationStep({
+  form,
+  organizationId,
+  onBack,
+}: SelectPublicationStepProps) {
   return (
     <div className="space-y-6">
       <PublicationSelector form={form} organizationId={organizationId} />
       <div className="flex justify-end gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onBack}
-        >
+        <Button type="button" variant="outline" onClick={onBack}>
           Back
         </Button>
         <Button type="submit">Add Data Store</Button>

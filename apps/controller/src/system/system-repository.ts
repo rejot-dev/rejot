@@ -46,9 +46,11 @@ export type GetSystemBySlugParams = {
   slug: string;
 };
 
-export type GetSystemBySlugResult = {
-  id: number;
-} | undefined;
+export type GetSystemBySlugResult =
+  | {
+      id: number;
+    }
+  | undefined;
 
 export type UpsertDataStoreParams = {
   systemCode: string;
@@ -80,34 +82,36 @@ export class SystemRepository implements ISystemRepository {
     this.#db = postgres.db;
   }
 
-  async create(
-    orgCode: string,
-    system: CreateSystemEntity,
-  ): Promise<SystemEntity> {
+  async create(orgCode: string, system: CreateSystemEntity): Promise<SystemEntity> {
     const org = this.#db.$with("org").as(
-      this.#db.select({
-        id: schema.organization.id,
-        code: schema.organization.code,
-        name: schema.organization.name,
-      }).from(schema.organization).where(
-        eq(schema.organization.code, orgCode),
-      ),
+      this.#db
+        .select({
+          id: schema.organization.id,
+          code: schema.organization.code,
+          name: schema.organization.name,
+        })
+        .from(schema.organization)
+        .where(eq(schema.organization.code, orgCode)),
     );
 
-    const res = await this.#db.with(org).insert(schema.system).values({
-      organizationId: sql`(SELECT id FROM org)`,
-      name: system.name,
-      code: system.code,
-      slug: system.slug,
-    }).returning({
-      id: schema.system.id,
-      code: schema.system.code,
-      name: schema.system.name,
-      slug: schema.system.slug,
-      organizationId: sql`(SELECT id FROM org)`,
-      organizationCode: sql`(SELECT code FROM org)`,
-      organizationName: sql`(SELECT name FROM org)`,
-    });
+    const res = await this.#db
+      .with(org)
+      .insert(schema.system)
+      .values({
+        organizationId: sql`(SELECT id FROM org)`,
+        name: system.name,
+        code: system.code,
+        slug: system.slug,
+      })
+      .returning({
+        id: schema.system.id,
+        code: schema.system.code,
+        name: schema.system.name,
+        slug: schema.system.slug,
+        organizationId: sql`(SELECT id FROM org)`,
+        organizationCode: sql`(SELECT code FROM org)`,
+        organizationName: sql`(SELECT name FROM org)`,
+      });
 
     if (res.length === 0) {
       throw new SystemError({
@@ -123,15 +127,7 @@ export class SystemRepository implements ISystemRepository {
       });
     }
 
-    const {
-      id,
-      code,
-      name,
-      slug,
-      organizationId,
-      organizationCode,
-      organizationName,
-    } = res[0];
+    const { id, code, name, slug, organizationId, organizationCode, organizationName } = res[0];
 
     return {
       id,
@@ -146,25 +142,20 @@ export class SystemRepository implements ISystemRepository {
     };
   }
 
-  async get(
-    organizationCode: string,
-    systemSlug: string,
-  ): Promise<SystemOverview> {
-    const res = await this.#db.select().from(schema.system).where(
-      eq(schema.system.slug, systemSlug),
-    ).innerJoin(
-      schema.organization,
-      and(
-        eq(schema.system.organizationId, schema.organization.id),
-        eq(schema.organization.code, organizationCode),
-      ),
-    ).leftJoin(
-      schema.dataStore,
-      eq(schema.dataStore.systemId, schema.system.id),
-    ).leftJoin(
-      schema.connection,
-      eq(schema.dataStore.connectionId, schema.connection.id),
-    );
+  async get(organizationCode: string, systemSlug: string): Promise<SystemOverview> {
+    const res = await this.#db
+      .select()
+      .from(schema.system)
+      .where(eq(schema.system.slug, systemSlug))
+      .innerJoin(
+        schema.organization,
+        and(
+          eq(schema.system.organizationId, schema.organization.id),
+          eq(schema.organization.code, organizationCode),
+        ),
+      )
+      .leftJoin(schema.dataStore, eq(schema.dataStore.systemId, schema.system.id))
+      .leftJoin(schema.connection, eq(schema.dataStore.connectionId, schema.connection.id));
 
     if (res.length === 0) {
       throw new SystemError({
@@ -190,32 +181,39 @@ export class SystemRepository implements ISystemRepository {
           return [];
         }
 
-        return [{
-          connectionSlug: connection.slug,
-          tables: data_store.publicationTables ?? [],
-        }];
+        return [
+          {
+            connectionSlug: connection.slug,
+            tables: data_store.publicationTables ?? [],
+          },
+        ];
       }),
     };
   }
 
   async getSystems(organizationCode: string): Promise<SystemEntity[]> {
-    const org = this.#db.$with("org").as(
-      this.#db.select().from(schema.organization).where(
-        eq(schema.organization.code, organizationCode),
-      ),
-    );
+    const org = this.#db
+      .$with("org")
+      .as(
+        this.#db
+          .select()
+          .from(schema.organization)
+          .where(eq(schema.organization.code, organizationCode)),
+      );
 
-    const res = await this.#db.with(org).select({
-      id: schema.system.id,
-      code: schema.system.code,
-      name: schema.system.name,
-      slug: schema.system.slug,
-      organizationId: sql`(SELECT id FROM org)`,
-      organizationCode: sql`(SELECT code FROM org)`,
-      organizationName: sql`(SELECT name FROM org)`,
-    }).from(schema.system).where(
-      eq(schema.system.organizationId, sql`(SELECT id FROM org)`),
-    );
+    const res = await this.#db
+      .with(org)
+      .select({
+        id: schema.system.id,
+        code: schema.system.code,
+        name: schema.system.name,
+        slug: schema.system.slug,
+        organizationId: sql`(SELECT id FROM org)`,
+        organizationCode: sql`(SELECT code FROM org)`,
+        organizationName: sql`(SELECT name FROM org)`,
+      })
+      .from(schema.system)
+      .where(eq(schema.system.organizationId, sql`(SELECT id FROM org)`));
 
     return res.map((system) => ({
       id: system.id,
@@ -231,12 +229,11 @@ export class SystemRepository implements ISystemRepository {
   }
 
   async findById(id: number): Promise<SystemEntity | undefined> {
-    const res = await this.#db.select().from(schema.system).where(
-      eq(schema.system.id, id),
-    ).innerJoin(
-      schema.organization,
-      eq(schema.system.organizationId, schema.organization.id),
-    );
+    const res = await this.#db
+      .select()
+      .from(schema.system)
+      .where(eq(schema.system.id, id))
+      .innerJoin(schema.organization, eq(schema.system.organizationId, schema.organization.id));
 
     if (res.length === 0) {
       return undefined;
@@ -265,14 +262,17 @@ export class SystemRepository implements ISystemRepository {
   }
 
   async getSystemBySlug(params: GetSystemBySlugParams): Promise<GetSystemBySlugResult> {
-    const result = await this.#db.select({
-      id: schema.system.id,
-    })
+    const result = await this.#db
+      .select({
+        id: schema.system.id,
+      })
       .from(schema.system)
-      .where(and(
-        eq(schema.system.organizationId, params.organizationId),
-        eq(schema.system.slug, params.slug),
-      ))
+      .where(
+        and(
+          eq(schema.system.organizationId, params.organizationId),
+          eq(schema.system.slug, params.slug),
+        ),
+      )
       .limit(1);
 
     return result[0];
@@ -287,18 +287,14 @@ export class SystemRepository implements ISystemRepository {
           connectionId: schema.connection.id,
         })
         .from(schema.system)
-        .innerJoin(
-          schema.organization,
-          eq(schema.system.organizationId, schema.organization.id),
+        .innerJoin(schema.organization, eq(schema.system.organizationId, schema.organization.id))
+        .innerJoin(schema.connection, eq(schema.connection.organizationId, schema.organization.id))
+        .where(
+          and(
+            eq(schema.system.code, params.systemCode),
+            eq(schema.connection.slug, params.connectionSlug),
+          ),
         )
-        .innerJoin(
-          schema.connection,
-          eq(schema.connection.organizationId, schema.organization.id),
-        )
-        .where(and(
-          eq(schema.system.code, params.systemCode),
-          eq(schema.connection.slug, params.connectionSlug),
-        ))
         .limit(1);
 
       if (!systemAndConnection[0]) {

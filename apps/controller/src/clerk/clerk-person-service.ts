@@ -38,11 +38,7 @@ export class ClerkPersonService implements IClerkPersonService {
       return person;
     }
 
-    const {
-      firstName,
-      lastName,
-      email,
-    } = await this.#clerkApiClient.getUser(clerkUserId);
+    const { firstName, lastName, email } = await this.#clerkApiClient.getUser(clerkUserId);
 
     await this.#clerkRepository.insertPersonAndClerkUser({
       clerkUserId,

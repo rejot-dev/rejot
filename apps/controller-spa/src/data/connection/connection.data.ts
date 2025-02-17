@@ -8,11 +8,11 @@ import {
 } from "@rejot/api-interface-controller/connection";
 
 type ConnectionListResponse = z.infer<
-  typeof connectionListApi.responses[200]["content"]["application/json"]["schema"]
+  (typeof connectionListApi.responses)[200]["content"]["application/json"]["schema"]
 >;
 
 type ConnectionCreateResponse = z.infer<
-  typeof connectionCreateApi.responses[201]["content"]["application/json"]["schema"]
+  (typeof connectionCreateApi.responses)[201]["content"]["application/json"]["schema"]
 >;
 
 export function getConnections(organizationId: string): Promise<ApiResult<ConnectionListResponse>> {

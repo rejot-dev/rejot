@@ -9,19 +9,19 @@ import {
 import type { z } from "zod";
 
 type ClerkGetResponse = z.infer<
-  typeof clerkGetApi.responses[200]["content"]["application/json"]["schema"]
+  (typeof clerkGetApi.responses)[200]["content"]["application/json"]["schema"]
 >;
 
 type ClerkPostResponse = z.infer<
-  typeof createSelfUserClerkPostApi.responses[201]["content"]["application/json"]["schema"]
+  (typeof createSelfUserClerkPostApi.responses)[201]["content"]["application/json"]["schema"]
 >;
 
 type ClerkMetadataRequest = z.infer<
-  typeof replaceUserMetadataClerkPutApi.request.body.content["application/json"]["schema"]
+  (typeof replaceUserMetadataClerkPutApi.request.body.content)["application/json"]["schema"]
 >;
 
 type ClerkMetadataResponse = z.infer<
-  typeof replaceUserMetadataClerkPutApi.responses[200]["content"]["application/json"]["schema"]
+  (typeof replaceUserMetadataClerkPutApi.responses)[200]["content"]["application/json"]["schema"]
 >;
 
 export function getCurrentClerkUser(): Promise<ApiResult<ClerkGetResponse>> {

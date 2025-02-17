@@ -5,14 +5,15 @@ import { eq } from "drizzle-orm";
 
 export interface IPersonRepository {
   getPersonByCode(code: string): Promise<
-    {
-      id: number;
-      code: string;
-      firstName: string;
-      lastName: string;
-      email: string;
-      createdAt: Date;
-    } | undefined
+    | {
+        id: number;
+        code: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        createdAt: Date;
+      }
+    | undefined
   >;
 }
 

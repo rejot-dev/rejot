@@ -6,9 +6,15 @@ type NodeData = {
   targetPosition?: Position;
 };
 
-const AllHandles = (
-  { type, active, nodeId }: { type: "source" | "target"; active?: Position; nodeId: string },
-) => (
+const AllHandles = ({
+  type,
+  active,
+  nodeId,
+}: {
+  type: "source" | "target";
+  active?: Position;
+  nodeId: string;
+}) => (
   <>
     <Handle
       type={type}

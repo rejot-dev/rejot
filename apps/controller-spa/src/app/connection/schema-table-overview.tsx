@@ -53,9 +53,7 @@ export function SchemaTableOverview() {
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <NavLink to={`/connections/${connectionSlug}`}>
-                    {connectionSlug}
-                  </NavLink>
+                  <NavLink to={`/connections/${connectionSlug}`}>{connectionSlug}</NavLink>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
@@ -84,37 +82,33 @@ export function SchemaTableOverview() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading
-                ? (
-                  <TableRow>
-                    <TableCell colSpan={2} className="text-center">
-                      <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={2} className="text-center">
+                    <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                  </TableCell>
+                </TableRow>
+              ) : !tables || tables.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={2} className="text-center">
+                    No tables found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                tables.map((table) => (
+                  <TableRow key={`${table.schema}.${table.name}`}>
+                    <TableCell>{table.schema}</TableCell>
+                    <TableCell>
+                      <NavLink
+                        to={`/connections/${connectionSlug}/tables/${table.schema}.${table.name}`}
+                        className="hover:underline"
+                      >
+                        {table.name}
+                      </NavLink>
                     </TableCell>
                   </TableRow>
-                )
-                : !tables || tables.length === 0
-                ? (
-                  <TableRow>
-                    <TableCell colSpan={2} className="text-center">
-                      No tables found
-                    </TableCell>
-                  </TableRow>
-                )
-                : (
-                  tables.map((table) => (
-                    <TableRow key={`${table.schema}.${table.name}`}>
-                      <TableCell>{table.schema}</TableCell>
-                      <TableCell>
-                        <NavLink
-                          to={`/connections/${connectionSlug}/tables/${table.schema}.${table.name}`}
-                          className="hover:underline"
-                        >
-                          {table.name}
-                        </NavLink>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                ))
+              )}
             </TableBody>
           </Table>
         </div>

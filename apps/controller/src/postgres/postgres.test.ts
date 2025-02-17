@@ -30,11 +30,9 @@ dbDescribe("test", (ctx) => {
     const db = ctx.db;
 
     await db.execute(
-      sql`CREATE TABLE some_new_table_to_test (id SERIAL PRIMARY KEY, name VARCHAR(255))`
+      sql`CREATE TABLE some_new_table_to_test (id SERIAL PRIMARY KEY, name VARCHAR(255))`,
     );
-    await db.execute(
-      sql`INSERT INTO some_new_table_to_test (name) VALUES ('test')`
-    );
+    await db.execute(sql`INSERT INTO some_new_table_to_test (name) VALUES ('test')`);
 
     const [res] = await db.execute(sql`SELECT * FROM some_new_table_to_test`);
 
@@ -45,11 +43,9 @@ dbDescribe("test", (ctx) => {
     const db = ctx.db;
 
     await db.execute(
-      sql`CREATE TABLE some_new_table_to_test (id SERIAL PRIMARY KEY, name VARCHAR(255))`
+      sql`CREATE TABLE some_new_table_to_test (id SERIAL PRIMARY KEY, name VARCHAR(255))`,
     );
-    await db.execute(
-      sql`INSERT INTO some_new_table_to_test (name) VALUES ('test')`
-    );
+    await db.execute(sql`INSERT INTO some_new_table_to_test (name) VALUES ('test')`);
 
     const [res] = await db.execute(sql`SELECT * FROM some_new_table_to_test`);
 
@@ -57,9 +53,7 @@ dbDescribe("test", (ctx) => {
   });
 
   test("PSQL - Use repository - Create and get", async () => {
-    const organizationRepository = ctx.injector.resolve(
-      "organizationRepository"
-    );
+    const organizationRepository = ctx.injector.resolve("organizationRepository");
 
     const { id } = await organizationRepository.create({
       code: "ORG_TEST123",
@@ -75,9 +69,7 @@ dbDescribe("test", (ctx) => {
   });
 
   test("PSQL - Use repository - Get from previous test", async () => {
-    const organizationRepository = ctx.injector.resolve(
-      "organizationRepository"
-    );
+    const organizationRepository = ctx.injector.resolve("organizationRepository");
 
     await assertRejects(async () => {
       await organizationRepository.get("ORG_TEST123");

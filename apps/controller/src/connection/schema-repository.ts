@@ -9,12 +9,10 @@ export interface ISchemaRepository {
     connectionSlug: string;
     schemaName: string;
     tableName: string;
-  }): Promise<
-    {
-      schema: Record<string, ColumnSchema>;
-      createdAt: Date;
-    } | null
-  >;
+  }): Promise<{
+    schema: Record<string, ColumnSchema>;
+    createdAt: Date;
+  } | null>;
 
   createSnapshot(params: {
     connectionSlug: string;
@@ -41,7 +39,9 @@ export class SchemaRepository implements ISchemaRepository {
     schemaName: string;
     tableName: string;
   }) {
-    const result = await this.#db.select().from(schema.schemaSnapshot)
+    const result = await this.#db
+      .select()
+      .from(schema.schemaSnapshot)
       .innerJoin(
         schema.connection,
         and(
@@ -49,10 +49,12 @@ export class SchemaRepository implements ISchemaRepository {
           eq(schema.connection.slug, params.connectionSlug),
         ),
       )
-      .where(and(
-        eq(schema.schemaSnapshot.schemaName, params.schemaName),
-        eq(schema.schemaSnapshot.tableName, params.tableName),
-      ))
+      .where(
+        and(
+          eq(schema.schemaSnapshot.schemaName, params.schemaName),
+          eq(schema.schemaSnapshot.tableName, params.tableName),
+        ),
+      )
       .orderBy(desc(schema.schemaSnapshot.createdAt))
       .limit(1);
 
@@ -73,14 +75,17 @@ export class SchemaRepository implements ISchemaRepository {
     schema: Record<string, ColumnSchema>;
   }) {
     const connectionCte = this.#db.$with("connection").as(
-      this.#db.select({
-        id: schema.connection.id,
-      }).from(schema.connection).where(
-        eq(schema.connection.slug, params.connectionSlug),
-      ),
+      this.#db
+        .select({
+          id: schema.connection.id,
+        })
+        .from(schema.connection)
+        .where(eq(schema.connection.slug, params.connectionSlug)),
     );
 
-    const result = await this.#db.with(connectionCte).insert(schema.schemaSnapshot)
+    const result = await this.#db
+      .with(connectionCte)
+      .insert(schema.schemaSnapshot)
       .values({
         connectionId: sql`(SELECT id FROM connection)`,
         schemaName: params.schemaName,

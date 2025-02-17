@@ -73,7 +73,9 @@ export function DashboardHome() {
                 </Link>
               </Button>
             </div>
-            {isLoading ? <div>Loading systems...</div> : (
+            {isLoading ? (
+              <div>Loading systems...</div>
+            ) : (
               <Table>
                 <TableHeader>
                   <TableRow>

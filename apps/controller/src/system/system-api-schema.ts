@@ -12,25 +12,27 @@ export const SystemIdPathParamSchema = z
     description: "ID of the system",
   });
 
-export const SystemGetResponse = z.object({
-  id: z.string(),
-  name: z.string(),
-  slug: z.string(),
-}).openapi("System");
+export const SystemGetResponse = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    slug: z.string(),
+  })
+  .openapi("System");
 
 export type SystemGetResponse = z.infer<typeof SystemGetResponse>;
 
-export const SystemPostRequest = z.object({
-  name: z.string().min(1).max(255)
-    .openapi({
+export const SystemPostRequest = z
+  .object({
+    name: z.string().min(1).max(255).openapi({
       description: "Name of the system",
       example: "My System",
     }),
-  slug: z.string().min(1).max(255)
-    .openapi({
+    slug: z.string().min(1).max(255).openapi({
       description: "Slug of the system",
       example: "my-system",
     }),
-}).openapi("NewSystem");
+  })
+  .openapi("NewSystem");
 
 export type SystemPostRequest = z.infer<typeof SystemPostRequest>;

@@ -13,10 +13,7 @@ export class SystemRoutes {
 
   #routes;
 
-  constructor(
-    systemService: ISystemService,
-    authenticationMiddleware: AuthenticationMiddleware,
-  ) {
+  constructor(systemService: ISystemService, authenticationMiddleware: AuthenticationMiddleware) {
     this.#routes = new OpenAPIHono()
       .openapi(
         createRoute({

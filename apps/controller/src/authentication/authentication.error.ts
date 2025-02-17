@@ -23,8 +23,10 @@ export const AuthenticationErrors = {
   },
 } as const satisfies ErrorMap<AuthenticationErrorCode, AuthenticationErrorContext>;
 
-export class AuthenticationError
-  extends BaseError<AuthenticationErrorCode, AuthenticationErrorContext> {
+export class AuthenticationError extends BaseError<
+  AuthenticationErrorCode,
+  AuthenticationErrorContext
+> {
   constructor(definition: ErrorDefinition<AuthenticationErrorCode, AuthenticationErrorContext>) {
     super(definition);
   }

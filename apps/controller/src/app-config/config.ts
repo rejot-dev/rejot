@@ -17,9 +17,7 @@ export const PostgresConnectionSchema = BaseConnectionSchema.extend({
   database: z.string(),
 });
 
-export const ConnectionSchema = z.discriminatedUnion("connectionType", [
-  PostgresConnectionSchema,
-]);
+export const ConnectionSchema = z.discriminatedUnion("connectionType", [PostgresConnectionSchema]);
 
 export const DataStoreSchema = z.object({
   connectionSlug: z.string(),

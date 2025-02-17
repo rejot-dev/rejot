@@ -13,8 +13,9 @@ export class PublicationMemoryStore implements PublicationStore {
   }
 
   getPublicationByName(publicationName: string): Promise<PSResult<Publication>> {
-    const publication = [...this.publications.values()]
-      .find((pub) => pub.publicationName === publicationName);
+    const publication = [...this.publications.values()].find(
+      (pub) => pub.publicationName === publicationName,
+    );
     if (!publication) {
       return Promise.resolve({ success: false, error: "publication_not_found" });
     }

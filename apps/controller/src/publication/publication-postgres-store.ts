@@ -14,11 +14,14 @@ export class PublicationPostgresStore implements PublicationStore {
   }
 
   async createPublication(publication: NewPublication): Promise<PSResult<string>> {
-    const res = await this.#db.insert(schema.publication).values({
-      name: publication.publicationName,
-      version: publication.metadata.version,
-      schema: publication.schema,
-    }).returning();
+    const res = await this.#db
+      .insert(schema.publication)
+      .values({
+        name: publication.publicationName,
+        version: publication.metadata.version,
+        schema: publication.schema,
+      })
+      .returning();
 
     return {
       success: true,
@@ -27,9 +30,10 @@ export class PublicationPostgresStore implements PublicationStore {
   }
 
   async getPublicationByName(publicationName: string): Promise<PSResult<Publication>> {
-    const res = await this.#db.select().from(schema.publication).where(
-      eq(schema.publication.name, publicationName),
-    );
+    const res = await this.#db
+      .select()
+      .from(schema.publication)
+      .where(eq(schema.publication.name, publicationName));
 
     if (res.length === 0) {
       return {
@@ -57,9 +61,10 @@ export class PublicationPostgresStore implements PublicationStore {
   async getPublicationById(id: string): Promise<PSResult<Publication>> {
     const idNum = parseInt(id);
 
-    const res = await this.#db.select().from(schema.publication).where(
-      eq(schema.publication.id, idNum),
-    );
+    const res = await this.#db
+      .select()
+      .from(schema.publication)
+      .where(eq(schema.publication.id, idNum));
 
     if (res.length === 0) {
       return {

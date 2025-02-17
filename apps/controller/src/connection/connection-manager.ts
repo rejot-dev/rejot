@@ -30,8 +30,5 @@ export type IConnectionManager = {
     connectionSlug: string,
     tableName: string,
   ): Promise<ConnectionTableColumn[]>;
-  getPublications(
-    organizationId: string,
-    connectionSlug: string,
-  ): Promise<ConnectionPublication[]>;
+  getPublications(organizationId: string, connectionSlug: string): Promise<ConnectionPublication[]>;
 };

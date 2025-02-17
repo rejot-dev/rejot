@@ -43,7 +43,7 @@ export function SystemHome() {
   const [selectedSchema, selectedTableName] = selectedTable?.split(".") ?? ["", ""];
 
   const connectionSlug = data?.dataStores.find((ds) =>
-    ds.publication.tables?.includes(selectedTableName ?? "")
+    ds.publication.tables?.includes(selectedTableName ?? ""),
   )?.slug;
 
   const { data: schemaChanges, isLoading: isLoadingChanges } = useRecentSchemaChanges(
@@ -118,31 +118,23 @@ export function SystemHome() {
             <h3 className="mb-2 text-3xl font-bold tracking-tight">Data Stores</h3>
           </div>
           <Button asChild>
-            <NavLink to={`/systems/${systemSlug}/data-stores/new`}>
-              Add Data Store
-            </NavLink>
+            <NavLink to={`/systems/${systemSlug}/data-stores/new`}>Add Data Store</NavLink>
           </Button>
         </div>
 
         <div className="flex flex-col gap-4">
           <div className="w-[300px]">
-            <Select
-              value={selectedTable}
-              onValueChange={(value) => setSelectedTable(value)}
-            >
+            <Select value={selectedTable} onValueChange={(value) => setSelectedTable(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select table" />
               </SelectTrigger>
               <SelectContent>
                 {system.dataStores.map((ds) =>
                   (ds.publication.tables || []).map((table) => (
-                    <SelectItem
-                      key={`public.${table}`}
-                      value={`public.${table}`}
-                    >
+                    <SelectItem key={`public.${table}`} value={`public.${table}`}>
                       {`public.${table}`}
                     </SelectItem>
-                  ))
+                  )),
                 )}
               </SelectContent>
             </Select>
@@ -158,31 +150,27 @@ export function SystemHome() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoadingChanges
-                  ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center">
-                        Loading schema changes...
-                      </TableCell>
+                {isLoadingChanges ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">
+                      Loading schema changes...
+                    </TableCell>
+                  </TableRow>
+                ) : !schemaChanges?.changes?.length ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">
+                      No recent schema changes
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  schemaChanges.changes.map((change, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{selectedSchema}</TableCell>
+                      <TableCell>{selectedTableName}</TableCell>
+                      <TableCell>{change.details}</TableCell>
                     </TableRow>
-                  )
-                  : !schemaChanges?.changes?.length
-                  ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center">
-                        No recent schema changes
-                      </TableCell>
-                    </TableRow>
-                  )
-                  : (
-                    schemaChanges.changes.map((change, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{selectedSchema}</TableCell>
-                        <TableCell>{selectedTableName}</TableCell>
-                        <TableCell>{change.details}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

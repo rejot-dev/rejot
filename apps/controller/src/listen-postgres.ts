@@ -56,17 +56,20 @@ logicalReplicationService.on("error", (err: Error) => {
   console.error("[ERROR] Logical replication error:", err);
 });
 
-logicalReplicationService.on("heartbeat", (lsn: string, timestamp: number, shouldRespond: boolean) => {
-  if (shouldRespond) {
-    console.log("[HEARTBEAT]", {
-      lsn,
-      timestamp,
-      shouldRespond,
-    });
+logicalReplicationService.on(
+  "heartbeat",
+  (lsn: string, timestamp: number, shouldRespond: boolean) => {
+    if (shouldRespond) {
+      console.log("[HEARTBEAT]", {
+        lsn,
+        timestamp,
+        shouldRespond,
+      });
 
-    // logicalReplicationService.acknowledge(lsn);
-  }
-});
+      // logicalReplicationService.acknowledge(lsn);
+    }
+  },
+);
 
 console.log("Subscribing to slot");
 

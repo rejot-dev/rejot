@@ -24,21 +24,31 @@ export const person = pgTable("person", {
   createdAt: timestamp().notNull().defaultNow(),
 });
 
-export const personOrganization = pgTable("person_organization", {
-  personId: integer().references(() => person.id).notNull(),
-  organizationId: integer().references(() => organization.id).notNull(),
-}, (t) => [
-  unique().on(t.personId, t.organizationId),
-]);
+export const personOrganization = pgTable(
+  "person_organization",
+  {
+    personId: integer()
+      .references(() => person.id)
+      .notNull(),
+    organizationId: integer()
+      .references(() => organization.id)
+      .notNull(),
+  },
+  (t) => [unique().on(t.personId, t.organizationId)],
+);
 
 export const clerkUser = pgTable("clerk_user", {
   clerkUserId: varchar({ length: 255 }).primaryKey(),
-  personId: integer().references(() => person.id).notNull(),
+  personId: integer()
+    .references(() => person.id)
+    .notNull(),
 });
 
 export const apiKey = pgTable("api_key", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  organizationId: integer().references(() => organization.id).notNull(),
+  organizationId: integer()
+    .references(() => organization.id)
+    .notNull(),
   key: varchar({ length: 255 }).notNull(),
   createdAt: timestamp().notNull().defaultNow(),
 });
@@ -47,79 +57,99 @@ export const system = pgTable("system", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   code: varchar({ length: 30 }).notNull().unique(),
   slug: varchar({ length: 255 }).notNull(),
-  organizationId: integer().references(() => organization.id).notNull(),
+  organizationId: integer()
+    .references(() => organization.id)
+    .notNull(),
   name: varchar({ length: 255 }).notNull(),
   createdAt: timestamp().notNull().defaultNow(),
 });
 
-export const syncServiceStatus = pgEnum("sync_service_status", [
-  "onboarding",
-  "active",
-  "paused",
-]);
+export const syncServiceStatus = pgEnum("sync_service_status", ["onboarding", "active", "paused"]);
 
 export const syncService = pgTable("sync_service", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   code: varchar({ length: 30 }).notNull().unique(),
-  systemId: integer().references(() => system.id).notNull(),
+  systemId: integer()
+    .references(() => system.id)
+    .notNull(),
   slug: varchar({ length: 255 }).notNull(),
   createdAt: timestamp().notNull().defaultNow(),
   status: syncServiceStatus(),
 });
 
-export const connectionType = pgEnum("connection_type", [
-  "postgres",
-]);
+export const connectionType = pgEnum("connection_type", ["postgres"]);
 
-export const connection = pgTable("connection", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  organizationId: integer().references(() => organization.id).notNull(),
-  slug: varchar({ length: 255 }).notNull(),
-  type: connectionType(),
-}, (t) => [
-  unique().on(t.organizationId, t.slug),
-]);
+export const connection = pgTable(
+  "connection",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    organizationId: integer()
+      .references(() => organization.id)
+      .notNull(),
+    slug: varchar({ length: 255 }).notNull(),
+    type: connectionType(),
+  },
+  (t) => [unique().on(t.organizationId, t.slug)],
+);
 
-export const connectionPostgres = pgTable("connection_postgres", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  connectionId: integer().references(() => connection.id).notNull(),
-  host: varchar({ length: 255 }).notNull(),
-  port: integer().notNull(),
-  user: varchar({ length: 255 }).notNull(),
-  password: varchar({ length: 255 }).notNull(),
-  database: varchar({ length: 255 }).notNull(),
-}, (t) => [
-  unique().on(t.connectionId),
-]);
+export const connectionPostgres = pgTable(
+  "connection_postgres",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    connectionId: integer()
+      .references(() => connection.id)
+      .notNull(),
+    host: varchar({ length: 255 }).notNull(),
+    port: integer().notNull(),
+    user: varchar({ length: 255 }).notNull(),
+    password: varchar({ length: 255 }).notNull(),
+    database: varchar({ length: 255 }).notNull(),
+  },
+  (t) => [unique().on(t.connectionId)],
+);
 
-export const dataStore = pgTable("data_store", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  connectionId: integer().references(() => connection.id).notNull(),
-  systemId: integer().references(() => system.id).notNull(),
-  publicationName: varchar({ length: 255 }),
-  publicationTables: varchar({ length: 255 }).array(),
-  example: varchar({ length: 255 }),
-}, (t) => [
-  unique().on(t.connectionId),
-]);
+export const dataStore = pgTable(
+  "data_store",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    connectionId: integer()
+      .references(() => connection.id)
+      .notNull(),
+    systemId: integer()
+      .references(() => system.id)
+      .notNull(),
+    publicationName: varchar({ length: 255 }),
+    publicationTables: varchar({ length: 255 }).array(),
+    example: varchar({ length: 255 }),
+  },
+  (t) => [unique().on(t.connectionId)],
+);
 
-export const eventStore = pgTable("event_store", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  connectionId: integer().references(() => connection.id).notNull(),
-}, (t) => [
-  unique().on(t.connectionId),
-]);
+export const eventStore = pgTable(
+  "event_store",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    connectionId: integer()
+      .references(() => connection.id)
+      .notNull(),
+  },
+  (t) => [unique().on(t.connectionId)],
+);
 
-export const schemaSnapshot = pgTable("schema_snapshot", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  connectionId: integer().references(() => connection.id).notNull(),
-  schemaName: varchar({ length: 255 }).notNull(),
-  tableName: varchar({ length: 255 }).notNull(),
-  schema: jsonb().notNull(),
-  createdAt: timestamp().notNull().defaultNow(),
-}, (t) => [
-  unique().on(t.connectionId, t.schemaName, t.tableName),
-]);
+export const schemaSnapshot = pgTable(
+  "schema_snapshot",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    connectionId: integer()
+      .references(() => connection.id)
+      .notNull(),
+    schemaName: varchar({ length: 255 }).notNull(),
+    tableName: varchar({ length: 255 }).notNull(),
+    schema: jsonb().notNull(),
+    createdAt: timestamp().notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.connectionId, t.schemaName, t.tableName)],
+);
 
 export const schema = {
   publication,

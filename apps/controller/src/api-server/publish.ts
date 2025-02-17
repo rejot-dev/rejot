@@ -9,7 +9,8 @@ const publicationService = appInjector.resolve("publicationService");
 
 const IdParam = z.object({
   id: z
-    .string().nonempty()
+    .string()
+    .nonempty()
     .openapi({
       param: {
         name: "id",

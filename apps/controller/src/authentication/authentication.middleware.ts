@@ -44,10 +44,9 @@ export class AuthenticationMiddleware implements IAuthenticationMiddleware {
   }
 
   async requireOrganizationAccess(clerkUserId: string, organizationId: string): Promise<void> {
-    const canAccess = await this.#organizationService.clerkUserCanAccessOrganizations(
-      clerkUserId,
-      [organizationId],
-    );
+    const canAccess = await this.#organizationService.clerkUserCanAccessOrganizations(clerkUserId, [
+      organizationId,
+    ]);
 
     if (!canAccess) {
       throw new AuthenticationError(AuthenticationErrors.UNAUTHORIZED).withContext({

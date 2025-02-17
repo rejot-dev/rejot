@@ -25,17 +25,11 @@ export class MockAuthenticationMiddleware implements IAuthenticationMiddleware {
     });
   }
 
-  requireOrganizationAccess(
-    _clerkUserId: string,
-    _organizationId: string
-  ): Promise<void> {
+  requireOrganizationAccess(_clerkUserId: string, _organizationId: string): Promise<void> {
     return Promise.resolve();
   }
 
-  requireOrganizationsAccess(
-    _clerkUserId: string,
-    _organizationIds: string[]
-  ): Promise<void> {
+  requireOrganizationsAccess(_clerkUserId: string, _organizationIds: string[]): Promise<void> {
     return Promise.resolve();
   }
 }

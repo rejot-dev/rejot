@@ -1,28 +1,39 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
 
-export const ClerkPostRequest = z.object({
-  // Empty
-}).openapi("ClerkPostRequest");
+export const ClerkPostRequest = z
+  .object({
+    // Empty
+  })
+  .openapi("ClerkPostRequest");
 
-export const ClerkPersonResponse = z.object({
-  personCode: z.string(),
-  clerkUserId: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  email: z.string(),
-}).strict().openapi("ClerkPersonResponse");
+export const ClerkPersonResponse = z
+  .object({
+    personCode: z.string(),
+    clerkUserId: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string(),
+  })
+  .strict()
+  .openapi("ClerkPersonResponse");
 
-export const ClerkMetadataRequest = z.object({
-  organizationIds: z.array(z.string()),
-  selectedOrganizationId: z.string(),
-  finishedOnboarding: z.boolean(),
-}).strict().openapi("ClerkMetadataRequest");
+export const ClerkMetadataRequest = z
+  .object({
+    organizationIds: z.array(z.string()),
+    selectedOrganizationId: z.string(),
+    finishedOnboarding: z.boolean(),
+  })
+  .strict()
+  .openapi("ClerkMetadataRequest");
 
-export const ClerkUserMetadata = z.object({
-  organizationIds: z.array(z.string()),
-  selectedOrganizationId: z.string().optional(),
-  finishedOnboarding: z.boolean(),
-}).strict().openapi("ClerkUserMetadata");
+export const ClerkUserMetadata = z
+  .object({
+    organizationIds: z.array(z.string()),
+    selectedOrganizationId: z.string().optional(),
+    finishedOnboarding: z.boolean(),
+  })
+  .strict()
+  .openapi("ClerkUserMetadata");
 
 export const clerkGetApi = {
   method: "get",

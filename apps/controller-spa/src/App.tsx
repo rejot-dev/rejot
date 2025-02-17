@@ -29,7 +29,8 @@ const queryClient = new QueryClient();
 
 function ClerkProviderWithTheme({ children }: { children: ReactNode }) {
   const { theme } = useTheme();
-  const isDark = theme === "dark" ||
+  const isDark =
+    theme === "dark" ||
     (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   if (!PUBLISHABLE_KEY) {

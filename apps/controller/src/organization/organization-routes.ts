@@ -58,13 +58,14 @@ export class OrganizationRoutes {
         async (c) => {
           const clerkUserId = c.get("clerkUserId");
 
-          const organizations = await organizationService.getOrganizationsByClerkUserId(
-            clerkUserId,
+          const organizations =
+            await organizationService.getOrganizationsByClerkUserId(clerkUserId);
+          return c.json(
+            organizations.map((org) => ({
+              code: org.code,
+              name: org.name,
+            })),
           );
-          return c.json(organizations.map((org) => ({
-            code: org.code,
-            name: org.name,
-          })));
         },
       );
   }

@@ -77,10 +77,7 @@ export function NavMain() {
             <CollapsibleContent>
               <SidebarMenuSub>
                 <SidebarMenuSubItem>
-                  <SidebarMenuSubButton
-                    asChild
-                    isActive={!!useMatch({ path: "/connections" })}
-                  >
+                  <SidebarMenuSubButton asChild isActive={!!useMatch({ path: "/connections" })}>
                     <NavLink to="/connections">
                       <span>Overview</span>
                     </NavLink>
@@ -91,8 +88,7 @@ export function NavMain() {
           </SidebarMenuItem>
         </Collapsible>
 
-        {
-          /* <Collapsible asChild className="group/collapsible">
+        {/* <Collapsible asChild className="group/collapsible">
           <SidebarMenuItem>
             <CollapsibleTrigger asChild>
               <SidebarMenuButton tooltip="Settings">
@@ -113,8 +109,7 @@ export function NavMain() {
               </SidebarMenuSub>
             </CollapsibleContent>
           </SidebarMenuItem>
-        </Collapsible> */
-        }
+        </Collapsible> */}
       </SidebarMenu>
     </SidebarGroup>
   );

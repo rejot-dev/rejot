@@ -23,9 +23,7 @@ export function ConnectionTables({ organizationId, connectionSlug }: ConnectionT
     <Card>
       <CardHeader>
         <CardTitle>Database Tables</CardTitle>
-        <CardDescription>
-          Available tables in your database
-        </CardDescription>
+        <CardDescription>Available tables in your database</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
@@ -36,37 +34,33 @@ export function ConnectionTables({ organizationId, connectionSlug }: ConnectionT
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading
-              ? (
-                <TableRow>
-                  <TableCell colSpan={2} className="text-center">
-                    <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={2} className="text-center">
+                  <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                </TableCell>
+              </TableRow>
+            ) : !tables || tables.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={2} className="text-center">
+                  No tables found
+                </TableCell>
+              </TableRow>
+            ) : (
+              tables.map((table) => (
+                <TableRow key={`${table.schema}.${table.name}`}>
+                  <TableCell>{table.schema}</TableCell>
+                  <TableCell>
+                    <NavLink
+                      to={`/connections/${connectionSlug}/tables/${table.schema}.${table.name}`}
+                      className="hover:underline"
+                    >
+                      {table.name}
+                    </NavLink>
                   </TableCell>
                 </TableRow>
-              )
-              : !tables || tables.length === 0
-              ? (
-                <TableRow>
-                  <TableCell colSpan={2} className="text-center">
-                    No tables found
-                  </TableCell>
-                </TableRow>
-              )
-              : (
-                tables.map((table) => (
-                  <TableRow key={`${table.schema}.${table.name}`}>
-                    <TableCell>{table.schema}</TableCell>
-                    <TableCell>
-                      <NavLink
-                        to={`/connections/${connectionSlug}/tables/${table.schema}.${table.name}`}
-                        className="hover:underline"
-                      >
-                        {table.name}
-                      </NavLink>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+              ))
+            )}
           </TableBody>
         </Table>
       </CardContent>

@@ -67,10 +67,10 @@ export class ClerkRoutes {
           const clerkUserId = c.get("clerkUserId");
           const metadata = c.req.valid("json");
 
-          await authenticationMiddleware.requireOrganizationsAccess(
-            clerkUserId,
-            [...metadata.organizationIds, metadata.selectedOrganizationId],
-          );
+          await authenticationMiddleware.requireOrganizationsAccess(clerkUserId, [
+            ...metadata.organizationIds,
+            metadata.selectedOrganizationId,
+          ]);
 
           await clerkApiClient.setUserPublicMetadata(clerkUserId, metadata);
 

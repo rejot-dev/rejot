@@ -15,7 +15,6 @@ import { NavOnboarding } from "./nav-onboarding";
 import { useClerkPublicMetadata } from "@/data/clerk/clerk-meta.data";
 import { useOrganizations } from "@/data/organizations/organizations.data";
 
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const metadata = useClerkPublicMetadata();
   const { data } = useOrganizations();
@@ -43,8 +42,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     name: org.name,
   }));
 
-  let selectedOrganization = organizations.find((org) =>
-    org.id === metadata.selectedOrganizationId
+  let selectedOrganization = organizations.find(
+    (org) => org.id === metadata.selectedOrganizationId,
   );
 
   if (!selectedOrganization) {

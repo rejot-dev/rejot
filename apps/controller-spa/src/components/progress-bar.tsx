@@ -34,9 +34,7 @@ export function ProgressBar({ steps, currentStep }: ProgressBarProps) {
             >
               {step.label}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {step.description}
-            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{step.description}</span>
           </div>
         </div>
       ))}

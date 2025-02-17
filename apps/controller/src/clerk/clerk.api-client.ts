@@ -38,8 +38,7 @@ export class ClerkApiClient implements IClerkApiClient {
     const user = await this.#clerk.users.getUser(clerkUserId);
 
     if (!user) {
-      throw new ClerkError(ClerkErrors.USER_NOT_FOUND)
-        .withContext({ clerkUserId });
+      throw new ClerkError(ClerkErrors.USER_NOT_FOUND).withContext({ clerkUserId });
     }
 
     const missingFields: string[] = [];
@@ -54,8 +53,10 @@ export class ClerkApiClient implements IClerkApiClient {
     }
 
     if (missingFields.length > 0) {
-      throw new ClerkError(ClerkErrors.INCOMPLETE_PROFILE)
-        .withContext({ clerkUserId, missingFields });
+      throw new ClerkError(ClerkErrors.INCOMPLETE_PROFILE).withContext({
+        clerkUserId,
+        missingFields,
+      });
     }
 
     return {
@@ -66,15 +67,11 @@ export class ClerkApiClient implements IClerkApiClient {
     };
   }
 
-  async setUserPublicMetadata(
-    clerkUserId: string,
-    metadata: ClerkUserMetadata,
-  ): Promise<void> {
+  async setUserPublicMetadata(clerkUserId: string, metadata: ClerkUserMetadata): Promise<void> {
     const user = await this.#clerk.users.getUser(clerkUserId);
 
     if (!user) {
-      throw new ClerkError(ClerkErrors.USER_NOT_FOUND)
-        .withContext({ clerkUserId });
+      throw new ClerkError(ClerkErrors.USER_NOT_FOUND).withContext({ clerkUserId });
     }
 
     await this.#clerk.users.updateUser(clerkUserId, {

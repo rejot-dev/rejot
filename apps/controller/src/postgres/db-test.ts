@@ -9,15 +9,11 @@ export interface DbTestContext {
   db: Postgres;
 }
 
-export function dbDescribe(
-  name: string,
-  fn: (ctx: DbTestContext) => void
-): void {
+export function dbDescribe(name: string, fn: (ctx: DbTestContext) => void): void {
   const context: DbTestContext = {} as DbTestContext;
 
   describe(name, () => {
-    let testPromise: ReturnType<typeof Promise.withResolvers<void>> | null =
-      null;
+    let testPromise: ReturnType<typeof Promise.withResolvers<void>> | null = null;
 
     beforeEach(async () => {
       context.injector = createInjectionContainer();
@@ -43,12 +39,7 @@ export function dbDescribe(
           ormTx.rollback();
         })
         .catch((error) => {
-          if (
-            !(
-              error instanceof DrizzleError &&
-              error.message.includes("Rollback")
-            )
-          ) {
+          if (!(error instanceof DrizzleError && error.message.includes("Rollback"))) {
             throw error;
           }
         });

@@ -20,7 +20,8 @@ type SafeRouteConfig = {
 
 type ExtractResponseType<T extends SafeRouteConfig> = T["responses"][200] extends {
   content: { "application/json": { schema: z.ZodSchema } };
-} ? z.infer<T["responses"][200]["content"]["application/json"]["schema"]>
+}
+  ? z.infer<T["responses"][200]["content"]["application/json"]["schema"]>
   : never;
 
 type ExtractParamsType<T extends SafeRouteConfig> = T extends { request: { params: z.ZodSchema } }
@@ -37,7 +38,8 @@ type ExtractBodyType<T extends SafeRouteConfig> = T extends {
       };
     };
   };
-} ? z.infer<T["request"]["body"]["content"]["application/json"]["schema"]>
+}
+  ? z.infer<T["request"]["body"]["content"]["application/json"]["schema"]>
   : never;
 
 type RequestOptions<T extends SafeRouteConfig> = {
@@ -74,9 +76,7 @@ export async function fetchRoute<TConfig extends SafeRouteConfig>(
     },
   };
 
-  if (
-    route.method.toUpperCase() !== "GET" && route.method.toUpperCase() !== "HEAD"
-  ) {
+  if (route.method.toUpperCase() !== "GET" && route.method.toUpperCase() !== "HEAD") {
     requestOptions.body = JSON.stringify(options?.body ?? {});
   }
 

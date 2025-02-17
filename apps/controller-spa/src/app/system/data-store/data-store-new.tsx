@@ -73,9 +73,7 @@ export function DataStoreNew() {
     return () => subscription.unsubscribe();
   }, [form, searchParams, setSearchParams]);
 
-  const selectedConnection = connections.find(
-    (conn) => conn.slug === form.watch("connectionSlug"),
-  );
+  const selectedConnection = connections.find((conn) => conn.slug === form.watch("connectionSlug"));
 
   const steps = [
     {

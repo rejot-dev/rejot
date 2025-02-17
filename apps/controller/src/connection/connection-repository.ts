@@ -51,16 +51,19 @@ export class ConnectionRepository implements IConnectionRepository {
     config: ConnectionConfig;
   }) {
     const [connection] = await this.#db.transaction(async (tx) => {
-      const [connection] = await tx.insert(schema.connection).values({
-        organizationId: params.organizationId,
-        slug: params.slug,
-        type: params.type,
-      }).returning({
-        id: schema.connection.id,
-        organizationId: schema.connection.organizationId,
-        slug: schema.connection.slug,
-        type: schema.connection.type,
-      });
+      const [connection] = await tx
+        .insert(schema.connection)
+        .values({
+          organizationId: params.organizationId,
+          slug: params.slug,
+          type: params.type,
+        })
+        .returning({
+          id: schema.connection.id,
+          organizationId: schema.connection.organizationId,
+          slug: schema.connection.slug,
+          type: schema.connection.type,
+        });
 
       if (!connection || connection.type !== "postgres") {
         throw new ConnectionError({
@@ -74,12 +77,14 @@ export class ConnectionRepository implements IConnectionRepository {
         ...params.config,
       });
 
-      return [{
-        id: connection.id,
-        organizationId: connection.organizationId,
-        slug: connection.slug,
-        type: connection.type as "postgres",
-      }];
+      return [
+        {
+          id: connection.id,
+          organizationId: connection.organizationId,
+          slug: connection.slug,
+          type: connection.type as "postgres",
+        },
+      ];
     });
 
     return connection;
@@ -141,10 +146,9 @@ export class ConnectionRepository implements IConnectionRepository {
         schema.connectionPostgres,
         eq(schema.connection.id, schema.connectionPostgres.connectionId),
       )
-      .where(and(
-        eq(schema.connection.organizationId, organizationId),
-        eq(schema.connection.slug, slug),
-      ));
+      .where(
+        and(eq(schema.connection.organizationId, organizationId), eq(schema.connection.slug, slug)),
+      );
 
     const connection = connections[0];
     if (!connection || connection.type !== "postgres" || !connection.config) {
@@ -183,8 +187,9 @@ export class ConnectionRepository implements IConnectionRepository {
       .where(eq(schema.connection.organizationId, organizationId));
 
     return connections
-      .filter((c): c is typeof c & { type: "postgres"; config: NonNullable<typeof c.config> } =>
-        c.type === "postgres" && c.config !== null
+      .filter(
+        (c): c is typeof c & { type: "postgres"; config: NonNullable<typeof c.config> } =>
+          c.type === "postgres" && c.config !== null,
       )
       .map((connection) => ({
         id: connection.id,

@@ -9,11 +9,7 @@ import type {
 
 test("SchemaService.compareSchemas", async () => {
   // Create a minimal SchemaService instance for testing the private method
-  const service = new SchemaService(
-    {} as any,
-    {} as any,
-    {} as any,
-  );
+  const service = new SchemaService({} as any, {} as any, {} as any);
 
   // Access the private method using any type assertion
   const compareSchemas = (service as any).compareSchemas.bind(service);
@@ -138,23 +134,23 @@ test("SchemaService.compareSchemas", async () => {
     expect(result.changes.length).toBe(3);
 
     // Type change for id
-    const typeChange = result.changes.find((c: ConnectionTableSchemaChange) =>
-      c.changeType === "type_changed"
+    const typeChange = result.changes.find(
+      (c: ConnectionTableSchemaChange) => c.changeType === "type_changed",
     );
     expect(typeChange?.column).toBe("id");
     expect(typeChange?.oldValue).toBe("integer");
     expect(typeChange?.newValue).toBe("bigint");
 
     // Removal of name
-    const removeChange = result.changes.find((c: ConnectionTableSchemaChange) =>
-      c.changeType === "column_removed"
+    const removeChange = result.changes.find(
+      (c: ConnectionTableSchemaChange) => c.changeType === "column_removed",
     );
     expect(removeChange?.column).toBe("name");
     expect(removeChange?.oldValue).toBe("text");
 
     // Addition of email
-    const addChange = result.changes.find((c: ConnectionTableSchemaChange) =>
-      c.changeType === "column_added"
+    const addChange = result.changes.find(
+      (c: ConnectionTableSchemaChange) => c.changeType === "column_added",
     );
     expect(addChange?.column).toBe("email");
     expect(addChange?.newValue).toBe("text");

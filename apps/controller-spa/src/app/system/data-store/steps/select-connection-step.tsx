@@ -14,11 +14,7 @@ export function SelectConnectionStep({ form, connections, onContinue }: SelectCo
     <div className="space-y-6">
       <ConnectionSelector form={form} connections={connections} />
       <div className="flex justify-end">
-        <Button
-          type="button"
-          onClick={onContinue}
-          disabled={!form.watch("connectionSlug")}
-        >
+        <Button type="button" onClick={onContinue} disabled={!form.watch("connectionSlug")}>
           Continue
         </Button>
       </div>

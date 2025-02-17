@@ -45,50 +45,72 @@ export type ConnectionPublication = {
   tables?: ConnectionTable[];
 };
 
-export const ConnectionHealthResponseSchema = z.object({
-  status: z.enum(["healthy", "unhealthy"]),
-  message: z.string().optional(),
-}).openapi("ConnectionHealthResponse");
+export const ConnectionHealthResponseSchema = z
+  .object({
+    status: z.enum(["healthy", "unhealthy"]),
+    message: z.string().optional(),
+  })
+  .openapi("ConnectionHealthResponse");
 
-export const ConnectionTablesResponseSchema = z.array(z.object({
-  schema: z.string(),
-  name: z.string(),
-})).openapi("ConnectionTablesResponse");
+export const ConnectionTablesResponseSchema = z
+  .array(
+    z.object({
+      schema: z.string(),
+      name: z.string(),
+    }),
+  )
+  .openapi("ConnectionTablesResponse");
 
-export const ConnectionTableSchemaResponseSchema = z.array(z.object({
-  columnName: z.string(),
-  dataType: z.string(),
-  isNullable: z.boolean(),
-  columnDefault: z.string().nullable(),
-  tableSchema: z.string(),
-})).openapi("ConnectionTableSchemaResponse");
+export const ConnectionTableSchemaResponseSchema = z
+  .array(
+    z.object({
+      columnName: z.string(),
+      dataType: z.string(),
+      isNullable: z.boolean(),
+      columnDefault: z.string().nullable(),
+      tableSchema: z.string(),
+    }),
+  )
+  .openapi("ConnectionTableSchemaResponse");
 
-export const ConnectionPublicationsResponseSchema = z.array(z.object({
-  name: z.string(),
-  allTables: z.boolean(),
-  tables: z.array(z.object({
-    schema: z.string(),
-    name: z.string(),
-  })).optional(),
-})).openapi("ConnectionPublicationsResponse");
+export const ConnectionPublicationsResponseSchema = z
+  .array(
+    z.object({
+      name: z.string(),
+      allTables: z.boolean(),
+      tables: z
+        .array(
+          z.object({
+            schema: z.string(),
+            name: z.string(),
+          }),
+        )
+        .optional(),
+    }),
+  )
+  .openapi("ConnectionPublicationsResponse");
 
-export const ConnectionTableSchemaChangesResponseSchema = z.object({
-  changes: z.array(z.object({
-    changeType: z.enum([
-      "column_added",
-      "column_removed",
-      "type_changed",
-      "nullability_changed",
-      "default_changed",
-    ]),
-    details: z.string(),
-    column: z.string(),
-    timestamp: z.string(),
-    oldValue: z.string().optional(),
-    newValue: z.string().optional(),
-  })),
-  snapshotDate: z.string(),
-}).openapi("ConnectionTableSchemaChangesResponse");
+export const ConnectionTableSchemaChangesResponseSchema = z
+  .object({
+    changes: z.array(
+      z.object({
+        changeType: z.enum([
+          "column_added",
+          "column_removed",
+          "type_changed",
+          "nullability_changed",
+          "default_changed",
+        ]),
+        details: z.string(),
+        column: z.string(),
+        timestamp: z.string(),
+        oldValue: z.string().optional(),
+        newValue: z.string().optional(),
+      }),
+    ),
+    snapshotDate: z.string(),
+  })
+  .openapi("ConnectionTableSchemaChangesResponse");
 
 export const connectionHealthApi = {
   method: "get",

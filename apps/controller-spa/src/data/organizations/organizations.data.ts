@@ -7,11 +7,11 @@ import {
 import type { z } from "zod";
 
 type OrganizationPostResponse = z.infer<
-  typeof organizationPostApi.responses[200]["content"]["application/json"]["schema"]
+  (typeof organizationPostApi.responses)[200]["content"]["application/json"]["schema"]
 >;
 
 type OrganizationListResponse = z.infer<
-  typeof organizationListApi.responses[200]["content"]["application/json"]["schema"]
+  (typeof organizationListApi.responses)[200]["content"]["application/json"]["schema"]
 >;
 
 export function getOrganizations(): Promise<ApiResult<OrganizationListResponse>> {

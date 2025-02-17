@@ -181,16 +181,16 @@ export const generateNodesAndEdges = (
 
     // First calculate all sync engine positions
     const syncEnginePositions = children.map((_, index) =>
-      getOrbitPosition(index, children.length, syncEngineRadius, x, y)
+      getOrbitPosition(index, children.length, syncEngineRadius, x, y),
     );
 
     // Calculate control plane handle position based on average child position
     let controlPlaneHandles = { sourcePosition: Position.Right, targetPosition: Position.Left };
     if (syncEnginePositions.length > 0) {
-      const avgX = syncEnginePositions.reduce((sum, pos) => sum + pos.x, 0) /
-        syncEnginePositions.length;
-      const avgY = syncEnginePositions.reduce((sum, pos) => sum + pos.y, 0) /
-        syncEnginePositions.length;
+      const avgX =
+        syncEnginePositions.reduce((sum, pos) => sum + pos.x, 0) / syncEnginePositions.length;
+      const avgY =
+        syncEnginePositions.reduce((sum, pos) => sum + pos.y, 0) / syncEnginePositions.length;
       controlPlaneHandles = getHandlePositions(x, y, avgX, avgY);
     }
 

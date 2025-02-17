@@ -2,19 +2,14 @@ import { testClient } from "hono/testing";
 import { createInjector } from "typed-inject";
 import { test, expect } from "bun:test";
 
-import type {
-  CreateOrganization,
-  IOrganizationService,
-} from "./organization-service.ts";
+import type { CreateOrganization, IOrganizationService } from "./organization-service.ts";
 import { OrganizationRoutes } from "./organization-routes.ts";
 import type { OrganizationEntity } from "./organization-repository.ts";
 import { MockAuthenticationMiddleware } from "@/_test/mock-authentication.middleware.ts";
 import { assert } from "@std/assert/assert";
 
 class MockOrganizationService implements IOrganizationService {
-  createOrganization({
-    name,
-  }: CreateOrganization): Promise<OrganizationEntity> {
+  createOrganization({ name }: CreateOrganization): Promise<OrganizationEntity> {
     return Promise.resolve({
       id: 1,
       code: "ORG_1",
@@ -32,7 +27,7 @@ class MockOrganizationService implements IOrganizationService {
 
   createOrganizationForClerkUserId(
     organization: CreateOrganization,
-    _clerkUserId: string
+    _clerkUserId: string,
   ): Promise<OrganizationEntity> {
     return Promise.resolve({
       id: 1,
@@ -41,9 +36,7 @@ class MockOrganizationService implements IOrganizationService {
     });
   }
 
-  getOrganizationsByClerkUserId(
-    _clerkUserId: string
-  ): Promise<OrganizationEntity[]> {
+  getOrganizationsByClerkUserId(_clerkUserId: string): Promise<OrganizationEntity[]> {
     return Promise.resolve([
       {
         id: 1,
@@ -55,7 +48,7 @@ class MockOrganizationService implements IOrganizationService {
 
   clerkUserCanAccessOrganizations(
     _clerkUserId: string,
-    _organizationIds: string[]
+    _organizationIds: string[],
   ): Promise<boolean> {
     return Promise.resolve(true);
   }

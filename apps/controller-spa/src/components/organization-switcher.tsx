@@ -47,9 +47,7 @@ export function OrganizationSwitcher({
                 <GalleryVerticalEnd className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
-                  {selectedOrganization.name}
-                </span>
+                <span className="truncate font-semibold">{selectedOrganization.name}</span>
                 <span className="truncate text-xs">Limited Access Preview</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
@@ -65,10 +63,7 @@ export function OrganizationSwitcher({
               Organizations
             </DropdownMenuLabel>
             {organizations.map((organization) => (
-              <DropdownMenuItem
-                key={organization.name}
-                className="gap-2 p-2"
-              >
+              <DropdownMenuItem key={organization.name} className="gap-2 p-2">
                 <div className="flex size-6 items-center justify-center rounded-sm border">
                   <GalleryVerticalEnd className="size-4 shrink-0" />
                 </div>
@@ -76,15 +71,13 @@ export function OrganizationSwitcher({
                 {/* <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut> */}
               </DropdownMenuItem>
             ))}
-            {
-              /* <DropdownMenuSeparator />
+            {/* <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 p-2">
               <div className="flex size-6 items-center justify-center rounded-md border bg-background">
                 <Plus className="size-4" />
               </div>
               <div className="font-medium text-muted-foreground">Add team</div>
-            </DropdownMenuItem> */
-            }
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

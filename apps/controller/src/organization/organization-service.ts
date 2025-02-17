@@ -13,10 +13,7 @@ export interface IOrganizationService {
   ): Promise<OrganizationEntity>;
   getOrganization(organizationId: string): Promise<OrganizationEntity>;
   getOrganizationsByClerkUserId(clerkUserId: string): Promise<OrganizationEntity[]>;
-  clerkUserCanAccessOrganizations(
-    clerkUserId: string,
-    organizationIds: string[],
-  ): Promise<boolean>;
+  clerkUserCanAccessOrganizations(clerkUserId: string, organizationIds: string[]): Promise<boolean>;
 }
 
 export class OrganizationService implements IOrganizationService {
@@ -39,10 +36,13 @@ export class OrganizationService implements IOrganizationService {
     { name }: CreateOrganization,
     clerkUserId: string,
   ): Promise<OrganizationEntity> {
-    return this.#organizationRepository.createOrganizationForClerkUserId({
-      name,
-      code: generateCode("ORG"),
-    }, clerkUserId);
+    return this.#organizationRepository.createOrganizationForClerkUserId(
+      {
+        name,
+        code: generateCode("ORG"),
+      },
+      clerkUserId,
+    );
   }
 
   getOrganization(organizationId: string): Promise<OrganizationEntity> {
@@ -59,7 +59,7 @@ export class OrganizationService implements IOrganizationService {
   ): Promise<boolean> {
     const organizations = await this.getOrganizationsByClerkUserId(clerkUserId);
     return organizationIds.every((organizationId) =>
-      organizations.some((organization) => organization.code === organizationId)
+      organizations.some((organization) => organization.code === organizationId),
     );
   }
 }

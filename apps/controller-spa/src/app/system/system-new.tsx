@@ -21,9 +21,12 @@ import { useQueryClient } from "@tanstack/react-query";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, {
-    message: "Slug must contain only lowercase letters, numbers, and hyphens",
-  }),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .regex(/^[a-z0-9-]+$/, {
+      message: "Slug must contain only lowercase letters, numbers, and hyphens",
+    }),
 });
 
 type FormData = z.infer<typeof formSchema>;

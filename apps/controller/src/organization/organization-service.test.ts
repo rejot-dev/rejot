@@ -26,9 +26,7 @@ dbDescribe("OrganizationService tests", async (ctx) => {
       name: "Test Organization",
     });
 
-    const organization = await organizationService.getOrganization(
-      created.code
-    );
+    const organization = await organizationService.getOrganization(created.code);
 
     assertExists(organization);
     assertEquals(organization.id, created.id);
@@ -43,7 +41,7 @@ dbDescribe("OrganizationService tests", async (ctx) => {
     await assertRejects(
       () => organizationService.getOrganization(nonExistentCode),
       Error,
-      "Organization not found"
+      "Organization not found",
     );
   });
 });

@@ -13,15 +13,13 @@ import type { ConnectionType } from "../connection/connection";
 import type { SyncServiceStatus } from "../sync-service/sync-service.data";
 import { z } from "zod";
 import { useSelectedOrganizationCode as useSelectedOrganizationId } from "../clerk/clerk-meta.data";
-import {
-  getConnectionTableSchemaChanges,
-} from "@/data/connection/connection-health.data";
+import { getConnectionTableSchemaChanges } from "@/data/connection/connection-health.data";
 
 type SystemResponse = z.infer<
-  typeof systemGetApi.responses[200]["content"]["application/json"]["schema"]
+  (typeof systemGetApi.responses)[200]["content"]["application/json"]["schema"]
 >;
 type SystemListResponse = z.infer<
-  typeof systemListApi.responses[200]["content"]["application/json"]["schema"]
+  (typeof systemListApi.responses)[200]["content"]["application/json"]["schema"]
 >;
 
 export type SystemOverview = {
@@ -146,11 +144,13 @@ export async function getRealSystemOverview(
     code: system.code,
     name: system.name,
     slug: system.slug,
-    syncServices: [{
-      code: "SYNC_123",
-      slug: "default-sync",
-      status: "active",
-    }], // This will need to be populated when sync service API is available
+    syncServices: [
+      {
+        code: "SYNC_123",
+        slug: "default-sync",
+        status: "active",
+      },
+    ], // This will need to be populated when sync service API is available
     dataStores: system.dataStores.map((ds) => ({
       slug: ds.connectionSlug,
       type: "postgres" as ConnectionType, // We might need to fetch the actual type from connections API

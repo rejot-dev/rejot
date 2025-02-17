@@ -3,17 +3,18 @@ export type PostgresTable = {
   name: string;
 };
 
-export type PostgresPublication =
-  & {
-    name: string;
-  }
-  & ({
-    allTables: true;
-    tables: undefined;
-  } | {
-    allTables: false;
-    tables: PostgresTable[];
-  });
+export type PostgresPublication = {
+  name: string;
+} & (
+  | {
+      allTables: true;
+      tables: undefined;
+    }
+  | {
+      allTables: false;
+      tables: PostgresTable[];
+    }
+);
 
 export function normalizePostgresTable(table: string): PostgresTable {
   const parts = table.split(".");
@@ -60,14 +61,13 @@ export class PostgresPublicationState {
       if (configPublication.allTables) {
         solution = `Run: CREATE PUBLICATION ${configPublication.name} FOR ALL TABLES;`;
       } else {
-        solution = `Run: CREATE PUBLICATION ${configPublication.name} FOR TABLE ${
-          configPublication.tables?.map((t) => `${t.schema}.${t.name}`).join(", ")
-        };`;
+        solution = `Run: CREATE PUBLICATION ${configPublication.name} FOR TABLE ${configPublication.tables
+          ?.map((t) => `${t.schema}.${t.name}`)
+          .join(", ")};`;
       }
 
       errors.push({
-        error:
-          `Publication "${configPublication.name}" does not exist in database "${this.#dbIdentifier}"`,
+        error: `Publication "${configPublication.name}" does not exist in database "${this.#dbIdentifier}"`,
         solution,
       });
       return errors;
@@ -75,31 +75,29 @@ export class PostgresPublicationState {
 
     if (configPublication.allTables && !databasePublication.allTables) {
       errors.push({
-        error:
-          `Publication "${configPublication.name}" in database "${this.#dbIdentifier}" is configured for all tables, but the database is not configured for all tables`,
+        error: `Publication "${configPublication.name}" in database "${this.#dbIdentifier}" is configured for all tables, but the database is not configured for all tables`,
       });
     }
 
     if (!configPublication.allTables && databasePublication.allTables) {
       errors.push({
-        error:
-          `Publication "${configPublication.name}" in database "${this.#dbIdentifier}" is configured for specific tables, but the database is configured for all tables`,
+        error: `Publication "${configPublication.name}" in database "${this.#dbIdentifier}" is configured for specific tables, but the database is configured for all tables`,
       });
     }
 
     if (!configPublication.allTables && !databasePublication.allTables) {
-      const missingTables = configPublication.tables?.filter((configTable) =>
-        !databasePublication.tables?.some((dbTable) =>
-          dbTable.schema === configTable.schema && dbTable.name === configTable.name
-        )
+      const missingTables = configPublication.tables?.filter(
+        (configTable) =>
+          !databasePublication.tables?.some(
+            (dbTable) => dbTable.schema === configTable.schema && dbTable.name === configTable.name,
+          ),
       );
 
       if (missingTables.length > 0) {
         errors.push({
-          error:
-            `Publication "${configPublication.name}" in database "${this.#dbIdentifier}" is missing configured tables: ${
-              missingTables.map((t) => `${t.schema}.${t.name}`).join(", ")
-            }`,
+          error: `Publication "${configPublication.name}" in database "${this.#dbIdentifier}" is missing configured tables: ${missingTables
+            .map((t) => `${t.schema}.${t.name}`)
+            .join(", ")}`,
         });
       }
     }

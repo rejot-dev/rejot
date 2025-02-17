@@ -170,7 +170,10 @@ export class PostgresConnectionManager implements IConnectionManager {
     }));
   }
 
-  async getPublications(organizationId: string, connectionSlug: string): Promise<ConnectionPublication[]> {
+  async getPublications(
+    organizationId: string,
+    connectionSlug: string,
+  ): Promise<ConnectionPublication[]> {
     const organization = await this.#organizationRepository.get(organizationId);
     const connection = await this.#connectionRepository.findBySlug(organization.id, connectionSlug);
 

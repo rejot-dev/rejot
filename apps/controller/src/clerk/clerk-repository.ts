@@ -39,9 +39,11 @@ export class ClerkRepository implements IClerkRepository {
   }
 
   async getPersonByClerkUserId(clerkUserId: string): Promise<Person | null> {
-    const person = await this.#db.select().from(schema.clerkUser).where(
-      eq(schema.clerkUser.clerkUserId, clerkUserId),
-    ).leftJoin(schema.person, eq(schema.clerkUser.personId, schema.person.id));
+    const person = await this.#db
+      .select()
+      .from(schema.clerkUser)
+      .where(eq(schema.clerkUser.clerkUserId, clerkUserId))
+      .leftJoin(schema.person, eq(schema.clerkUser.personId, schema.person.id));
 
     if (person.length === 0) {
       return null;
@@ -53,21 +55,29 @@ export class ClerkRepository implements IClerkRepository {
   async insertPersonAndClerkUser(params: InsertPersonAndClerkUser): Promise<boolean> {
     // TODO: This is too complicated, this should simply be an insert with a `WHERE NOT EXISTS` clause.
     const person = this.#db.$with("person").as(
-      this.#db.insert(schema.person).values(params.person).onConflictDoUpdate({
-        target: [schema.person.code],
-        set: {
-          firstName: params.person.firstName,
-          lastName: params.person.lastName,
-          email: params.person.email,
-        },
-      }).returning(),
+      this.#db
+        .insert(schema.person)
+        .values(params.person)
+        .onConflictDoUpdate({
+          target: [schema.person.code],
+          set: {
+            firstName: params.person.firstName,
+            lastName: params.person.lastName,
+            email: params.person.email,
+          },
+        })
+        .returning(),
     );
 
     try {
-      const clerkUser = await this.#db.with(person).insert(schema.clerkUser).values({
-        clerkUserId: params.clerkUserId,
-        personId: sql`(SELECT id FROM person)`,
-      }).returning();
+      const clerkUser = await this.#db
+        .with(person)
+        .insert(schema.clerkUser)
+        .values({
+          clerkUserId: params.clerkUserId,
+          personId: sql`(SELECT id FROM person)`,
+        })
+        .returning();
 
       return clerkUser.length === 1;
     } catch (error) {

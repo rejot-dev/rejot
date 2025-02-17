@@ -64,9 +64,7 @@ export function SchemaTableDetail() {
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <NavLink to={`/connections/${connectionSlug}`}>
-                    {connectionSlug}
-                  </NavLink>
+                  <NavLink to={`/connections/${connectionSlug}`}>{connectionSlug}</NavLink>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
@@ -83,9 +81,7 @@ export function SchemaTableDetail() {
           <h1 className="mb-2 text-3xl font-bold tracking-tight">
             {schema}.{tableName}
           </h1>
-          <p className="text-lg text-muted-foreground">
-            View table schema and column information
-          </p>
+          <p className="text-lg text-muted-foreground">View table schema and column information</p>
         </div>
 
         <div className="rounded-md border">
@@ -99,42 +95,38 @@ export function SchemaTableDetail() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading
-                ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center">
-                      <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">
+                    <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                  </TableCell>
+                </TableRow>
+              ) : !columns || columns.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">
+                    No columns found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                columns.map((column) => (
+                  <TableRow key={column.columnName}>
+                    <TableCell>{column.columnName}</TableCell>
+                    <TableCell>{column.dataType}</TableCell>
+                    <TableCell>
+                      <Badge variant={column.isNullable ? "secondary" : "outline"}>
+                        {column.isNullable ? "NULL" : "NOT NULL"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {column.columnDefault === null ? (
+                        <span className="text-muted-foreground">none</span>
+                      ) : (
+                        column.columnDefault
+                      )}
                     </TableCell>
                   </TableRow>
-                )
-                : !columns || columns.length === 0
-                ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center">
-                      No columns found
-                    </TableCell>
-                  </TableRow>
-                )
-                : (
-                  columns.map((column) => (
-                    <TableRow key={column.columnName}>
-                      <TableCell>{column.columnName}</TableCell>
-                      <TableCell>{column.dataType}</TableCell>
-                      <TableCell>
-                        <Badge variant={column.isNullable ? "secondary" : "outline"}>
-                          {column.isNullable ? "NULL" : "NOT NULL"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {column.columnDefault === null
-                          ? <span className="text-muted-foreground">none</span>
-                          : (
-                            column.columnDefault
-                          )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
