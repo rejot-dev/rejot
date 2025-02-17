@@ -140,3 +140,48 @@ jobs:
       - name: Type check api-interface-controller
         working-directory: packages/api-interface-controller
         run: bun check
+
+  test-postgres:
+    needs: install
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lockb') }}
+
+      - name: Create Database Schema
+        working-directory: apps/controller
+        run: bunx drizzle-kit --config=_ci/ci-test-drizzle.config.ts migrate
+
+      - name: Run database tests
+        working-directory: apps/controller
+        env:
+          REJOT_CONTROLLER_CONFIG_PATH: ./_ci/ci-test-config.json
+        run: bun test

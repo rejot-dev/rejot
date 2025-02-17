@@ -12,7 +12,7 @@ export interface DbTestContext {
 export function dbDescribe(name: string, fn: (ctx: DbTestContext) => void): void {
   const context: DbTestContext = {} as DbTestContext;
 
-  describe("[db-test]" + name, () => {
+  describe("[db-test] " + name, () => {
     let testPromise: ReturnType<typeof Promise.withResolvers<void>> | null = null;
 
     beforeEach(async () => {
@@ -23,6 +23,13 @@ export function dbDescribe(name: string, fn: (ctx: DbTestContext) => void): void
 
       testPromise = Promise.withResolvers<void>();
       const beforeEachPromise = Promise.withResolvers<void>();
+
+      try {
+        await context.db.execute("SELECT 99 as test");
+      } catch (error) {
+        // Db connection not healthy
+        beforeEachPromise.reject(error);
+      }
 
       context.db
         .transaction(async (ormTx) => {

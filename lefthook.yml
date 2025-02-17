@@ -7,4 +7,4 @@ pre-commit:
     - name: eslint
       run: bunx eslint --fix --no-warn-ignored {staged_files}
     - name: prettier
-      run: bunx prettier --ignore-unknown --check {staged_files}
+      run: sh -c 'bunx prettier --ignore-unknown --check {staged_files}; code=$?; bunx prettier --ignore-unknown --write {staged_files}; exit $code'
