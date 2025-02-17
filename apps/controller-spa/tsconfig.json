@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleDetection": "force",
+    "moduleResolution": "bundler",
+
+    "jsx": "react-jsx",
+
+    "declaration": true,
+    "declarationMap": true,
+    "incremental": false,
+    "allowImportingTsExtensions": true,
+    "noUncheckedIndexedAccess": true,
+    "verbatimModuleSyntax": true,
+    "strict": true,
+    "allowJs": true,
+    "checkJs": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "isolatedModules": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "exclude": ["dist", "node_modules", "eslint.config.js"]
+}

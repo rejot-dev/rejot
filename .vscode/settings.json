@@ -1,0 +1,10 @@
+{
+  "deno.enable": false,
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "rest-client.environmentVariables": {
+    "$shared": {
+      "controller-url": "http://localhost:3000"
+    }
+  }
+}

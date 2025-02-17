@@ -1,0 +1,32 @@
+volumes:
+  controller:
+  grafana:
+  prometheus:
+  loki:
+
+services:
+  db:
+    image: postgres:17-bookworm
+    volumes:
+      - controller:/var/lib/postgresql/data
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - 5432:5432
+
+  # https://github.com/grafana/docker-otel-lgtm
+  lgtm:
+    image: docker.io/grafana/otel-lgtm:latest
+    container_name: lgtm
+    ports:
+      - "4000:4000"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      - GF_PATHS_DATA=/data/grafana
+      - GF_SERVER_HTTP_PORT=4000
+    volumes:
+      - grafana:/data/grafana
+      - prometheus:/data/prometheus
+      - loki:/data/loki

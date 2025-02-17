@@ -1,0 +1,10 @@
+{
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

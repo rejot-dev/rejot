@@ -1,0 +1,130 @@
+---
+description: Single Page Application Guidelines
+globs: apps/controller-spa/**
+---
+# Single Page Application Guidelines
+
+## Core Technologies
+- React SPA with Vite
+- Tailwind for styling
+- ShadCN for UI components
+  - Components located under `@components/ui`
+  - Install new components: `npx shadcn@latest add <component>` from `./apps/basic` folder
+  - See [components.json](mdc:apps/basic/components.json) for configuration
+
+## State Management
+### Zustand
+- Primary state management solution
+- State files location: `src/app/<domain>/<domain>.state.ts`
+
+## Routing
+### Configuration
+- Uses React Router v7
+  - Import from `"react-router"` only (NEVER from `react-router-dom`)
+  - Routes defined in [App.tsx](mdc:apps/basic/src/App.tsx)
+  - Most resources are part of a system
+- When creating or moving files that migh be routes, DO NOT FORGET to update App.tsx
+  
+### Navigation
+- Update sidebar links when adding new pages
+  - See `app-sidebar.tsx` and `nav-systems.tsx`
+
+## Project Structure
+### Pages
+- Located in `src/app/<domain>/`
+- Root pages: `src/app/<domain>/<domain>-home.tsx`
+### Fully usable components
+- These are components that are not domain specific at all. (E.g. avatar, breadcrumb, button, card, etc)
+- They go in `src/app/components`
+
+### API Integration
+- React Query definitions: `src/data/<domain>/<domain>.data.ts`
+- Type-safe backend communication using [fetch.ts](mdc:apps/basic/src/data/fetch.ts)
+- Check available routes in [package.json](mdc:packages/api-interface-controller/package.json)
+
+## Code Style
+- NO default exports
+- NO star imports (* as X), just import the thing directly.
+- Check for existing `.data.ts` files in `src/data` before implementation
+- ABSOLUTELY minimize usages of `useEffect` in React.
+- ALWAYS prefer to use react-query
+- PREFER components with a single purpose. Use multiple files to split out the components if that makes sense.
+- PREFER to use "standard" Tailwind classes, so no calculations like `h-[2px]`. Sometimes they are required however so they are not completed banned.
+- Use curly-brackets even for single-line if-statements.
+
+## Examples
+### API Definition
+```ts
+import { type RouteConfig, z } from "@hono/zod-openapi";
+
+export const OrganizationGetResponse = z.object({
+  // ..
+}).openapi("Organization");
+
+export const organizationGetApi = {
+  method: "get",
+  path: "/organization/{organizationCode}",
+  request: {
+    params: z.object({
+      organizationCode: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: OrganizationGetResponse,
+        },
+      },
+      description: "Organization retrieved successfully",
+    },
+    404: {
+      description: "Organization not found",
+    },
+    500: {
+      description: "Internal server error",
+    },
+  },
+  tags: ["organizations"],
+  description: "Get an organization by code",
+} as const satisfies RouteConfig;
+```
+
+### Data Layer Implementation
+```ts
+type ClerkGetResponse = z.infer<
+  typeof clerkGetApi.responses[200]["content"]["application/json"]["schema"]
+>;
+
+type ClerkPostResponse = z.infer<
+  typeof clerkPostApi.responses[201]["content"]["application/json"]["schema"]
+>;
+
+export function getCurrentClerkUser(): Promise<ApiResult<ClerkGetResponse>> {
+  return fetchRoute(clerkGetApi);
+}
+
+export function useCurrentClerkUser() {
+  return useQuery({
+    queryKey: ["clerk", "current"],
+    queryFn: getCurrentClerkUser,
+    select: (result) => {
+      if (result.status === "error") {
+        throw new Error(result.error);
+      }
+      return result.data;
+    },
+  });
+}
+
+export function createCurrentUser(): Promise<ApiResult<ClerkPostResponse>> {
+  return fetchRoute(clerkPostApi);
+}
+
+export function useCreateCurrentUserMutation() {
+  return useMutation({
+    mutationFn: createCurrentUser,
+  });
+}
+```
+

@@ -1,0 +1,44 @@
+---
+description: Always
+globs: **
+---
+
+# This repository is a monorepo
+
+# Monorepo Structure and Guidelines
+
+## Overview
+- Code is organized by domain functionality rather than technical implementation
+
+## File Naming Conventions
+### General Pattern
+- Use dots to indicate the main object: `organization.repository.ts`
+- Use dots to indicate file types
+- Examples:
+  - Main files: `organization.service.ts`, `organization.routes.ts`
+  - Test files: `organization.repository.test.ts`
+
+## Code Style
+### Import Organization
+Sort imports in this order (with blank line between categories):
+1. External imports (npm)
+2. Monorepo imports
+3. Local imports
+- Within each category: alphabetical order
+- Type-only imports last
+
+## API Development
+### Architecture
+- REST APIs built with Hono framework
+- OpenAPI specifications:
+  - Location: `./packages/api-interface-*`
+  - Example: [organizations.api.ts](mdc:packages/api-interface-controller/organizations.api.ts)
+- Implementation:
+  - Located in specific apps
+  - Example: [organization-routes.ts](mdc:apps/controller/src/organization/organization-routes.ts)
+
+## Technology Stack
+### Core Technologies
+- Hono for REST APIs
+- Zod for schema validation and type safety
+- Domain-driven organization structure
