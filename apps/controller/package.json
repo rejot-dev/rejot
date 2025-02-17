@@ -8,7 +8,7 @@
     "lint": "eslint --fix src/",
     "lint:watch": "nodemon --exec 'npm run lint'",
     "check": "tsc --noEmit",
-    "dev": "nodemon src/index.ts",
+    "dev": "bun --watch src/index.ts",
     "dev:otel": "cross-env OTEL_SERVICE_NAME=controller OTEL_EXPORTER_OTLP_PROTOCOL=http/json OTEL_DENO=true nodemon src/index.ts",
     "db:push": "drizzle-kit push",
     "db:push-test": "cross-env REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json drizzle-kit push",
