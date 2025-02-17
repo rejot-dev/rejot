@@ -1,6 +1,9 @@
 {
   "name": "@rejot/api-interface-controller",
   "version": "0.0.0",
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
   "exports": {
     "./organizations": "./organizations.api.ts",
     "./person": "./person.api.ts",

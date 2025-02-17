@@ -12,7 +12,7 @@ export interface DbTestContext {
 export function dbDescribe(name: string, fn: (ctx: DbTestContext) => void): void {
   const context: DbTestContext = {} as DbTestContext;
 
-  describe(name, () => {
+  describe("[db-test]" + name, () => {
     let testPromise: ReturnType<typeof Promise.withResolvers<void>> | null = null;
 
     beforeEach(async () => {

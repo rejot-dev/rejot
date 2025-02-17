@@ -10,6 +10,7 @@ import type { IOrganizationService } from "@/organization/organization-service.t
 export class MockAuthenticationMiddleware implements IAuthenticationMiddleware {
   static inject = tokens("organizationService");
 
+  // @ts-expect-error unused
   // eslint-disable-next-line no-unused-private-class-members
   #organizationService: IOrganizationService;
 
