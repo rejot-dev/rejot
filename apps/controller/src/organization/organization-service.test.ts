@@ -7,7 +7,9 @@ import { assertRejects } from "@std/assert/rejects";
 import { test } from "bun:test";
 
 dbDescribe("OrganizationService tests", async (ctx) => {
-  test("OrganizationService - Create Organization", async () => {
+  test.only("OrganizationService - Create Organization", async () => {
+    console.log("test start");
+
     const organizationService = ctx.resolve("organizationService");
 
     const organization = await organizationService.createOrganization({
@@ -17,6 +19,8 @@ dbDescribe("OrganizationService tests", async (ctx) => {
     assertExists(organization);
     assertMatch(organization.code, /^ORG_/);
     assertEquals(organization.name, "Test Organization");
+
+    console.log("test end");
   });
 
   test("OrganizationService - Get Organization", async () => {

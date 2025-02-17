@@ -3,18 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "cross-env REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json jest",
-    "test:watch": "cross-env REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json jest --watch",
+    "test": "REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json bun test",
+    "test:watch": "REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json bun test --watch",
     "lint": "eslint --fix src/",
-    "lint:watch": "nodemon --exec 'npm run lint'",
     "check": "tsc --noEmit",
     "dev": "bun --watch src/index.ts",
     "dev:otel": "cross-env OTEL_SERVICE_NAME=controller OTEL_EXPORTER_OTLP_PROTOCOL=http/json OTEL_DENO=true nodemon src/index.ts",
     "db:push": "drizzle-kit push",
     "db:push-test": "cross-env REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json drizzle-kit push",
-    "db:seed": "ts-node ./seed.ts",
-    "db:seed-test": "cross-env REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json ts-node ./seed.ts",
-    "db:dangerous-reset": "ts-node ./seed.ts --reset"
+    "db:seed": "bun run ./seed.ts",
+    "db:seed-test": "cross-env REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json bun run ./seed.ts",
+    "db:dangerous-reset": "bun run ./seed.ts --reset"
   },
   "dependencies": {
     "@clerk/backend": "^1.24.1",

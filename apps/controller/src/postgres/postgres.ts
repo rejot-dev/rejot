@@ -38,7 +38,7 @@ export class PostgresManager implements Disposable {
 
   #config: ConfigManager;
 
-  #db: Postgres;
+  #db: Postgres | undefined;
 
   #activeTxForTesting: Postgres | undefined;
 
@@ -48,23 +48,31 @@ export class PostgresManager implements Disposable {
     if (dbSingleton) {
       this.#db = dbSingleton;
     } else {
-      const { host, port, user, password, database } = this.#config.mainPostgresConnection;
-
-      this.#db = connectPostgres({
-        host,
-        port,
-        user,
-        password,
-        database,
-        drizzleLogging: this.#config.drizzle.logging,
-      });
-      dbSingleton = this.#db;
+      this.connect();
     }
+  }
+
+  connect(): void {
+    const { host, port, user, password, database } = this.#config.mainPostgresConnection;
+
+    this.#db = connectPostgres({
+      host,
+      port,
+      user,
+      password,
+      database,
+      drizzleLogging: this.#config.drizzle.logging,
+    });
+    dbSingleton = this.#db;
   }
 
   get db(): Postgres {
     if (this.#activeTxForTesting) {
       return this.#activeTxForTesting;
+    }
+
+    if (!this.#db) {
+      throw new Error("db is not connected");
     }
 
     return this.#db;
@@ -75,6 +83,11 @@ export class PostgresManager implements Disposable {
   }
 
   async dispose(): Promise<void> {
+    console.log("dispose");
+    if (!this.#db) {
+      return;
+    }
+
     await this.#db.$client.end();
     dbSingleton = undefined;
   }
