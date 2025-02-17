@@ -8,26 +8,26 @@ steps:
       [
         "tag",
         "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller",
-        "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${TAG_NAME}${SHORT_SHA}",
+        "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${_APP_VERSION}",
       ]
   - name: "gcr.io/cloud-builders/docker"
     args: ["push", "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller"]
   - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${TAG_NAME}${SHORT_SHA}"]
+    args: ["push", "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${_APP_VERSION}"]
 
   # Build controller-spa
-  - name: "oven/bun:1.2.1"
+  - name: "node:23"
     dir: "apps/controller-spa"
-    entrypoint: bun
-    args: ["install", "--production"]
+    entrypoint: npm
+    args: ["install"]
 
-  - name: "oven/bun:1.2.1"
+  - name: "node:23"
     dir: "apps/controller-spa"
-    entrypoint: bun
+    entrypoint: npm
     env:
       - "CONTROLLER_API_URL=https://${_DOMAIN}/api"
       - "VITE_CLERK_PUBLISHABLE_KEY=${_CLERK_PUBLISHABLE_KEY}"
-      - "APP_VERSION=${TAG_NAME}${SHORT_SHA}"
+      - "APP_VERSION=${_APP_VERSION}"
     args: ["run", "build"]
 
   # Push build files to Google Cloud Storage
@@ -42,12 +42,12 @@ steps:
       - "deploy"
       - "${_CLOUD_RUN_SERVICE_NAME}"
       - "--image"
-      - "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${TAG_NAME}${SHORT_SHA}"
+      - "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${_APP_VERSION}"
       - "--region"
       - "$LOCATION"
 
 images:
   - "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller"
-  - "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${TAG_NAME}${SHORT_SHA}"
+  - "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${_APP_VERSION}"
 options:
   logging: CLOUD_LOGGING_ONLY
