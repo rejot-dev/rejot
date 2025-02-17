@@ -98,7 +98,7 @@ export function SchemaTableDetail() {
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center">
-                    <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                    <Loader2 className="mx-auto size-4 animate-spin" />
                   </TableCell>
                 </TableRow>
               ) : !columns || columns.length === 0 ? (

@@ -27,7 +27,7 @@ export function PublicationSelector({ form, organizationId }: PublicationSelecto
   if (error) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
+        <AlertCircle className="size-4" />
         <AlertDescription>Failed to load publications</AlertDescription>
       </Alert>
     );
@@ -53,11 +53,11 @@ export function PublicationSelector({ form, organizationId }: PublicationSelecto
                       <Card key={index} className="relative p-4">
                         <div className="space-y-2">
                           <div className="flex items-start gap-3">
-                            <Skeleton className="mt-1 h-5 w-5 shrink-0 rounded" />
+                            <Skeleton className="mt-1 size-5 shrink-0 rounded" />
                             <div className="flex-1 space-y-2">
                               <Skeleton className="h-5 w-3/4" />
                               <div className="flex items-center gap-2">
-                                <Skeleton className="h-4 w-4" />
+                                <Skeleton className="size-4" />
                                 <Skeleton className="h-4 w-20" />
                               </div>
                             </div>
@@ -83,11 +83,11 @@ export function PublicationSelector({ form, organizationId }: PublicationSelecto
                         >
                           <div className="space-y-2">
                             <div className="flex items-start gap-3">
-                              <Database className="text-primary mt-1 h-5 w-5 shrink-0" />
+                              <Database className="text-primary mt-1 size-5 shrink-0" />
                               <div>
                                 <h4 className="text-base font-medium">{publication.name}</h4>
                                 <div className="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
-                                  <TableProperties className="h-4 w-4" />
+                                  <TableProperties className="size-4" />
                                   {publication.allTables ? (
                                     <span>All Tables</span>
                                   ) : (
@@ -98,7 +98,7 @@ export function PublicationSelector({ form, organizationId }: PublicationSelecto
                             </div>
                           </div>
                           {field.value === publication.name && (
-                            <div className="bg-primary absolute right-4 top-4 h-2 w-2 rounded-full" />
+                            <div className="bg-primary absolute right-4 top-4 size-2 rounded-full" />
                           )}
                         </Card>
                       </label>
@@ -119,7 +119,7 @@ export function PublicationSelector({ form, organizationId }: PublicationSelecto
           </div>
         ) : selectedPublication.allTables ? (
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
-            <TableIcon className="h-4 w-4" />
+            <TableIcon className="size-4" />
             <span>All tables in the database will be included</span>
           </div>
         ) : !selectedPublication.tables?.length ? (
@@ -133,7 +133,7 @@ export function PublicationSelector({ form, organizationId }: PublicationSelecto
                 key={`${table.schema}.${table.name}`}
                 className="bg-muted flex items-center gap-2 rounded-md p-2 text-sm"
               >
-                <TableIcon className="text-muted-foreground h-4 w-4" />
+                <TableIcon className="text-muted-foreground size-4" />
                 <span className="truncate">
                   {table.schema}.{table.name}
                 </span>

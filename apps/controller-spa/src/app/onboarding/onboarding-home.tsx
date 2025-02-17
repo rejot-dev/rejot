@@ -115,9 +115,9 @@ export function OnboardingHome() {
             <div className="space-y-4">
               {completedItems.map((item, index) => (
                 <div key={index} className="flex items-start space-x-3">
-                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
                     <svg
-                      className="h-4 w-4 text-green-600 dark:text-green-300"
+                      className="size-4 text-green-600 dark:text-green-300"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -142,9 +142,9 @@ export function OnboardingHome() {
             {!isDone && !hasError && (
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-3">
-                  <div className="h-3 w-3 animate-bounce rounded-full bg-blue-500 [animation-delay:-0.3s]" />
-                  <div className="h-3 w-3 animate-bounce rounded-full bg-blue-500 [animation-delay:-0.15s]" />
-                  <div className="h-3 w-3 animate-bounce rounded-full bg-blue-500" />
+                  <div className="size-3 animate-bounce rounded-full bg-blue-500 [animation-delay:-0.3s]" />
+                  <div className="size-3 animate-bounce rounded-full bg-blue-500 [animation-delay:-0.15s]" />
+                  <div className="size-3 animate-bounce rounded-full bg-blue-500" />
                 </div>
                 <p className="text-gray-600 dark:text-gray-300">{status}</p>
               </div>
@@ -153,9 +153,9 @@ export function OnboardingHome() {
             {/* Error State */}
             {hasError && (
               <div className="flex items-center space-x-3">
-                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
+                <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
                   <svg
-                    className="h-4 w-4 text-red-600 dark:text-red-300"
+                    className="size-4 text-red-600 dark:text-red-300"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"

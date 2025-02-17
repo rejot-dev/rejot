@@ -68,7 +68,7 @@ export function DashboardHome() {
               <h2 className="text-xl font-semibold">Your Systems</h2>
               <Button asChild>
                 <Link to="/systems/new" className="gap-2">
-                  <PlusCircle className="h-4 w-4" />
+                  <PlusCircle className="size-4" />
                   Onboard New System
                 </Link>
               </Button>

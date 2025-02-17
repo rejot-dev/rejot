@@ -101,11 +101,11 @@ export function SystemHome() {
       </div>
 
       <div className="min-h-0 flex-1 p-4">
-        <div className="h-full w-full">
+        <div className="size-full">
           {
             <ArchitectureDiagram
               systemOverview={system}
-              className="h-full w-full shadow-md"
+              className="size-full shadow-md"
               disableSimulation={false}
             />
           }

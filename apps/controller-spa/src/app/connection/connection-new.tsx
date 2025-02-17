@@ -25,7 +25,7 @@ export function ConnectionNew() {
         >
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
+              <Database className="size-5" />
               <CardTitle>PostgreSQL</CardTitle>
             </div>
             <CardDescription>Connect to a PostgreSQL database to sync data</CardDescription>

@@ -26,13 +26,13 @@ export function ConnectionOverviewStep({
     <div className="space-y-6">
       {isLoading && (
         <Alert>
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="size-4 animate-spin" />
           <AlertDescription>Checking connection health...</AlertDescription>
         </Alert>
       )}
       {!isLoading && !isHealthy && (
         <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="size-4" />
           <AlertDescription>
             The connection must be healthy before you can continue. Please check your connection
             settings.
@@ -43,7 +43,7 @@ export function ConnectionOverviewStep({
         <CardHeader className="space-y-1 pb-4">
           <div className="flex items-center justify-between">
             <CardTitle>Connection Details</CardTitle>
-            <DatabaseIcon className="text-muted-foreground h-5 w-5" />
+            <DatabaseIcon className="text-muted-foreground size-5" />
           </div>
         </CardHeader>
         <CardContent className="grid gap-4">

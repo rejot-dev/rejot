@@ -13,12 +13,12 @@ export function ProgressBar({ steps, currentStep }: ProgressBarProps) {
   return (
     <div className="relative flex items-center">
       {/* Connecting lines */}
-      <div className="absolute left-0 right-0 top-5 h-[2px] bg-gray-200 dark:bg-gray-700" />
+      <div className="absolute inset-x-0 top-5 h-[2px] bg-gray-200 dark:bg-gray-700" />
       <div className="w-1" /> {/* Left spacer */}
       {steps.map((step, index) => (
         <div key={step.label} className="relative z-10 flex flex-1 flex-col items-center">
           <div
-            className={`flex h-10 w-10 items-center justify-center rounded-full ${
+            className={`flex size-10 items-center justify-center rounded-full ${
               index <= currentStep ? "bg-blue-500 text-white" : "bg-gray-300 dark:bg-gray-700"
             }`}
           >

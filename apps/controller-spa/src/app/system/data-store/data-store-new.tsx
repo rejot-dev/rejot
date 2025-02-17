@@ -78,17 +78,17 @@ export function DataStoreNew() {
   const steps = [
     {
       label: "Select Connection",
-      children: <DatabaseIcon className="h-5 w-5" />,
+      children: <DatabaseIcon className="size-5" />,
       description: "Choose a data source",
     },
     {
       label: "Connection Overview",
-      children: <CheckIcon className="h-5 w-5" />,
+      children: <CheckIcon className="size-5" />,
       description: "Review connection details",
     },
     {
       label: "Select Publication",
-      children: <BookOpenIcon className="h-5 w-5" />,
+      children: <BookOpenIcon className="size-5" />,
       description: "Choose a publication to sync",
     },
   ];

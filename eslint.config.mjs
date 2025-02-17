@@ -4,6 +4,9 @@ import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier";
 import eslintPluginReact from "eslint-plugin-react";
+import eslintPluginTailwindcss from "eslint-plugin-tailwindcss";
+
+const frontendAppFiles = ["apps/controller-spa/**/*.{ts,tsx}"];
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -29,7 +32,8 @@ export default tseslint.config(
     },
   },
   {
-    files: ["apps/controller-spa/**/*.{ts,tsx}"],
+    // React stuff
+    files: frontendAppFiles,
     plugins: {
       react: eslintPluginReact,
     },
@@ -47,6 +51,23 @@ export default tseslint.config(
     settings: {
       react: {
         version: "detect",
+      },
+    },
+  },
+  {
+    // Tailwind stuff
+    files: frontendAppFiles,
+    plugins: {
+      tailwindcss: eslintPluginTailwindcss,
+    },
+    rules: {
+      ...eslintPluginTailwindcss.configs["recommended"].rules,
+      // Fixed by prettier tailwind
+      "tailwindcss/classnames-order": "off",
+    },
+    settings: {
+      tailwindcss: {
+        config: "./apps/controller-spa/tailwind.config.cjs",
       },
     },
   },
