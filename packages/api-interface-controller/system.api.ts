@@ -1,6 +1,5 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
-import { SlugSchema } from "./util/slug.ts";
-import { ZodErrorSchema } from "./util/zod-error.ts";
+import { SlugSchema, ZodErrorSchema } from "@rejot/api-interface-controller/generic";
 
 export const SystemResponse = z
   .object({

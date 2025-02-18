@@ -1,5 +1,5 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
-import { SlugSchema } from "./util/slug";
+import { SlugSchema } from "./generic/slug";
 
 const ConnectionPostgresConfig = z
   .object({

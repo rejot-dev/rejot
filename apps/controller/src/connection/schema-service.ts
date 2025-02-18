@@ -51,10 +51,10 @@ export class SchemaService implements ISchemaService {
     );
 
     const currentSchema = await this.postgresConnectionManager.getTableSchema(
-      params.organizationCode,
-      connection.slug,
+      connection.config,
       params.tableName,
     );
+
     const snapshot = await this.schemaRepository.getLatestSnapshot({
       connectionSlug: connection.slug,
       schemaName: params.schemaName,

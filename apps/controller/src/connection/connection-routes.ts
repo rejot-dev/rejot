@@ -32,10 +32,12 @@ export class ConnectionRoutes {
           const { slug, type, config } = c.req.valid("json");
 
           const connection = await connectionService.create({
-            organizationCode: organizationId,
+            organizationId,
             slug,
-            type,
-            config,
+            config: {
+              type,
+              ...config,
+            },
           });
 
           return c.json(connection, 201);

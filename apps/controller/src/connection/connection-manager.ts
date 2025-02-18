@@ -1,3 +1,14 @@
+export type PostgresConnectionConfig = {
+  type: "postgres";
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+};
+
+export type ConnectionConfig = PostgresConnectionConfig;
+
 export type ConnectionHealth = {
   status: "healthy" | "unhealthy";
   message?: string;
@@ -23,12 +34,8 @@ export type ConnectionPublication = {
 };
 
 export type IConnectionManager = {
-  checkHealth(organizationId: string, connectionSlug: string): Promise<ConnectionHealth>;
-  getTables(organizationId: string, connectionSlug: string): Promise<ConnectionTable[]>;
-  getTableSchema(
-    organizationId: string,
-    connectionSlug: string,
-    tableName: string,
-  ): Promise<ConnectionTableColumn[]>;
-  getPublications(organizationId: string, connectionSlug: string): Promise<ConnectionPublication[]>;
+  checkHealth(config: ConnectionConfig): Promise<ConnectionHealth>;
+  getTables(config: ConnectionConfig): Promise<ConnectionTable[]>;
+  getTableSchema(config: ConnectionConfig, tableName: string): Promise<ConnectionTableColumn[]>;
+  getPublications(config: ConnectionConfig): Promise<ConnectionPublication[]>;
 };

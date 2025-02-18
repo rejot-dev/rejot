@@ -2,49 +2,39 @@ import { tokens } from "typed-inject";
 import type { IConnectionRepository } from "./connection-repository.ts";
 import { ConnectionError, ConnectionErrors } from "./connection.error.ts";
 import type { OrganizationRepository } from "@/organization/organization-repository.ts";
+import type { PostgresConnectionConfig } from "./connection-manager.ts";
 
-export type ConnectionConfig = {
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-};
+export type ConnectionConfig = PostgresConnectionConfig;
 
 export type ConnectionConfigWithoutPassword = Omit<ConnectionConfig, "password">;
 
 type ConnectionResponse = {
   slug: string;
   type: "postgres";
-};
-
-type ConnectionResponseWithPassword = ConnectionResponse & {
-  config: ConnectionConfig;
-};
-
-type ConnectionResponseWithoutPassword = ConnectionResponse & {
   config: ConnectionConfigWithoutPassword;
+};
+
+type ConnectionResponseWithPassword = {
+  slug: string;
+  type: "postgres";
+  config: ConnectionConfig;
 };
 
 export interface IConnectionService {
   create(params: {
-    organizationCode: string;
+    organizationId: string;
     slug: string;
-    type: "postgres";
     config: ConnectionConfig;
-  }): Promise<ConnectionResponseWithoutPassword>;
+  }): Promise<ConnectionResponse>;
 
-  getBySlug(
-    organizationCode: string,
-    connectionSlug: string,
-  ): Promise<ConnectionResponseWithoutPassword>;
+  getBySlug(organizationId: string, connectionSlug: string): Promise<ConnectionResponse>;
 
   getBySlugWithPassword(
-    organizationCode: string,
+    organizationId: string,
     connectionSlug: string,
   ): Promise<ConnectionResponseWithPassword>;
 
-  getByOrganization(organizationCode: string): Promise<ConnectionResponseWithoutPassword[]>;
+  getByOrganization(organizationId: string): Promise<ConnectionResponse[]>;
 }
 
 export class ConnectionService implements IConnectionService {
@@ -62,69 +52,72 @@ export class ConnectionService implements IConnectionService {
   }
 
   async create(params: {
-    organizationCode: string;
+    organizationId: string;
     slug: string;
-    type: "postgres";
     config: ConnectionConfig;
-  }) {
-    const organization = await this.#organizationRepository.get(params.organizationCode);
+  }): Promise<ConnectionResponse> {
+    const organization = await this.#organizationRepository.get(params.organizationId);
 
     const connection = await this.#connectionRepository.create({
       organizationId: organization.id,
       slug: params.slug,
-      type: params.type,
+      type: params.config.type,
       config: params.config,
     });
 
     const { password: _, ...configWithoutPassword } = params.config;
 
     return {
-      id: connection.id,
-      organizationId: organization.code,
       slug: connection.slug,
-      type: connection.type,
-      config: configWithoutPassword,
+      type: "postgres",
+      config: { ...configWithoutPassword, type: "postgres" as const },
     };
   }
 
-  async getBySlug(organizationCode: string, connectionSlug: string) {
-    const connection = await this.getBySlugWithPassword(organizationCode, connectionSlug);
+  async getBySlug(organizationId: string, connectionSlug: string): Promise<ConnectionResponse> {
+    const connection = await this.getBySlugWithPassword(organizationId, connectionSlug);
     const { password: _, ...configWithoutPassword } = connection.config;
 
-    return {
-      ...connection,
-      config: configWithoutPassword,
+    const response: ConnectionResponse = {
+      slug: connection.slug,
+      type: "postgres",
+      config: { ...configWithoutPassword, type: "postgres" as const },
     };
+
+    return response;
   }
 
-  async getBySlugWithPassword(organizationCode: string, connectionSlug: string) {
-    const organization = await this.#organizationRepository.get(organizationCode);
+  async getBySlugWithPassword(
+    organizationId: string,
+    connectionSlug: string,
+  ): Promise<ConnectionResponseWithPassword> {
+    const organization = await this.#organizationRepository.get(organizationId);
 
     const connection = await this.#connectionRepository.findBySlug(organization.id, connectionSlug);
     if (!connection) {
       throw new ConnectionError({
         ...ConnectionErrors.NOT_FOUND,
-        context: { organizationId: organizationCode, slug: connectionSlug },
+        context: { organizationId: organizationId, slug: connectionSlug },
       });
     }
 
     return {
       slug: connection.slug,
-      type: connection.type,
-      config: connection.config,
+      type: "postgres",
+      config: connection.config as ConnectionConfig,
     };
   }
 
-  async getByOrganization(organizationCode: string): Promise<ConnectionResponseWithoutPassword[]> {
-    const organization = await this.#organizationRepository.get(organizationCode);
+  async getByOrganization(organizationId: string): Promise<ConnectionResponse[]> {
+    const organization = await this.#organizationRepository.get(organizationId);
     const connections = await this.#connectionRepository.findByOrganization(organization.id);
 
     return connections.map((connection) => {
       const { password: _, ...configWithoutPassword } = connection.config;
       return {
         slug: connection.slug,
-        type: connection.type,
-        config: configWithoutPassword,
+        type: "postgres",
+        config: { ...configWithoutPassword, type: "postgres" as const },
       };
     });
   }
