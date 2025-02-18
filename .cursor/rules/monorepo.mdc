@@ -34,7 +34,7 @@ Sort imports in this order (with blank line between categories):
   - Location: `./packages/api-interface-*`
   - Example: [organizations.api.ts](mdc:packages/api-interface-controller/organizations.api.ts)
 - Implementation:
-  - Located in specific apps
+  - Located in specific apps, such as ./apps/controller
   - Example: [organization-routes.ts](mdc:apps/controller/src/organization/organization-routes.ts)
 
 ## Technology Stack

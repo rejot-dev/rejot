@@ -5,6 +5,7 @@
     "check": "tsc --noEmit"
   },
   "exports": {
+    "./generic": "./generic/generic.ts",
     "./organizations": "./organizations.api.ts",
     "./person": "./person.api.ts",
     "./clerk": "./clerk.api.ts",

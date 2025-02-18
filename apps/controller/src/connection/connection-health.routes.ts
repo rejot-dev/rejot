@@ -12,6 +12,8 @@ import type { IConnectionManager } from "./connection-manager.ts";
 import type { ISchemaService } from "./schema-service.ts";
 import { createRoute } from "@hono/zod-openapi";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
+import { ConnectionErrors } from "./connection.error.ts";
+import { ConnectionError } from "./connection.error.ts";
 
 export class ConnectionHealthRoutes {
   static inject = tokens(
@@ -45,24 +47,21 @@ export class ConnectionHealthRoutes {
             connectionSlug,
           );
           if (!connection) {
-            return c.json({ error: "Connection not found" }, 404);
+            throw new ConnectionError({
+              ...ConnectionErrors.NOT_FOUND,
+              context: { connectionId: connectionSlug },
+            });
           }
 
           if (connection.type === "postgres") {
-            const health = await postgresConnectionManager.checkHealth(
-              organizationId,
-              connectionSlug,
-            );
+            const health = await postgresConnectionManager.checkHealth(connection.config);
             return c.json(health);
           }
 
-          return c.json(
-            {
-              status: "unhealthy",
-              message: `Unsupported connection type: ${connection.type}`,
-            },
-            500,
-          );
+          throw new ConnectionError({
+            ...ConnectionErrors.INVALID_TYPE,
+            context: { type: connection.type },
+          });
         },
       )
       .openapi(
@@ -80,23 +79,21 @@ export class ConnectionHealthRoutes {
             connectionSlug,
           );
           if (!connection) {
-            return c.json({ error: "Connection not found" }, 404);
+            throw new ConnectionError({
+              ...ConnectionErrors.NOT_FOUND,
+              context: { connectionId: connectionSlug },
+            });
           }
 
           if (connection.type === "postgres") {
-            const tables = await postgresConnectionManager.getTables(
-              organizationId,
-              connectionSlug,
-            );
+            const tables = await postgresConnectionManager.getTables(connection.config);
             return c.json(tables);
           }
 
-          return c.json(
-            {
-              error: `Unsupported connection type: ${connection.type}`,
-            },
-            500,
-          );
+          throw new ConnectionError({
+            ...ConnectionErrors.INVALID_TYPE,
+            context: { type: connection.type },
+          });
         },
       )
       .openapi(
@@ -114,24 +111,24 @@ export class ConnectionHealthRoutes {
             connectionSlug,
           );
           if (!connection) {
-            return c.json({ error: "Connection not found" }, 404);
+            throw new ConnectionError({
+              ...ConnectionErrors.NOT_FOUND,
+              context: { connectionId: connectionSlug },
+            });
           }
 
           if (connection.type === "postgres") {
             const schema = await postgresConnectionManager.getTableSchema(
-              organizationId,
-              connectionSlug,
+              connection.config,
               tableName,
             );
             return c.json(schema);
           }
 
-          return c.json(
-            {
-              error: `Unsupported connection type: ${connection.type}`,
-            },
-            500,
-          );
+          throw new ConnectionError({
+            ...ConnectionErrors.INVALID_TYPE,
+            context: { type: connection.type },
+          });
         },
       )
       .openapi(
@@ -150,23 +147,21 @@ export class ConnectionHealthRoutes {
           );
 
           if (!connection) {
-            return c.json({ error: "Connection not found" }, 404);
+            throw new ConnectionError({
+              ...ConnectionErrors.NOT_FOUND,
+              context: { connectionId: connectionSlug },
+            });
           }
 
           if (connection.type === "postgres") {
-            const publications = await postgresConnectionManager.getPublications(
-              organizationId,
-              connectionSlug,
-            );
+            const publications = await postgresConnectionManager.getPublications(connection.config);
             return c.json(publications);
           }
 
-          return c.json(
-            {
-              error: `Unsupported connection type: ${connection.type}`,
-            },
-            500,
-          );
+          throw new ConnectionError({
+            ...ConnectionErrors.INVALID_TYPE,
+            context: { type: connection.type },
+          });
         },
       )
       .openapi(
@@ -189,7 +184,10 @@ export class ConnectionHealthRoutes {
             return c.json(changes);
           } catch (error) {
             if (error instanceof Error && error.message === "Connection not found") {
-              return c.json({ error: "Connection not found" }, 404);
+              throw new ConnectionError({
+                ...ConnectionErrors.NOT_FOUND,
+                context: { connectionId: connectionSlug },
+              });
             }
             throw error;
           }
