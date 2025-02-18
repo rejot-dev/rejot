@@ -18,7 +18,7 @@ steps:
   # Build controller-spa
   - name: "oven/bun:1.2.1"
     dir: "apps/controller-spa"
-    entrypoint: npm
+    entrypoint: bun
     args: ["install"]
 
   # Using node for actually building the frontend, as there seems to be some issue the bun build failing
