@@ -1,4 +1,5 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
+import { SlugSchema } from "./util/slug";
 
 const ConnectionPostgresConfig = z
   .object({
@@ -27,7 +28,7 @@ export const ConnectionResponse = ConnectionBase.extend({
 
 export const ConnectionCreateRequest = z
   .object({
-    slug: z.string(),
+    slug: SlugSchema,
     type: z.literal("postgres"),
     config: ConnectionPostgresConfig,
   })
