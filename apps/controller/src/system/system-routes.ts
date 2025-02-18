@@ -6,14 +6,14 @@ import {
   systemListApi,
 } from "@rejot/api-interface-controller/system";
 import type { ISystemService } from "./system-service.ts";
-import type { AuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
+import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 
 export class SystemRoutes {
   static inject = ["systemService", "authenticationMiddleware"] as const;
 
   #routes;
 
-  constructor(systemService: ISystemService, authenticationMiddleware: AuthenticationMiddleware) {
+  constructor(systemService: ISystemService, authenticationMiddleware: IAuthenticationMiddleware) {
     this.#routes = new OpenAPIHono()
       .openapi(
         createRoute({

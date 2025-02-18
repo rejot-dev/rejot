@@ -5,18 +5,9 @@ import type {
   IAuthenticationMiddleware,
   RequireLoginMiddleware,
 } from "@/authentication/authentication.middleware.ts";
-import type { IOrganizationService } from "@/organization/organization-service.ts";
 
 export class MockAuthenticationMiddleware implements IAuthenticationMiddleware {
-  static inject = tokens("organizationService");
-
-  // @ts-expect-error unused
-  // eslint-disable-next-line no-unused-private-class-members
-  #organizationService: IOrganizationService;
-
-  constructor(organizationService: IOrganizationService) {
-    this.#organizationService = organizationService;
-  }
+  static inject = tokens();
 
   requireLogin(): RequireLoginMiddleware {
     return createMiddleware(async (c, next) => {

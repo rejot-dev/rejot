@@ -1,4 +1,6 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
+import { SlugSchema } from "./util/slug.ts";
+import { ZodErrorSchema } from "./util/zod-error.ts";
 
 export const SystemResponse = z
   .object({
@@ -31,7 +33,7 @@ export const SystemListResponse = z
 export const CreateSystem = z
   .object({
     name: z.string(),
-    slug: z.string(),
+    slug: SlugSchema,
   })
   .openapi("CreateSystem");
 
@@ -92,6 +94,11 @@ export const systemCreateApi = {
     },
     400: {
       description: "Invalid request body",
+      content: {
+        "application/json": {
+          schema: ZodErrorSchema,
+        },
+      },
     },
     500: {
       description: "Internal server error",
