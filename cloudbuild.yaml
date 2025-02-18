@@ -16,11 +16,12 @@ steps:
     args: ["push", "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${_APP_VERSION}"]
 
   # Build controller-spa
-  - name: "node:23"
+  - name: "oven/bun:1.2.1"
     dir: "apps/controller-spa"
     entrypoint: npm
     args: ["install"]
 
+  # Using node for actually building the frontend, as there seems to be some issue the bun build failing
   - name: "node:23"
     dir: "apps/controller-spa"
     entrypoint: npm
