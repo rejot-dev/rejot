@@ -52,11 +52,12 @@ class MockSystemService implements ISystemService {
     organizationId: string;
     systemSlug: string;
     connectionSlug: string;
-    tables: string[];
-  }): Promise<{ connectionSlug: string; tables: string[] }> {
+    publicationName: string;
+  }): Promise<{ connectionSlug: string; publicationName: string; publicationTables: string[] }> {
     return Promise.resolve({
       connectionSlug: "test-connection",
-      tables: ["table1", "table2"],
+      publicationName: "test-publication",
+      publicationTables: ["table1", "table2"],
     });
   }
 }

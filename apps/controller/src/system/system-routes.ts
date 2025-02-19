@@ -67,12 +67,12 @@ export class SystemRoutes {
           const clerkUserId = c.get("clerkUserId");
           await authenticationMiddleware.requireOrganizationAccess(clerkUserId, organizationId);
 
-          const { connectionSlug, tables } = c.req.valid("json");
+          const { connectionSlug, publicationName } = c.req.valid("json");
           const dataStore = await systemService.upsertDataStore({
             organizationId,
             systemSlug,
             connectionSlug,
-            tables,
+            publicationName,
           });
           return c.json(dataStore);
         },

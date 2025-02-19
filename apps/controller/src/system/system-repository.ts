@@ -3,6 +3,7 @@ import type { PostgresManager } from "@/postgres/postgres.ts";
 import { schema } from "@/postgres/schema.ts";
 import { and, eq, sql } from "drizzle-orm";
 import { SystemError, SystemErrors } from "./system.error.ts";
+import type { IConnectionManager } from "@/connection/connection-manager.ts";
 
 export type CreateSystemEntity = {
   code: string;
@@ -55,12 +56,13 @@ export type GetSystemBySlugResult =
 export type UpsertDataStoreParams = {
   systemCode: string;
   connectionSlug: string;
-  tables: string[];
+  publicationName: string;
 };
 
 export type UpsertDataStoreResult = {
   id: number;
   connectionId: number;
+  publicationName: string;
   publicationTables: string[];
 };
 
@@ -74,12 +76,14 @@ export interface ISystemRepository {
 }
 
 export class SystemRepository implements ISystemRepository {
-  static inject = tokens("postgres");
+  static inject = tokens("postgres", "postgresConnectionManager");
 
   #db: PostgresManager["db"];
+  #postgresConnectionManager: IConnectionManager;
 
-  constructor(postgres: PostgresManager) {
+  constructor(postgres: PostgresManager, postgresConnectionManager: IConnectionManager) {
     this.#db = postgres.db;
+    this.#postgresConnectionManager = postgresConnectionManager;
   }
 
   async create(orgCode: string, system: CreateSystemEntity): Promise<SystemEntity> {
@@ -212,6 +216,7 @@ export class SystemRepository implements ISystemRepository {
         return [
           {
             connectionSlug: connection.slug,
+            publicationName: data_store.publicationName,
             tables: data_store.publicationTables ?? [],
           },
         ];
@@ -346,10 +351,19 @@ export class SystemRepository implements ISystemRepository {
         .select({
           systemId: schema.system.id,
           connectionId: schema.connection.id,
+          host: schema.connectionPostgres.host,
+          port: schema.connectionPostgres.port,
+          user: schema.connectionPostgres.user,
+          password: schema.connectionPostgres.password,
+          database: schema.connectionPostgres.database,
         })
         .from(schema.system)
         .innerJoin(schema.organization, eq(schema.system.organizationId, schema.organization.id))
         .innerJoin(schema.connection, eq(schema.connection.organizationId, schema.organization.id))
+        .innerJoin(
+          schema.connectionPostgres,
+          eq(schema.connection.id, schema.connectionPostgres.connectionId),
+        )
         .where(
           and(
             eq(schema.system.code, params.systemCode),
@@ -368,39 +382,51 @@ export class SystemRepository implements ISystemRepository {
         });
       }
 
+      const { systemId, connectionId, host, port, user, password, database } =
+        systemAndConnection[0];
+
+      // For now we store a snapshot of the publication tables in the data store table
+      // In the future we should fetch it on demand from the downstream database.
+      const publications = await this.#postgresConnectionManager.getPublications({
+        type: "postgres",
+        host,
+        port,
+        user,
+        password,
+        database,
+      });
+      const publication = publications.find((p) => p.name === params.publicationName);
+      const publicationTables = publication?.tables?.map((t) => t.name) ?? [];
+
       const result = await tx
         .insert(schema.dataStore)
         .values({
-          systemId: systemAndConnection[0].systemId,
-          connectionId: systemAndConnection[0].connectionId,
-          publicationTables: params.tables,
+          systemId,
+          connectionId,
+          publicationName: params.publicationName,
+          publicationTables,
         })
         .onConflictDoUpdate({
           target: schema.dataStore.connectionId,
           set: {
-            publicationTables: params.tables,
+            publicationTables: publicationTables,
+            publicationName: params.publicationName,
           },
         })
         .returning({
           id: schema.dataStore.id,
           connectionId: schema.dataStore.connectionId,
+          publicationName: schema.dataStore.publicationName,
           publicationTables: schema.dataStore.publicationTables,
         });
 
       const dataStore = result[0];
-      if (!dataStore.publicationTables) {
-        throw new SystemError({
-          ...SystemErrors.INVALID_CONNECTION,
-          context: {
-            connectionSlug: params.connectionSlug,
-          },
-        });
-      }
 
       return {
         id: dataStore.id,
         connectionId: dataStore.connectionId,
-        publicationTables: dataStore.publicationTables,
+        publicationName: dataStore.publicationName ?? "",
+        publicationTables: dataStore.publicationTables ?? [],
       };
     });
   }

@@ -135,7 +135,7 @@ export const systemListApi = {
 export const DataStoreRequest = z
   .object({
     connectionSlug: z.string(),
-    tables: z.array(z.string()),
+    publicationName: z.string(),
   })
   .openapi("DataStoreRequest");
 

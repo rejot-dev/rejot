@@ -6,12 +6,13 @@ export type UpsertDataStoreServiceParams = {
   organizationId: string;
   systemSlug: string;
   connectionSlug: string;
-  tables: string[];
+  publicationName: string;
 };
 
 export type UpsertDataStoreServiceResult = {
   connectionSlug: string;
-  tables: string[];
+  publicationName: string;
+  publicationTables: string[];
 };
 
 export type SystemOverviewResponse = {
@@ -96,12 +97,13 @@ export class SystemService implements ISystemService {
     const dataStore = await this.#systemRepository.upsertDataStore({
       systemCode: system.code,
       connectionSlug: params.connectionSlug,
-      tables: params.tables,
+      publicationName: params.publicationName,
     });
 
     return {
       connectionSlug: params.connectionSlug,
-      tables: dataStore.publicationTables,
+      publicationName: dataStore.publicationName,
+      publicationTables: dataStore.publicationTables,
     };
   }
 }
