@@ -14,12 +14,11 @@ import { createRoute } from "@hono/zod-openapi";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 import { ConnectionErrors } from "./connection.error.ts";
 import { ConnectionError } from "./connection.error.ts";
-import { assertUnreachable } from "@/lib/assert.ts";
 
 export class ConnectionHealthRoutes {
   static inject = tokens(
     "connectionService",
-    "postgresConnectionManager",
+    "connectionTypeMultiplexer",
     "schemaService",
     "authenticationMiddleware",
   );
@@ -28,7 +27,7 @@ export class ConnectionHealthRoutes {
 
   constructor(
     connectionService: IConnectionService,
-    postgresConnectionManager: IConnectionManager,
+    connectionManager: IConnectionManager,
     schemaService: ISchemaService,
     authenticationMiddleware: IAuthenticationMiddleware,
   ) {
@@ -55,14 +54,8 @@ export class ConnectionHealthRoutes {
             });
           }
 
-          const { config } = connection;
-
-          if (config.type === "postgres") {
-            const health = await postgresConnectionManager.checkHealth(connection.config);
-            return c.json(health);
-          }
-
-          assertUnreachable(config.type);
+          const health = await connectionManager.checkHealth(connection.config);
+          return c.json(health);
         },
       )
       .openapi(
@@ -86,13 +79,8 @@ export class ConnectionHealthRoutes {
             });
           }
 
-          const { config } = connection;
-          if (config.type === "postgres") {
-            const tables = await postgresConnectionManager.getTables(connection.config);
-            return c.json(tables);
-          }
-
-          assertUnreachable(config.type);
+          const tables = await connectionManager.getTables(connection.config);
+          return c.json(tables);
         },
       )
       .openapi(
@@ -116,16 +104,8 @@ export class ConnectionHealthRoutes {
             });
           }
 
-          const { config } = connection;
-          if (config.type === "postgres") {
-            const schema = await postgresConnectionManager.getTableSchema(
-              connection.config,
-              tableName,
-            );
-            return c.json(schema);
-          }
-
-          assertUnreachable(config.type);
+          const schema = await connectionManager.getTableSchema(connection.config, tableName);
+          return c.json(schema);
         },
       )
       .openapi(
@@ -150,13 +130,8 @@ export class ConnectionHealthRoutes {
             });
           }
 
-          const { config } = connection;
-          if (config.type === "postgres") {
-            const publications = await postgresConnectionManager.getPublications(connection.config);
-            return c.json(publications);
-          }
-
-          assertUnreachable(config.type);
+          const publications = await connectionManager.getPublications(connection.config);
+          return c.json(publications);
         },
       )
       .openapi(

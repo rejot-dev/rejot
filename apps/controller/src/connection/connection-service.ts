@@ -2,23 +2,23 @@ import { tokens } from "typed-inject";
 import type { IConnectionRepository } from "./connection-repository.ts";
 import { ConnectionError, ConnectionErrors } from "./connection.error.ts";
 import type { OrganizationRepository } from "@/organization/organization-repository.ts";
-import type { ConnectionConfig } from "./connection-manager.ts";
+import type { PostgresConnectionConfig } from "./connection-manager.ts";
 
 export type ConnectionWithoutPassword = {
   slug: string;
-  config: Omit<ConnectionConfig, "password">;
+  config: Omit<PostgresConnectionConfig, "password">;
 };
 
 export type ConnectionWithPassword = {
   slug: string;
-  config: ConnectionConfig;
+  config: PostgresConnectionConfig;
 };
 
 export interface IConnectionService {
   create(params: {
     organizationId: string;
     slug: string;
-    config: ConnectionConfig;
+    config: PostgresConnectionConfig;
   }): Promise<ConnectionWithoutPassword>;
 
   getBySlug(organizationId: string, connectionSlug: string): Promise<ConnectionWithoutPassword>;
@@ -29,6 +29,14 @@ export interface IConnectionService {
   ): Promise<ConnectionWithPassword>;
 
   getByOrganization(organizationId: string): Promise<ConnectionWithoutPassword[]>;
+
+  update(params: {
+    organizationId: string;
+    connectionSlug: string;
+    config: PostgresConnectionConfig;
+  }): Promise<ConnectionWithoutPassword>;
+
+  delete(organizationId: string, connectionSlug: string): Promise<void>;
 }
 
 export class ConnectionService implements IConnectionService {
@@ -48,7 +56,7 @@ export class ConnectionService implements IConnectionService {
   async create(params: {
     organizationId: string;
     slug: string;
-    config: ConnectionConfig;
+    config: PostgresConnectionConfig;
   }): Promise<ConnectionWithoutPassword> {
     const organization = await this.#organizationRepository.get(params.organizationId);
 
@@ -63,7 +71,7 @@ export class ConnectionService implements IConnectionService {
 
     return {
       slug: connection.slug,
-      config: { ...configWithoutPassword, type: "postgres" as const },
+      config: { ...configWithoutPassword },
     };
   }
 
@@ -74,12 +82,10 @@ export class ConnectionService implements IConnectionService {
     const connection = await this.getBySlugWithPassword(organizationId, connectionSlug);
     const { password: _, ...configWithoutPassword } = connection.config;
 
-    const response: ConnectionWithoutPassword = {
+    return {
       slug: connection.slug,
-      config: { ...configWithoutPassword, type: "postgres" as const },
+      config: { ...configWithoutPassword },
     };
-
-    return response;
   }
 
   async getBySlugWithPassword(
@@ -98,7 +104,7 @@ export class ConnectionService implements IConnectionService {
 
     return {
       slug: connection.slug,
-      config: { ...connection.config, type: "postgres" as const },
+      config: connection.config,
     };
   }
 
@@ -110,9 +116,31 @@ export class ConnectionService implements IConnectionService {
       const { password: _, ...configWithoutPassword } = connection.config;
       return {
         slug: connection.slug,
-        type: "postgres",
-        config: { ...configWithoutPassword, type: "postgres" as const },
+        config: { ...configWithoutPassword },
       };
     });
+  }
+
+  async update(params: {
+    organizationId: string;
+    connectionSlug: string;
+    config: PostgresConnectionConfig;
+  }): Promise<ConnectionWithoutPassword> {
+    const connection = await this.#connectionRepository.update({
+      organizationCode: params.organizationId,
+      slug: params.connectionSlug,
+      config: params.config,
+    });
+
+    const { password: _, ...configWithoutPassword } = params.config;
+
+    return {
+      slug: connection.slug,
+      config: { ...configWithoutPassword },
+    };
+  }
+
+  async delete(organizationId: string, connectionSlug: string): Promise<void> {
+    await this.#connectionRepository.delete(organizationId, connectionSlug);
   }
 }

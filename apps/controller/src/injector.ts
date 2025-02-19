@@ -27,6 +27,7 @@ import { ConnectionHealthRoutes } from "./connection/connection-health.routes.ts
 import { PostgresConnectionManager } from "./connection/postgres/postgres-connection-manager.ts";
 import { SchemaService } from "./connection/schema-service.ts";
 import { SchemaRepository } from "./connection/schema-repository.ts";
+import { ConnectionTypeMultiplexer } from "./connection/connection-type-multiplexer.ts";
 
 export const appInjector = createInjectionContainer();
 
@@ -51,6 +52,7 @@ export function createInjectionContainer() {
     // API Clients
     .provideClass("clerkApiClient", ClerkApiClient)
     .provideClass("postgresConnectionManager", PostgresConnectionManager)
+    .provideClass("connectionTypeMultiplexer", ConnectionTypeMultiplexer)
     // Services
     .provideClass("publicationService", PublicationService)
     .provideClass("authenticationService", AuthenticationService)

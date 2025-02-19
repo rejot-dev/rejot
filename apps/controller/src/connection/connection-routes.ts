@@ -5,6 +5,8 @@ import {
   connectionCreateApi,
   connectionGetApi,
   connectionListApi,
+  connectionUpdateApi,
+  connectionDeleteApi,
 } from "@rejot/api-interface-controller/connection";
 import { createRoute } from "@hono/zod-openapi";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
@@ -71,6 +73,45 @@ export class ConnectionRoutes {
           const connections = await connectionService.getByOrganization(organizationId);
 
           return c.json(connections);
+        },
+      )
+      .openapi(
+        createRoute({
+          ...connectionUpdateApi,
+          middleware: [authenticationMiddleware.requireLogin()] as const,
+        }),
+        async (c) => {
+          const { organizationId, connectionSlug } = c.req.valid("param");
+          const clerkUserId = c.get("clerkUserId");
+          await authenticationMiddleware.requireOrganizationAccess(clerkUserId, organizationId);
+
+          const { type, config } = c.req.valid("json");
+
+          const connection = await connectionService.update({
+            organizationId,
+            connectionSlug,
+            config: {
+              type,
+              ...config,
+            },
+          });
+
+          return c.json(connection);
+        },
+      )
+      .openapi(
+        createRoute({
+          ...connectionDeleteApi,
+          middleware: [authenticationMiddleware.requireLogin()] as const,
+        }),
+        async (c) => {
+          const { organizationId, connectionSlug } = c.req.valid("param");
+          const clerkUserId = c.get("clerkUserId");
+          await authenticationMiddleware.requireOrganizationAccess(clerkUserId, organizationId);
+
+          await connectionService.delete(organizationId, connectionSlug);
+
+          return c.body(null, 204);
         },
       );
   }

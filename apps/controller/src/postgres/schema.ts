@@ -87,7 +87,7 @@ export const connection = pgTable(
       .references(() => organization.id)
       .notNull(),
     slug: varchar({ length: 255 }).notNull(),
-    type: connectionType(),
+    type: connectionType().notNull(),
   },
   (t) => [unique().on(t.organizationId, t.slug)],
 );
