@@ -11,7 +11,7 @@ export const ARCHITECTURE_CONFIG = {
     baseRadius: 200,
     radiusPerChild: 60,
   },
-  table: {
+  publication: {
     baseRadius: 150,
     radiusPerChild: 50,
     width: 160,
@@ -19,10 +19,17 @@ export const ARCHITECTURE_CONFIG = {
   },
 } as const;
 
+export type ListDetail = {
+  value: string;
+  type: string;
+  link: string;
+};
+
 export type ArchitectureNode = {
   id: string;
-  type: "controlPlane" | "syncEngine" | "database" | "table";
+  type: "controlPlane" | "syncEngine" | "database" | "publication";
   label: string;
+  detail?: ListDetail[];
   children?: ArchitectureNode[];
   parentSlug?: string; // Used to track which database a table belongs to
 };
@@ -38,17 +45,25 @@ export const systemOverviewToArchitectureNode = (system: SystemOverview): Archit
       const databaseNode: ArchitectureNode = {
         id: store.slug,
         type: "database",
-        label: store.publication.name,
+        label: store.slug,
+        detail: [{ value: store.type, type: "driver", link: `/connections/${store.slug}` }],
       };
 
-      // If the store has tables, add them as children
+      // If the store has publications, add them as children
       if (store.publication.tables?.length) {
-        databaseNode.children = store.publication.tables.map((table) => ({
-          id: `${store.slug}-${table}`,
-          type: "table",
-          label: table,
-          parentSlug: store.slug,
-        }));
+        databaseNode.children = [
+          {
+            id: `${store.slug}-${store.publication.name}`,
+            type: "publication",
+            label: store.publication.name,
+            // TODO: allow non-public table schema?
+            detail: store.publication.tables.map((table) => ({
+              value: table,
+              type: "table",
+              link: `/connections/${store.slug}/tables/public.${table}`,
+            })),
+          },
+        ];
       }
 
       return databaseNode;
@@ -88,8 +103,8 @@ export const generateNodesAndEdges = (
     if (parentAngle !== undefined) {
       if (isTable) {
         // For tables, calculate spacing based on actual pixel dimensions
-        const tableWidth = ARCHITECTURE_CONFIG.table.width;
-        const minSpacing = ARCHITECTURE_CONFIG.table.minSpacing;
+        const tableWidth = ARCHITECTURE_CONFIG.publication.width;
+        const minSpacing = ARCHITECTURE_CONFIG.publication.minSpacing;
 
         // Calculate circumference at this radius
         const adjustedRadius = Math.max(
@@ -257,6 +272,7 @@ export const generateNodesAndEdges = (
             label: database.label,
             sourcePosition: handles.sourcePosition,
             targetPosition: handles.targetPosition,
+            detail: database.detail,
           },
           position: dbPos,
         });
@@ -271,17 +287,17 @@ export const generateNodesAndEdges = (
         });
 
         // Handle tables as moons of databases
-        const tableChildren = database.children ?? [];
-        const tableRadius = Math.max(
-          ARCHITECTURE_CONFIG.table.baseRadius,
-          tableChildren.length * ARCHITECTURE_CONFIG.table.radiusPerChild,
+        const publicationChildren = database.children ?? [];
+        const publicationRadius = Math.max(
+          ARCHITECTURE_CONFIG.publication.baseRadius,
+          publicationChildren.length * ARCHITECTURE_CONFIG.publication.radiusPerChild,
         );
 
-        tableChildren.forEach((table, tableIndex) => {
+        publicationChildren.forEach((publication, tableIndex) => {
           const tablePos = getOrbitPosition(
             tableIndex,
-            tableChildren.length,
-            tableRadius,
+            publicationChildren.length,
+            publicationRadius,
             dbPos.x,
             dbPos.y,
             dbPos.angle,
@@ -291,22 +307,23 @@ export const generateNodesAndEdges = (
           const handles = getHandlePositions(dbPos.x, dbPos.y, tablePos.x, tablePos.y);
 
           nodes.push({
-            id: table.id,
-            type: table.type,
+            id: publication.id,
+            type: publication.type,
             data: {
-              label: table.label,
+              label: publication.label,
+              detail: publication.detail,
               targetPosition: handles.targetPosition,
             },
             position: tablePos,
           });
 
           edges.push({
-            id: `${database.id}-${table.id}`,
+            id: `${database.id}-${publication.id}`,
             source: database.id,
-            target: table.id,
+            target: publication.id,
             type: ConnectionLineType.SimpleBezier,
             sourceHandle: `${database.id}-${handles.sourcePosition}`,
-            targetHandle: `${table.id}-${handles.targetPosition}`,
+            targetHandle: `${publication.id}-${handles.targetPosition}`,
           });
         });
       });

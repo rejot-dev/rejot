@@ -20,7 +20,12 @@ import {
 } from "d3-force";
 import { type HTMLAttributes, useMemo, useRef } from "react";
 
-import { ControlPlaneNode, DatabaseNode, SyncEngineNode, TableNode } from "./custom-nodes.tsx";
+import {
+  ControlPlaneNode,
+  DatabaseNode,
+  SyncEngineNode,
+  PublicationNode,
+} from "./custom-nodes.tsx";
 import type { SystemOverview } from "@/data/system/system.data.ts";
 import { collide } from "./collide.ts";
 import { systemOverviewToArchitectureNode } from "./process-architecture.ts";
@@ -164,7 +169,7 @@ export function LayoutFlow({
     controlPlane: ControlPlaneNode,
     syncEngine: SyncEngineNode,
     database: DatabaseNode,
-    table: TableNode,
+    publication: PublicationNode,
   };
 
   return (
