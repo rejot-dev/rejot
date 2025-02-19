@@ -128,3 +128,66 @@ export const connectionCreateApi = {
   tags: ["connections"],
   description: "Create a new connection",
 } satisfies RouteConfig;
+
+export const connectionUpdateApi = {
+  method: "put",
+  path: "/organizations/{organizationId}/connections/{connectionSlug}",
+  request: {
+    params: z.object({
+      organizationId: z.string(),
+      connectionSlug: z.string(),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: ConnectionCreateRequest,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: ConnectionResponse,
+        },
+      },
+      description: "Connection updated successfully",
+    },
+    400: {
+      description: "Invalid request body",
+    },
+    404: {
+      description: "Connection not found",
+    },
+    500: {
+      description: "Internal server error",
+    },
+  },
+  tags: ["connections"],
+  description: "Update an existing connection",
+} satisfies RouteConfig;
+
+export const connectionDeleteApi = {
+  method: "delete",
+  path: "/organizations/{organizationId}/connections/{connectionSlug}",
+  request: {
+    params: z.object({
+      organizationId: z.string(),
+      connectionSlug: z.string(),
+    }),
+  },
+  responses: {
+    204: {
+      description: "Connection deleted successfully",
+    },
+    404: {
+      description: "Connection not found",
+    },
+    500: {
+      description: "Internal server error",
+    },
+  },
+  tags: ["connections"],
+  description: "Delete a connection",
+} satisfies RouteConfig;

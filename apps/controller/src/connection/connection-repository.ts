@@ -1,22 +1,12 @@
 import { tokens } from "typed-inject";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { PostgresManager } from "@/postgres/postgres.ts";
 import { schema } from "@/postgres/schema.ts";
 import { ConnectionError, ConnectionErrors } from "./connection.error.ts";
-
-type ConnectionConfig = {
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-};
+import type { ConnectionConfig, PostgresConnectionConfig } from "./connection-manager.ts";
 
 type ConnectionEntity = {
-  id: number;
-  organizationId: number;
   slug: string;
-  type: "postgres";
   config: ConnectionConfig;
 };
 
@@ -25,7 +15,7 @@ export interface IConnectionRepository {
     organizationId: number;
     slug: string;
     type: "postgres";
-    config: ConnectionConfig;
+    config: PostgresConnectionConfig;
   }): Promise<Omit<ConnectionEntity, "config">>;
 
   findById(id: number): Promise<ConnectionEntity | undefined>;
@@ -33,6 +23,14 @@ export interface IConnectionRepository {
   findBySlug(organizationId: number, slug: string): Promise<ConnectionEntity | undefined>;
 
   findByOrganization(organizationId: number): Promise<ConnectionEntity[]>;
+
+  update(params: {
+    organizationCode: string;
+    slug: string;
+    config: PostgresConnectionConfig;
+  }): Promise<Omit<ConnectionEntity, "config">>;
+
+  delete(organizationCode: string, slug: string): Promise<void>;
 }
 
 export class ConnectionRepository implements IConnectionRepository {
@@ -48,7 +46,7 @@ export class ConnectionRepository implements IConnectionRepository {
     organizationId: number;
     slug: string;
     type: "postgres";
-    config: ConnectionConfig;
+    config: PostgresConnectionConfig;
   }) {
     const [connection] = await this.#db.transaction(async (tx) => {
       const [connection] = await tx
@@ -98,6 +96,7 @@ export class ConnectionRepository implements IConnectionRepository {
         slug: schema.connection.slug,
         type: schema.connection.type,
         config: {
+          type: sql<"postgres">`'postgres'`,
           host: schema.connectionPostgres.host,
           port: schema.connectionPostgres.port,
           user: schema.connectionPostgres.user,
@@ -118,10 +117,7 @@ export class ConnectionRepository implements IConnectionRepository {
     }
 
     return {
-      id: connection.id,
-      organizationId: connection.organizationId,
       slug: connection.slug,
-      type: connection.type,
       config: connection.config,
     } satisfies ConnectionEntity;
   }
@@ -129,11 +125,10 @@ export class ConnectionRepository implements IConnectionRepository {
   async findBySlug(organizationId: number, slug: string) {
     const connections = await this.#db
       .select({
-        id: schema.connection.id,
-        organizationId: schema.connection.organizationId,
         slug: schema.connection.slug,
         type: schema.connection.type,
         config: {
+          type: sql<"postgres">`'postgres'`,
           host: schema.connectionPostgres.host,
           port: schema.connectionPostgres.port,
           user: schema.connectionPostgres.user,
@@ -156,15 +151,12 @@ export class ConnectionRepository implements IConnectionRepository {
     }
 
     return {
-      id: connection.id,
-      organizationId: connection.organizationId,
       slug: connection.slug,
-      type: connection.type,
       config: connection.config,
     } satisfies ConnectionEntity;
   }
 
-  async findByOrganization(organizationId: number) {
+  async findByOrganization(organizationId: number): Promise<ConnectionEntity[]> {
     const connections = await this.#db
       .select({
         id: schema.connection.id,
@@ -186,17 +178,99 @@ export class ConnectionRepository implements IConnectionRepository {
       )
       .where(eq(schema.connection.organizationId, organizationId));
 
-    return connections
-      .filter(
-        (c): c is typeof c & { type: "postgres"; config: NonNullable<typeof c.config> } =>
-          c.type === "postgres" && c.config !== null,
-      )
-      .map((connection) => ({
-        id: connection.id,
-        organizationId: connection.organizationId,
-        slug: connection.slug,
-        type: connection.type,
-        config: connection.config,
-      })) satisfies ConnectionEntity[];
+    return connections.flatMap((connection) => {
+      if (!connection || connection.type !== "postgres" || !connection.config) {
+        return [];
+      }
+
+      return [
+        {
+          slug: connection.slug,
+          config: {
+            ...connection.config,
+            type: "postgres",
+          },
+        },
+      ];
+    });
+  }
+
+  async update(params: {
+    organizationCode: string;
+    slug: string;
+    config: PostgresConnectionConfig;
+  }) {
+    const [connection] = await this.#db.transaction(async (tx) => {
+      const [connection] = await tx
+        .select({
+          id: schema.connection.id,
+          organizationId: schema.connection.organizationId,
+          slug: schema.connection.slug,
+          type: schema.connection.type,
+        })
+        .from(schema.connection)
+        .innerJoin(
+          schema.organization,
+          and(
+            eq(schema.organization.id, schema.connection.organizationId),
+            eq(schema.organization.code, params.organizationCode),
+          ),
+        )
+        .where(eq(schema.connection.slug, params.slug));
+
+      if (!connection || connection.type !== "postgres") {
+        throw new ConnectionError({
+          ...ConnectionErrors.NOT_FOUND,
+          context: { organizationId: params.organizationCode, slug: params.slug },
+        });
+      }
+
+      await tx
+        .update(schema.connectionPostgres)
+        .set(params.config)
+        .where(eq(schema.connectionPostgres.connectionId, connection.id));
+
+      return [
+        {
+          id: connection.id,
+          organizationId: connection.organizationId,
+          slug: connection.slug,
+          type: connection.type,
+        },
+      ];
+    });
+
+    return connection;
+  }
+
+  async delete(organizationCode: string, slug: string) {
+    await this.#db.transaction(async (tx) => {
+      const [connection] = await tx
+        .select({
+          id: schema.connection.id,
+        })
+        .from(schema.connection)
+        .innerJoin(
+          schema.organization,
+          and(
+            eq(schema.organization.id, schema.connection.organizationId),
+            eq(schema.organization.code, organizationCode),
+          ),
+        )
+        .where(eq(schema.connection.slug, slug));
+
+      if (!connection) {
+        throw new ConnectionError({
+          ...ConnectionErrors.NOT_FOUND,
+          context: { organizationId: organizationCode, slug },
+        });
+      }
+
+      await tx
+        .delete(schema.connectionPostgres)
+        .where(eq(schema.connectionPostgres.connectionId, connection.id));
+
+      await tx.delete(schema.connection).where(eq(schema.connection.id, connection.id));
+    });
   }
 }
