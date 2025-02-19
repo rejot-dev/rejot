@@ -27,6 +27,7 @@ export type SystemOverviewResponse = {
 
   dataStores: {
     connectionSlug: string;
+    publicationName: string;
     tables: string[];
   }[];
 };
@@ -74,6 +75,7 @@ export class SystemService implements ISystemService {
       },
       dataStores: system.dataStores.map((dataStore) => ({
         connectionSlug: dataStore.connectionSlug,
+        publicationName: dataStore.publicationName,
         tables: dataStore.tables,
       })),
     };

@@ -38,7 +38,7 @@ export const systemOverviewToArchitectureNode = (system: SystemOverview): Archit
       const databaseNode: ArchitectureNode = {
         id: store.slug,
         type: "database",
-        label: store.slug,
+        label: store.publication.name,
       };
 
       // If the store has tables, add them as children
