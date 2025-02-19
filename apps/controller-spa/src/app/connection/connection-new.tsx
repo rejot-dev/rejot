@@ -44,7 +44,7 @@ export function ConnectionNew() {
 
   return (
     <>
-      <ConnectionNewHeader step={step} />
+      <ConnectionNewHeader />
       <div className="container space-y-6">
         <ProgressBar steps={steps} currentStep={currentStep} />
         <Card className="mx-auto max-w-2xl">

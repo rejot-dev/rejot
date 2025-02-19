@@ -8,3 +8,7 @@ pre-commit:
       run: bunx eslint --fix --no-warn-ignored {staged_files}
     - name: prettier
       run: sh -c 'bunx prettier --ignore-unknown --check {staged_files}; code=$?; bunx prettier --ignore-unknown --write {staged_files}; exit $code'
+    - name: type-check controller
+      run: cd apps/controller && bun check
+    - name: type-check controller-spa
+      run: cd apps/controller-spa && bun check
