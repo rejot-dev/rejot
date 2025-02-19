@@ -13,6 +13,7 @@ export const SystemResponse = z
     dataStores: z.array(
       z.object({
         connectionSlug: z.string(),
+        publicationName: z.string(),
         tables: z.array(z.string()),
       }),
     ),

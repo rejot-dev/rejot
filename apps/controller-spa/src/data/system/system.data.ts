@@ -155,7 +155,7 @@ export async function getRealSystemOverview(
       slug: ds.connectionSlug,
       type: "postgres" as ConnectionType, // We might need to fetch the actual type from connections API
       publication: {
-        name: ds.connectionSlug,
+        name: ds.publicationName,
         tables: ds.tables,
       },
     })),

@@ -38,6 +38,7 @@ export type SystemOverview = {
 
   dataStores: {
     connectionSlug: string;
+    publicationName: string;
     tables: string[];
   }[];
 };
@@ -216,7 +217,7 @@ export class SystemRepository implements ISystemRepository {
         return [
           {
             connectionSlug: connection.slug,
-            publicationName: data_store.publicationName,
+            publicationName: data_store.publicationName ?? "",
             tables: data_store.publicationTables ?? [],
           },
         ];
