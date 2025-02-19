@@ -253,4 +253,5 @@ export class ClerkError extends BaseError<ClerkErrorCode, ClerkErrorContext> {
   - Enums
   - Constructor parameter members
   - TypeScript constructs that don't work with type stripping
+- NEVER use Unsafe type casting unless EXPLICITELY asked for.
 

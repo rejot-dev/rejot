@@ -14,6 +14,7 @@ import { createRoute } from "@hono/zod-openapi";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 import { ConnectionErrors } from "./connection.error.ts";
 import { ConnectionError } from "./connection.error.ts";
+import { assertUnreachable } from "@/lib/assert.ts";
 
 export class ConnectionHealthRoutes {
   static inject = tokens(
@@ -46,6 +47,7 @@ export class ConnectionHealthRoutes {
             organizationId,
             connectionSlug,
           );
+
           if (!connection) {
             throw new ConnectionError({
               ...ConnectionErrors.NOT_FOUND,
@@ -53,15 +55,14 @@ export class ConnectionHealthRoutes {
             });
           }
 
-          if (connection.type === "postgres") {
+          const { config } = connection;
+
+          if (config.type === "postgres") {
             const health = await postgresConnectionManager.checkHealth(connection.config);
             return c.json(health);
           }
 
-          throw new ConnectionError({
-            ...ConnectionErrors.INVALID_TYPE,
-            context: { type: connection.type },
-          });
+          assertUnreachable(config.type);
         },
       )
       .openapi(
@@ -85,15 +86,13 @@ export class ConnectionHealthRoutes {
             });
           }
 
-          if (connection.type === "postgres") {
+          const { config } = connection;
+          if (config.type === "postgres") {
             const tables = await postgresConnectionManager.getTables(connection.config);
             return c.json(tables);
           }
 
-          throw new ConnectionError({
-            ...ConnectionErrors.INVALID_TYPE,
-            context: { type: connection.type },
-          });
+          assertUnreachable(config.type);
         },
       )
       .openapi(
@@ -117,7 +116,8 @@ export class ConnectionHealthRoutes {
             });
           }
 
-          if (connection.type === "postgres") {
+          const { config } = connection;
+          if (config.type === "postgres") {
             const schema = await postgresConnectionManager.getTableSchema(
               connection.config,
               tableName,
@@ -125,10 +125,7 @@ export class ConnectionHealthRoutes {
             return c.json(schema);
           }
 
-          throw new ConnectionError({
-            ...ConnectionErrors.INVALID_TYPE,
-            context: { type: connection.type },
-          });
+          assertUnreachable(config.type);
         },
       )
       .openapi(
@@ -153,15 +150,13 @@ export class ConnectionHealthRoutes {
             });
           }
 
-          if (connection.type === "postgres") {
+          const { config } = connection;
+          if (config.type === "postgres") {
             const publications = await postgresConnectionManager.getPublications(connection.config);
             return c.json(publications);
           }
 
-          throw new ConnectionError({
-            ...ConnectionErrors.INVALID_TYPE,
-            context: { type: connection.type },
-          });
+          assertUnreachable(config.type);
         },
       )
       .openapi(

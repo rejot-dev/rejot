@@ -2,21 +2,15 @@ import { tokens } from "typed-inject";
 import type { IConnectionRepository } from "./connection-repository.ts";
 import { ConnectionError, ConnectionErrors } from "./connection.error.ts";
 import type { OrganizationRepository } from "@/organization/organization-repository.ts";
-import type { PostgresConnectionConfig } from "./connection-manager.ts";
+import type { ConnectionConfig } from "./connection-manager.ts";
 
-export type ConnectionConfig = PostgresConnectionConfig;
-
-export type ConnectionConfigWithoutPassword = Omit<ConnectionConfig, "password">;
-
-type ConnectionResponse = {
+export type ConnectionWithoutPassword = {
   slug: string;
-  type: "postgres";
-  config: ConnectionConfigWithoutPassword;
+  config: Omit<ConnectionConfig, "password">;
 };
 
-type ConnectionResponseWithPassword = {
+export type ConnectionWithPassword = {
   slug: string;
-  type: "postgres";
   config: ConnectionConfig;
 };
 
@@ -25,16 +19,16 @@ export interface IConnectionService {
     organizationId: string;
     slug: string;
     config: ConnectionConfig;
-  }): Promise<ConnectionResponse>;
+  }): Promise<ConnectionWithoutPassword>;
 
-  getBySlug(organizationId: string, connectionSlug: string): Promise<ConnectionResponse>;
+  getBySlug(organizationId: string, connectionSlug: string): Promise<ConnectionWithoutPassword>;
 
   getBySlugWithPassword(
     organizationId: string,
     connectionSlug: string,
-  ): Promise<ConnectionResponseWithPassword>;
+  ): Promise<ConnectionWithPassword>;
 
-  getByOrganization(organizationId: string): Promise<ConnectionResponse[]>;
+  getByOrganization(organizationId: string): Promise<ConnectionWithoutPassword[]>;
 }
 
 export class ConnectionService implements IConnectionService {
@@ -55,7 +49,7 @@ export class ConnectionService implements IConnectionService {
     organizationId: string;
     slug: string;
     config: ConnectionConfig;
-  }): Promise<ConnectionResponse> {
+  }): Promise<ConnectionWithoutPassword> {
     const organization = await this.#organizationRepository.get(params.organizationId);
 
     const connection = await this.#connectionRepository.create({
@@ -69,18 +63,19 @@ export class ConnectionService implements IConnectionService {
 
     return {
       slug: connection.slug,
-      type: "postgres",
       config: { ...configWithoutPassword, type: "postgres" as const },
     };
   }
 
-  async getBySlug(organizationId: string, connectionSlug: string): Promise<ConnectionResponse> {
+  async getBySlug(
+    organizationId: string,
+    connectionSlug: string,
+  ): Promise<ConnectionWithoutPassword> {
     const connection = await this.getBySlugWithPassword(organizationId, connectionSlug);
     const { password: _, ...configWithoutPassword } = connection.config;
 
-    const response: ConnectionResponse = {
+    const response: ConnectionWithoutPassword = {
       slug: connection.slug,
-      type: "postgres",
       config: { ...configWithoutPassword, type: "postgres" as const },
     };
 
@@ -90,7 +85,7 @@ export class ConnectionService implements IConnectionService {
   async getBySlugWithPassword(
     organizationId: string,
     connectionSlug: string,
-  ): Promise<ConnectionResponseWithPassword> {
+  ): Promise<ConnectionWithPassword> {
     const organization = await this.#organizationRepository.get(organizationId);
 
     const connection = await this.#connectionRepository.findBySlug(organization.id, connectionSlug);
@@ -103,12 +98,11 @@ export class ConnectionService implements IConnectionService {
 
     return {
       slug: connection.slug,
-      type: "postgres",
-      config: connection.config as ConnectionConfig,
+      config: { ...connection.config, type: "postgres" as const },
     };
   }
 
-  async getByOrganization(organizationId: string): Promise<ConnectionResponse[]> {
+  async getByOrganization(organizationId: string): Promise<ConnectionWithoutPassword[]> {
     const organization = await this.#organizationRepository.get(organizationId);
     const connections = await this.#connectionRepository.findByOrganization(organization.id);
 
