@@ -2,13 +2,17 @@ import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSelectedOrganizationCode } from "@/data/clerk/clerk-meta.data";
 import { useCreateConnectionMutation } from "@/data/connection/connection.data";
+import { Button } from "@/components/ui/button";
 import {
   ConnectionNewPostgresForm,
   type ConnectionNewPostgresFormData,
-} from "./connection-new-postgres.form";
-import { Button } from "@/components/ui/button";
+} from "../connection-new-postgres.form";
 
-export function ConnectionNewPostgres() {
+interface ConfigurePostgresStepProps {
+  onBack: () => void;
+}
+
+export function ConfigurePostgresStep({ onBack }: ConfigurePostgresStepProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const organizationId = useSelectedOrganizationCode();
@@ -43,32 +47,21 @@ export function ConnectionNewPostgres() {
   }
 
   return (
-    <div className="mx-auto min-w-96 max-w-prose space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">New PostgreSQL Connection</h1>
-      </div>
-
-      <ConnectionNewPostgresForm
-        id="postgres-connection-form"
-        organizationId={organizationId}
-        onSubmit={onSubmit}
-        isSubmitting={createMutation.isPending}
-        formControls={({ isSubmitting }) => (
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate("/connections/new")}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting} form="postgres-connection-form">
-              {isSubmitting ? "Creating..." : "Create Connection"}
-            </Button>
-          </div>
-        )}
-      />
-    </div>
+    <ConnectionNewPostgresForm
+      id="postgres-connection-form"
+      organizationId={organizationId}
+      onSubmit={onSubmit}
+      isSubmitting={createMutation.isPending}
+      formControls={({ isSubmitting }) => (
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting}>
+            Back
+          </Button>
+          <Button type="submit" disabled={isSubmitting} form="postgres-connection-form">
+            {isSubmitting ? "Creating..." : "Create Connection"}
+          </Button>
+        </div>
+      )}
+    />
   );
 }

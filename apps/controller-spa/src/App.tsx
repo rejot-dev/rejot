@@ -20,7 +20,6 @@ import { OnboardingHome } from "./app/onboarding/onboarding-home.tsx";
 import { useClerkPublicMetadata } from "./data/clerk/clerk-meta.data.ts";
 import { ConnectionOverview } from "./app/connection/connection-overview.tsx";
 import { ConnectionNew } from "./app/connection/connection-new.tsx";
-import { ConnectionNewPostgres } from "./app/connection/connection-new-postgres.tsx";
 import { ConnectionDetail } from "./app/connection/connection-detail.tsx";
 import { SchemaTableDetail } from "./app/connection/schema-table-detail.tsx";
 
@@ -98,8 +97,8 @@ export function App() {
                     <Route path="new/:step" element={<DataStoreNew />} />
                   </Route>
                   <Route path="/connections" element={<ConnectionOverview />} />
-                  <Route path="/connections/new" element={<ConnectionNew />} />
-                  <Route path="/connections/new/postgres" element={<ConnectionNewPostgres />} />
+                  <Route path="/connections/new" element={<Navigate to="select-type" replace />} />
+                  <Route path="/connections/new/:step" element={<ConnectionNew />} />
                   <Route path="/connections/:connectionSlug" element={<ConnectionDetail />} />
                   <Route
                     path="/connections/:connectionSlug/tables/:tableId"
