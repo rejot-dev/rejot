@@ -54,7 +54,6 @@ export function DataStoreNew() {
     defaultValues: {
       connectionSlug: searchParams.get("connectionSlug") ?? undefined,
       publicationName: searchParams.get("publicationName") ?? undefined,
-      tables: [],
     },
   });
 
@@ -99,7 +98,7 @@ export function DataStoreNew() {
     try {
       const result = await addDataStore(organizationId, systemSlug, {
         connectionSlug: data.connectionSlug,
-        tables: [],
+        publicationName: data.publicationName,
       });
       if (result.status === "error") {
         throw new Error(result.message);
