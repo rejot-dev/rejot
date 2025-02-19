@@ -3,6 +3,7 @@ import { SlugSchema } from "./generic/slug";
 
 const ConnectionPostgresConfig = z
   .object({
+    type: z.enum(["postgres"]),
     host: z.string(),
     port: z.number(),
     user: z.string(),
@@ -15,21 +16,16 @@ const ConnectionPostgresConfigWithoutPassword = ConnectionPostgresConfig.omit({
   password: true,
 });
 
-const ConnectionBase = z
+export const ConnectionResponse = z
   .object({
     slug: z.string(),
-    type: z.enum(["postgres"]),
+    config: ConnectionPostgresConfigWithoutPassword,
   })
-  .openapi("ConnectionBase");
-
-export const ConnectionResponse = ConnectionBase.extend({
-  config: ConnectionPostgresConfigWithoutPassword,
-}).openapi("Connection");
+  .openapi("Connection");
 
 export const ConnectionCreateRequest = z
   .object({
     slug: SlugSchema,
-    type: z.literal("postgres"),
     config: ConnectionPostgresConfig,
   })
   .openapi("ConnectionCreateRequest");

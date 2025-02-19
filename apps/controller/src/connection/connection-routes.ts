@@ -31,13 +31,12 @@ export class ConnectionRoutes {
           const clerkUserId = c.get("clerkUserId");
           await authenticationMiddleware.requireOrganizationAccess(clerkUserId, organizationId);
 
-          const { slug, type, config } = c.req.valid("json");
+          const { slug, config } = c.req.valid("json");
 
           const connection = await connectionService.create({
             organizationId,
             slug,
             config: {
-              type,
               ...config,
             },
           });
@@ -72,7 +71,7 @@ export class ConnectionRoutes {
 
           const connections = await connectionService.getByOrganization(organizationId);
 
-          return c.json(connections);
+          return c.json(connections, 200);
         },
       )
       .openapi(
@@ -85,13 +84,12 @@ export class ConnectionRoutes {
           const clerkUserId = c.get("clerkUserId");
           await authenticationMiddleware.requireOrganizationAccess(clerkUserId, organizationId);
 
-          const { type, config } = c.req.valid("json");
+          const { config } = c.req.valid("json");
 
           const connection = await connectionService.update({
             organizationId,
             connectionSlug,
             config: {
-              type,
               ...config,
             },
           });

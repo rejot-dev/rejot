@@ -31,13 +31,11 @@ export function ConnectionDetail() {
         </div>
 
         <div className="grid gap-6">
-          <ConnectionConfigForm connection={connection} />
-          {connection.type === "postgres" && (
-            <PostgresPublicationDetails
-              organizationId={organizationId}
-              connectionSlug={connectionSlug}
-            />
-          )}
+          <ConnectionConfigForm type="postgres" connection={connection} />
+          <PostgresPublicationDetails
+            organizationId={organizationId}
+            connectionSlug={connectionSlug}
+          />
           <ConnectionTables organizationId={organizationId} connectionSlug={connectionSlug} />
         </div>
       </div>

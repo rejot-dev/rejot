@@ -29,6 +29,7 @@ export function useConnections(organizationId: string) {
       }
       return result.data;
     },
+    enabled: !!organizationId,
   });
 }
 

@@ -12,24 +12,22 @@ interface ConnectionConfig {
 
 interface Connection {
   slug: string;
-  type: "postgres";
   config: ConnectionConfig;
 }
 
 interface ConnectionConfigFormProps {
+  type: "postgres";
   connection: Connection;
 }
 
-export function ConnectionConfigForm({ connection }: ConnectionConfigFormProps) {
+export function ConnectionConfigForm({ type, connection }: ConnectionConfigFormProps) {
   const form = useForm({ defaultValues: connection.config });
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Connection Details</CardTitle>
-        <CardDescription>
-          Configuration for your {connection.type} database connection
-        </CardDescription>
+        <CardDescription>Configuration for your {type} database connection</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>

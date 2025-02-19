@@ -134,4 +134,16 @@ dbDescribe("test", (ctx) => {
     assertInstanceOf(error, DrizzleError);
     assertStringIncludes(error.message, "Rollback");
   });
+
+  test("PSQL - throw in transaction", async () => {
+    const db = ctx.db;
+    const error = await assertRejects(async () => {
+      await db.transaction(async (_tx) => {
+        throw new Error("test");
+      });
+    });
+
+    assertInstanceOf(error, Error);
+    assertEquals(error.message, "test");
+  });
 });

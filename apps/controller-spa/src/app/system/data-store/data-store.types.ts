@@ -8,13 +8,17 @@ export const dataStoreFormSchema = z.object({
 
 export type DataStoreFormValues = z.infer<typeof dataStoreFormSchema>;
 
+export type PostgresConnectionConfig = {
+  type: "postgres";
+  host: string;
+  port: number;
+  user: string;
+  database: string;
+};
+
+export type ConnectionConfig = PostgresConnectionConfig;
+
 export type Connection = {
   slug: string;
-  type: "postgres";
-  config: {
-    host: string;
-    port: number;
-    user: string;
-    database: string;
-  };
+  config: ConnectionConfig;
 };

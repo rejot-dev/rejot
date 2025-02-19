@@ -104,7 +104,7 @@ export function ConnectionOverview() {
               {connections?.map((connection) => (
                 <TableRow key={connection.slug}>
                   <TableCell>{connection.slug}</TableCell>
-                  <TableCell>{connection.type}</TableCell>
+                  <TableCell>{connection.config.type}</TableCell>
                   <TableCell>{connection.config.database}</TableCell>
                   <TableCell>{connection.config.host}</TableCell>
                   <TableCell>
