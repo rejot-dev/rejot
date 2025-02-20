@@ -41,6 +41,7 @@ export const systemOverviewToArchitectureNode = (system: SystemOverview): Archit
     id: syncService.code,
     type: "syncEngine",
     label: syncService.slug,
+    detail: [{ value: syncService.status, type: "status" }],
     children: system.dataStores.map((store) => {
       const databaseNode: ArchitectureNode = {
         id: store.slug,
@@ -237,6 +238,7 @@ export const generateNodesAndEdges = (
           label: syncEngine.label,
           sourcePosition: handles.sourcePosition,
           targetPosition: handles.targetPosition,
+          detail: syncEngine.detail,
         },
         position: pos,
       });

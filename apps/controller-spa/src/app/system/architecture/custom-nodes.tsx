@@ -1,5 +1,5 @@
 import { Handle, Position } from "@xyflow/react";
-import { Database, Album, RefreshCw } from "lucide-react";
+import { Database, Album, RefreshCw, Bolt } from "lucide-react";
 import { Link } from "react-router";
 import type { ListDetail } from "./process-architecture";
 
@@ -62,19 +62,23 @@ const DetailView = ({ detail }: { detail: ListDetail[] }) => (
 );
 
 export const ControlPlaneNode = ({ id, data }: { id: string; data: NodeData }) => (
-  <div className="w-72 rounded-md border border-red-600 bg-red-300 p-2 text-center dark:border-red-600 dark:bg-red-900">
+  <div className="overflow-hidden rounded-md border border-red-600 text-center dark:border-red-600">
     <AllHandles type="source" active={data.sourcePosition} nodeId={id} />
-    <div>{data.label}</div>
+    <div className="flex items-center gap-2 bg-red-300 p-2 font-semibold dark:bg-red-900">
+      <Bolt />
+      {data.label}
+    </div>
   </div>
 );
 
 export const SyncEngineNode = ({ id, data }: { id: string; data: NodeData }) => (
-  <div className="rounded-md border border-green-600 bg-green-300 p-2 text-center dark:border-green-600 dark:bg-green-900">
+  <div className="overflow-hidden rounded-md border border-green-600 text-center dark:border-green-600">
     <AllHandles type="target" active={data.targetPosition} nodeId={id} />
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 bg-green-300 p-2 font-semibold dark:bg-green-900">
       <RefreshCw />
       {data.label}
     </div>
+    {data.detail && data.detail.length > 0 && <DetailView detail={data.detail} />}
     <AllHandles type="source" active={data.sourcePosition} nodeId={id} />
   </div>
 );
@@ -82,7 +86,7 @@ export const SyncEngineNode = ({ id, data }: { id: string; data: NodeData }) => 
 export const DatabaseNode = ({ id, data }: { id: string; data: NodeData }) => (
   <div className="overflow-hidden rounded-md border border-blue-600 text-center dark:border-blue-600 dark:bg-blue-900">
     <AllHandles type="target" active={data.targetPosition} nodeId={id} />
-    <div className="flex items-center gap-2 rounded-t-md bg-blue-200 p-2 font-semibold dark:bg-blue-900">
+    <div className="flex items-center gap-2 bg-blue-200 p-2 font-semibold dark:bg-blue-900">
       <Database />
       {data.label}
     </div>
@@ -93,7 +97,7 @@ export const DatabaseNode = ({ id, data }: { id: string; data: NodeData }) => (
 
 export const PublicationNode = ({ id, data }: { id: string; data: NodeData }) => (
   <div className="overflow-hidden rounded-lg border border-purple-600 dark:bg-purple-950">
-    <div className="flex items-center gap-2 rounded-t-md bg-purple-200 p-2 font-semibold dark:bg-purple-900">
+    <div className="flex items-center gap-2 bg-purple-200 p-2 font-semibold dark:bg-purple-900">
       <Album />
       {data.label}
     </div>
