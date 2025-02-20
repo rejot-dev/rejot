@@ -1,6 +1,7 @@
 import { generateCode } from "@/codes/codes.ts";
 import type { SystemEntity, SystemRepository } from "./system-repository.ts";
 import type { CreateSystem } from "@rejot/api-interface-controller/system";
+import type { Publication } from "@rejot/api-interface-controller/publications";
 
 export type UpsertDataStoreServiceParams = {
   organizationId: string;
@@ -27,8 +28,11 @@ export type SystemOverviewResponse = {
 
   dataStores: {
     connectionSlug: string;
+    // Postgres publication
     publicationName: string;
     tables: string[];
+    // Rejot publications
+    publications: Publication[];
   }[];
 };
 
@@ -73,11 +77,7 @@ export class SystemService implements ISystemService {
         code: system.organization.code,
         name: system.organization.name,
       },
-      dataStores: system.dataStores.map((dataStore) => ({
-        connectionSlug: dataStore.connectionSlug,
-        publicationName: dataStore.publicationName,
-        tables: dataStore.tables,
-      })),
+      dataStores: system.dataStores,
     };
   }
 

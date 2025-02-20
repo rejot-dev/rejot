@@ -14,7 +14,7 @@ import type { SyncServiceStatus } from "../sync-service/sync-service.data";
 import { z } from "zod";
 import { useSelectedOrganizationCode as useSelectedOrganizationId } from "../clerk/clerk-meta.data";
 import { getConnectionTableSchemaChanges } from "@/data/connection/connection-health.data";
-
+import type { Publication } from "@rejot/api-interface-controller/publications";
 type SystemResponse = z.infer<
   (typeof systemGetApi.responses)[200]["content"]["application/json"]["schema"]
 >;
@@ -36,10 +36,12 @@ export type SystemOverview = {
   dataStores: {
     slug: string;
     type: ConnectionType;
+    // TODO: rename to something better?
     publication: {
       name: string;
       tables?: string[];
     };
+    publications: Publication[];
   }[];
 };
 
@@ -158,6 +160,7 @@ export async function getRealSystemOverview(
         name: ds.publicationName,
         tables: ds.tables,
       },
+      publications: ds.publications,
     })),
   };
 }

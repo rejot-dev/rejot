@@ -1,4 +1,5 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
+import { SchemaDefinition } from "../schemas.ts";
 
 export type ConnectionHealth = {
   status: "healthy" | "unhealthy";
@@ -61,17 +62,9 @@ export const ConnectionTablesResponseSchema = z
   )
   .openapi("ConnectionTablesResponse");
 
-export const ConnectionTableSchemaResponseSchema = z
-  .array(
-    z.object({
-      columnName: z.string(),
-      dataType: z.string(),
-      isNullable: z.boolean(),
-      columnDefault: z.string().nullable(),
-      tableSchema: z.string(),
-    }),
-  )
-  .openapi("ConnectionTableSchemaResponse");
+export const ConnectionTableSchemaResponseSchema = SchemaDefinition.openapi(
+  "ConnectionTableSchemaResponse",
+);
 
 export const ConnectionPublicationsResponseSchema = z
   .array(

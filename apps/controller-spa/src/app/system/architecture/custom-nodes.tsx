@@ -54,7 +54,7 @@ const DetailView = ({ detail }: { detail: ListDetail[] }) => (
         key={index}
         className="flex flex-row items-center justify-between p-2 font-mono text-sm odd:bg-white even:bg-gray-100 dark:even:bg-gray-700"
       >
-        <Link to={item.link}>{item.value}</Link>
+        {item.link ? <Link to={item.link}>{item.value}</Link> : item.value}
         <div className="ml-2 text-xs text-gray-500">{item.type}</div>
       </div>
     ))}

@@ -1,4 +1,5 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
+import { SchemaDefinition } from "./schemas";
 
 export const PublicationIdPathParamSchema = z
   .string()
@@ -16,7 +17,7 @@ export const PublicationSchema = z
   .object({
     name: z.string().min(1).max(255),
     version: z.string().min(1).max(10),
-    schema: z.record(z.any()).optional(),
+    schema: SchemaDefinition.optional(),
   })
   .openapi("Publication");
 
@@ -40,13 +41,18 @@ export const PublicationPostRequest = z
       description: "Slug of the associated connection",
       example: "my-connection",
     }),
-    schema: z
-      .record(z.any())
-      .optional()
-      .openapi({
-        description: "JSON schema of the publication",
-        example: { type: "object", properties: {} },
-      }),
+    schema: SchemaDefinition.openapi({
+      description: "Schema of the publication",
+      example: [
+        {
+          columnName: "id",
+          dataType: "integer",
+          isNullable: false,
+          columnDefault: null,
+          tableSchema: "public",
+        },
+      ],
+    }),
   })
   .openapi("NewPublication");
 
