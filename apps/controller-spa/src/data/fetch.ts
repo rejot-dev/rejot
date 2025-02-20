@@ -49,7 +49,7 @@ type RequestOptions<T extends SafeRouteConfig> = {
 
 export type ApiResult<T> =
   | { status: "success"; data: T; statusCode: number }
-  | { status: "error"; error: string; statusCode: number };
+  | { status: "error"; message: string; statusCode: number; code: string };
 
 function replacePathParams(path: string, params?: Record<string, string>): string {
   if (!params) return path;
@@ -85,9 +85,12 @@ export async function fetchRoute<TConfig extends SafeRouteConfig>(
     const statusCode = response.status;
 
     if (!response.ok) {
+      const data = await response.json();
+
       return {
         status: "error",
-        error: `HTTP error! status: ${statusCode}`,
+        message: data?.message ?? `Unknown error occurred. Status: ${statusCode}`,
+        code: data?.code ?? "UNKNOWN_ERROR",
         statusCode,
       };
     }
@@ -111,8 +114,41 @@ export async function fetchRoute<TConfig extends SafeRouteConfig>(
   } catch (error) {
     return {
       status: "error",
-      error: error instanceof Error ? error.message : "Unknown error occurred",
+      message: error instanceof Error ? error.message : "Unknown error occurred",
       statusCode: 500,
+      code: "UNKNOWN_ERROR",
     };
   }
+}
+
+export class FetchError extends Error {
+  #code: string;
+  #statusCode: number;
+
+  constructor(message: string, code: string, statusCode: number) {
+    super(message);
+    this.#code = code;
+    this.#statusCode = statusCode;
+  }
+
+  get code() {
+    return this.#code;
+  }
+
+  get statusCode() {
+    return this.#statusCode;
+  }
+}
+
+export async function fetchRouteThrowing<TConfig extends SafeRouteConfig>(
+  route: TConfig,
+  options?: RequestOptions<TConfig>,
+): Promise<ExtractResponseType<TConfig>> {
+  const result = await fetchRoute(route, options);
+
+  if (result.status === "error") {
+    throw new FetchError(result.message, result.code, result.statusCode);
+  }
+
+  return result.data;
 }

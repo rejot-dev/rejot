@@ -28,6 +28,7 @@ import { PostgresConnectionManager } from "./connection/postgres/postgres-connec
 import { SchemaService } from "./connection/schema-service.ts";
 import { SchemaRepository } from "./connection/schema-repository.ts";
 import { ConnectionTypeMultiplexer } from "./connection/connection-type-multiplexer.ts";
+import { ConnectionRawRoutes } from "./connection/connection-raw.routes.ts";
 
 export const appInjector = createInjectionContainer();
 
@@ -69,7 +70,8 @@ export function createInjectionContainer() {
     .provideClass("clerkRoutes", ClerkRoutes)
     .provideClass("systemRoutes", SystemRoutes)
     .provideClass("connectionRoutes", ConnectionRoutes)
-    .provideClass("connectionHealthRoutes", ConnectionHealthRoutes);
+    .provideClass("connectionHealthRoutes", ConnectionHealthRoutes)
+    .provideClass("connectionRawRoutes", ConnectionRawRoutes);
 
   // Force disposer to be loaded.
   appInjector.resolve("postgresDisposer");

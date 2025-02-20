@@ -1,20 +1,6 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
-import { SlugSchema } from "./generic/slug";
-
-const ConnectionPostgresConfig = z
-  .object({
-    type: z.enum(["postgres"]),
-    host: z.string(),
-    port: z.number(),
-    user: z.string(),
-    password: z.string(),
-    database: z.string(),
-  })
-  .openapi("ConnectionPostgresConfig");
-
-const ConnectionPostgresConfigWithoutPassword = ConnectionPostgresConfig.omit({
-  password: true,
-});
+import { SlugSchema } from "../generic/slug";
+import { ConnectionPostgresConfig, ConnectionPostgresConfigWithoutPassword } from "./connection";
 
 export const ConnectionResponse = z
   .object({

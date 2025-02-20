@@ -64,7 +64,7 @@ export function useSystem(organizationId: string, systemId: string) {
     queryFn: () => getSystem(organizationId, systemId),
     select: (result) => {
       if (result.status === "error") {
-        throw new Error(result.error);
+        throw new Error(result.message);
       }
       return result.data;
     },
@@ -100,7 +100,7 @@ export function useSystems(organizationId: string) {
     queryFn: () => getSystems(organizationId),
     select: (result) => {
       if (result.status === "error") {
-        throw new Error(result.error);
+        throw new Error(result.message);
       }
       return result.data;
     },
@@ -120,7 +120,7 @@ export function useCurrentOrganizationSystems() {
       const result = await getSystems(organizationId);
 
       if (result.status === "error") {
-        throw new Error(result.error);
+        throw new Error(result.message);
       }
 
       return result.data;
@@ -135,7 +135,7 @@ export async function getRealSystemOverview(
   const result = await getSystem(organizationId, slug);
 
   if (result.status === "error") {
-    throw new Error(result.error);
+    throw new Error(result.message);
   }
 
   const system = result.data;
@@ -213,7 +213,7 @@ export function useRecentSchemaChanges(
       );
 
       if (result.status === "error") {
-        throw new Error(result.error);
+        throw new Error(result.message);
       }
 
       return result.data;

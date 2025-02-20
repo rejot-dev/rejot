@@ -217,4 +217,41 @@ dbDescribe("ConnectionRepository tests", async (ctx) => {
     const connections = await connectionRepository.findByOrganization(organization.id);
     expect(connections).toEqual([]);
   });
+
+  test("create - should fail when creating connection with duplicate slug in same organization", async () => {
+    const organization = await createTestOrganization();
+    const connectionRepository = ctx.resolve("connectionRepository");
+
+    const config: PostgresConnectionConfig = {
+      type: "postgres",
+      host: "localhost",
+      port: 5432,
+      user: "test",
+      password: "test",
+      database: "test",
+    };
+
+    // Create first connection
+    await connectionRepository.create({
+      organizationId: organization.id,
+      slug: "duplicate-slug",
+      type: "postgres",
+      config,
+    });
+
+    // Attempt to create second connection with same slug
+    expect(
+      connectionRepository.create({
+        organizationId: organization.id,
+        slug: "duplicate-slug",
+        type: "postgres",
+        config,
+      }),
+    ).rejects.toMatchObject({
+      code: "CONNECTION_ALREADY_EXISTS",
+      context: expect.objectContaining({
+        slug: "duplicate-slug",
+      }),
+    });
+  });
 });

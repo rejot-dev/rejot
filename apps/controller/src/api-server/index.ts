@@ -14,6 +14,7 @@ import { BaseError } from "@/error/base-error.ts";
 import type { SystemRoutes } from "../system/system-routes.ts";
 import type { ConnectionRoutes } from "../connection/connection-routes.ts";
 import type { ConnectionHealthRoutes } from "../connection/connection-health.routes.ts";
+import type { ConnectionRawRoutes } from "@/connection/connection-raw.routes.ts";
 export class ApiServer {
   static inject = [
     "config",
@@ -23,6 +24,7 @@ export class ApiServer {
     "systemRoutes",
     "connectionRoutes",
     "connectionHealthRoutes",
+    "connectionRawRoutes",
   ] as const;
 
   #app;
@@ -35,6 +37,7 @@ export class ApiServer {
     systemRoutes: SystemRoutes,
     connectionRoutes: ConnectionRoutes,
     connectionHealthRoutes: ConnectionHealthRoutes,
+    connectionRawRoutes: ConnectionRawRoutes,
   ) {
     this.#app = new OpenAPIHono()
       .doc("api", {
@@ -66,6 +69,7 @@ export class ApiServer {
       .route("/", clerkRoutes.routes)
       .route("/", connectionRoutes.routes)
       .route("/", connectionHealthRoutes.routes)
+      .route("/", connectionRawRoutes.routes)
       .onError((err, c) => {
         if (err instanceof BaseError) {
           console.error({
@@ -76,7 +80,7 @@ export class ApiServer {
           });
 
           // @ts-expect-error we might give a wrong http status code.
-          return c.json({ message: err.message }, err.httpStatus);
+          return c.json({ message: err.message, code: err.code }, err.httpStatus);
         }
 
         console.error(err);

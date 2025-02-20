@@ -102,7 +102,7 @@ export function DataStoreNew() {
         tables: [],
       });
       if (result.status === "error") {
-        throw new Error(result.error);
+        throw new Error(result.message);
       }
       toast({
         title: "Success",

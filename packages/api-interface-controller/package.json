@@ -10,8 +10,8 @@
     "./person": "./person.api.ts",
     "./clerk": "./clerk.api.ts",
     "./system": "./system.api.ts",
-    "./connection": "./connection.api.ts",
-    "./connection-health": "./connection-health.api.ts"
+    "./connection": "./connection/index.ts",
+    "./connection-health": "./connection/connection-health.api.ts"
   },
   "private": true,
   "type": "module",

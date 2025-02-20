@@ -48,42 +48,56 @@ export class ConnectionRepository implements IConnectionRepository {
     type: "postgres";
     config: PostgresConnectionConfig;
   }) {
-    const [connection] = await this.#db.transaction(async (tx) => {
-      const [connection] = await tx
-        .insert(schema.connection)
-        .values({
-          organizationId: params.organizationId,
-          slug: params.slug,
-          type: params.type,
-        })
-        .returning({
-          id: schema.connection.id,
-          organizationId: schema.connection.organizationId,
-          slug: schema.connection.slug,
-          type: schema.connection.type,
+    const [connection] = await this.#db
+      .transaction(async (tx) => {
+        const [connection] = await tx
+          .insert(schema.connection)
+          .values({
+            organizationId: params.organizationId,
+            slug: params.slug,
+            type: params.type,
+          })
+          .returning({
+            id: schema.connection.id,
+            organizationId: schema.connection.organizationId,
+            slug: schema.connection.slug,
+            type: schema.connection.type,
+          });
+
+        if (!connection || connection.type !== "postgres") {
+          throw new ConnectionError({
+            ...ConnectionErrors.INVALID_TYPE,
+            context: { type: connection?.type ?? "undefined" },
+          });
+        }
+
+        await tx.insert(schema.connectionPostgres).values({
+          connectionId: connection.id,
+          ...params.config,
         });
 
-      if (!connection || connection.type !== "postgres") {
-        throw new ConnectionError({
-          ...ConnectionErrors.INVALID_TYPE,
-          context: { type: connection?.type ?? "undefined" },
-        });
-      }
+        return [
+          {
+            id: connection.id,
+            organizationId: connection.organizationId,
+            slug: connection.slug,
+            type: connection.type as "postgres",
+          },
+        ];
+      })
+      .catch((err) => {
+        if (
+          err instanceof Error &&
+          err.message.includes("duplicate key value violates unique constraint")
+        ) {
+          throw new ConnectionError({
+            ...ConnectionErrors.ALREADY_EXISTS,
+            context: { slug: params.slug },
+          });
+        }
 
-      await tx.insert(schema.connectionPostgres).values({
-        connectionId: connection.id,
-        ...params.config,
+        throw err;
       });
-
-      return [
-        {
-          id: connection.id,
-          organizationId: connection.organizationId,
-          slug: connection.slug,
-          type: connection.type as "postgres",
-        },
-      ];
-    });
 
     return connection;
   }

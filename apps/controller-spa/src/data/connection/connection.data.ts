@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { type ApiResult, fetchRoute } from "../fetch";
+import { type ApiResult, fetchRoute, fetchRouteThrowing } from "../fetch";
 import {
   connectionCreateApi,
   ConnectionCreateRequest,
@@ -25,7 +25,7 @@ export function useConnections(organizationId: string) {
     queryFn: () => getConnections(organizationId),
     select: (result) => {
       if (result.status === "error") {
-        throw new Error(result.error);
+        throw new Error(result.message);
       }
       return result.data;
     },
@@ -36,8 +36,8 @@ export function useConnections(organizationId: string) {
 export function createConnection(
   organizationId: string,
   data: z.infer<typeof ConnectionCreateRequest>,
-): Promise<ApiResult<ConnectionCreateResponse>> {
-  return fetchRoute(connectionCreateApi, {
+): Promise<ConnectionCreateResponse> {
+  return fetchRouteThrowing(connectionCreateApi, {
     params: { organizationId },
     body: data,
   });

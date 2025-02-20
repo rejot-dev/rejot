@@ -11,17 +11,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import type { ComponentPropsWithoutRef } from "react";
+import { ConnectionPostgresForm } from "./connection-types";
 
-const formSchema = z.object({
-  slug: z.string().min(1, "Name is required"),
-  host: z.string().min(1, "Host is required"),
-  port: z.coerce.number().min(1, "Port is required"),
-  database: z.string().min(1, "Database name is required"),
-  user: z.string().min(1, "Username is required"),
-  password: z.string(),
-});
-
-export type ConnectionNewPostgresFormData = z.infer<typeof formSchema>;
+export type ConnectionNewPostgresFormData = z.infer<typeof ConnectionPostgresForm>;
 
 type FormProps = Omit<ComponentPropsWithoutRef<"form">, "onSubmit">;
 
@@ -41,8 +33,9 @@ export function ConnectionNewPostgresForm({
   ...props
 }: ConnectionNewPostgresFormProps) {
   const form = useForm<ConnectionNewPostgresFormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(ConnectionPostgresForm),
     defaultValues: {
+      type: "postgres",
       slug: "",
       host: "",
       port: 5432,

@@ -34,7 +34,7 @@ export function useCurrentClerkUser() {
     queryFn: getCurrentClerkUser,
     select: (result) => {
       if (result.status === "error") {
-        throw new Error(result.error);
+        throw new Error(result.message);
       }
       return result.data;
     },

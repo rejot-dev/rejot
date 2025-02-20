@@ -28,7 +28,7 @@ export function useConnectionHealth(organizationId: string, connectionSlug: stri
     queryFn: () => getConnectionHealth(organizationId, connectionSlug),
     select: (result) => {
       if (result.status === "error") {
-        throw new Error(result.error);
+        throw new Error(result.message);
       }
       return result.data;
     },
@@ -50,7 +50,7 @@ export function useConnectionTables(organizationId: string, connectionSlug: stri
     queryFn: () => getConnectionTables(organizationId, connectionSlug),
     select: (result) => {
       if (result.status === "error") {
-        throw new Error(result.error);
+        throw new Error(result.message);
       }
       return result.data;
     },
@@ -77,7 +77,7 @@ export function useConnectionTableSchema(
     queryFn: () => getConnectionTableSchema(organizationId, connectionSlug, tableName),
     select: (result) => {
       if (result.status === "error") {
-        throw new Error(result.error);
+        throw new Error(result.message);
       }
       return result.data;
     },
@@ -99,7 +99,7 @@ export function useConnectionPublications(organizationId: string, connectionSlug
     queryFn: () => getConnectionPublications(organizationId, connectionSlug),
     select: (result) => {
       if (result.status === "error") {
-        throw new Error(result.error);
+        throw new Error(result.message);
       }
       return result.data;
     },
