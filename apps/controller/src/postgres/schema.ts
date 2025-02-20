@@ -53,16 +53,20 @@ export const apiKey = pgTable("api_key", {
   createdAt: timestamp().notNull().defaultNow(),
 });
 
-export const system = pgTable("system", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  code: varchar({ length: 30 }).notNull().unique(),
-  slug: varchar({ length: 255 }).notNull(),
-  organizationId: integer()
-    .references(() => organization.id)
-    .notNull(),
-  name: varchar({ length: 255 }).notNull(),
-  createdAt: timestamp().notNull().defaultNow(),
-});
+export const system = pgTable(
+  "system",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    code: varchar({ length: 30 }).notNull().unique(),
+    slug: varchar({ length: 255 }).notNull(),
+    organizationId: integer()
+      .references(() => organization.id)
+      .notNull(),
+    name: varchar({ length: 255 }).notNull(),
+    createdAt: timestamp().notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.organizationId, t.slug)],
+);
 
 export const syncServiceStatus = pgEnum("sync_service_status", ["onboarding", "active", "paused"]);
 

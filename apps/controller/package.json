@@ -11,6 +11,7 @@
     "dev:otel": "cross-env OTEL_SERVICE_NAME=controller OTEL_EXPORTER_OTLP_PROTOCOL=http/json OTEL_DENO=true nodemon src/index.ts",
     "db:push": "drizzle-kit push",
     "db:push-test": "cross-env REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json drizzle-kit push",
+    "db:migrate": "drizzle-kit migrate",
     "db:seed": "bun run ./seed.ts",
     "db:seed-test": "cross-env REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json bun run ./seed.ts",
     "db:dangerous-reset": "bun run ./seed.ts --reset"
