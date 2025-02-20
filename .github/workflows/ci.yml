@@ -180,6 +180,22 @@ jobs:
         working-directory: apps/controller
         run: bunx drizzle-kit --config=_ci/ci-test-drizzle.config.ts migrate
 
+      - name: Generate and check for unstaged migrations
+        working-directory: apps/controller
+        run: |
+          bunx drizzle-kit --config=_ci/ci-test-drizzle.config.ts generate
+          if ! git diff --quiet drizzle/; then
+            echo "Error: Found unstaged migration files in apps/controller/drizzle"
+            echo "New/modified migration files:"
+            git status drizzle/
+            echo "Contents of modified SQL files:"
+            (git ls-files -m drizzle/ && git ls-files --others --exclude-standard drizzle/) | grep '\.sql$' | while read file; do
+              echo -e "\n=== $file ===\n"
+              cat "$file"
+            done
+            exit 1
+          fi
+
       - name: Run database tests
         working-directory: apps/controller
         env:
