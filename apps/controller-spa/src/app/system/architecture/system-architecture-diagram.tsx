@@ -32,6 +32,9 @@ import { systemOverviewToArchitectureNode } from "./process-architecture.ts";
 
 // Configuration
 import { generateNodesAndEdges } from "./process-architecture.ts";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button.tsx";
+import { NavLink } from "react-router";
 const SIMULATION_TICKS = 0;
 
 // Define a custom type that extends SimulationNodeDatum with our required properties
@@ -186,6 +189,12 @@ export function LayoutFlow({
     >
       <Panel position="top-left">
         <h2 className="text-2xl font-bold">{systemOverview.name}</h2>
+      </Panel>
+      <Panel position="top-right">
+        <Button>
+          <Plus />
+          <NavLink to={`/systems/${systemOverview.slug}/data-stores/new`}>Add Data Store</NavLink>
+        </Button>
       </Panel>
     </ReactFlow>
   );
