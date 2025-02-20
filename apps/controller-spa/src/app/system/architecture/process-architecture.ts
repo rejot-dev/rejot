@@ -43,18 +43,28 @@ export const systemOverviewToArchitectureNode = (system: SystemOverview): Archit
     label: syncService.slug,
     detail: [{ value: syncService.status, type: "status" }],
     children: system.dataStores.map((store) => {
+      const tableDetails =
+        store.publication.tables?.map((table) => ({
+          value: table,
+          type: "source table",
+          link: `/connections/${store.slug}/tables/public.${table}`,
+        })) ?? [];
+
+      if (tableDetails.length === 0) {
+        tableDetails.push({
+          value: "all tables",
+          type: "source table",
+          link: `/connections/${store.slug}`,
+        });
+      }
+
       const databaseNode: ArchitectureNode = {
         id: store.slug,
         type: "database",
         label: store.slug,
         detail: [
           { value: store.type, type: "driver", link: `/connections/${store.slug}` },
-          ...(store.publication.tables?.map((table) => ({
-            value: table,
-            type: "source table",
-            // TODO: non public schemas?
-            link: `/connections/${store.slug}/tables/public.${table}`,
-          })) ?? []),
+          ...tableDetails,
         ],
       };
 

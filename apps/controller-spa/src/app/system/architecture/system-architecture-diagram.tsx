@@ -35,7 +35,7 @@ import { generateNodesAndEdges } from "./process-architecture.ts";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { NavLink } from "react-router";
-const SIMULATION_TICKS = 0;
+const SIMULATION_TICKS = 30;
 
 // Define a custom type that extends SimulationNodeDatum with our required properties
 interface SimNode extends SimulationNodeDatum {
