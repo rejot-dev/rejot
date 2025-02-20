@@ -15,6 +15,8 @@ import type { SystemRoutes } from "../system/system-routes.ts";
 import type { ConnectionRoutes } from "../connection/connection-routes.ts";
 import type { ConnectionHealthRoutes } from "../connection/connection-health.routes.ts";
 import type { ConnectionRawRoutes } from "@/connection/connection-raw.routes.ts";
+import type { PublicationRoutes } from "../publication/publication-routes.ts";
+
 export class ApiServer {
   static inject = [
     "config",
@@ -25,6 +27,7 @@ export class ApiServer {
     "connectionRoutes",
     "connectionHealthRoutes",
     "connectionRawRoutes",
+    "publicationRoutes",
   ] as const;
 
   #app;
@@ -38,6 +41,7 @@ export class ApiServer {
     connectionRoutes: ConnectionRoutes,
     connectionHealthRoutes: ConnectionHealthRoutes,
     connectionRawRoutes: ConnectionRawRoutes,
+    publicationRoutes: PublicationRoutes,
   ) {
     this.#app = new OpenAPIHono()
       .doc("api", {
@@ -70,6 +74,7 @@ export class ApiServer {
       .route("/", connectionRoutes.routes)
       .route("/", connectionHealthRoutes.routes)
       .route("/", connectionRawRoutes.routes)
+      .route("/", publicationRoutes.routes)
       .onError((err, c) => {
         if (err instanceof BaseError) {
           console.error({
