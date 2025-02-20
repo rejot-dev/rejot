@@ -1,12 +1,23 @@
 import { integer, jsonb, pgEnum, pgTable, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
-export const publication = pgTable("publication", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar({ length: 255 }).notNull(),
-  createdAt: timestamp().notNull().defaultNow(),
-  version: varchar({ length: 10 }).notNull(),
-  schema: jsonb(),
-});
+export const publication = pgTable(
+  "publication",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    organizationId: integer()
+      .references(() => organization.id)
+      .notNull(),
+    name: varchar({ length: 255 }).notNull(),
+    createdAt: timestamp().notNull().defaultNow(),
+    dataStoreId: integer()
+      .references(() => dataStore.id)
+      .notNull(),
+    version: varchar({ length: 10 }).notNull(),
+    slug: varchar({ length: 255 }).notNull(),
+    schema: jsonb(),
+  },
+  (t) => [unique().on(t.id, t.organizationId, t.dataStoreId, t.version, t.slug)],
+);
 
 export const organization = pgTable("organization", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),

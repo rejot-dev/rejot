@@ -1,39 +1,49 @@
 import type { Counter } from "@opentelemetry/api";
-import type { PublicationStore } from "./publication-store.ts";
-import type { NewPublication } from "./publication.ts";
 import { metrics } from "@opentelemetry/api";
+import type { CreatePublication } from "./publication-repository.ts";
+import type { PublicationEntity } from "./publication-repository.ts";
+import type { IPublicationRepository } from "./publication-repository.ts";
 
-export class PublicationService {
-  static inject = ["publicationStore"] as const;
+export interface IPublicationService {
+  createPublication(
+    organizationId: string,
+    publication: CreatePublication,
+  ): Promise<PublicationEntity>;
+  getPublicationBySlug(organizationId: string, publicationSlug: string): Promise<PublicationEntity>;
+  getPublicationsByOrganizationId(organizationId: string): Promise<PublicationEntity[]>;
+}
 
-  #publicationStore: PublicationStore;
+export class PublicationService implements IPublicationService {
+  static inject = ["publicationRepository"] as const;
 
-  // Metrics
+  #publicationRepository: IPublicationRepository;
   #createdCounter: Counter;
 
-  constructor(publicationStore: PublicationStore) {
-    this.#publicationStore = publicationStore;
+  constructor(publicationRepository: IPublicationRepository) {
+    this.#publicationRepository = publicationRepository;
 
     // Metric Initialization
     const meter = metrics.getMeter("publication.service");
     this.#createdCounter = meter.createCounter("publications_created");
   }
 
-  getPublicationById(id: string) {
-    return this.#publicationStore.getPublicationById(id);
+  async createPublication(
+    organizationId: string,
+    publication: CreatePublication,
+  ): Promise<PublicationEntity> {
+    const created = await this.#publicationRepository.create(organizationId, publication);
+    this.#createdCounter.add(1);
+    return created;
   }
 
-  getPublicationByName(name: string) {
-    return this.#publicationStore.getPublicationByName(name);
+  async getPublicationBySlug(
+    organizationId: string,
+    publicationSlug: string,
+  ): Promise<PublicationEntity> {
+    return this.#publicationRepository.get(organizationId, publicationSlug);
   }
 
-  createPublication(publication: NewPublication) {
-    const created = this.#publicationStore.createPublication(publication);
-    return created.then((publication) => {
-      if (publication.success) {
-        this.#createdCounter.add(1);
-      }
-      return publication;
-    });
+  async getPublicationsByOrganizationId(organizationId: string): Promise<PublicationEntity[]> {
+    return this.#publicationRepository.getPublicationsByOrganizationId(organizationId);
   }
 }

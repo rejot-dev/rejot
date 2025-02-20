@@ -11,7 +11,8 @@
     "./clerk": "./clerk.api.ts",
     "./system": "./system.api.ts",
     "./connection": "./connection/index.ts",
-    "./connection-health": "./connection/connection-health.api.ts"
+    "./connection-health": "./connection/connection-health.api.ts",
+    "./publications": "./publications.api.ts"
   },
   "private": true,
   "type": "module",
