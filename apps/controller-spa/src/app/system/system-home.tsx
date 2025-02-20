@@ -11,7 +11,6 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSystemOverview } from "@/data/system/system.data";
 import { NavLink, useParams } from "react-router";
-import { Button } from "@/components/ui/button";
 
 export function SystemHome() {
   const { systemSlug } = useParams();
@@ -74,17 +73,6 @@ export function SystemHome() {
               disableSimulation={false}
             />
           }
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-6 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="mb-2 text-3xl font-bold tracking-tight">Data Stores</h3>
-          </div>
-          <Button asChild>
-            <NavLink to={`/systems/${systemSlug}/data-stores/new`}>Add Data Store</NavLink>
-          </Button>
         </div>
       </div>
     </>
