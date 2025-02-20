@@ -4,6 +4,10 @@ import { schema } from "@/postgres/schema.ts";
 import { and, eq, sql } from "drizzle-orm";
 import { SystemError, SystemErrors } from "./system.error.ts";
 import type { IConnectionManager } from "@/connection/connection-manager.ts";
+import type { Publication } from "@rejot/api-interface-controller/publications";
+
+import { SchemaDefinition } from "../../../../packages/api-interface-controller/schemas.ts";
+import { PublicationError, PublicationErrors } from "@/publication/publication.error.ts";
 
 export type CreateSystemEntity = {
   code: string;
@@ -40,6 +44,7 @@ export type SystemOverview = {
     connectionSlug: string;
     publicationName: string;
     tables: string[];
+    publications: Publication[];
   }[];
 };
 
@@ -71,7 +76,7 @@ export interface ISystemRepository {
   getSystemBySlug(params: GetSystemBySlugParams): Promise<GetSystemBySlugResult>;
   upsertDataStore(params: UpsertDataStoreParams): Promise<UpsertDataStoreResult>;
   create(orgCode: string, system: CreateSystemEntity): Promise<SystemEntity>;
-  get(organizationCode: string, systemSlug: string): Promise<SystemEntity>;
+  get(organizationCode: string, systemSlug: string): Promise<SystemOverview>;
   getSystems(organizationCode: string): Promise<SystemEntity[]>;
   findById(id: number): Promise<SystemEntity | undefined>;
 }
@@ -188,7 +193,8 @@ export class SystemRepository implements ISystemRepository {
         ),
       )
       .leftJoin(schema.dataStore, eq(schema.dataStore.systemId, schema.system.id))
-      .leftJoin(schema.connection, eq(schema.dataStore.connectionId, schema.connection.id));
+      .leftJoin(schema.connection, eq(schema.dataStore.connectionId, schema.connection.id))
+      .leftJoin(schema.publication, eq(schema.dataStore.id, schema.publication.dataStoreId));
 
     if (res.length === 0) {
       throw new SystemError({
@@ -196,6 +202,51 @@ export class SystemRepository implements ISystemRepository {
         context: { systemSlug, organizationCode },
       });
     }
+
+    // Group results by data store
+    const dataStoreMap = new Map<
+      number,
+      {
+        connectionSlug: string;
+        publicationName: string;
+        tables: string[];
+        publications: Publication[];
+      }
+    >();
+
+    res.forEach(({ data_store, connection, publication }) => {
+      if (!data_store || !connection) {
+        return;
+      }
+
+      if (!dataStoreMap.has(data_store.id)) {
+        dataStoreMap.set(data_store.id, {
+          connectionSlug: connection.slug,
+          publicationName: data_store.publicationName ?? "",
+          tables: data_store.publicationTables ?? [],
+          publications: [],
+        });
+      }
+
+      if (publication) {
+        const parsedSchema = SchemaDefinition.safeParse(publication.schema);
+
+        if (!parsedSchema.success) {
+          throw new PublicationError(PublicationErrors.INVALID_SCHEMA).withContext({
+            organizationId: organizationCode,
+            publicationSlug: publication.slug,
+            schemaError: parsedSchema.error,
+          });
+        }
+
+        const dataStore = dataStoreMap.get(data_store.id)!;
+        dataStore.publications.push({
+          name: publication.name,
+          version: publication.version,
+          schema: parsedSchema.data,
+        });
+      }
+    });
 
     const { system, organization } = res[0];
 
@@ -209,19 +260,7 @@ export class SystemRepository implements ISystemRepository {
         code: organization.code,
         name: organization.name,
       },
-      dataStores: res.flatMap(({ data_store, connection }) => {
-        if (!data_store || !connection) {
-          return [];
-        }
-
-        return [
-          {
-            connectionSlug: connection.slug,
-            publicationName: data_store.publicationName ?? "",
-            tables: data_store.publicationTables ?? [],
-          },
-        ];
-      }),
+      dataStores: Array.from(dataStoreMap.values()),
     };
   }
 

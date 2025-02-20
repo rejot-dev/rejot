@@ -49,9 +49,9 @@ export function createInjectionContainer() {
     .provideClass("clerkRepository", ClerkRepository)
     .provideClass("personRepository", PersonRepository)
     .provideClass("postgresConnectionManager", PostgresConnectionManager)
+    .provideClass("publicationRepository", PublicationRepository)
     .provideClass("systemRepository", SystemRepository)
     .provideClass("schemaRepository", SchemaRepository)
-    .provideClass("publicationRepository", PublicationRepository)
     // API Clients
     .provideClass("clerkApiClient", ClerkApiClient)
     .provideClass("connectionTypeMultiplexer", ConnectionTypeMultiplexer)

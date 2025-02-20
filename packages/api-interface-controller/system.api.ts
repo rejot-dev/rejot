@@ -1,5 +1,6 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
 import { SlugSchema, ZodErrorSchema } from "@rejot/api-interface-controller/generic";
+import { PublicationSchema } from "./publications.api";
 
 export const SystemResponse = z
   .object({
@@ -15,6 +16,7 @@ export const SystemResponse = z
         connectionSlug: z.string(),
         publicationName: z.string(),
         tables: z.array(z.string()),
+        publications: z.array(PublicationSchema),
       }),
     ),
   })

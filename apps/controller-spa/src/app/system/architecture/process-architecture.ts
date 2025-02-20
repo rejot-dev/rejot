@@ -22,7 +22,7 @@ export const ARCHITECTURE_CONFIG = {
 export type ListDetail = {
   value: string;
   type: string;
-  link: string;
+  link?: string;
 };
 
 export type ArchitectureNode = {
@@ -46,24 +46,28 @@ export const systemOverviewToArchitectureNode = (system: SystemOverview): Archit
         id: store.slug,
         type: "database",
         label: store.slug,
-        detail: [{ value: store.type, type: "driver", link: `/connections/${store.slug}` }],
+        detail: [
+          { value: store.type, type: "driver", link: `/connections/${store.slug}` },
+          ...(store.publication.tables?.map((table) => ({
+            value: table,
+            type: "source table",
+            // TODO: non public schemas?
+            link: `/connections/${store.slug}/tables/public.${table}`,
+          })) ?? []),
+        ],
       };
 
       // If the store has publications, add them as children
       if (store.publication.tables?.length) {
-        databaseNode.children = [
-          {
-            id: `${store.slug}-${store.publication.name}`,
-            type: "publication",
-            label: store.publication.name,
-            // TODO: allow non-public table schema?
-            detail: store.publication.tables.map((table) => ({
-              value: table,
-              type: "table",
-              link: `/connections/${store.slug}/tables/public.${table}`,
-            })),
-          },
-        ];
+        databaseNode.children = store.publications.map((publication) => ({
+          id: `${store.slug}-${publication.name}`,
+          type: "publication",
+          label: publication.name,
+          detail: publication.schema?.map((schema) => ({
+            value: schema.columnName,
+            type: schema.dataType,
+          })),
+        }));
       }
 
       return databaseNode;
