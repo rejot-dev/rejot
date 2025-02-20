@@ -109,16 +109,16 @@ export class PublicationRepository implements IPublicationRepository {
           .from(schema.organization)
           .where(eq(schema.organization.code, organizationId)),
       );
-          slug: schema.publication.slug,
-          version: schema.publication.version,
-          createdAt: schema.publication.createdAt,
-          schema: schema.publication.schema,
-          dataStoreId: schema.publication.dataStoreId,
-        });
 
-      if (result.length === 0) {
-        throw new PublicationError(PublicationErrors.CREATION_FAILED);
-      }
+    const dataStore = this.#db
+      .$with("ds")
+      .as(
+        this.#db
+          .select({ id: schema.dataStore.id })
+          .from(schema.dataStore)
+          .innerJoin(schema.connection, eq(schema.dataStore.connectionId, schema.connection.id))
+          .where(eq(schema.connection.slug, publication.connectionSlug)),
+      );
 
     // Insert the publication with organizationId
     const result = await this.#db
