@@ -185,7 +185,7 @@ export function LayoutFlow({
       fitView
     >
       <Panel position="top-left">
-        <h3>{systemOverview.name}</h3>
+        <h2 className="text-2xl font-bold">{systemOverview.name}</h2>
       </Panel>
     </ReactFlow>
   );
