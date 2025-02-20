@@ -222,7 +222,7 @@ export class SystemRepository implements ISystemRepository {
       if (!dataStoreMap.has(data_store.id)) {
         dataStoreMap.set(data_store.id, {
           connectionSlug: connection.slug,
-          publicationName: data_store.publicationName ?? "",
+          publicationName: data_store.publicationName,
           tables: data_store.publicationTables ?? [],
           publications: [],
         });
@@ -465,7 +465,7 @@ export class SystemRepository implements ISystemRepository {
       return {
         id: dataStore.id,
         connectionId: dataStore.connectionId,
-        publicationName: dataStore.publicationName ?? "",
+        publicationName: dataStore.publicationName,
         publicationTables: dataStore.publicationTables ?? [],
       };
     });

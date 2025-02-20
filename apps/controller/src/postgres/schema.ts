@@ -133,7 +133,7 @@ export const dataStore = pgTable(
     systemId: integer()
       .references(() => system.id)
       .notNull(),
-    publicationName: varchar({ length: 255 }),
+    publicationName: varchar({ length: 255 }).notNull(),
     publicationTables: varchar({ length: 255 }).array(),
     example: varchar({ length: 255 }),
   },
