@@ -16,8 +16,10 @@ RUN bun install --filter ./apps/controller --production --no-progress
 
 FROM base AS release
 WORKDIR /opt
+USER bun
+
 COPY --from=install /install/node_modules /opt/node_modules 
 COPY . /opt
+COPY entrypoint.sh /entrypoint.sh
 
-USER bun
-ENTRYPOINT [ "bun", "run", "apps/controller/src/index.ts" ]
+ENTRYPOINT [ "/entrypoint.sh" ]
