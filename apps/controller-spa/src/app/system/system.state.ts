@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { useEffect } from "react";
 import { useLocation } from "react-router";
+import { patchClerkMetadata, useDefaultSystemSlug } from "@/data/clerk/clerk-meta.data";
 
 interface SystemState {
   selectedSystemSlug: string | null;
@@ -14,6 +15,8 @@ const useSystemStore = create<SystemState>((set) => ({
 
 export const useSelectedSystemSlug = () => {
   const location = useLocation();
+  const defaultSystemSlug = useDefaultSystemSlug();
+  const selectedSystemSlug = useSystemStore((state) => state.selectedSystemSlug);
 
   useEffect(() => {
     const match = location.pathname.match(/\/systems\/([^/]+)/);
@@ -23,10 +26,34 @@ export const useSelectedSystemSlug = () => {
         useSystemStore.getState().setSelectedSystemSlug(systemSlug);
       }
     }
-  }, [location]);
+  }, [location, selectedSystemSlug, defaultSystemSlug]);
 
-  return useSystemStore((state) => state.selectedSystemSlug);
+  if (selectedSystemSlug) {
+    return selectedSystemSlug;
+  }
+
+  if (defaultSystemSlug) {
+    useSystemStore.getState().setSelectedSystemSlug(defaultSystemSlug);
+    return defaultSystemSlug;
+  }
+
+  return defaultSystemSlug ?? null;
+
+  // return useSystemStore((state) => state.selectedSystemSlug);
 };
 
-export const setSelectedSystemSlug = (slug: string) =>
-  useSystemStore.getState().setSelectedSystemSlug(slug);
+export const setSelectedSystemSlug = (slug: string) => {
+  const state = useSystemStore.getState();
+
+  if (state.selectedSystemSlug === slug) {
+    return;
+  }
+
+  state.setSelectedSystemSlug(slug);
+
+  patchClerkMetadata({
+    defaultSystemSlug: slug,
+  }).catch((error) => {
+    console.error("Failed to set default system slug", error);
+  });
+};

@@ -4,6 +4,7 @@ import {
   clerkGetApi,
   createSelfUserClerkPostApi,
   replaceUserMetadataClerkPutApi,
+  patchUserMetadataClerkPatchApi,
 } from "@rejot/api-interface-controller/clerk";
 import type { AuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 import type { IClerkPersonService } from "./clerk-person-service.ts";
@@ -75,6 +76,37 @@ export class ClerkRoutes {
           await clerkApiClient.setUserPublicMetadata(clerkUserId, metadata);
 
           return c.json(metadata, 200);
+        },
+      )
+      .openapi(
+        createRoute({
+          ...patchUserMetadataClerkPatchApi,
+          middleware: [authenticationMiddleware.requireLogin()] as const,
+        }),
+        async (c) => {
+          const clerkUserId = c.get("clerkUserId");
+          const partialMetadata = c.req.valid("json");
+
+          // Only validate organization access if those fields are being updated
+          const organizationsToValidate: string[] = [
+            ...(partialMetadata.organizationIds ?? []),
+            ...(partialMetadata.selectedOrganizationId
+              ? [partialMetadata.selectedOrganizationId]
+              : []),
+          ];
+
+          if (organizationsToValidate.length > 0) {
+            await authenticationMiddleware.requireOrganizationsAccess(
+              clerkUserId,
+              organizationsToValidate,
+            );
+          }
+
+          await clerkApiClient.mergeUserPublicMetadata(clerkUserId, partialMetadata);
+
+          // Return the full updated metadata
+          const publicMetadata = await clerkApiClient.getUserPublicMetadata(clerkUserId);
+          return c.json(publicMetadata, 200);
         },
       );
   }

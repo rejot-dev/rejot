@@ -40,6 +40,11 @@ export class BaseError<
     this.context = context;
     return this;
   }
+
+  withCause(cause: unknown): BaseError<TCode, TContext> {
+    this.cause = cause;
+    return this;
+  }
 }
 
 /**

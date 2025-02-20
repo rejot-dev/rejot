@@ -7,13 +7,18 @@ import {
 } from "@rejot/api-interface-controller/system";
 import type { ISystemService } from "./system-service.ts";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
+import type { IClerkApiClient } from "@/clerk/clerk.api-client.ts";
 
 export class SystemRoutes {
-  static inject = ["systemService", "authenticationMiddleware"] as const;
+  static inject = ["systemService", "authenticationMiddleware", "clerkApiClient"] as const;
 
   #routes;
 
-  constructor(systemService: ISystemService, authenticationMiddleware: IAuthenticationMiddleware) {
+  constructor(
+    systemService: ISystemService,
+    authenticationMiddleware: IAuthenticationMiddleware,
+    clerkApiClient: IClerkApiClient,
+  ) {
     this.#routes = new OpenAPIHono()
       .openapi(
         createRoute({
@@ -40,6 +45,16 @@ export class SystemRoutes {
 
           const newSystem = c.req.valid("json");
           const system = await systemService.createSystem(organizationId, newSystem);
+
+          clerkApiClient
+            .mergeUserPublicMetadata(clerkUserId, {
+              defaultSystemSlug: system.code,
+            })
+            .catch((e) => {
+              // TODO: Observability for this.
+              console.log("Clerk threw an error, but we can ignore it.", e);
+            });
+
           return c.json(system, 201);
         },
       )
@@ -54,6 +69,7 @@ export class SystemRoutes {
           await authenticationMiddleware.requireOrganizationAccess(clerkUserId, organizationId);
 
           const systems = await systemService.getSystems(organizationId);
+
           return c.json(systems);
         },
       )

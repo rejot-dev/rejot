@@ -22,6 +22,7 @@ export const ClerkMetadataRequest = z
     organizationIds: z.array(z.string()),
     selectedOrganizationId: z.string(),
     finishedOnboarding: z.boolean(),
+    defaultSystemSlug: z.string().optional(),
   })
   .strict()
   .openapi("ClerkMetadataRequest");
@@ -31,6 +32,7 @@ export const ClerkUserMetadata = z
     organizationIds: z.array(z.string()),
     selectedOrganizationId: z.string().optional(),
     finishedOnboarding: z.boolean(),
+    defaultSystemSlug: z.string().optional(),
   })
   .strict()
   .openapi("ClerkUserMetadata");
@@ -120,4 +122,36 @@ export const replaceUserMetadataClerkPutApi = {
   },
   tags: ["clerk"],
   description: "Update clerk user metadata",
+} satisfies RouteConfig;
+
+export const patchUserMetadataClerkPatchApi = {
+  method: "patch",
+  path: "/clerk/metadata",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: ClerkMetadataRequest.partial(),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: ClerkUserMetadata,
+        },
+      },
+      description: "Clerk user metadata patched successfully",
+    },
+    404: {
+      description: "Clerk user not found",
+    },
+    500: {
+      description: "Internal server error",
+    },
+  },
+  tags: ["clerk"],
+  description: "Partially update clerk user metadata",
 } satisfies RouteConfig;

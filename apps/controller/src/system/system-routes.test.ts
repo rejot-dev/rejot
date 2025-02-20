@@ -9,6 +9,9 @@ import type { SystemEntity } from "./system-repository.ts";
 import { MockAuthenticationMiddleware } from "@/_test/mock-authentication.middleware.ts";
 import type { CreateSystem } from "@rejot/api-interface-controller/system";
 import type { SystemOverviewResponse } from "./system-service.ts";
+import type { ClerkUserMetadata, IClerkApiClient } from "@/clerk/clerk.api-client.ts";
+import { ClerkErrors } from "@/clerk/clerk.error.ts";
+import { ClerkError } from "@/clerk/clerk.error.ts";
 
 class MockSystemService implements ISystemService {
   createSystem(organizationCode: string, { name, slug }: CreateSystem): Promise<SystemEntity> {
@@ -62,10 +65,31 @@ class MockSystemService implements ISystemService {
   }
 }
 
+class MockClerkApiClient implements IClerkApiClient {
+  getUserPublicMetadata(_clerkUserId: string): Promise<ClerkUserMetadata> {
+    return Promise.reject(new Error("Method not implemented."));
+  }
+  getUser(
+    _clerkUserId: string,
+  ): Promise<{ clerkUserId: string; firstName: string; lastName: string; email: string }> {
+    return Promise.reject(new Error("Method not implemented."));
+  }
+  setUserPublicMetadata(_clerkUserId: string, _metadata: ClerkUserMetadata): Promise<void> {
+    return Promise.resolve();
+  }
+  mergeUserPublicMetadata(
+    _clerkUserId: string,
+    _metadata: Partial<ClerkUserMetadata>,
+  ): Promise<void> {
+    return Promise.resolve();
+  }
+}
+
 test("System Routes - Create System", async () => {
   const systemRoutes = createInjector()
     .provideClass("systemService", MockSystemService)
     .provideClass("authenticationMiddleware", MockAuthenticationMiddleware)
+    .provideClass("clerkApiClient", MockClerkApiClient)
     .injectClass(SystemRoutes);
 
   const routes = systemRoutes.routes;
@@ -91,6 +115,7 @@ test("System Routes - Create System - Invalid Slugs", async () => {
   const systemRoutes = createInjector()
     .provideClass("systemService", MockSystemService)
     .provideClass("authenticationMiddleware", MockAuthenticationMiddleware)
+    .provideClass("clerkApiClient", MockClerkApiClient)
     .injectClass(SystemRoutes);
 
   const routes = systemRoutes.routes;
@@ -152,5 +177,42 @@ test("System Routes - Create System - Invalid Slugs", async () => {
     const createSystemBody = await createSystemResponse.json();
 
     expect(createSystemBody.success).toBe(false);
+  }
+});
+
+test("System Routes - Create System - Clerk API Error should not fail the request", async () => {
+  class ThrowingClerkApiClient extends MockClerkApiClient {
+    mergeUserPublicMetadata(
+      _clerkUserId: string,
+      _metadata: Partial<ClerkUserMetadata>,
+    ): Promise<void> {
+      return Promise.reject(new ClerkError(ClerkErrors.CLERK_API_ERROR));
+    }
+  }
+
+  const systemRoutes = createInjector()
+    .provideClass("systemService", MockSystemService)
+    .provideClass("authenticationMiddleware", MockAuthenticationMiddleware)
+    .provideClass("clerkApiClient", ThrowingClerkApiClient)
+    .injectClass(SystemRoutes);
+
+  const routes = systemRoutes.routes;
+  const client = testClient(routes);
+
+  const createSystemResponse = await client["/organizations/ORG_1/systems"].$post({
+    param: {
+      organizationId: "ORG_1",
+    },
+    json: {
+      name: "Test System",
+      slug: "test-system",
+    },
+  });
+
+  expect(createSystemResponse.ok).toBe(true);
+  if (createSystemResponse.ok) {
+    expect(createSystemResponse.status).toBe(201);
+    const createSystemBody = await createSystemResponse.json();
+    expect(createSystemBody.code).toBe("SYS_1");
   }
 });

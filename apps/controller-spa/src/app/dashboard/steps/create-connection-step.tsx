@@ -17,7 +17,7 @@ export function CreateConnectionStep({ completed = false }: CreateConnectionStep
     >
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Getting Started with Connections</CardTitle>
+          <CardTitle>Create a connection</CardTitle>
           {completed && (
             <div className="rounded-full bg-green-500/10 p-1">
               <Check className="size-4 text-green-500" />

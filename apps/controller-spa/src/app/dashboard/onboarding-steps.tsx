@@ -38,7 +38,9 @@ export interface OnboardingStepsProps {
 }
 
 export function OnboardingSteps({ className, completedSteps = [] }: OnboardingStepsProps) {
-  const [selectedStep, setSelectedStep] = useState<OnboardingStepId | null>(steps[0].id);
+  const [selectedStep, setSelectedStep] = useState<OnboardingStepId | null>(
+    steps[completedSteps.length % steps.length]!.id,
+  );
   const [localCompletedSteps, setLocalCompletedSteps] =
     useState<OnboardingStepId[]>(completedSteps);
 

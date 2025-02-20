@@ -3,7 +3,9 @@ import { BaseError, type ErrorDefinition, type ErrorMap } from "@/error/base-err
 export type ClerkErrorCode =
   | "CLERK_USER_NOT_FOUND"
   | "CLERK_USER_INCOMPLETE_PROFILE"
-  | "CLERK_USER_INSERTION_FAILED";
+  | "CLERK_USER_INSERTION_FAILED"
+  | "CLERK_API_ERROR";
+
 export type ClerkErrorContext = {
   clerkUserId?: string;
   missingFields?: string[];
@@ -23,6 +25,11 @@ export const ClerkErrors = {
   INSERTION_FAILED: {
     code: "CLERK_USER_INSERTION_FAILED",
     message: "Failed to insert user",
+    httpStatus: 500,
+  },
+  CLERK_API_ERROR: {
+    code: "CLERK_API_ERROR",
+    message: "Clerk API error",
     httpStatus: 500,
   },
 } as const satisfies ErrorMap<ClerkErrorCode, ClerkErrorContext>;
