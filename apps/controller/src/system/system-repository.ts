@@ -434,6 +434,7 @@ export class SystemRepository implements ISystemRepository {
         user,
         password,
         database,
+        ssl: false,
       });
       const publication = publications.find((p) => p.name === params.publicationName);
       const publicationTables = publication?.tables?.map((t) => t.name) ?? [];

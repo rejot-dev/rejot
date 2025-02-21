@@ -23,6 +23,7 @@ dbDescribe("ConnectionRepository tests", async (ctx) => {
       user: "test",
       password: "test",
       database: "test",
+      ssl: false,
     };
 
     const connection = await connectionRepository.create({
@@ -46,6 +47,7 @@ dbDescribe("ConnectionRepository tests", async (ctx) => {
       user: "test",
       password: "test",
       database: "test",
+      ssl: false,
     };
 
     const connection = await connectionRepository.create({
@@ -102,6 +104,7 @@ dbDescribe("ConnectionRepository tests", async (ctx) => {
       user: "test2",
       password: "test2",
       database: "test2",
+      ssl: false,
     };
 
     await connectionRepository.create({
@@ -130,6 +133,7 @@ dbDescribe("ConnectionRepository tests", async (ctx) => {
       user: "new-user",
       password: "new-password",
       database: "new-database",
+      ssl: false,
     };
 
     const updatedConnection = await connectionRepository.update({
@@ -180,6 +184,7 @@ dbDescribe("ConnectionRepository tests", async (ctx) => {
       user: "new-user",
       password: "new-password",
       database: "new-database",
+      ssl: false,
     };
 
     await expect(
@@ -229,6 +234,7 @@ dbDescribe("ConnectionRepository tests", async (ctx) => {
       user: "test",
       password: "test",
       database: "test",
+      ssl: false,
     };
 
     // Create first connection

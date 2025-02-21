@@ -21,8 +21,8 @@ export class ConnectionRawRoutes {
       }),
       async (c) => {
         const config = c.req.valid("json");
-        const { status } = await connectionTypeMultiplexer.checkHealth(config);
-        return c.json({ status }, 200);
+        const { status, message } = await connectionTypeMultiplexer.checkHealth(config);
+        return c.json({ status, message }, 200);
       },
     );
   }

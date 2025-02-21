@@ -1,4 +1,13 @@
-import { integer, jsonb, pgEnum, pgTable, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import {
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  timestamp,
+  unique,
+  varchar,
+  boolean,
+} from "drizzle-orm/pg-core";
 
 export const publication = pgTable(
   "publication",
@@ -119,6 +128,7 @@ export const connectionPostgres = pgTable(
     user: varchar({ length: 255 }).notNull(),
     password: varchar({ length: 255 }).notNull(),
     database: varchar({ length: 255 }).notNull(),
+    ssl: boolean().notNull().default(true),
   },
   (t) => [unique().on(t.connectionId)],
 );

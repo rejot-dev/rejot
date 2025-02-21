@@ -17,6 +17,7 @@ interface ConnectionCreationOverviewStepProps {
       user: string;
       password: string;
       database: string;
+      ssl: boolean;
     };
   };
   organizationId: string;

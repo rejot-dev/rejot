@@ -10,6 +10,7 @@ type ConnectionConfig = {
   user: string;
   password: string;
   database: string;
+  ssl: boolean;
 };
 
 export function checkConnection(config: ConnectionConfig): Promise<ApiResult<ConnectionHealth>> {

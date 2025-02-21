@@ -10,6 +10,7 @@ export const ConnectionPostgresForm = z
     database: z.string().min(1, "Database name is required"),
     user: z.string().min(1, "Username is required"),
     password: z.string(),
+    ssl: z.boolean().default(true),
   })
   .openapi("ConnectionPostgresForm");
 

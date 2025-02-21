@@ -5,6 +5,7 @@ export type PostgresConnectionConfig = {
   user: string;
   password: string;
   database: string;
+  ssl: boolean;
 };
 
 export type ConnectionConfig = PostgresConnectionConfig;

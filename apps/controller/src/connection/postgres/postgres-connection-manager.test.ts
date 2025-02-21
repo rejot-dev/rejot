@@ -10,8 +10,9 @@ describe("PostgresConnectionManager", () => {
   // Get the postgres config from the main database config
   const mainConnection = configManager.mainPostgresConnection;
   const postgresConfig: PostgresConnectionConfig = {
-    type: "postgres",
     ...mainConnection,
+    type: "postgres",
+    ssl: false,
   };
 
   test("returns healthy status for valid connection", async () => {

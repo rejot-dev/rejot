@@ -19,6 +19,7 @@ export const postCheckConnectionApi = {
         "application/json": {
           schema: z.object({
             status: z.enum(["healthy", "unhealthy"]),
+            message: z.string().optional(),
           }),
         },
       },

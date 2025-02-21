@@ -116,6 +116,7 @@ export class ConnectionRepository implements IConnectionRepository {
           user: schema.connectionPostgres.user,
           password: schema.connectionPostgres.password,
           database: schema.connectionPostgres.database,
+          ssl: schema.connectionPostgres.ssl,
         },
       })
       .from(schema.connection)
@@ -148,6 +149,7 @@ export class ConnectionRepository implements IConnectionRepository {
           user: schema.connectionPostgres.user,
           password: schema.connectionPostgres.password,
           database: schema.connectionPostgres.database,
+          ssl: schema.connectionPostgres.ssl,
         },
       })
       .from(schema.connection)
@@ -183,6 +185,7 @@ export class ConnectionRepository implements IConnectionRepository {
           user: schema.connectionPostgres.user,
           password: schema.connectionPostgres.password,
           database: schema.connectionPostgres.database,
+          ssl: schema.connectionPostgres.ssl,
         },
       })
       .from(schema.connection)

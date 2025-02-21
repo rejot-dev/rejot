@@ -10,6 +10,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { ComponentPropsWithoutRef } from "react";
 import { ConnectionPostgresForm } from "./connection-types";
 
@@ -42,6 +43,7 @@ export function ConnectionNewPostgresForm({
       database: "",
       user: "",
       password: "",
+      ssl: true,
     },
   });
 
@@ -143,6 +145,25 @@ export function ConnectionNewPostgresForm({
           )}
         />
 
+        <FormField
+          control={form.control}
+          name="ssl"
+          render={({ field }) => (
+            <FormItem className="flex flex-col space-y-2">
+              <div className="flex flex-row items-center space-x-2">
+                <FormControl>
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <FormLabel className="font-normal">Enable SSL</FormLabel>
+              </div>
+              {!field.value && (
+                <FormMessage className="text-yellow-600">
+                  Warning: disable SSL only for local development, not in production.
+                </FormMessage>
+              )}
+            </FormItem>
+          )}
+        />
         {renderActions?.({ isSubmitting })}
       </form>
     </Form>

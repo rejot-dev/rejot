@@ -8,6 +8,7 @@ export const ConnectionPostgresConfig = z
     user: z.string(),
     password: z.string(),
     database: z.string(),
+    ssl: z.boolean(),
   })
   .openapi("ConnectionPostgresConfig");
 

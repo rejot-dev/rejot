@@ -8,6 +8,7 @@ interface ConnectionConfig {
   port: number;
   user: string;
   database: string;
+  ssl: boolean;
 }
 
 interface Connection {
@@ -79,6 +80,11 @@ export function ConnectionConfigForm({ type, connection }: ConnectionConfigFormP
                   </FormControl>
                 </FormItem>
               )}
+            />
+            <FormField
+              control={form.control}
+              name="ssl"
+              render={({ field }) => <span>SSL is {field.value ? "enabled" : "disabled"}</span>}
             />
           </div>
         </Form>
