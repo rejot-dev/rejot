@@ -23,6 +23,7 @@ import { ConnectionNew } from "./app/connection/connection-new.tsx";
 import { ConnectionDetail } from "./app/connection/connection-detail.tsx";
 import { SchemaTableDetail } from "./app/connection/schema-table-detail.tsx";
 import { PublicSchemaOverview } from "./app/public-schema/public-schema-overview.tsx";
+import { PublicSchemaNew } from "./app/public-schema/public-schema-new.tsx";
 
 const PUBLISHABLE_KEY: string | undefined = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const queryClient = new QueryClient();
@@ -114,6 +115,10 @@ export function App() {
                   </Route>
                   <Route path="/public-schemas">
                     <Route index element={<PublicSchemaOverview />} />
+                    <Route path="new">
+                      <Route index element={<Navigate to="select-data-store" replace />} />
+                      <Route path=":step" element={<PublicSchemaNew />} />
+                    </Route>
                   </Route>
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>
