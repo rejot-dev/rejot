@@ -3,7 +3,7 @@ import { Form } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
 import { useConnections } from "@/data/connection/connection.data";
 import { useSelectedOrganizationCode } from "@/data/clerk/clerk-meta.data";
-import { addDataStore, useSystemOverview } from "@/data/system/system.data";
+import { useAddDataStoreMutation, useSystemOverview } from "@/data/system/system.data";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams, useSearchParams } from "react-router";
@@ -15,6 +15,7 @@ import { DataStoreNewHeader } from "./data-store-new-header";
 import { SelectConnectionStep } from "./steps/select-connection-step";
 import { ConnectionOverviewStep } from "./steps/connection-overview-step";
 import { SelectPublicationStep } from "./steps/select-publication-step";
+import { useQueryClient } from "@tanstack/react-query";
 
 const STEPS = {
   "select-connection": 0,
@@ -27,6 +28,8 @@ type StepKey = keyof typeof STEPS;
 export function DataStoreNew() {
   const { systemSlug, step } = useParams();
   const organizationId = useSelectedOrganizationCode();
+  const addDataStoreMutation = useAddDataStoreMutation();
+  const queryClient = useQueryClient();
 
   if (!organizationId || !systemSlug) {
     throw new Error("Organization or system slug not found");
@@ -96,13 +99,23 @@ export function DataStoreNew() {
     if (!organizationId || !systemSlug) return;
 
     try {
-      const result = await addDataStore(organizationId, systemSlug, {
-        connectionSlug: data.connectionSlug,
-        publicationName: data.publicationName,
+      const result = await addDataStoreMutation.mutateAsync({
+        organizationId,
+        systemSlug,
+        dataStore: {
+          connectionSlug: data.connectionSlug,
+          publicationName: data.publicationName,
+        },
       });
       if (result.status === "error") {
         throw new Error(result.message);
       }
+
+      // Invalidate the system overview query to refresh the data
+      await queryClient.invalidateQueries({
+        queryKey: ["system-overview", organizationId, systemSlug],
+      });
+
       toast({
         title: "Success",
         description: "Data store added successfully",
