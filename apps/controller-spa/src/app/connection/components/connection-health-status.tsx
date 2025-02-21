@@ -17,7 +17,10 @@ export function ConnectionHealthStatus({ connectionSlug }: { connectionSlug: str
   }
 
   return (
-    <Badge variant={health?.status === "healthy" ? "secondary" : "destructive"}>
+    <Badge
+      className="capitalize"
+      variant={health?.status === "healthy" ? "secondary" : "destructive"}
+    >
       {health?.status ?? "unknown"}
     </Badge>
   );

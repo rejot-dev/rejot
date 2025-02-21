@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import type { Connection } from "@/data/connection/connection.data";
 import { ConnectionHealthStatus } from "./connection-health-status";
+import { Lock, LockOpen } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface ConnectionDetailsSlotProps {
   connection: Connection;
@@ -12,6 +14,18 @@ export function ConnectionDetailsSlot({ connection }: ConnectionDetailsSlotProps
       <div className="mb-3 flex items-center justify-between">
         <h4 className="text-sm font-medium">Connection Details</h4>
         <div className="flex items-center gap-2">
+          {!connection.config.ssl && (
+            <Badge className="gap-2" variant="destructive">
+              <LockOpen className="size-4" />
+              Insecure
+            </Badge>
+          )}
+          {!!connection.config.ssl && (
+            <Badge className="gap-2" variant="outline">
+              <Lock className="size-4" />
+              Secure
+            </Badge>
+          )}
           <ConnectionHealthStatus connectionSlug={connection.slug} />
         </div>
       </div>

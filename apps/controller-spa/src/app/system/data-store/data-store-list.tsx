@@ -17,12 +17,14 @@ interface DataStoreListProps {
 }
 
 export function DataStoreList({ systemOverview }: DataStoreListProps) {
+  const systemSlug = systemOverview.slug;
+
   if (!systemOverview.dataStores.length) {
     return (
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Your Data Stores</h2>
         <Button asChild>
-          <Link to="/systems/new" className="gap-2">
+          <Link to={`/systems/${systemSlug}/data-stores/new`} className="gap-2">
             <PlusCircle className="size-4" />
             New Data Store
           </Link>
@@ -36,7 +38,7 @@ export function DataStoreList({ systemOverview }: DataStoreListProps) {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Your Data Stores</h2>
         <Button asChild>
-          <Link to="/systems/new" className="gap-2">
+          <Link to={`/systems/${systemSlug}/data-stores/new`} className="gap-2">
             <PlusCircle className="size-4" />
             New Data Store
           </Link>

@@ -21,7 +21,7 @@ export function SelectPublicationStep({
         <Button type="button" variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button type="submit">Add Data Store</Button>
+        <Button type="submit">Create Data Store</Button>
       </div>
     </div>
   );

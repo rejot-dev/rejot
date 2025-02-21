@@ -5,11 +5,11 @@ import { useConnections } from "@/data/connection/connection.data";
 import { useSelectedOrganizationCode } from "@/data/clerk/clerk-meta.data";
 import { useAddDataStoreMutation, useSystemOverview } from "@/data/system/system.data";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormReturn } from "react-hook-form";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { dataStoreFormSchema, type DataStoreFormValues } from "./data-store.types";
 import { ProgressBar } from "@/components/progress-bar";
-import { BookOpenIcon, CheckIcon, DatabaseIcon } from "lucide-react";
+import { BookCopy, BookMarked, DatabaseIcon } from "lucide-react";
 import { useEffect } from "react";
 import { DataStoreNewHeader } from "./data-store-new-header";
 import { SelectConnectionStep } from "./steps/select-connection-step";
@@ -81,16 +81,16 @@ export function DataStoreNew() {
     {
       label: "Select Connection",
       children: <DatabaseIcon className="size-5" />,
-      description: "Choose a data source",
+      description: "Choose a connection",
     },
     {
-      label: "Connection Overview",
-      children: <CheckIcon className="size-5" />,
-      description: "Review connection details",
+      label: "Create a Publication",
+      children: <BookCopy className="size-5" />,
+      description: "Manually set up a publication",
     },
     {
       label: "Select Publication",
-      children: <BookOpenIcon className="size-5" />,
+      children: <BookMarked className="size-5" />,
       description: "Choose a publication to sync",
     },
   ];
@@ -177,12 +177,12 @@ export function DataStoreNew() {
             <CardHeader className="space-y-1">
               <CardTitle>
                 {currentStep === 0 && "Select a Connection"}
-                {currentStep === 1 && "Review Connection Details"}
+                {currentStep === 1 && "Create a Publication"}
                 {currentStep === 2 && "Choose Publication"}
               </CardTitle>
               <CardDescription>
                 {currentStep === 0 && "Choose a data source to connect to your system"}
-                {currentStep === 1 && "Review and confirm your connection settings"}
+                {currentStep === 1 && "Create a publication to sync data from your data source"}
                 {currentStep === 2 && "Select a publication to sync data from"}
               </CardDescription>
             </CardHeader>
@@ -191,7 +191,7 @@ export function DataStoreNew() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   {currentStep === 0 && (
                     <SelectConnectionStep
-                      form={form}
+                      form={form as UseFormReturn<Partial<DataStoreFormValues>>}
                       connections={connections}
                       onContinue={handleConnectionSelect}
                     />

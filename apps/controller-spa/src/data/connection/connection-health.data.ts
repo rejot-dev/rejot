@@ -22,16 +22,17 @@ export function getConnectionHealth(
   });
 }
 
-export function useConnectionHealth(organizationId: string, connectionSlug: string) {
+export function useConnectionHealth(organizationId: string, connectionSlug: string | undefined) {
   return useQuery({
     queryKey: ["connection-health", organizationId, connectionSlug],
-    queryFn: () => getConnectionHealth(organizationId, connectionSlug),
+    queryFn: () => getConnectionHealth(organizationId, connectionSlug!),
     select: (result) => {
       if (result.status === "error") {
         throw new Error(result.message);
       }
       return result.data;
     },
+    enabled: !!connectionSlug,
   });
 }
 

@@ -90,20 +90,27 @@ export function App() {
               <Routes>
                 <Route element={<DashboardLayout />}>
                   <Route index element={<DashboardHome />} />
-                  <Route path="/systems/new" element={<SystemNew />} />
-                  <Route path="/systems/:systemSlug" element={<SystemHome />} />
-                  <Route path="/systems/:systemSlug/data-stores">
-                    <Route path="new" element={<Navigate to="select-connection" replace />} />
-                    <Route path="new/:step" element={<DataStoreNew />} />
+                  <Route path="/systems">
+                    <Route path="new" element={<SystemNew />} />
+                    <Route path=":systemSlug">
+                      <Route index element={<SystemHome />} />
+                      <Route path="data-stores">
+                        <Route path="new" element={<Navigate to="select-connection" replace />} />
+                        <Route path="new/:step" element={<DataStoreNew />} />
+                      </Route>
+                    </Route>
                   </Route>
-                  <Route path="/connections" element={<ConnectionOverview />} />
-                  <Route path="/connections/new" element={<Navigate to="select-type" replace />} />
-                  <Route path="/connections/new/:step" element={<ConnectionNew />} />
-                  <Route path="/connections/:connectionSlug" element={<ConnectionDetail />} />
-                  <Route
-                    path="/connections/:connectionSlug/tables/:tableId"
-                    element={<SchemaTableDetail />}
-                  />
+                  <Route path="/connections">
+                    <Route index element={<ConnectionOverview />} />
+                    <Route path="new">
+                      <Route index element={<Navigate to="select-type" replace />} />
+                      <Route path=":step" element={<ConnectionNew />} />
+                    </Route>
+                    <Route path=":connectionSlug">
+                      <Route index element={<ConnectionDetail />} />
+                      <Route path="tables/:tableId" element={<SchemaTableDetail />} />
+                    </Route>
+                  </Route>
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>
               </Routes>
