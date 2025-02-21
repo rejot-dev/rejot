@@ -81,7 +81,7 @@ export class PublicationRepository implements IPublicationRepository {
     const parsedSchema = SchemaDefinition.safeParse(result[0].publication.schema);
 
     if (!parsedSchema.success) {
-      throw new PublicationError(PublicationErrors.INVALID_SCHEMA).withContext({
+      throw new PublicationError(PublicationErrors.INVALID_SERIALIZED_SCHEMA).withContext({
         publicationSlug,
         organizationId,
         schemaError: parsedSchema.error,
@@ -221,7 +221,7 @@ export class PublicationRepository implements IPublicationRepository {
       const parsedSchema = SchemaDefinition.safeParse(row.publication.schema);
 
       if (!parsedSchema.success) {
-        throw new PublicationError(PublicationErrors.INVALID_SCHEMA).withContext({
+        throw new PublicationError(PublicationErrors.INVALID_SERIALIZED_SCHEMA).withContext({
           organizationId,
           publicationSlug: row.publication.slug,
           schemaError: parsedSchema.error,

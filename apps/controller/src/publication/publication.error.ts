@@ -5,6 +5,7 @@ export type PublicationErrorCode =
   | "PUBLICATION_NOT_FOUND"
   | "PUBLICATION_ALREADY_EXISTS"
   | "INVALID_PUBLICATION_SCHEMA"
+  | "INVALID_SERIALIZED_SCHEMA"
   | "PUBLICATION_CREATION_FAILED";
 
 export type PublicationErrorContext = {
@@ -28,6 +29,11 @@ export const PublicationErrors = {
     code: "INVALID_PUBLICATION_SCHEMA",
     message: "Invalid publication schema",
     httpStatus: 400,
+  },
+  INVALID_SERIALIZED_SCHEMA: {
+    code: "INVALID_SERIALIZED_SCHEMA",
+    message: "Invalid serialized publication schema",
+    httpStatus: 500,
   },
   CREATION_FAILED: {
     code: "PUBLICATION_CREATION_FAILED",

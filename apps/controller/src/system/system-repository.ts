@@ -232,7 +232,7 @@ export class SystemRepository implements ISystemRepository {
         const parsedSchema = SchemaDefinition.safeParse(publication.schema);
 
         if (!parsedSchema.success) {
-          throw new PublicationError(PublicationErrors.INVALID_SCHEMA).withContext({
+          throw new PublicationError(PublicationErrors.INVALID_SERIALIZED_SCHEMA).withContext({
             organizationId: organizationCode,
             publicationSlug: publication.slug,
             schemaError: parsedSchema.error,
