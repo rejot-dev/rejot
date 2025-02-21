@@ -8,6 +8,7 @@ export type AuthenticationErrorContext = {
   clerkUserId?: string;
   organizationId?: string;
   organizationIds?: string[];
+  systemSlug?: string;
 };
 
 export const AuthenticationErrors = {

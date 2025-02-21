@@ -1,9 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { useSelectedSystemSlug } from "@/app/system/system.state";
 import type { SystemOverview } from "@/data/system/system.data";
 import { DataStoreList } from "@/app/system/data-store/data-store-list";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router";
 
 interface CreateDataStoreStepProps {
   completed?: boolean;
@@ -47,6 +49,14 @@ export function CreateDataStoreStep({
           <></>
         )}
       </CardContent>
+      <CardFooter className="border-t px-6 py-4">
+        <Button asChild>
+          <Link to={`/systems/${systemSlug}/data-stores/new`}>
+            <Plus className="size-4" />
+            Add Data Store
+          </Link>
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

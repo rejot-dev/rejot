@@ -23,6 +23,7 @@ export function DashboardHome() {
   }
 
   const connections = useConnections(organizationCode);
+  const systemOverview = useSystemOverview(systemSlug, { retry: false });
 
   // Compute completed steps based on current state
   const completedSteps: OnboardingStepId[] = [];
@@ -34,14 +35,13 @@ export function DashboardHome() {
     completedSteps.push("create-connection");
   }
 
-  const systemOverview = useSystemOverview(systemSlug);
-
   if (systemOverview.data && systemOverview.data.dataStores.length > 0) {
     completedSteps.push("create-data-store");
   }
 
-  if (!organizationCode) {
-    return <div>No organization selected</div>;
+  if (systemOverview.error) {
+    // Clear the array, since we should create a new system.
+    completedSteps.splice(0, completedSteps.length);
   }
 
   const onboardingCompleted = completedSteps.length === 3;

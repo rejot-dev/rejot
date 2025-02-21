@@ -1,5 +1,5 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
-import { SchemaDefinition } from "../schemas.ts";
+import { SchemaDefinition } from "../public-schema.api.ts";
 
 export type ConnectionHealth = {
   status: "healthy" | "unhealthy";
