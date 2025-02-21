@@ -6,6 +6,13 @@
 
   "apiPort": 3000,
 
+  "sentry": {
+    "enabled": false,
+    "dsn": "",
+    "tracesSampleRate": 0.1,
+    "environment": "development"
+  },
+
   "connections": [
     {
       "slug": "postgres-database-1",

@@ -25,6 +25,7 @@
     "@hono/zod-validator": "^0.4.3",
     "@opentelemetry/api": "^1.9.0",
     "@rejot/api-interface-controller": "*",
+    "@sentry/bun": "^9.1.0",
     "@std/assert": "npm:@jsr/std__assert@^1.0.11",
     "@types/bun": "^1.2.2",
     "@types/pg": "^8.11.11",

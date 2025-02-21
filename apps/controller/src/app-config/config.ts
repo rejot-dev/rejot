@@ -58,6 +58,15 @@ export const BaseConfigSchema = z.object({
     verbose: z.boolean().default(false),
     logging: z.boolean().default(false),
   }),
+
+  sentry: z
+    .object({
+      enabled: z.boolean().default(false),
+      dsn: z.string(),
+      tracesSampleRate: z.number().default(0.1),
+      environment: z.string(),
+    })
+    .optional(),
 });
 
 export const ControllerConfigSchema = BaseConfigSchema.extend({
