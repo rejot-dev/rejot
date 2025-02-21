@@ -4,6 +4,7 @@ import type { MiddlewareHandler } from "hono/types";
 import { tokens } from "typed-inject";
 import type { IOrganizationService } from "@/organization/organization-service.ts";
 import { AuthenticationError, AuthenticationErrors } from "./authentication.error.ts";
+import type { ISystemService } from "@/system/system-service.ts";
 
 export type RequireLoginMiddleware = MiddlewareHandler<
   {
@@ -18,15 +19,20 @@ export interface IAuthenticationMiddleware {
   requireLogin(): RequireLoginMiddleware;
   requireOrganizationAccess(clerkUserId: string, organizationId: string): Promise<void>;
   requireOrganizationsAccess(clerkUserId: string, organizationIds: string[]): Promise<void>;
+  requireSystemAccess(clerkUserId: string, systemSlug: string): Promise<void>;
 }
 
 export class AuthenticationMiddleware implements IAuthenticationMiddleware {
-  static inject = tokens("organizationService");
+  static inject = tokens("organizationService", "systemService");
 
   #organizationService: IOrganizationService;
+  // @ts-expect-error unused
+  // eslint-disable-next-line no-unused-private-class-members
+  #systemService: ISystemService;
 
-  constructor(organizationService: IOrganizationService) {
+  constructor(organizationService: IOrganizationService, systemService: ISystemService) {
     this.#organizationService = organizationService;
+    this.#systemService = systemService;
   }
 
   requireLogin(): RequireLoginMiddleware {
@@ -41,6 +47,10 @@ export class AuthenticationMiddleware implements IAuthenticationMiddleware {
 
       await next();
     });
+  }
+
+  async requireSystemAccess(_clerkUserId: string, _systemSlug: string): Promise<void> {
+    // TODO: Implement this
   }
 
   async requireOrganizationAccess(clerkUserId: string, organizationId: string): Promise<void> {

@@ -24,4 +24,8 @@ export class MockAuthenticationMiddleware implements IAuthenticationMiddleware {
   requireOrganizationsAccess(_clerkUserId: string, _organizationIds: string[]): Promise<void> {
     return Promise.resolve();
   }
+
+  requireSystemAccess(_clerkUserId: string, _systemSlug: string): Promise<void> {
+    return Promise.resolve();
+  }
 }

@@ -1,7 +1,7 @@
 import { generateCode } from "@/codes/codes.ts";
 import type { SystemEntity, SystemRepository } from "./system-repository.ts";
 import type { CreateSystem } from "@rejot/api-interface-controller/system";
-import type { Publication } from "@rejot/api-interface-controller/publications";
+import type { PublicSchema } from "@rejot/api-interface-controller/public-schema";
 
 export type UpsertDataStoreServiceParams = {
   organizationId: string;
@@ -32,7 +32,7 @@ export type SystemOverviewResponse = {
     publicationName: string;
     tables: string[];
     // Rejot publications
-    publications: Publication[];
+    publications: PublicSchema[];
   }[];
 };
 
@@ -44,8 +44,8 @@ export type System = {
 
 export interface ISystemService {
   createSystem(organizationCode: string, system: CreateSystem): Promise<SystemEntity>;
-  getSystem(organizationCode: string, systemSlug: string): Promise<SystemOverviewResponse>;
-  getSystems(organizationCode: string): Promise<System[]>;
+  getSystem(organizationId: string, systemSlug: string): Promise<SystemOverviewResponse>;
+  getSystems(organizationId: string): Promise<System[]>;
   upsertDataStore(params: UpsertDataStoreServiceParams): Promise<UpsertDataStoreServiceResult>;
 }
 
@@ -58,16 +58,16 @@ export class SystemService implements ISystemService {
     this.#systemRepository = systemRepository;
   }
 
-  createSystem(organizationCode: string, { name, slug }: CreateSystem): Promise<SystemEntity> {
-    return this.#systemRepository.create(organizationCode, {
+  createSystem(organizationId: string, { name, slug }: CreateSystem): Promise<SystemEntity> {
+    return this.#systemRepository.create(organizationId, {
       name,
       code: generateCode("SYS"),
       slug,
     });
   }
 
-  async getSystem(organizationCode: string, systemSlug: string): Promise<SystemOverviewResponse> {
-    const { id: _id, ...system } = await this.#systemRepository.get(organizationCode, systemSlug);
+  async getSystem(organizationId: string, systemSlug: string): Promise<SystemOverviewResponse> {
+    const { id: _id, ...system } = await this.#systemRepository.get(organizationId, systemSlug);
 
     return {
       code: system.code,
@@ -77,12 +77,21 @@ export class SystemService implements ISystemService {
         code: system.organization.code,
         name: system.organization.name,
       },
-      dataStores: system.dataStores,
+      dataStores: system.dataStores.map((dataStore) => ({
+        ...dataStore,
+        publications: dataStore.publications.map((pub) => ({
+          ...pub,
+          id: pub.code,
+          dataStore: {
+            slug: dataStore.connectionSlug,
+          },
+        })),
+      })),
     };
   }
 
-  async getSystems(organizationCode: string): Promise<System[]> {
-    const systems = await this.#systemRepository.getSystems(organizationCode);
+  async getSystems(organizationId: string): Promise<System[]> {
+    const systems = await this.#systemRepository.getSystems(organizationId);
 
     return systems.map((system) => ({
       code: system.code,

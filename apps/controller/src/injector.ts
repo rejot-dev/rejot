@@ -1,6 +1,5 @@
 import { createInjector } from "typed-inject";
 
-import { PublicationService } from "./publication/publication-service.ts";
 import { PostgresManager } from "./postgres/postgres.ts";
 import { OrganizationRepository } from "./organization/organization-repository.ts";
 import { OrganizationService } from "./organization/organization-service.ts";
@@ -28,8 +27,9 @@ import { SchemaService } from "./connection/schema-service.ts";
 import { SchemaRepository } from "./connection/schema-repository.ts";
 import { ConnectionTypeMultiplexer } from "./connection/connection-type-multiplexer.ts";
 import { ConnectionRawRoutes } from "./connection/connection-raw.routes.ts";
-import { PublicationRepository } from "./publication/publication-repository.ts";
-import { PublicationRoutes } from "./publication/publication-routes.ts";
+import { PublicSchemaRepository } from "./public-schema/public-schema-repository.ts";
+import { PublicSchemaRoutes } from "./public-schema/public-schema-routes.ts";
+import { PublicSchemaService } from "./public-schema/public-schema-service.ts";
 
 export const appInjector = createInjectionContainer();
 
@@ -49,14 +49,14 @@ export function createInjectionContainer() {
     .provideClass("clerkRepository", ClerkRepository)
     .provideClass("personRepository", PersonRepository)
     .provideClass("postgresConnectionManager", PostgresConnectionManager)
-    .provideClass("publicationRepository", PublicationRepository)
+    .provideClass("publicSchemaRepository", PublicSchemaRepository)
     .provideClass("systemRepository", SystemRepository)
     .provideClass("schemaRepository", SchemaRepository)
     // API Clients
     .provideClass("clerkApiClient", ClerkApiClient)
     .provideClass("connectionTypeMultiplexer", ConnectionTypeMultiplexer)
     // Services
-    .provideClass("publicationService", PublicationService)
+    .provideClass("publicSchemaService", PublicSchemaService)
     .provideClass("authenticationService", AuthenticationService)
     .provideClass("connectionService", ConnectionService)
     .provideClass("organizationService", OrganizationService)
@@ -73,7 +73,7 @@ export function createInjectionContainer() {
     .provideClass("connectionRoutes", ConnectionRoutes)
     .provideClass("connectionHealthRoutes", ConnectionHealthRoutes)
     .provideClass("connectionRawRoutes", ConnectionRawRoutes)
-    .provideClass("publicationRoutes", PublicationRoutes);
+    .provideClass("publicSchemaRoutes", PublicSchemaRoutes);
 
   // Force disposer to be loaded.
   appInjector.resolve("postgresDisposer");

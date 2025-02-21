@@ -14,7 +14,7 @@ import type { SyncServiceStatus } from "../sync-service/sync-service.data";
 import { z } from "zod";
 import { useSelectedOrganizationCode as useSelectedOrganizationId } from "../clerk/clerk-meta.data";
 import { getConnectionTableSchemaChanges } from "@/data/connection/connection-health.data";
-import type { Publication } from "@rejot/api-interface-controller/publications";
+import type { PublicSchema } from "@rejot/api-interface-controller/public-schema";
 type SystemResponse = z.infer<
   (typeof systemGetApi.responses)[200]["content"]["application/json"]["schema"]
 >;
@@ -41,7 +41,7 @@ export type SystemOverview = {
       name: string;
       tables?: string[];
     };
-    publications: Publication[];
+    publications: PublicSchema[];
   }[];
 };
 
@@ -165,13 +165,18 @@ export async function getRealSystemOverview(
   };
 }
 
-export function useSystemOverview(slug: string | null) {
+export type SystemOverviewOptions = {
+  retry?: number | false;
+};
+
+export function useSystemOverview(slug: string | null, options: SystemOverviewOptions = {}) {
   const organizationId = useSelectedOrganizationId();
 
   return useQuery({
     queryKey: ["system-overview", organizationId, slug],
     queryFn: () => getRealSystemOverview(organizationId!, slug!),
     enabled: !!organizationId && !!slug,
+    ...options,
   });
 }
 

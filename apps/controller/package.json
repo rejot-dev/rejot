@@ -12,6 +12,7 @@
     "db:push": "drizzle-kit push",
     "db:push-test": "cross-env REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate-test": "REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json drizzle-kit migrate",
     "db:generate": "drizzle-kit generate",
     "db:seed": "bun run ./seed.ts",
     "db:seed-test": "cross-env REJOT_CONTROLLER_CONFIG_PATH=./_config.test.json bun run ./seed.ts",

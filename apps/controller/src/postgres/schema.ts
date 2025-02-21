@@ -9,23 +9,21 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
-export const publication = pgTable(
-  "publication",
+export const publicSchema = pgTable(
+  "public_schema",
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    organizationId: integer()
-      .references(() => organization.id)
-      .notNull(),
-    name: varchar({ length: 255 }).notNull(),
-    createdAt: timestamp().notNull().defaultNow(),
+    code: varchar({ length: 30 }).notNull(),
     dataStoreId: integer()
       .references(() => dataStore.id)
       .notNull(),
-    version: varchar({ length: 10 }).notNull(),
-    slug: varchar({ length: 255 }).notNull(),
+    name: varchar({ length: 255 }).notNull(),
+    createdAt: timestamp().notNull().defaultNow(),
+    majorVersion: integer().notNull().default(1),
+    minorVersion: integer().notNull().default(0),
     schema: jsonb(),
   },
-  (t) => [unique().on(t.id, t.organizationId, t.dataStoreId, t.version, t.slug)],
+  (t) => [unique().on(t.code, t.majorVersion, t.minorVersion)],
 );
 
 export const organization = pgTable("organization", {
@@ -177,7 +175,7 @@ export const schemaSnapshot = pgTable(
 );
 
 export const schema = {
-  publication,
+  publicSchema,
   organization,
   person,
   personOrganization,

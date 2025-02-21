@@ -4,10 +4,8 @@ import { schema } from "@/postgres/schema.ts";
 import { and, eq, sql } from "drizzle-orm";
 import { SystemError, SystemErrors } from "./system.error.ts";
 import type { IConnectionManager } from "@/connection/connection-manager.ts";
-import type { Publication } from "@rejot/api-interface-controller/publications";
-
-import { SchemaDefinition } from "../../../../packages/api-interface-controller/schemas.ts";
-import { PublicationError, PublicationErrors } from "@/publication/publication.error.ts";
+import { SchemaDefinition } from "@/public-schema/public-schema.ts";
+import { PublicSchemaError, PublicSchemaErrors } from "@/public-schema/public-schema.error.ts";
 
 export type CreateSystemEntity = {
   code: string;
@@ -28,6 +26,13 @@ export type SystemEntity = {
   };
 };
 
+export type PublicSchema = {
+  code: string;
+  name: string;
+  version: string;
+  schema: SchemaDefinition;
+};
+
 export type SystemOverview = {
   id: number;
   code: string;
@@ -44,7 +49,7 @@ export type SystemOverview = {
     connectionSlug: string;
     publicationName: string;
     tables: string[];
-    publications: Publication[];
+    publications: PublicSchema[];
   }[];
 };
 
@@ -181,7 +186,7 @@ export class SystemRepository implements ISystemRepository {
   }
 
   async get(organizationCode: string, systemSlug: string): Promise<SystemOverview> {
-    const res = await this.#db
+    const query = this.#db
       .select()
       .from(schema.system)
       .where(eq(schema.system.slug, systemSlug))
@@ -194,8 +199,9 @@ export class SystemRepository implements ISystemRepository {
       )
       .leftJoin(schema.dataStore, eq(schema.dataStore.systemId, schema.system.id))
       .leftJoin(schema.connection, eq(schema.dataStore.connectionId, schema.connection.id))
-      .leftJoin(schema.publication, eq(schema.dataStore.id, schema.publication.dataStoreId));
+      .leftJoin(schema.publicSchema, eq(schema.dataStore.id, schema.publicSchema.dataStoreId));
 
+    const res = await query;
     if (res.length === 0) {
       throw new SystemError({
         ...SystemErrors.NOT_FOUND,
@@ -210,11 +216,11 @@ export class SystemRepository implements ISystemRepository {
         connectionSlug: string;
         publicationName: string;
         tables: string[];
-        publications: Publication[];
+        publications: PublicSchema[];
       }
     >();
 
-    res.forEach(({ data_store, connection, publication }) => {
+    res.forEach(({ data_store, connection, public_schema }) => {
       if (!data_store || !connection) {
         return;
       }
@@ -228,21 +234,22 @@ export class SystemRepository implements ISystemRepository {
         });
       }
 
-      if (publication) {
-        const parsedSchema = SchemaDefinition.safeParse(publication.schema);
+      if (public_schema) {
+        const parsedSchema = SchemaDefinition.safeParse(public_schema.schema);
 
         if (!parsedSchema.success) {
-          throw new PublicationError(PublicationErrors.INVALID_SERIALIZED_SCHEMA).withContext({
+          throw new PublicSchemaError(PublicSchemaErrors.INVALID_SERIALIZED_SCHEMA).withContext({
             organizationId: organizationCode,
-            publicationSlug: publication.slug,
+            publicSchemaId: public_schema.code,
             schemaError: parsedSchema.error,
           });
         }
 
         const dataStore = dataStoreMap.get(data_store.id)!;
         dataStore.publications.push({
-          name: publication.name,
-          version: publication.version,
+          code: public_schema.code,
+          name: public_schema.name,
+          version: `${public_schema.majorVersion}.${public_schema.minorVersion}`,
           schema: parsedSchema.data,
         });
       }

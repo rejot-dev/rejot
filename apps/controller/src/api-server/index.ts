@@ -3,6 +3,7 @@ import { clerkMiddleware } from "@hono/clerk-auth";
 import { logger } from "hono/logger";
 import { cors } from "hono/cors";
 import { swaggerUI } from "@hono/swagger-ui";
+import * as Sentry from "@sentry/bun";
 
 import { OpenAPIHono } from "@hono/zod-openapi";
 import type { OrganizationRoutes } from "../organization/organization-routes.ts";
@@ -15,8 +16,7 @@ import type { SystemRoutes } from "../system/system-routes.ts";
 import type { ConnectionRoutes } from "../connection/connection-routes.ts";
 import type { ConnectionHealthRoutes } from "../connection/connection-health.routes.ts";
 import type { ConnectionRawRoutes } from "@/connection/connection-raw.routes.ts";
-import type { PublicationRoutes } from "../publication/publication-routes.ts";
-import * as Sentry from "@sentry/bun";
+import type { PublicSchemaRoutes } from "../public-schema/public-schema-routes.ts";
 
 export class ApiServer {
   static inject = [
@@ -28,7 +28,7 @@ export class ApiServer {
     "connectionRoutes",
     "connectionHealthRoutes",
     "connectionRawRoutes",
-    "publicationRoutes",
+    "publicSchemaRoutes",
   ] as const;
 
   #app;
@@ -42,7 +42,7 @@ export class ApiServer {
     connectionRoutes: ConnectionRoutes,
     connectionHealthRoutes: ConnectionHealthRoutes,
     connectionRawRoutes: ConnectionRawRoutes,
-    publicationRoutes: PublicationRoutes,
+    publicSchemaRoutes: PublicSchemaRoutes,
   ) {
     this.#app = new OpenAPIHono()
       .doc("api", {
@@ -75,14 +75,18 @@ export class ApiServer {
       .route("/", connectionRoutes.routes)
       .route("/", connectionHealthRoutes.routes)
       .route("/", connectionRawRoutes.routes)
-      .route("/", publicationRoutes.routes)
+      .route("/", publicSchemaRoutes.routes)
       .onError((err, c) => {
         if (err instanceof BaseError) {
+          // Get first stack trace element if available
+          const tokens = (err.stack ?? "").split(" ").filter((token) => token.includes("rejot"));
+
           console.error({
             code: err.code,
             message: err.message,
             httpStatus: err.httpStatus,
             context: err.context,
+            errorLocation: tokens,
           });
 
           Sentry.captureException(err, { extra: err.context });
