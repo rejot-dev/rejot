@@ -157,52 +157,54 @@ export function DataStoreNew() {
   return (
     <>
       <DataStoreNewHeader systemSlug={systemSlug} />
-      <div className="container space-y-6">
+      <div className="space-y-6">
         <ProgressBar steps={steps} currentStep={currentStep} />
-        <Card className="mx-auto max-w-2xl">
-          <CardHeader className="space-y-1">
-            <CardTitle>
-              {currentStep === 0 && "Select a Connection"}
-              {currentStep === 1 && "Review Connection Details"}
-              {currentStep === 2 && "Choose Publication"}
-            </CardTitle>
-            <CardDescription>
-              {currentStep === 0 && "Choose a data source to connect to your system"}
-              {currentStep === 1 && "Review and confirm your connection settings"}
-              {currentStep === 2 && "Select a publication to sync data from"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {currentStep === 0 && (
-                  <SelectConnectionStep
-                    form={form}
-                    connections={connections}
-                    onContinue={handleConnectionSelect}
-                  />
-                )}
+        <div className="flex justify-center">
+          <Card className="mx-6 w-full max-w-5xl">
+            <CardHeader className="space-y-1">
+              <CardTitle>
+                {currentStep === 0 && "Select a Connection"}
+                {currentStep === 1 && "Review Connection Details"}
+                {currentStep === 2 && "Choose Publication"}
+              </CardTitle>
+              <CardDescription>
+                {currentStep === 0 && "Choose a data source to connect to your system"}
+                {currentStep === 1 && "Review and confirm your connection settings"}
+                {currentStep === 2 && "Select a publication to sync data from"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {currentStep === 0 && (
+                    <SelectConnectionStep
+                      form={form}
+                      connections={connections}
+                      onContinue={handleConnectionSelect}
+                    />
+                  )}
 
-                {currentStep === 1 && selectedConnection && (
-                  <ConnectionOverviewStep
-                    organizationId={organizationId}
-                    connection={selectedConnection}
-                    onBack={handleBack}
-                    onContinue={handleOverviewContinue}
-                  />
-                )}
+                  {currentStep === 1 && selectedConnection && (
+                    <ConnectionOverviewStep
+                      organizationId={organizationId}
+                      connection={selectedConnection}
+                      onBack={handleBack}
+                      onContinue={handleOverviewContinue}
+                    />
+                  )}
 
-                {currentStep === 2 && (
-                  <SelectPublicationStep
-                    form={form}
-                    organizationId={organizationId}
-                    onBack={handleBack}
-                  />
-                )}
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+                  {currentStep === 2 && (
+                    <SelectPublicationStep
+                      form={form}
+                      organizationId={organizationId}
+                      onBack={handleBack}
+                    />
+                  )}
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </>
   );

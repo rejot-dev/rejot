@@ -4,21 +4,16 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import type { Connection } from "@/data/connection/connection.data";
 
 interface ConnectionSelectorProps {
   value?: string;
   onChange?: (value: string) => void;
   className?: string;
-  connections: Array<{
-    slug: string;
-    config: {
-      database: string;
-      host: string;
-    };
-  }>;
+  connections: Connection[];
   isLoading?: boolean;
   showNewConnection?: boolean;
-  children?: React.ReactNode;
+  connectionDetails?: (connection: Connection) => React.ReactNode;
 }
 
 export function ConnectionSelector({
@@ -28,7 +23,7 @@ export function ConnectionSelector({
   connections,
   isLoading,
   showNewConnection = true,
-  children,
+  connectionDetails,
 }: ConnectionSelectorProps) {
   return (
     <div className={cn("space-y-6", className)}>
@@ -106,7 +101,7 @@ export function ConnectionSelector({
         )}
       </RadioGroup>
 
-      {children}
+      {connectionDetails && value && connectionDetails(connections.find((c) => c.slug === value)!)}
     </div>
   );
 }

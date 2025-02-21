@@ -2,7 +2,7 @@ import { type RouteConfig, z } from "@hono/zod-openapi";
 import { SlugSchema } from "../generic/slug";
 import { ConnectionPostgresConfig, ConnectionPostgresConfigWithoutPassword } from "./connection";
 
-export const ConnectionResponse = z
+export const ConnectionSchema = z
   .object({
     slug: z.string(),
     config: ConnectionPostgresConfigWithoutPassword,
@@ -28,7 +28,7 @@ export const connectionListApi = {
     200: {
       content: {
         "application/json": {
-          schema: z.array(ConnectionResponse),
+          schema: z.array(ConnectionSchema),
         },
       },
       description: "List of connections retrieved successfully",
@@ -57,7 +57,7 @@ export const connectionGetApi = {
     200: {
       content: {
         "application/json": {
-          schema: ConnectionResponse,
+          schema: ConnectionSchema,
         },
       },
       description: "Connection retrieved successfully",
@@ -92,7 +92,7 @@ export const connectionCreateApi = {
     201: {
       content: {
         "application/json": {
-          schema: ConnectionResponse,
+          schema: ConnectionSchema,
         },
       },
       description: "Connection created successfully",
@@ -131,7 +131,7 @@ export const connectionUpdateApi = {
     200: {
       content: {
         "application/json": {
-          schema: ConnectionResponse,
+          schema: ConnectionSchema,
         },
       },
       description: "Connection updated successfully",

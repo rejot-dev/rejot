@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { CreateSystemStep } from "./steps/create-system-step";
 import { CreateConnectionStep } from "./steps/create-connection-step";
 import { CreateDataStoreStep } from "./steps/create-data-store-step";
-import type { ConnectionListResponse } from "@/data/connection/connection.data";
+import type { Connection } from "@/data/connection/connection.data";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface OnboardingStep {
@@ -37,7 +37,7 @@ export type OnboardingStepId = (typeof steps)[number]["id"];
 export interface OnboardingStepsProps {
   className?: string;
   completedSteps: OnboardingStepId[];
-  connections: ConnectionListResponse;
+  connections: Connection[];
   isLoading: boolean;
 }
 

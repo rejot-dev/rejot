@@ -2,17 +2,13 @@ import { Button } from "@/components/ui/button";
 import { ConnectionSelector } from "../../../connection/components/connection-selector";
 import type { UseFormReturn } from "react-hook-form";
 import type { DataStoreFormValues } from "../data-store.types";
+import { ConnectionDetailsSlot } from "@/app/connection/components/connection-details-slot";
+import type { Connection } from "@/data/connection/connection.data";
 
 interface SelectConnectionStepProps {
   form: UseFormReturn<DataStoreFormValues>;
   onContinue: () => void;
-  connections: Array<{
-    slug: string;
-    config: {
-      database: string;
-      host: string;
-    };
-  }>;
+  connections: Connection[];
   isLoading?: boolean;
 }
 
@@ -29,6 +25,7 @@ export function SelectConnectionStep({
         onChange={(value) => form.setValue("connectionSlug", value)}
         connections={connections}
         isLoading={isLoading}
+        connectionDetails={(connection) => <ConnectionDetailsSlot connection={connection} />}
       />
       <div className="flex justify-end">
         <Button type="button" onClick={onContinue} disabled={!form.watch("connectionSlug")}>

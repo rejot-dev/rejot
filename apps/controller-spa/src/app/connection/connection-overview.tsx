@@ -91,10 +91,7 @@ export function ConnectionOverview() {
                   <TableCell>{connection.config.database}</TableCell>
                   <TableCell>{connection.config.host}</TableCell>
                   <TableCell>
-                    <ConnectionHealthStatus
-                      organizationId={organizationId}
-                      connectionSlug={connection.slug}
-                    />
+                    <ConnectionHealthStatus connectionSlug={connection.slug} />
                   </TableCell>
                   <TableCell>
                     <Link to={`/connections/${connection.slug}`}>More Info</Link>

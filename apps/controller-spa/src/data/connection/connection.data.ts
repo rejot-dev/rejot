@@ -5,21 +5,20 @@ import {
   connectionCreateApi,
   ConnectionCreateRequest,
   connectionListApi,
+  type ConnectionSchema,
 } from "@rejot/api-interface-controller/connection";
 
-export type ConnectionListResponse = z.infer<
-  (typeof connectionListApi.responses)[200]["content"]["application/json"]["schema"]
->;
+export type Connection = z.infer<typeof ConnectionSchema>;
 
 export type ConnectionCreateResponse = z.infer<
   (typeof connectionCreateApi.responses)[201]["content"]["application/json"]["schema"]
 >;
 
-export function getConnections(organizationId: string): Promise<ApiResult<ConnectionListResponse>> {
+export function getConnections(organizationId: string): Promise<ApiResult<Connection[]>> {
   return fetchRoute(connectionListApi, { params: { organizationId } });
 }
 
-export function useConnections(organizationId: string): UseQueryResult<ConnectionListResponse> {
+export function useConnections(organizationId: string): UseQueryResult<Connection[]> {
   return useQuery({
     queryKey: ["connections", organizationId],
     queryFn: () => getConnections(organizationId),
