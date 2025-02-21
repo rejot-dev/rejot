@@ -16,6 +16,7 @@ import type { ConnectionRoutes } from "../connection/connection-routes.ts";
 import type { ConnectionHealthRoutes } from "../connection/connection-health.routes.ts";
 import type { ConnectionRawRoutes } from "@/connection/connection-raw.routes.ts";
 import type { PublicationRoutes } from "../publication/publication-routes.ts";
+import * as Sentry from "@sentry/bun";
 
 export class ApiServer {
   static inject = [
@@ -84,11 +85,14 @@ export class ApiServer {
             context: err.context,
           });
 
+          Sentry.captureException(err, { extra: err.context });
+
           // @ts-expect-error we might give a wrong http status code.
           return c.json({ message: err.message, code: err.code }, err.httpStatus);
         }
 
         console.error(err);
+        Sentry.captureException(err);
         return c.json({ message: "Internal server error" }, 500);
       });
   }
