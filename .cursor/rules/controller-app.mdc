@@ -312,6 +312,7 @@ export class ClerkError extends BaseError<ClerkErrorCode, ClerkErrorContext> {
 dbDescribe("SomeRepository tests", async (ctx) => {
   // Reusable methods
   async function createTestThing() {
+    // ctx.resolve will be typed automatically, do not add casts.
     const thingRepository = ctx.resolve("thingRepository");
     return await thingRepository.bla()''
   }

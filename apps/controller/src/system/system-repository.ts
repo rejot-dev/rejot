@@ -84,6 +84,7 @@ export interface ISystemRepository {
   get(organizationCode: string, systemSlug: string): Promise<SystemOverview>;
   getSystems(organizationCode: string): Promise<SystemEntity[]>;
   findById(id: number): Promise<SystemEntity | undefined>;
+  getSystemsForClerkUser(clerkUserId: string): Promise<SystemEntity[]>;
 }
 
 export class SystemRepository implements ISystemRepository {
@@ -478,5 +479,42 @@ export class SystemRepository implements ISystemRepository {
         publicationTables: dataStore.publicationTables ?? [],
       };
     });
+  }
+
+  async getSystemsForClerkUser(clerkUserId: string): Promise<SystemEntity[]> {
+    const res = await this.#db
+      .select({
+        systemId: schema.system.id,
+        systemCode: schema.system.code,
+        systemName: schema.system.name,
+        systemSlug: schema.system.slug,
+        organizationId: schema.organization.id,
+        organizationCode: schema.organization.code,
+        organizationName: schema.organization.name,
+      })
+      .from(schema.clerkUser)
+      .innerJoin(schema.person, eq(schema.clerkUser.personId, schema.person.id))
+      .innerJoin(
+        schema.personOrganization,
+        eq(schema.person.id, schema.personOrganization.personId),
+      )
+      .innerJoin(
+        schema.organization,
+        eq(schema.personOrganization.organizationId, schema.organization.id),
+      )
+      .innerJoin(schema.system, eq(schema.organization.id, schema.system.organizationId))
+      .where(eq(schema.clerkUser.clerkUserId, clerkUserId));
+
+    return res.map((row) => ({
+      id: row.systemId,
+      code: row.systemCode,
+      name: row.systemName,
+      slug: row.systemSlug,
+      organization: {
+        id: row.organizationId,
+        code: row.organizationCode,
+        name: row.organizationName,
+      },
+    }));
   }
 }

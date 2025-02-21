@@ -26,8 +26,6 @@ export class AuthenticationMiddleware implements IAuthenticationMiddleware {
   static inject = tokens("organizationService", "systemService");
 
   #organizationService: IOrganizationService;
-  // @ts-expect-error unused
-  // eslint-disable-next-line no-unused-private-class-members
   #systemService: ISystemService;
 
   constructor(organizationService: IOrganizationService, systemService: ISystemService) {
@@ -49,8 +47,17 @@ export class AuthenticationMiddleware implements IAuthenticationMiddleware {
     });
   }
 
-  async requireSystemAccess(_clerkUserId: string, _systemSlug: string): Promise<void> {
-    // TODO: Implement this
+  async requireSystemAccess(clerkUserId: string, systemSlug: string): Promise<void> {
+    const systemSlugs = (await this.#systemService.getSystemsForClerkUser(clerkUserId)).map(
+      (system) => system.slug,
+    );
+
+    if (!systemSlugs.includes(systemSlug)) {
+      throw new AuthenticationError(AuthenticationErrors.UNAUTHORIZED).withContext({
+        clerkUserId,
+        systemSlug,
+      });
+    }
   }
 
   async requireOrganizationAccess(clerkUserId: string, organizationId: string): Promise<void> {

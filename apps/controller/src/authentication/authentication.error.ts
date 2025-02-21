@@ -31,4 +31,20 @@ export class AuthenticationError extends BaseError<
   constructor(definition: ErrorDefinition<AuthenticationErrorCode, AuthenticationErrorContext>) {
     super(definition);
   }
+
+  override convertToServiceError(): BaseError<string, Record<string, unknown>> {
+    if (this.code === "AUTHENTICATION_UNAUTHORIZED") {
+      return new BaseError({
+        code: "NOT_FOUND",
+        message: "The requested resource was not found.",
+        httpStatus: 404,
+      });
+    }
+
+    return new BaseError({
+      code: this.code,
+      message: this.message,
+      httpStatus: this.httpStatus,
+    });
+  }
 }

@@ -81,8 +81,11 @@ export class ApiServer {
           // Get first stack trace element if available
           const tokens = (err.stack ?? "").split(" ").filter((token) => token.includes("rejot"));
 
+          const serviceError = err.convertToServiceError();
+
           console.error({
             code: err.code,
+            convertedTo: serviceError.code === err.code ? undefined : serviceError.code,
             message: err.message,
             httpStatus: err.httpStatus,
             context: err.context,
@@ -91,8 +94,11 @@ export class ApiServer {
 
           Sentry.captureException(err, { extra: err.context });
 
-          // @ts-expect-error we might give a wrong http status code.
-          return c.json({ message: err.message, code: err.code }, err.httpStatus);
+          return c.json(
+            { message: serviceError.message, code: serviceError.code },
+            // @ts-expect-error we might give a wrong http status code.
+            serviceError.httpStatus,
+          );
         }
 
         console.error(err);

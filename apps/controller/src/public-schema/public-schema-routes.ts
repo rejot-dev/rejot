@@ -83,6 +83,7 @@ export class PublicSchemaRoutes {
               schema: pub.schema,
               dataStore: pub.dataStore,
             })),
+            200,
           );
         },
       );

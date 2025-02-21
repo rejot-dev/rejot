@@ -46,6 +46,7 @@ export interface ISystemService {
   createSystem(organizationCode: string, system: CreateSystem): Promise<SystemEntity>;
   getSystem(organizationId: string, systemSlug: string): Promise<SystemOverviewResponse>;
   getSystems(organizationId: string): Promise<System[]>;
+  getSystemsForClerkUser(clerkUserId: string): Promise<System[]>;
   upsertDataStore(params: UpsertDataStoreServiceParams): Promise<UpsertDataStoreServiceResult>;
 }
 
@@ -92,6 +93,16 @@ export class SystemService implements ISystemService {
 
   async getSystems(organizationId: string): Promise<System[]> {
     const systems = await this.#systemRepository.getSystems(organizationId);
+
+    return systems.map((system) => ({
+      code: system.code,
+      name: system.name,
+      slug: system.slug,
+    }));
+  }
+
+  async getSystemsForClerkUser(clerkUserId: string): Promise<System[]> {
+    const systems = await this.#systemRepository.getSystemsForClerkUser(clerkUserId);
 
     return systems.map((system) => ({
       code: system.code,

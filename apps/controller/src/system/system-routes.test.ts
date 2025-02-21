@@ -3,7 +3,7 @@ import { createInjector } from "typed-inject";
 import { test, expect } from "bun:test";
 import { assert } from "@std/assert/assert";
 
-import type { ISystemService } from "./system-service.ts";
+import type { ISystemService, System } from "./system-service.ts";
 import { SystemRoutes } from "./system-routes.ts";
 import type { SystemEntity } from "./system-repository.ts";
 import { MockAuthenticationMiddleware } from "@/_test/mock-authentication.middleware.ts";
@@ -14,6 +14,10 @@ import { ClerkErrors } from "@/clerk/clerk.error.ts";
 import { ClerkError } from "@/clerk/clerk.error.ts";
 
 class MockSystemService implements ISystemService {
+  getSystemsForClerkUser(_clerkUserId: string): Promise<System[]> {
+    return Promise.resolve([]);
+  }
+
   createSystem(organizationCode: string, { name, slug }: CreateSystem): Promise<SystemEntity> {
     return Promise.resolve({
       id: 1,

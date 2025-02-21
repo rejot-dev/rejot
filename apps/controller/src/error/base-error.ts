@@ -45,6 +45,13 @@ export class BaseError<
     this.cause = cause;
     return this;
   }
+
+  /**
+   * Not all errors should be public to the client.
+   */
+  convertToServiceError(): BaseError<string, Record<string, unknown>> {
+    return this;
+  }
 }
 
 /**
