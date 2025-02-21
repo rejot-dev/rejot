@@ -1,7 +1,8 @@
 import { Handle, Position } from "@xyflow/react";
-import { Database, Album, RefreshCw, Bolt } from "lucide-react";
+import { Database, Album, Bolt } from "lucide-react";
 import { Link } from "react-router";
 import type { ListDetail } from "./process-architecture";
+import { RejotIcon } from "@/components/icons/rejot";
 
 type NodeData = {
   label: string;
@@ -81,7 +82,7 @@ export const SyncEngineNode = ({ id, data }: { id: string; data: NodeData }) => 
   <div className="overflow-hidden rounded-md border border-green-600 text-center dark:border-green-600">
     <AllHandles type="target" active={data.targetPosition} nodeId={id} />
     <div className="flex items-center gap-2 bg-green-300 p-2 font-semibold dark:bg-green-900">
-      <RefreshCw />
+      <RejotIcon strokeWidth={8} className="overflow-visible" />
       {data.label}
     </div>
     {data.detail && data.detail.length > 0 && <DetailView detail={data.detail} />}
