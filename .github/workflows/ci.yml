@@ -26,7 +26,7 @@ jobs:
           path: |
             node_modules
             */*/node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
   check-prettier:
     needs: install
@@ -45,7 +45,7 @@ jobs:
           path: |
             node_modules
             */*/node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
       - name: Check formatting
         run: bun run format:check
@@ -67,7 +67,7 @@ jobs:
           path: |
             node_modules
             */*/node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
       - name: Run linter
         run: bun run lint
@@ -89,7 +89,7 @@ jobs:
           path: |
             node_modules
             */*/node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
       - name: Type check controller
         working-directory: apps/controller
@@ -112,7 +112,7 @@ jobs:
           path: |
             node_modules
             */*/node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
       - name: Type check controller-spa
         working-directory: apps/controller-spa
@@ -135,7 +135,7 @@ jobs:
           path: |
             node_modules
             */*/node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
       - name: Type check api-interface-controller
         working-directory: packages/api-interface-controller
