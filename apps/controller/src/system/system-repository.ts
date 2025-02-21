@@ -396,6 +396,7 @@ export class SystemRepository implements ISystemRepository {
           user: schema.connectionPostgres.user,
           password: schema.connectionPostgres.password,
           database: schema.connectionPostgres.database,
+          ssl: schema.connectionPostgres.ssl,
         })
         .from(schema.system)
         .innerJoin(schema.organization, eq(schema.system.organizationId, schema.organization.id))
@@ -422,7 +423,7 @@ export class SystemRepository implements ISystemRepository {
         });
       }
 
-      const { systemId, connectionId, host, port, user, password, database } =
+      const { systemId, connectionId, host, port, user, password, database, ssl } =
         systemAndConnection[0];
 
       // For now we store a snapshot of the publication tables in the data store table
@@ -434,7 +435,7 @@ export class SystemRepository implements ISystemRepository {
         user,
         password,
         database,
-        ssl: false,
+        ssl,
       });
       const publication = publications.find((p) => p.name === params.publicationName);
       const publicationTables = publication?.tables?.map((t) => t.name) ?? [];
