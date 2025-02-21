@@ -53,7 +53,7 @@ const DetailView = ({ detail }: { detail: ListDetail[] }) => (
     {detail.map((item, index) => (
       <div
         key={index}
-        className="flex flex-row items-center justify-between p-2 font-mono text-sm odd:bg-white even:bg-gray-100 dark:even:bg-gray-700"
+        className="flex flex-row items-center justify-between p-2 font-mono text-sm odd:bg-white even:bg-gray-100 dark:odd:bg-gray-600 dark:even:bg-gray-700"
       >
         {item.link ? (
           <Link className="hover:underline" to={item.link}>
@@ -62,7 +62,7 @@ const DetailView = ({ detail }: { detail: ListDetail[] }) => (
         ) : (
           item.value
         )}
-        <div className="ml-2 text-xs text-gray-500">{item.type}</div>
+        <div className="ml-2 text-xs text-gray-500 dark:text-gray-400">{item.type}</div>
       </div>
     ))}
   </div>
