@@ -33,12 +33,7 @@ export function NavMain() {
           </SidebarMenuButton>
         </SidebarMenuItem>
 
-        <Collapsible
-          asChild
-          defaultOpen={hasSelectedSystem}
-          open={hasSelectedSystem}
-          className="group/collapsible"
-        >
+        <Collapsible asChild defaultOpen={hasSelectedSystem} className="group/collapsible">
           <SidebarMenuItem>
             <CollapsibleTrigger asChild disabled={!hasSelectedSystem}>
               <SidebarMenuButton tooltip="System" disabled={!hasSelectedSystem}>
@@ -65,7 +60,7 @@ export function NavMain() {
           </SidebarMenuItem>
         </Collapsible>
 
-        <Collapsible asChild className="group/collapsible">
+        <Collapsible asChild className="group/collapsible" defaultOpen={true}>
           <SidebarMenuItem>
             <CollapsibleTrigger asChild>
               <SidebarMenuButton tooltip="Connections">

@@ -53,17 +53,6 @@ export function SystemHome() {
         </div>
       </header>
 
-      <div className="flex flex-col gap-6 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="mb-2 text-3xl font-bold tracking-tight">System Overview</h1>
-            <p className="text-muted-foreground text-lg">
-              View system details and configuration for &apos;{system.name}&apos;.
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="min-h-0 flex-1 p-4">
         <div className="size-full">
           {

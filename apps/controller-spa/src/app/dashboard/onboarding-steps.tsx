@@ -7,6 +7,7 @@ import { CreateConnectionStep } from "./steps/create-connection-step";
 import { CreateDataStoreStep } from "./steps/create-data-store-step";
 import type { Connection } from "@/data/connection/connection.data";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { SystemOverview } from "@/data/system/system.data";
 
 interface OnboardingStep {
   id: string;
@@ -38,6 +39,7 @@ export interface OnboardingStepsProps {
   className?: string;
   completedSteps: OnboardingStepId[];
   connections: Connection[];
+  systemOverview?: SystemOverview;
   isLoading: boolean;
 }
 
@@ -46,6 +48,7 @@ export function OnboardingSteps({
   completedSteps,
   connections,
   isLoading,
+  systemOverview,
 }: OnboardingStepsProps) {
   const [selectedStep, setSelectedStep] = useState<OnboardingStepId | null>(() => {
     if (isLoading) {
@@ -156,7 +159,11 @@ export function OnboardingSteps({
         />
       )}
       {selectedStep === "create-data-store" && (
-        <CreateDataStoreStep completed={completedSteps.includes("create-data-store")} />
+        <CreateDataStoreStep
+          completed={completedSteps.includes("create-data-store")}
+          isLoading={isLoading}
+          systemOverview={systemOverview}
+        />
       )}
     </div>
   );

@@ -165,13 +165,13 @@ export async function getRealSystemOverview(
   };
 }
 
-export function useSystemOverview(slug: string) {
+export function useSystemOverview(slug: string | null) {
   const organizationId = useSelectedOrganizationId();
 
   return useQuery({
     queryKey: ["system-overview", organizationId, slug],
-    queryFn: () => getRealSystemOverview(organizationId!, slug),
-    enabled: !!organizationId,
+    queryFn: () => getRealSystemOverview(organizationId!, slug!),
+    enabled: !!organizationId && !!slug,
   });
 }
 

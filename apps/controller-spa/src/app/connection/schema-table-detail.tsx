@@ -30,10 +30,15 @@ export function SchemaTableDetail() {
     return null;
   }
 
-  // tableId is in format "schema.table"
-  const [schema, tableName] = tableId.split(".");
-  if (!schema || !tableName) {
-    return <div>Invalid table identifier</div>;
+  let schema: string;
+  let tableName: string;
+  if (tableId.includes(".")) {
+    const split = tableId.split(".");
+    schema = split[0]!;
+    tableName = split[1]!;
+  } else {
+    schema = "public";
+    tableName = tableId;
   }
 
   const { data: columns, isLoading } = useConnectionTableSchema(
