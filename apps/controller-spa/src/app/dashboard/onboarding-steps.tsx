@@ -1,10 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CreateSystemStep } from "./steps/create-system-step";
 import { CreateConnectionStep } from "./steps/create-connection-step";
 import { CreateDataStoreStep } from "./steps/create-data-store-step";
+import type { ConnectionListResponse } from "@/data/connection/connection.data";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface OnboardingStep {
   id: string;
@@ -34,18 +36,36 @@ export type OnboardingStepId = (typeof steps)[number]["id"];
 
 export interface OnboardingStepsProps {
   className?: string;
-  completedSteps?: OnboardingStepId[];
+  completedSteps: OnboardingStepId[];
+  connections: ConnectionListResponse;
+  isLoading: boolean;
 }
 
-export function OnboardingSteps({ className, completedSteps = [] }: OnboardingStepsProps) {
-  const [selectedStep, setSelectedStep] = useState<OnboardingStepId | null>(
-    steps[completedSteps.length % steps.length]!.id,
-  );
-  const [localCompletedSteps, setLocalCompletedSteps] =
-    useState<OnboardingStepId[]>(completedSteps);
+export function OnboardingSteps({
+  className,
+  completedSteps,
+  connections,
+  isLoading,
+}: OnboardingStepsProps) {
+  const [selectedStep, setSelectedStep] = useState<OnboardingStepId | null>(() => {
+    if (isLoading) {
+      return null;
+    }
+
+    // Find the first incomplete step
+    const nextIncompleteStep = steps.find((step) => !completedSteps.includes(step.id));
+    return nextIncompleteStep?.id ?? null;
+  });
+
+  // Update selected step when loading completes
+  useEffect(() => {
+    if (!isLoading) {
+      const nextIncompleteStep = steps.find((step) => !completedSteps.includes(step.id));
+      setSelectedStep(nextIncompleteStep?.id ?? null);
+    }
+  }, [isLoading, completedSteps]);
 
   const handleStepComplete = (stepId: OnboardingStepId) => {
-    setLocalCompletedSteps((prev) => [...prev, stepId]);
     // Move to the next step if available
     const currentIndex = steps.findIndex((step) => step.id === stepId);
     const nextStep = steps[currentIndex + 1];
@@ -53,6 +73,33 @@ export function OnboardingSteps({ className, completedSteps = [] }: OnboardingSt
       setSelectedStep(nextStep.id);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className={cn("relative space-y-6", className)}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {steps.map((step) => (
+            <Card key={step.title} className="group cursor-wait">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">
+                    <Skeleton className="h-6 w-32" />
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="size-6 rounded-full" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="mt-2 h-4 w-3/4" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("relative space-y-6", className)}>
@@ -62,9 +109,9 @@ export function OnboardingSteps({ className, completedSteps = [] }: OnboardingSt
             key={step.title}
             className={cn(
               "group cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md",
-              localCompletedSteps.includes(step.id) && "border-green-500/30 bg-green-500/5",
+              completedSteps.includes(step.id) && "border-green-500/30 bg-green-500/5",
               selectedStep === step.id &&
-                !localCompletedSteps.includes(step.id) &&
+                !completedSteps.includes(step.id) &&
                 "border-primary/30 bg-primary/5",
             )}
             onClick={() => setSelectedStep(selectedStep === step.id ? null : step.id)}
@@ -73,7 +120,7 @@ export function OnboardingSteps({ className, completedSteps = [] }: OnboardingSt
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{step.title}</CardTitle>
                 <div className="flex items-center gap-2">
-                  {localCompletedSteps.includes(step.id) && (
+                  {completedSteps.includes(step.id) && (
                     <div className="rounded-full bg-green-500/10 p-1">
                       <Check className="size-4 text-green-500" />
                     </div>
@@ -97,15 +144,19 @@ export function OnboardingSteps({ className, completedSteps = [] }: OnboardingSt
 
       {selectedStep === "create-system" && (
         <CreateSystemStep
-          completed={localCompletedSteps.includes("create-system")}
+          completed={completedSteps.includes("create-system")}
           onComplete={() => handleStepComplete("create-system")}
         />
       )}
       {selectedStep === "create-connection" && (
-        <CreateConnectionStep completed={localCompletedSteps.includes("create-connection")} />
+        <CreateConnectionStep
+          completed={completedSteps.includes("create-connection")}
+          isLoading={isLoading}
+          connections={connections}
+        />
       )}
       {selectedStep === "create-data-store" && (
-        <CreateDataStoreStep completed={localCompletedSteps.includes("create-data-store")} />
+        <CreateDataStoreStep completed={completedSteps.includes("create-data-store")} />
       )}
     </div>
   );

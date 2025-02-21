@@ -38,8 +38,6 @@ export const useSelectedSystemSlug = () => {
   }
 
   return defaultSystemSlug ?? null;
-
-  // return useSystemStore((state) => state.selectedSystemSlug);
 };
 
 export const setSelectedSystemSlug = (slug: string) => {

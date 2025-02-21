@@ -126,7 +126,7 @@ export function ConnectionCreationOverviewStep({
               Creating...
             </>
           ) : (
-            "Continue"
+            "Create"
           )}
         </Button>
       </div>

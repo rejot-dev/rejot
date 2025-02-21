@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from "react-router";
+import { Link, NavLink } from "react-router";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -9,10 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useConnections } from "@/data/connection/connection.data";
-import { useConnectionHealth } from "@/data/connection/connection-health.data";
 import { useSelectedOrganizationCode } from "@/data/clerk/clerk-meta.data";
-import { Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,29 +20,10 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-
-function ConnectionHealthStatus({
-  organizationId,
-  connectionSlug,
-}: {
-  organizationId: string;
-  connectionSlug: string;
-}) {
-  const { data: health, isLoading } = useConnectionHealth(organizationId, connectionSlug);
-
-  if (isLoading) {
-    return <Loader2 className="size-4 animate-spin" />;
-  }
-
-  return (
-    <Badge variant={health?.status === "healthy" ? "secondary" : "destructive"}>
-      {health?.status ?? "unknown"}
-    </Badge>
-  );
-}
+import { PlusCircle } from "lucide-react";
+import { ConnectionHealthStatus } from "./components/connection-health-status";
 
 export function ConnectionOverview() {
-  const navigate = useNavigate();
   const organizationId = useSelectedOrganizationCode();
   const { data: connections, isLoading } = useConnections(organizationId ?? "");
 
@@ -82,10 +60,15 @@ export function ConnectionOverview() {
       <div className="flex flex-col gap-6 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="mb-2 text-3xl font-bold tracking-tight">Connections</h1>
+            <h2 className="mb-2 text-3xl font-bold tracking-tight">Connections</h2>
             <p className="text-muted-foreground text-lg">Manage your database connections</p>
           </div>
-          <Button onClick={() => navigate("new")}>Create Connection</Button>
+          <Button asChild>
+            <Link to="new" className="gap-2">
+              <PlusCircle className="size-4" />
+              Create Connection
+            </Link>
+          </Button>
         </div>
 
         <div className="rounded-md border">

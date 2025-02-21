@@ -5,10 +5,11 @@ import { Check } from "lucide-react";
 import { SystemList } from "../../system/system-list";
 import { useToast } from "@/hooks/use-toast";
 import { SystemNewForm } from "../../system/system-new.form";
+import { setSelectedSystemSlug } from "@/app/system/system.state";
 
 interface CreateSystemStepProps {
   completed?: boolean;
-  onComplete?: () => void;
+  onComplete?: (data: { slug: string }) => void;
 }
 
 export function CreateSystemStep({ completed = false, onComplete }: CreateSystemStepProps) {
@@ -18,7 +19,7 @@ export function CreateSystemStep({ completed = false, onComplete }: CreateSystem
     <Card className={cn("animate-in fade-in slide-in-from-top-2 duration-200")}>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>System Creation</CardTitle>
+          <CardTitle>Systems</CardTitle>
           {completed && (
             <div className="rounded-full bg-green-500/10 p-1">
               <Check className="size-4 text-green-500" />
@@ -49,12 +50,13 @@ export function CreateSystemStep({ completed = false, onComplete }: CreateSystem
           <SystemNewForm
             className="w-full space-y-4 md:w-96"
             id="create-system-form"
-            onSuccess={() => {
+            onSuccess={({ slug }) => {
               toast({
                 title: "Success",
                 description: "System created successfully",
               });
-              onComplete?.();
+              setSelectedSystemSlug(slug);
+              onComplete?.({ slug });
             }}
             onFailure={(error) => {
               toast({

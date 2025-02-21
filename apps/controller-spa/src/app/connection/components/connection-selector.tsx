@@ -17,6 +17,8 @@ interface ConnectionSelectorProps {
     };
   }>;
   isLoading?: boolean;
+  showNewConnection?: boolean;
+  children?: React.ReactNode;
 }
 
 export function ConnectionSelector({
@@ -25,9 +27,9 @@ export function ConnectionSelector({
   className,
   connections,
   isLoading,
+  showNewConnection = true,
+  children,
 }: ConnectionSelectorProps) {
-  const selectedConnection = connections.find((c) => c.slug === value);
-
   return (
     <div className={cn("space-y-6", className)}>
       <RadioGroup
@@ -57,23 +59,21 @@ export function ConnectionSelector({
         ) : (
           <>
             {connections.map((connection) => (
-              <div key={connection.slug} className="relative">
+              <div key={connection.slug} className="relative h-full">
                 <RadioGroupItem value={connection.slug} id={connection.slug} className="sr-only" />
-                <label htmlFor={connection.slug} className="block cursor-pointer">
+                <label htmlFor={connection.slug} className="block h-full cursor-pointer">
                   <Card
                     className={cn(
-                      "hover:border-primary hover:bg-primary/5 relative p-4 transition-colors",
+                      "hover:border-primary hover:bg-primary/5 relative h-full p-4 transition-colors",
                       value === connection.slug && "border-primary bg-primary/5",
                     )}
                   >
-                    <div className="space-y-2">
-                      <div className="flex items-start gap-3">
-                        <Database className="text-primary mt-1 size-5 shrink-0" />
-                        <div>
-                          <h4 className="text-base font-medium">{connection.slug}</h4>
-                          <div className="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
-                            <span>{connection.config.database}</span>
-                          </div>
+                    <div className="flex items-start gap-3">
+                      <Database className="text-primary mt-1 size-5 shrink-0" />
+                      <div>
+                        <h4 className="text-base font-medium">{connection.slug}</h4>
+                        <div className="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
+                          <span>{connection.config.database}</span>
                         </div>
                       </div>
                     </div>
@@ -84,43 +84,29 @@ export function ConnectionSelector({
                 </label>
               </div>
             ))}
-            <div className="relative">
-              <RadioGroupItem value="new" id="new-connection" className="sr-only" />
-              <Link to="/connections/new" className="block">
-                <Card className="hover:border-primary hover:bg-primary/5 relative flex h-full items-center p-4 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Plus className="text-primary size-5" />
-                    <div>
-                      <h4 className="text-base font-medium">New Connection</h4>
-                      <div className="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
-                        <span>Create a new connection</span>
+            {showNewConnection && (
+              <div className="relative h-full">
+                <RadioGroupItem value="new" id="new-connection" className="sr-only" />
+                <Link to="/connections/new" className="block h-full">
+                  <Card className="hover:border-primary hover:bg-primary/5 relative h-full p-4 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <Plus className="text-primary mt-1 size-5" />
+                      <div>
+                        <h4 className="text-base font-medium">New Connection</h4>
+                        <div className="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
+                          <span>Create a new connection</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
-              </Link>
-            </div>
+                  </Card>
+                </Link>
+              </div>
+            )}
           </>
         )}
       </RadioGroup>
 
-      <Card className="p-4">
-        <h4 className="mb-3 text-sm font-medium">Connection Details</h4>
-        {selectedConnection ? (
-          <div className="text-muted-foreground grid gap-2 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Host:</span>
-              <span>{selectedConnection.config.host}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Database:</span>
-              <span>{selectedConnection.config.database}</span>
-            </div>
-          </div>
-        ) : (
-          <div className="text-muted-foreground text-sm">Select a connection to view details</div>
-        )}
-      </Card>
+      {children}
     </div>
   );
 }

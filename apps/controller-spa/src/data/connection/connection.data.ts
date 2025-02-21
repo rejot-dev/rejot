@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { z } from "zod";
 import { type ApiResult, fetchRoute, fetchRouteThrowing } from "../fetch";
 import {
@@ -7,11 +7,11 @@ import {
   connectionListApi,
 } from "@rejot/api-interface-controller/connection";
 
-type ConnectionListResponse = z.infer<
+export type ConnectionListResponse = z.infer<
   (typeof connectionListApi.responses)[200]["content"]["application/json"]["schema"]
 >;
 
-type ConnectionCreateResponse = z.infer<
+export type ConnectionCreateResponse = z.infer<
   (typeof connectionCreateApi.responses)[201]["content"]["application/json"]["schema"]
 >;
 
@@ -19,7 +19,7 @@ export function getConnections(organizationId: string): Promise<ApiResult<Connec
   return fetchRoute(connectionListApi, { params: { organizationId } });
 }
 
-export function useConnections(organizationId: string) {
+export function useConnections(organizationId: string): UseQueryResult<ConnectionListResponse> {
   return useQuery({
     queryKey: ["connections", organizationId],
     queryFn: () => getConnections(organizationId),

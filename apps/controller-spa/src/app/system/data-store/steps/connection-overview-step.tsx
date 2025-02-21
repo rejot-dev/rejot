@@ -96,7 +96,7 @@ export function ConnectionOverviewStep({
           Back
         </Button>
         <Button type="button" onClick={onContinue} disabled={isLoading || !isHealthy}>
-          Continue
+          Create
         </Button>
       </div>
     </div>

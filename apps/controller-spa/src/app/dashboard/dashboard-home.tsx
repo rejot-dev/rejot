@@ -7,23 +7,33 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSelectedOrganizationCode } from "@/data/clerk/clerk-meta.data";
-import { OnboardingSteps, type OnboardingStepId } from "./onboarding-steps";
-import { useSystems } from "@/data/system/system.data";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useConnections } from "@/data/connection/connection.data";
+import { useSelectedSystemSlug } from "@/app/system/system.state";
+import { OnboardingSteps } from "./onboarding-steps";
+import type { OnboardingStepId } from "./onboarding-steps";
 
 export function DashboardHome() {
   const organizationCode = useSelectedOrganizationCode();
+  const systemSlug = useSelectedSystemSlug();
 
   if (!organizationCode) {
     return <div>No organization selected</div>;
   }
 
+  const connections = useConnections(organizationCode);
+
+  // Compute completed steps based on current state
   const completedSteps: OnboardingStepId[] = [];
-
-  const { data: systems, isLoading } = useSystems(organizationCode);
-
-  if (systems?.length) {
+  if (systemSlug) {
     completedSteps.push("create-system");
+  }
+
+  if (connections.data && connections.data.length > 0) {
+    completedSteps.push("create-connection");
+  }
+
+  if (!organizationCode) {
+    return <div>No organization selected</div>;
   }
 
   return (
@@ -45,15 +55,16 @@ export function DashboardHome() {
         <div className="max-w-2xl">
           <h1 className="mb-2 text-3xl font-bold tracking-tight">Welcome to ReJot</h1>
           <p className="text-muted-foreground text-lg">
-            Synchronization engine to enable reactive backends for cross-team integrations
+            A few small steps are required to get you started synchronizing data between backend
+            services.
           </p>
         </div>
-
-        {isLoading ? (
-          <Skeleton className="h-48 w-full" />
-        ) : (
-          <OnboardingSteps className="mb-4" completedSteps={completedSteps} />
-        )}
+        <OnboardingSteps
+          className="mb-4"
+          completedSteps={completedSteps}
+          connections={connections.data ?? []}
+          isLoading={connections.isLoading}
+        />
       </div>
     </>
   );
