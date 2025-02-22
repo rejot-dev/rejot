@@ -66,6 +66,17 @@ export function NavMain() {
                     </NavLink>
                   </SidebarMenuSubButton>
                 </SidebarMenuSubItem>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton
+                    asChild
+                    className={!hasSelectedSystem ? "pointer-events-none opacity-50" : ""}
+                    isActive={!!useMatch({ path: "/consumer-schemas" })}
+                  >
+                    <NavLink to="/consumer-schemas">
+                      <span>Consumer Schemas</span>
+                    </NavLink>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
               </SidebarMenuSub>
             </CollapsibleContent>
           </SidebarMenuItem>
