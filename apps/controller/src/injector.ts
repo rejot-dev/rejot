@@ -30,6 +30,9 @@ import { ConnectionRawRoutes } from "./connection/connection-raw.routes.ts";
 import { PublicSchemaRepository } from "./public-schema/public-schema-repository.ts";
 import { PublicSchemaRoutes } from "./public-schema/public-schema-routes.ts";
 import { PublicSchemaService } from "./public-schema/public-schema-service.ts";
+import { ConsumerSchemaRepository } from "./consumer-schema/consumer-schema-repository.ts";
+import { ConsumerSchemaService } from "./consumer-schema/consumer-schema-service.ts";
+import { ConsumerSchemaRoutes } from "./consumer-schema/consumer-schema-routes.ts";
 
 export const appInjector = createInjectionContainer();
 
@@ -50,6 +53,7 @@ export function createInjectionContainer() {
     .provideClass("personRepository", PersonRepository)
     .provideClass("postgresConnectionManager", PostgresConnectionManager)
     .provideClass("publicSchemaRepository", PublicSchemaRepository)
+    .provideClass("consumerSchemaRepository", ConsumerSchemaRepository)
     .provideClass("systemRepository", SystemRepository)
     .provideClass("schemaRepository", SchemaRepository)
     // API Clients
@@ -57,6 +61,7 @@ export function createInjectionContainer() {
     .provideClass("connectionTypeMultiplexer", ConnectionTypeMultiplexer)
     // Services
     .provideClass("publicSchemaService", PublicSchemaService)
+    .provideClass("consumerSchemaService", ConsumerSchemaService)
     .provideClass("authenticationService", AuthenticationService)
     .provideClass("connectionService", ConnectionService)
     .provideClass("organizationService", OrganizationService)
@@ -73,7 +78,8 @@ export function createInjectionContainer() {
     .provideClass("connectionRoutes", ConnectionRoutes)
     .provideClass("connectionHealthRoutes", ConnectionHealthRoutes)
     .provideClass("connectionRawRoutes", ConnectionRawRoutes)
-    .provideClass("publicSchemaRoutes", PublicSchemaRoutes);
+    .provideClass("publicSchemaRoutes", PublicSchemaRoutes)
+    .provideClass("consumerSchemaRoutes", ConsumerSchemaRoutes);
 
   // Force disposer to be loaded.
   appInjector.resolve("postgresDisposer");

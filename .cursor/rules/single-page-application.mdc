@@ -42,6 +42,42 @@ globs: apps/controller-spa/**
 - Type-safe backend communication using [fetch.ts](mdc:apps/basic/src/data/fetch.ts)
 - Check available routes in [package.json](mdc:packages/api-interface-controller/package.json)
 
+#### Data Layer Best Practices
+1. Error Handling:
+   - Use `fetchRouteThrowing` instead of `fetchRoute` for queries
+   - Remove `select` handlers that only handle errors
+
+2. Type Definitions:
+   - Create separate types for mutation variables
+   - DO NOT export inferred types from Zod schemas, use inline `z.infer<>` instead
+   - Example:
+     ```typescript
+     // Good
+     function createThing(variables: CreateThingMutationVariables): Promise<z.infer<typeof ThingSchema>>
+
+     // Bad
+     export type ThingResponse = z.infer<typeof ThingSchema>
+     function createThing(): Promise<ThingResponse>
+     ```
+
+3. Mutation Functions:
+   - Take a single variables object instead of multiple parameters
+   - Define mutation variable types separately
+   - Example:
+     ```typescript
+     export type CreateThingMutationVariables = {
+       systemId: string;
+       data: z.infer<typeof ThingPostRequest>;
+     };
+
+     export function createThing({ systemId, data }: CreateThingMutationVariables) {
+       return fetchRouteThrowing(thingPostApi, {
+         params: { systemId },
+         body: data,
+       });
+     }
+     ```
+
 ## Code Style
 - NO default exports
 - NO star imports (* as X), just import the thing directly.

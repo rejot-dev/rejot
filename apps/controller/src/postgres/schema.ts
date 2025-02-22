@@ -58,6 +58,53 @@ export const publicSchemaTransformationPostgresql = pgTable(
   (t) => [unique().on(t.publicSchemaTransformationId)],
 );
 
+export const consumerSchemaTransformationType = pgEnum("consumer_schema_transformation_type", [
+  "postgresql",
+]);
+
+export const consumerSchemaStatus = pgEnum("consumer_schema_status", [
+  "draft",
+  "backfill",
+  "active",
+  "archived",
+]);
+
+export const consumerSchema = pgTable("consumer_schema", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  code: varchar({ length: 30 }).notNull(),
+  dataStoreId: integer()
+    .references(() => dataStore.id)
+    .notNull(),
+  name: varchar({ length: 255 }).notNull(),
+  status: consumerSchemaStatus().notNull().default("draft"),
+  createdAt: timestamp().notNull().defaultNow(),
+});
+
+export const consumerSchemaTransformation = pgTable(
+  "consumer_schema_transformation",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    consumerSchemaId: integer()
+      .references(() => consumerSchema.id)
+      .notNull(),
+    type: consumerSchemaTransformationType().notNull(),
+    majorVersion: integer().notNull().default(1),
+  },
+  (t) => [unique().on(t.consumerSchemaId, t.majorVersion)],
+);
+
+export const consumerSchemaTransformationPostgresql = pgTable(
+  "consumer_schema_transformation_postgresql",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    consumerSchemaTransformationId: integer()
+      .references(() => consumerSchemaTransformation.id)
+      .notNull(),
+    sql: text().notNull(),
+  },
+  (t) => [unique().on(t.consumerSchemaTransformationId)],
+);
+
 export const organization = pgTable("organization", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   code: varchar({ length: 30 }).notNull().unique(),
@@ -210,6 +257,9 @@ export const schema = {
   publicSchema,
   publicSchemaTransformation,
   publicSchemaTransformationPostgresql,
+  consumerSchema,
+  consumerSchemaTransformation,
+  consumerSchemaTransformationPostgresql,
   organization,
   person,
   personOrganization,

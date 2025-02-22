@@ -26,6 +26,10 @@ export const Codes = [
     prefix: "PUBS",
     entity: "Public Schema",
   },
+  {
+    prefix: "CONS",
+    entity: "Consumer Schema",
+  },
 ] as const;
 
 export type CodePrefix = (typeof Codes)[number]["prefix"];

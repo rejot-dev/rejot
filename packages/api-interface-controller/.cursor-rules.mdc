@@ -1,0 +1,75 @@
+---
+description: 
+globs: 
+---
+# API Interface Controller
+
+## Overview
+This package contains OpenAPI interface definitions for the controller app. It defines the contract between the frontend and backend.
+
+## File Structure
+- API definitions should be in `*.api.ts` files
+- Each domain should have its own file
+- Complex domains can have a subdirectory with an `index.ts`
+
+## Package Exports
+- **IMPORTANT**: Every new API definition file MUST be added to `package.json` exports
+- Export format should be:
+  ```json
+  {
+    "exports": {
+      "./domain-name": "./domain-name.api.ts"
+    }
+  }
+  ```
+- For complex domains with directories:
+  ```json
+  {
+    "exports": {
+      "./domain": "./domain/index.ts",
+      "./domain-feature": "./domain/feature.api.ts"
+    }
+  }
+  ```
+
+## API Definition Guidelines
+1. Use Zod for schema definitions
+2. Always include OpenAPI metadata using `.openapi()`
+3. Export both schema and inferred types
+4. Follow the pattern:
+   ```typescript
+   export const SomeSchema = z.object({/*...*/}).openapi("SomeName");
+   ```
+5. Use `z` from `@hono/zod-openapi`
+6. DO NOT export an inferred type. Clients can infer from the schema themselves.
+   - (BAD: `export type Some = z.infer<typeof SomeSchema>;`)
+
+## Route Configuration
+1. Use `RouteConfig` type from `@hono/zod-openapi`
+2. Include all standard responses (200/201, 400, 404, 500)
+3. Group related endpoints under the same tag
+4. Example:
+   ```typescript
+   export const someApi = {
+     method: "get",
+     path: "/domain/{param}",
+     request: {
+       params: z.object({/*...*/}),
+     },
+     responses: {
+       200: {/*...*/},
+       404: {/*...*/},
+       500: {/*...*/},
+     },
+     tags: ["domain"],
+     description: "Description",
+   } satisfies RouteConfig;
+   ```
+
+## Checklist for New API Files
+1. [ ] Create `domain-name.api.ts`
+2. [ ] Define schemas with OpenAPI metadata
+3. [ ] Export types
+4. [ ] Define route configurations
+5. [ ] Add export to `package.json`
+
