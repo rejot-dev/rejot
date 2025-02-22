@@ -30,6 +30,7 @@ interface SchemaConfigurationEditorProps {
   schema: SchemaColumn[];
   onChange: (schema: SchemaColumn[]) => void;
   suggestedColumns?: Omit<SchemaColumn, "id">[];
+  editable?: boolean;
 }
 
 const DATA_TYPES = ["string", "number", "boolean"] as const;
@@ -38,6 +39,7 @@ export function SchemaConfigurationEditor({
   schema,
   onChange,
   suggestedColumns = [],
+  editable = true,
 }: SchemaConfigurationEditorProps) {
   const { toast } = useToast();
   const [newColumnName, setNewColumnName] = useState("");
@@ -149,7 +151,7 @@ export function SchemaConfigurationEditor({
               schema.map((column) => (
                 <TableRow key={column.id}>
                   <TableCell className="p-2">
-                    {editingColumns.has(column.id) ? (
+                    {editable && editingColumns.has(column.id) ? (
                       <Input
                         className="w-full"
                         value={column.columnName}
@@ -162,7 +164,7 @@ export function SchemaConfigurationEditor({
                     )}
                   </TableCell>
                   <TableCell className="p-2">
-                    {editingColumns.has(column.id) ? (
+                    {editable && editingColumns.has(column.id) ? (
                       <Select
                         value={column.dataType}
                         onValueChange={(value) =>
@@ -187,38 +189,44 @@ export function SchemaConfigurationEditor({
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => toggleEditMode(column.id)}>
-                        {editingColumns.has(column.id) ? (
-                          <PencilOff className="size-4" />
-                        ) : (
-                          <Pencil className="size-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={schema.indexOf(column) === 0}
-                        onClick={() => handleMoveColumn(column.id, "up")}
-                      >
-                        <ArrowUp className="size-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={schema.indexOf(column) === schema.length - 1}
-                        onClick={() => handleMoveColumn(column.id, "down")}
-                      >
-                        <ArrowDown className="size-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveColumn(column.id)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
+                    {editable && (
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => toggleEditMode(column.id)}
+                        >
+                          {editingColumns.has(column.id) ? (
+                            <PencilOff className="size-4" />
+                          ) : (
+                            <Pencil className="size-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={schema.indexOf(column) === 0}
+                          onClick={() => handleMoveColumn(column.id, "up")}
+                        >
+                          <ArrowUp className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={schema.indexOf(column) === schema.length - 1}
+                          onClick={() => handleMoveColumn(column.id, "down")}
+                        >
+                          <ArrowDown className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveColumn(column.id)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -227,36 +235,38 @@ export function SchemaConfigurationEditor({
         </Table>
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="flex flex-1 gap-4">
-          <span className="flex shrink-0 items-center text-sm font-medium">Add column:</span>
-          <Input
-            placeholder="Column name"
-            value={newColumnName}
-            onChange={(e) => setNewColumnName(e.target.value)}
-          />
-          <Select
-            value={newColumnType}
-            onValueChange={(value) => setNewColumnType(value as (typeof DATA_TYPES)[number])}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select type" />
-            </SelectTrigger>
-            <SelectContent>
-              {DATA_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button className="p-2" onClick={handleAddColumn} size="icon">
-            <Plus className="size-4" />
-          </Button>
+      {editable && (
+        <div className="flex items-center gap-2">
+          <div className="flex flex-1 gap-4">
+            <span className="flex shrink-0 items-center text-sm font-medium">Add column:</span>
+            <Input
+              placeholder="Column name"
+              value={newColumnName}
+              onChange={(e) => setNewColumnName(e.target.value)}
+            />
+            <Select
+              value={newColumnType}
+              onValueChange={(value) => setNewColumnType(value as (typeof DATA_TYPES)[number])}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {DATA_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button className="p-2" onClick={handleAddColumn} size="icon">
+              <Plus className="size-4" />
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {suggestedColumns.length > 0 && (
+      {suggestedColumns.length > 0 && editable && (
         <div className="flex flex-row gap-4">
           <div className="flex items-center text-sm font-medium">Suggested columns:</div>
           <div className="flex flex-wrap gap-2">
