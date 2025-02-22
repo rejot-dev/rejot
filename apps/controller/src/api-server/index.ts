@@ -96,7 +96,11 @@ export class ApiServer {
             errorLocation: tokens,
           });
 
-          Sentry.captureException(err, { extra: err.context });
+          if (err.httpStatus == 500) {
+            Sentry.captureException(err, {
+              extra: { errorContext: err.context, errorLocation: tokens },
+            });
+          }
 
           return c.json(
             { message: serviceError.message, code: serviceError.code },
