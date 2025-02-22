@@ -27,7 +27,7 @@ export function SystemSchemaChanges({ system, organizationId }: SystemSchemaChan
   const [selectedSchema, selectedTableName] = selectedTable?.split(".") ?? ["", ""];
 
   const connectionSlug = system.dataStores.find((ds) =>
-    ds.publication.tables?.includes(selectedTableName ?? ""),
+    ds.tables.includes(selectedTableName ?? ""),
   )?.slug;
 
   const { data: schemaChanges, isLoading: isLoadingChanges } = useRecentSchemaChanges(
@@ -46,7 +46,7 @@ export function SystemSchemaChanges({ system, organizationId }: SystemSchemaChan
           </SelectTrigger>
           <SelectContent>
             {system.dataStores.map((ds) =>
-              (ds.publication.tables || []).map((table) => (
+              ds.tables.map((table) => (
                 <SelectItem key={`public.${table}`} value={`public.${table}`}>
                   {`public.${table}`}
                 </SelectItem>

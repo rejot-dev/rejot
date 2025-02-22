@@ -20,11 +20,11 @@ export function DataStoreDetailsSlot({ dataStore }: DataStoreDetailsSlotProps) {
           </div>
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <TableProperties className="size-4" />
-            <span>{dataStore.publication.tables?.length ?? 0} Tables</span>
+            <span>{dataStore.tables.length} Tables</span>
           </div>
-          {dataStore.publication.tables && dataStore.publication.tables.length > 0 && (
+          {dataStore.tables && dataStore.tables.length > 0 && (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {dataStore.publication.tables.map((table) => (
+              {dataStore.tables.map((table) => (
                 <div
                   key={table}
                   className="bg-muted flex items-center gap-2 rounded-md p-2 text-sm"

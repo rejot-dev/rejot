@@ -10,11 +10,10 @@ import {
   systemListApi,
 } from "@rejot/api-interface-controller/system";
 import type { ConnectionType } from "../connection/connection";
-import type { SyncServiceStatus } from "../sync-service/sync-service.data";
 import { z } from "zod";
 import { useSelectedOrganizationCode as useSelectedOrganizationId } from "../clerk/clerk-meta.data";
 import { getConnectionTableSchemaChanges } from "@/data/connection/connection-health.data";
-import type { PublicSchema } from "@rejot/api-interface-controller/public-schema";
+
 type SystemResponse = z.infer<
   (typeof systemGetApi.responses)[200]["content"]["application/json"]["schema"]
 >;
@@ -22,27 +21,45 @@ type SystemListResponse = z.infer<
   (typeof systemListApi.responses)[200]["content"]["application/json"]["schema"]
 >;
 
+export type SchemaDefinitionColumn = {
+  columnName: string;
+  dataType: string;
+  isNullable: boolean;
+  default: string | null;
+};
+
+export type OverviewPublicSchema = {
+  id: string;
+  name: string;
+  version: number;
+  schema: SchemaDefinitionColumn[];
+};
+
+export type OverviewDataStores = {
+  slug: string;
+  type: ConnectionType;
+  publicationName: string;
+  tables: string[];
+  publicSchemas: OverviewPublicSchema[];
+};
+
 export type SystemOverview = {
-  code: string;
+  id: string;
   name: string;
   slug: string;
 
   syncServices: {
     code: string;
     slug: string;
-    status: SyncServiceStatus;
+    status: string;
   }[];
 
-  dataStores: {
-    slug: string;
-    type: ConnectionType;
-    // TODO: rename to something better?
-    publication: {
-      name: string;
-      tables?: string[];
-    };
-    publications: PublicSchema[];
-  }[];
+  organization: {
+    code: string;
+    name: string;
+  };
+
+  dataStores: OverviewDataStores[];
 };
 
 export type System = {
@@ -132,37 +149,68 @@ export function useCurrentOrganizationSystems() {
 
 export async function getRealSystemOverview(
   organizationId: string,
-  slug: string,
+  systemSlug: string,
 ): Promise<SystemOverview> {
-  const result = await getSystem(organizationId, slug);
+  const result = await getSystem(organizationId, systemSlug);
 
   if (result.status === "error") {
     throw new Error(result.message);
   }
 
-  const system = result.data;
+  const { id, name, slug, organization, dataStores } = result.data;
 
   return {
-    code: system.code,
-    name: system.name,
-    slug: system.slug,
+    id,
+    name,
+    slug,
     syncServices: [
       {
         code: "SYNC_123",
         slug: "default-sync",
         status: "active",
       },
-    ], // This will need to be populated when sync service API is available
-    dataStores: system.dataStores.map((ds) => ({
-      slug: ds.connectionSlug,
-      type: "postgres" as ConnectionType, // We might need to fetch the actual type from connections API
-      publication: {
-        name: ds.publicationName,
-        tables: ds.tables,
-      },
-      publications: ds.publications,
-    })),
+    ],
+    organization,
+    dataStores: dataStores.map(
+      (ds) =>
+        ({
+          slug: ds.slug,
+          type: ds.type,
+          publicationName: ds.publicationName,
+          tables: ds.tables,
+          publicSchemas: ds.publicSchemas.map(
+            (ps) =>
+              ({
+                id: ps.id,
+                name: ps.name,
+                version: ps.version,
+                schema: ps.schema,
+              }) satisfies OverviewPublicSchema,
+          ),
+        }) satisfies OverviewDataStores,
+    ),
   };
+
+  // syncServices: [
+  //   {
+  //     code: "SYNC_123",
+  //     slug: "default-sync",
+  //     status: "active",
+  //   },
+  // ], // This will need to be populated when sync service API is available
+  // dataStores: system.dataStores.map((ds) => ({
+  //   slug: ds.slug,
+  //   type: ds.type,
+  //   publicationName: ds.publicationName,
+  //   tables: ds.tables,
+
+  //   // type: "postgres" as ConnectionType, // We might need to fetch the actual type from connections API
+  //   // publicationName: ds.publicationName,
+  //   //   tables: ds.tables,
+  //   // },
+  //   // publications: ds.publications,
+  // })),
+  // };
 }
 
 export type SystemOverviewOptions = {

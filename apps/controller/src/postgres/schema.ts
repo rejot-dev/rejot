@@ -7,7 +7,10 @@ import {
   unique,
   varchar,
   boolean,
+  text,
 } from "drizzle-orm/pg-core";
+
+export const publicSchemaStatus = pgEnum("public_schema_status", ["draft", "active", "archived"]);
 
 export const publicSchema = pgTable(
   "public_schema",
@@ -18,12 +21,41 @@ export const publicSchema = pgTable(
       .references(() => dataStore.id)
       .notNull(),
     name: varchar({ length: 255 }).notNull(),
+    status: publicSchemaStatus().notNull().default("draft"),
     createdAt: timestamp().notNull().defaultNow(),
-    majorVersion: integer().notNull().default(1),
-    minorVersion: integer().notNull().default(0),
-    schema: jsonb(),
   },
-  (t) => [unique().on(t.code, t.majorVersion, t.minorVersion)],
+  (t) => [unique().on(t.code)],
+);
+
+export const publicSchemaTransformationType = pgEnum("public_schema_transformation_type", [
+  "postgresql",
+]);
+
+export const publicSchemaTransformation = pgTable(
+  "public_schema_transformation",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    publicSchemaId: integer()
+      .references(() => publicSchema.id)
+      .notNull(),
+    type: publicSchemaTransformationType().notNull(),
+    majorVersion: integer().notNull().default(1),
+    baseTable: varchar({ length: 255 }).notNull(),
+    schema: jsonb().notNull(),
+  },
+  (t) => [unique().on(t.publicSchemaId, t.majorVersion)],
+);
+
+export const publicSchemaTransformationPostgresql = pgTable(
+  "public_schema_transformation_postgresql",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    publicSchemaTransformationId: integer()
+      .references(() => publicSchemaTransformation.id)
+      .notNull(),
+    sql: text().notNull(),
+  },
+  (t) => [unique().on(t.publicSchemaTransformationId)],
 );
 
 export const organization = pgTable("organization", {
@@ -176,6 +208,8 @@ export const schemaSnapshot = pgTable(
 
 export const schema = {
   publicSchema,
+  publicSchemaTransformation,
+  publicSchemaTransformationPostgresql,
   organization,
   person,
   personOrganization,

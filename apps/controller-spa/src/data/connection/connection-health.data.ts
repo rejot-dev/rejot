@@ -62,7 +62,7 @@ export function getConnectionTableSchema(
   organizationId: string,
   connectionSlug: string,
   tableName: string,
-): Promise<ApiResult<ConnectionTableSchema[]>> {
+): Promise<ApiResult<ConnectionTableSchema>> {
   return fetchRoute(connectionTableSchemaApi, {
     params: { organizationId, connectionSlug, tableName },
   });

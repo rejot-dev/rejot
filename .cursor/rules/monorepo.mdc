@@ -27,6 +27,10 @@ Sort imports in this order (with blank line between categories):
 - Within each category: alphabetical order
 - Type-only imports last
 
+### Importing Rules
+- When at all possible DO NOT export types.
+- PREFER to recreate types instead of importing them. E.g. a component defines its own types, so do services and repositories.
+
 ## API Development
 ### Architecture
 - REST APIs built with Hono framework
@@ -42,3 +46,4 @@ Sort imports in this order (with blank line between categories):
 - Hono for REST APIs
 - Zod for schema validation and type safety
 - Domain-driven organization structure
+

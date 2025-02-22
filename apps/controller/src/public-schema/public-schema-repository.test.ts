@@ -77,8 +77,7 @@ dbDescribe("PublicSchemaRepository", async (ctx) => {
       columnName: "id",
       dataType: "integer",
       isNullable: false,
-      columnDefault: null,
-      tableSchema: "public",
+      default: null,
     },
   ];
 
@@ -90,11 +89,25 @@ dbDescribe("PublicSchemaRepository", async (ctx) => {
         code: "TEST_SCHEMA_1",
         name: "Test Public Schema",
         dataStoreId,
-        majorVersion: 1,
-        minorVersion: 0,
+        status: "draft",
+      })
+      .returning();
+
+    const [transformation] = await db
+      .insert(schema.publicSchemaTransformation)
+      .values({
+        publicSchemaId: publicSchema.id,
+        type: "postgresql",
+        baseTable: "test_table",
         schema: testSchema,
       })
       .returning();
+
+    await db.insert(schema.publicSchemaTransformationPostgresql).values({
+      publicSchemaTransformationId: transformation.id,
+      sql: "SELECT * FROM test_table",
+    });
+
     return publicSchema;
   }
 
@@ -114,10 +127,16 @@ dbDescribe("PublicSchemaRepository", async (ctx) => {
     expect(result).toBeDefined();
     expect(result.code).toBe(publicSchema.code);
     expect(result.name).toBe(publicSchema.name);
-    expect(result.majorVersion).toBe(publicSchema.majorVersion);
-    expect(result.minorVersion).toBe(publicSchema.minorVersion);
-    expect(result.dataStoreSlug).toBe(connection.slug);
-    expect(result.schema).toEqual(testSchema);
+    expect(result.status).toBe("draft");
+    expect(result.connection.slug).toBe(connection.slug);
+    expect(result.transformations).toHaveLength(1);
+    expect(result.transformations[0].majorVersion).toBe(1);
+    expect(result.transformations[0].baseTable).toBe("test_table");
+    expect(result.transformations[0].schema).toEqual(testSchema);
+    expect(result.transformations[0].details).toEqual({
+      type: "postgresql",
+      sql: "SELECT * FROM test_table",
+    });
   });
 
   test("get - throws NOT_FOUND when public schema doesn't exist", async () => {
@@ -143,7 +162,14 @@ dbDescribe("PublicSchemaRepository", async (ctx) => {
       name: "New Public Schema",
       code: generateCode("PUBS"),
       connectionSlug: connection.slug,
-      schema: testSchema,
+      transformation: {
+        baseTable: "test_table",
+        schema: testSchema,
+        details: {
+          type: "postgresql",
+          sql: "SELECT * FROM test_table",
+        },
+      },
     };
 
     // Test create method
@@ -152,10 +178,13 @@ dbDescribe("PublicSchemaRepository", async (ctx) => {
     expect(result).toBeDefined();
     expect(result.name).toBe(createData.name);
     expect(result.code).toBe(createData.code);
-    expect(result.majorVersion).toBe(1);
-    expect(result.minorVersion).toBe(0);
-    expect(result.dataStoreSlug).toBe(connection.slug);
-    expect(result.schema).toEqual(testSchema);
+    expect(result.status).toBe("draft");
+    expect(result.connection.slug).toBe(connection.slug);
+    expect(result.transformations).toHaveLength(1);
+    expect(result.transformations[0].majorVersion).toBe(1);
+    expect(result.transformations[0].baseTable).toBe(createData.transformation.baseTable);
+    expect(result.transformations[0].schema).toEqual(createData.transformation.schema);
+    expect(result.transformations[0].details).toEqual(createData.transformation.details);
   });
 
   test("create - throws CREATION_FAILED when system doesn't exist", async () => {
@@ -165,7 +194,14 @@ dbDescribe("PublicSchemaRepository", async (ctx) => {
       name: "New Public Schema",
       code: generateCode("PUBS"),
       connectionSlug: "test-connection",
-      schema: testSchema,
+      transformation: {
+        baseTable: "test_table",
+        schema: testSchema,
+        details: {
+          type: "postgresql",
+          sql: "SELECT * FROM test_table",
+        },
+      },
     };
 
     expect(publicSchemaRepository.create("nonexistent-system", createData)).rejects.toThrow(
@@ -189,10 +225,8 @@ dbDescribe("PublicSchemaRepository", async (ctx) => {
     expect(results).toHaveLength(1);
     expect(results[0].code).toBe(publicSchema.code);
     expect(results[0].name).toBe(publicSchema.name);
-    expect(results[0].majorVersion).toBe(publicSchema.majorVersion);
-    expect(results[0].minorVersion).toBe(publicSchema.minorVersion);
-    expect(results[0].dataStoreSlug).toBe(connection.slug);
-    expect(results[0].schema).toEqual(testSchema);
+    expect(results[0].status).toBe("draft");
+    expect(results[0].connection.slug).toBe(connection.slug);
   });
 
   test("getPublicSchemasBySystemSlug - returns empty array when no schemas exist", async () => {
@@ -216,17 +250,32 @@ dbDescribe("PublicSchemaRepository", async (ctx) => {
 
     // Create two public schemas
     const publicSchema1 = await createTestPublicSchema(dataStore.id);
-    await db
+
+    // Create second schema with transformation
+    const [publicSchema2] = await db
       .insert(schema.publicSchema)
       .values({
         code: "TEST_SCHEMA_2",
         name: "Test Public Schema 2",
         dataStoreId: dataStore.id,
-        majorVersion: 1,
-        minorVersion: 0,
+        status: "draft",
+      })
+      .returning();
+
+    const [transformation2] = await db
+      .insert(schema.publicSchemaTransformation)
+      .values({
+        publicSchemaId: publicSchema2.id,
+        type: "postgresql",
+        baseTable: "test_table_2",
         schema: testSchema,
       })
       .returning();
+
+    await db.insert(schema.publicSchemaTransformationPostgresql).values({
+      publicSchemaTransformationId: transformation2.id,
+      sql: "SELECT * FROM test_table_2",
+    });
 
     // Test getPublicSchemasBySystemSlug method
     const results = await publicSchemaRepository.getPublicSchemasBySystemSlug(system.slug);
@@ -237,10 +286,8 @@ dbDescribe("PublicSchemaRepository", async (ctx) => {
       [publicSchema1.name, "Test Public Schema 2"].sort(),
     );
     results.forEach((result) => {
-      expect(result.majorVersion).toBe(1);
-      expect(result.minorVersion).toBe(0);
-      expect(result.dataStoreSlug).toBe(connection.slug);
-      expect(result.schema).toEqual(testSchema);
+      expect(result.status).toBe("draft");
+      expect(result.connection.slug).toBe(connection.slug);
     });
   });
 
@@ -255,17 +302,33 @@ dbDescribe("PublicSchemaRepository", async (ctx) => {
     const dataStore = await createTestDataStore(system.id, connection.id);
 
     // Create a public schema with invalid schema data
-    await db.insert(schema.publicSchema).values({
-      code: "INVALID_SCHEMA",
-      name: "Invalid Schema",
-      dataStoreId: dataStore.id,
-      majorVersion: 1,
-      minorVersion: 0,
-      schema: [{ invalidField: "this should fail validation" }],
+    const [publicSchema] = await db
+      .insert(schema.publicSchema)
+      .values({
+        code: "INVALID_SCHEMA",
+        name: "Invalid Schema",
+        dataStoreId: dataStore.id,
+        status: "draft",
+      })
+      .returning();
+
+    const [transformation] = await db
+      .insert(schema.publicSchemaTransformation)
+      .values({
+        publicSchemaId: publicSchema.id,
+        type: "postgresql",
+        baseTable: "test_table",
+        schema: [{ invalidField: "this should fail validation" }],
+      })
+      .returning();
+
+    await db.insert(schema.publicSchemaTransformationPostgresql).values({
+      publicSchemaTransformationId: transformation.id,
+      sql: "SELECT * FROM test_table",
     });
 
     // Test that fetching throws an error due to invalid schema
-    await expect(publicSchemaRepository.getPublicSchemasBySystemSlug(system.slug)).rejects.toThrow(
+    expect(publicSchemaRepository.get(system.slug, publicSchema.code)).rejects.toThrow(
       PublicSchemaError,
     );
   });

@@ -4,18 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { createPublicSchema } from "@/data/public-schema/public-schema.data";
-import { useConnectionTableSchema } from "@/data/connection/connection-health.data";
+import { useCreatePublicSchemaMutation } from "@/data/public-schema/public-schema.data";
 import { Loader2 } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-
-interface ColumnSchema {
-  columnName: string;
-  dataType: string;
-  isNullable: boolean;
-  columnDefault: string | null;
-  tableSchema: string;
-}
 
 interface CreateTransformationStepProps {
   systemSlug: string;
@@ -35,31 +25,8 @@ export function CreateTransformationStep({
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [sqlQuery, setSqlQuery] = useState(`SELECT *\nFROM ${baseTable}`);
-  const { data: columns, isLoading } = useConnectionTableSchema(
-    systemSlug,
-    dataStoreSlug,
-    baseTable,
-  );
-  const createMutation = useMutation({
-    mutationFn: (params: {
-      systemSlug: string;
-      dataStoreSlug: string;
-      name: string;
-      schema: ColumnSchema[];
-    }) =>
-      createPublicSchema(params.systemSlug, params.dataStoreSlug, {
-        name: params.name,
-        schema: params.schema,
-      }),
-  });
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="size-8 animate-spin" />
-      </div>
-    );
-  }
+  const createMutation = useCreatePublicSchemaMutation();
 
   const handleCreate = async () => {
     if (!name || !sqlQuery) {
@@ -75,10 +42,16 @@ export function CreateTransformationStep({
       const result = await createMutation.mutateAsync({
         systemSlug,
         dataStoreSlug,
-        name,
-        schema: columns ?? [],
+        data: {
+          name,
+          baseTable,
+          schema: [],
+          details: {
+            type: "postgresql",
+            sql: sqlQuery,
+          },
+        },
       });
-
       toast({
         title: "Public schema created",
         description: "Your public schema has been created successfully",

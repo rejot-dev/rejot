@@ -3,7 +3,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Code2 } from "lucide-react";
+import { DatabaseZap, SquareFunction } from "lucide-react";
 
 interface TransformationTypeStepProps {
   onBack: () => void;
@@ -32,7 +32,7 @@ export function TransformationTypeStep({ onBack, onSelected }: TransformationTyp
             >
               <CardHeader className="p-0">
                 <div className="flex items-center gap-2">
-                  <Code2 className="text-primary size-5" />
+                  <DatabaseZap className="text-primary size-5" />
                   <CardTitle>SQL Transformation</CardTitle>
                 </div>
                 <CardDescription>Transform your data using SQL queries</CardDescription>
@@ -55,7 +55,7 @@ export function TransformationTypeStep({ onBack, onSelected }: TransformationTyp
             >
               <CardHeader className="p-0">
                 <div className="flex items-center gap-2">
-                  <Code2 className="text-primary size-5" />
+                  <SquareFunction className="text-primary size-5" />
                   <CardTitle>TypeScript Transformation</CardTitle>
                 </div>
                 <CardDescription>

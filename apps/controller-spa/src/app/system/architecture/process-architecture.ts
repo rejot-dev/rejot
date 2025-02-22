@@ -44,7 +44,7 @@ export const systemOverviewToArchitectureNode = (system: SystemOverview): Archit
     detail: [{ value: syncService.status, type: "status" }],
     children: system.dataStores.map((store) => {
       const tableDetails =
-        store.publication.tables?.map((table) => ({
+        store.tables.map((table) => ({
           value: table,
           type: "source table",
           link: `/connections/${store.slug}/tables/public.${table}`,
@@ -69,14 +69,14 @@ export const systemOverviewToArchitectureNode = (system: SystemOverview): Archit
       };
 
       // If the store has publications, add them as children
-      if (store.publications.length) {
-        databaseNode.children = store.publications.map((publication) => ({
-          id: `${store.slug}-${publication.name}`,
+      if (store.publicSchemas.length) {
+        databaseNode.children = store.publicSchemas.map((ps) => ({
+          id: `${store.slug}-${ps.name}`,
           type: "publication",
-          label: publication.name,
-          detail: publication.schema?.map((schema) => ({
-            value: schema.columnName,
-            type: schema.dataType,
+          label: ps.name,
+          detail: ps.schema.map((column) => ({
+            value: column.columnName,
+            type: column.dataType,
           })),
         }));
       }

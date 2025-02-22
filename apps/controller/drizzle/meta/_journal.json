@@ -43,6 +43,13 @@
       "when": 1740167500139,
       "tag": "0005_unusual_bloodstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1740192017732,
+      "tag": "0006_true_giant_girl",
+      "breakpoints": true
     }
   ]
 }

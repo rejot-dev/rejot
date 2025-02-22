@@ -3,4 +3,4 @@ build
 coverage
 
 # Ignore generated files:
-**/drizzle/**/*.sql
+**/drizzle/**

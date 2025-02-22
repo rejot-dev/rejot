@@ -1,14 +1,17 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
 
-export const SchemaDefinition = z.array(
-  z.object({
-    columnName: z.string(),
-    dataType: z.string(),
-    isNullable: z.boolean(),
-    columnDefault: z.string().nullable(),
-    tableSchema: z.string(),
-  }),
-);
+export const SchemaDefinitionColumnSchema = z.object({
+  columnName: z.string(),
+  dataType: z.string(),
+  isNullable: z.boolean(),
+  default: z.string().nullable(),
+});
+
+export type SchemaDefinitionColumn = z.infer<typeof SchemaDefinitionColumnSchema>;
+
+export const SchemaDefinitionSchema = z.array(SchemaDefinitionColumnSchema);
+
+export type SchemaDefinition = z.infer<typeof SchemaDefinitionSchema>;
 
 export const PublicSchemaIdPathParamSchema = z
   .string()
@@ -22,18 +25,42 @@ export const PublicSchemaIdPathParamSchema = z
     description: "Id of the public schema",
   });
 
+export const PublicSchemaTransformationSchema = z
+  .object({
+    majorVersion: z.number().int().min(1),
+    baseTable: z.string().min(1).max(255),
+    schema: SchemaDefinitionColumnSchema,
+    details: z.object({
+      type: z.literal("postgresql"),
+      sql: z.string(),
+    }),
+  })
+  .openapi("PublicSchemaTransformation");
+
+export const PublicSchemaListItemSchema = z
+  .object({
+    id: z.string().min(1).max(30),
+    name: z.string().min(1).max(255),
+    status: z.enum(["draft", "active", "archived"]),
+    connection: z.object({
+      slug: z.string().min(1).max(30),
+    }),
+  })
+  .openapi("PublicSchemaListItem");
+
 export const PublicSchemaSchema = z
   .object({
     id: z.string().min(1).max(30),
     name: z.string().min(1).max(255),
-    version: z.string().min(1).max(10),
-    dataStore: z.object({
+    status: z.enum(["draft", "active", "archived"]),
+    connection: z.object({
       slug: z.string().min(1).max(30),
     }),
-    schema: SchemaDefinition.optional(),
+    transformations: z.array(PublicSchemaTransformationSchema),
   })
   .openapi("PublicSchema");
 
+export type PublicSchemaListItem = z.infer<typeof PublicSchemaListItemSchema>;
 export type PublicSchema = z.infer<typeof PublicSchemaSchema>;
 
 export const PublicSchemaPostRequest = z
@@ -42,18 +69,33 @@ export const PublicSchemaPostRequest = z
       description: "Name of the public schema",
       example: "My Public Schema",
     }),
-    schema: SchemaDefinition.openapi({
+    baseTable: z.string().min(1).max(255).openapi({
+      description: "Base table for the transformation",
+      example: "public.users",
+    }),
+    schema: SchemaDefinitionSchema.openapi({
       description: "Schema definition",
       example: [
         {
           columnName: "id",
           dataType: "integer",
           isNullable: false,
-          columnDefault: null,
-          tableSchema: "public",
+          default: null,
         },
       ],
     }),
+    details: z
+      .object({
+        type: z.literal("postgresql"),
+        sql: z.string(),
+      })
+      .openapi({
+        description: "Transformation details including SQL",
+        example: {
+          type: "postgresql",
+          sql: "SELECT id, name FROM users",
+        },
+      }),
   })
   .openapi("NewPublicSchema");
 
@@ -136,7 +178,7 @@ export const publicSchemaListApi = {
     200: {
       content: {
         "application/json": {
-          schema: z.array(PublicSchemaSchema),
+          schema: z.array(PublicSchemaListItemSchema),
         },
       },
       description: "Public schemas retrieved successfully",

@@ -7,17 +7,20 @@ import {
   publicSchemaPostApi,
   PublicSchemaPostRequest,
   type PublicSchema,
+  type PublicSchemaListItem,
 } from "@rejot/api-interface-controller/public-schema";
 
 export type PublicSchemaCreateResponse = z.infer<
   (typeof publicSchemaPostApi.responses)[201]["content"]["application/json"]["schema"]
 >;
 
-export function getPublicSchemas(systemSlug: string): Promise<ApiResult<PublicSchema[]>> {
+export function getPublicSchemas(systemSlug: string): Promise<ApiResult<PublicSchemaListItem[]>> {
   return fetchRoute(publicSchemaListApi, { params: { systemSlug } });
 }
 
-export function usePublicSchemas(systemSlug: string | null): UseQueryResult<PublicSchema[]> {
+export function usePublicSchemas(
+  systemSlug: string | null,
+): UseQueryResult<PublicSchemaListItem[]> {
   return useQuery({
     queryKey: ["publicSchemas", systemSlug],
     queryFn: () => getPublicSchemas(systemSlug!),
@@ -36,13 +39,13 @@ export function getPublicSchema(systemSlug: string, publicSchemaId: string): Pro
 }
 
 export function usePublicSchema(
-  organizationId: string,
-  publicationSlug: string,
+  systemSlug: string,
+  publicSchemaId: string,
 ): UseQueryResult<PublicSchema> {
   return useQuery({
-    queryKey: ["publicSchema", organizationId, publicationSlug],
-    queryFn: () => getPublicSchema(organizationId, publicationSlug),
-    enabled: !!organizationId && !!publicationSlug,
+    queryKey: ["publicSchema", systemSlug, publicSchemaId],
+    queryFn: () => getPublicSchema(systemSlug, publicSchemaId),
+    enabled: !!systemSlug && !!publicSchemaId,
   });
 }
 

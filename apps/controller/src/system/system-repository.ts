@@ -4,7 +4,7 @@ import { schema } from "@/postgres/schema.ts";
 import { and, eq, sql } from "drizzle-orm";
 import { SystemError, SystemErrors } from "./system.error.ts";
 import type { IConnectionManager } from "@/connection/connection-manager.ts";
-import { SchemaDefinition } from "@/public-schema/public-schema.ts";
+import { SchemaDefinitionSchema, type SchemaDefinition } from "@/public-schema/public-schema.ts";
 import { PublicSchemaError, PublicSchemaErrors } from "@/public-schema/public-schema.error.ts";
 
 export type CreateSystemEntity = {
@@ -26,11 +26,18 @@ export type SystemEntity = {
   };
 };
 
-export type PublicSchema = {
+export type OverviewPublicSchema = {
   code: string;
   name: string;
-  version: string;
+  version: number;
   schema: SchemaDefinition;
+};
+
+export type OverviewDataStores = {
+  slug: string;
+  publicationName: string;
+  tables: string[];
+  publicSchemas: OverviewPublicSchema[];
 };
 
 export type SystemOverview = {
@@ -45,12 +52,7 @@ export type SystemOverview = {
     name: string;
   };
 
-  dataStores: {
-    connectionSlug: string;
-    publicationName: string;
-    tables: string[];
-    publications: PublicSchema[];
-  }[];
+  dataStores: OverviewDataStores[];
 };
 
 export type GetSystemBySlugParams = {
@@ -200,7 +202,11 @@ export class SystemRepository implements ISystemRepository {
       )
       .leftJoin(schema.dataStore, eq(schema.dataStore.systemId, schema.system.id))
       .leftJoin(schema.connection, eq(schema.dataStore.connectionId, schema.connection.id))
-      .leftJoin(schema.publicSchema, eq(schema.dataStore.id, schema.publicSchema.dataStoreId));
+      .leftJoin(schema.publicSchema, eq(schema.dataStore.id, schema.publicSchema.dataStoreId))
+      .leftJoin(
+        schema.publicSchemaTransformation,
+        eq(schema.publicSchema.id, schema.publicSchemaTransformation.publicSchemaId),
+      );
 
     const res = await query;
     if (res.length === 0) {
@@ -211,48 +217,44 @@ export class SystemRepository implements ISystemRepository {
     }
 
     // Group results by data store
-    const dataStoreMap = new Map<
-      number,
-      {
-        connectionSlug: string;
-        publicationName: string;
-        tables: string[];
-        publications: PublicSchema[];
-      }
-    >();
+    const dataStoreMap = new Map<number, OverviewDataStores>();
 
-    res.forEach(({ data_store, connection, public_schema }) => {
+    res.forEach(({ data_store, connection, public_schema, public_schema_transformation }) => {
       if (!data_store || !connection) {
         return;
       }
 
       if (!dataStoreMap.has(data_store.id)) {
         dataStoreMap.set(data_store.id, {
-          connectionSlug: connection.slug,
+          slug: connection.slug,
           publicationName: data_store.publicationName,
           tables: data_store.publicationTables ?? [],
-          publications: [],
+          publicSchemas: [],
         });
       }
 
-      if (public_schema) {
-        const parsedSchema = SchemaDefinition.safeParse(public_schema.schema);
+      if (public_schema_transformation) {
+        if (!public_schema) {
+          return;
+        }
+
+        const parsedSchema = SchemaDefinitionSchema.safeParse(public_schema_transformation.schema);
 
         if (!parsedSchema.success) {
           throw new PublicSchemaError(PublicSchemaErrors.INVALID_SERIALIZED_SCHEMA).withContext({
             organizationId: organizationCode,
-            publicSchemaId: public_schema.code,
+            publicSchemaId: public_schema?.code,
             schemaError: parsedSchema.error,
           });
         }
 
         const dataStore = dataStoreMap.get(data_store.id)!;
-        dataStore.publications.push({
+        dataStore.publicSchemas.push({
           code: public_schema.code,
           name: public_schema.name,
-          version: `${public_schema.majorVersion}.${public_schema.minorVersion}`,
+          version: public_schema_transformation.majorVersion,
           schema: parsedSchema.data,
-        });
+        } satisfies OverviewPublicSchema);
       }
     });
 

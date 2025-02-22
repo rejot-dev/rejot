@@ -3,29 +3,59 @@ import type { PostgresManager } from "../postgres/postgres.ts";
 import { schema } from "../postgres/schema.ts";
 import { eq, and, sql } from "drizzle-orm";
 import { PublicSchemaError, PublicSchemaErrors } from "./public-schema.error.ts";
-import { SchemaDefinition } from "./public-schema.ts";
+import { SchemaDefinitionSchema, type SchemaDefinition } from "./public-schema.ts";
 import { isPostgresError } from "@/postgres/postgres-error-codes.ts";
+import { unreachable } from "@std/assert";
 
 export type CreatePublicSchema = {
   name: string;
   code: string;
   connectionSlug: string;
-  schema: SchemaDefinition;
+
+  transformation: {
+    baseTable: string;
+    schema: SchemaDefinition;
+    details: SchemaTransformationDetails;
+  };
 };
 
-export type PublicSchemaEntity = {
+export type Transformation = {
+  majorVersion: number;
+  baseTable: string;
+  schema: SchemaDefinition;
+  details: SchemaTransformationDetails;
+};
+
+export type SchemaTransformationDetails = {
+  type: "postgresql";
+  sql: string;
+};
+
+export type PublicSchema = {
   code: string;
   name: string;
-  majorVersion: number;
-  minorVersion: number;
-  dataStoreSlug: string;
-  schema: SchemaDefinition;
+  connection: {
+    slug: string;
+  };
+
+  status: "draft" | "active" | "archived";
+
+  transformations: Transformation[];
+};
+
+export type PublicSchemaListItem = {
+  code: string;
+  name: string;
+  status: "draft" | "active" | "archived";
+  connection: {
+    slug: string;
+  };
 };
 
 export interface IPublicSchemaRepository {
-  get(systemSlug: string, publicSchemaCode: string): Promise<PublicSchemaEntity>;
-  create(systemSlug: string, publicSchema: CreatePublicSchema): Promise<PublicSchemaEntity>;
-  getPublicSchemasBySystemSlug(systemSlug: string): Promise<PublicSchemaEntity[]>;
+  get(systemSlug: string, publicSchemaCode: string): Promise<PublicSchema>;
+  create(systemSlug: string, publicSchema: CreatePublicSchema): Promise<PublicSchema>;
+  getPublicSchemasBySystemSlug(systemSlug: string): Promise<PublicSchemaListItem[]>;
 }
 
 export class PublicSchemaRepository implements IPublicSchemaRepository {
@@ -37,7 +67,7 @@ export class PublicSchemaRepository implements IPublicSchemaRepository {
     this.#db = postgres.db;
   }
 
-  async get(systemSlug: string, publicSchemaCode: string): Promise<PublicSchemaEntity> {
+  async get(systemSlug: string, publicSchemaCode: string): Promise<PublicSchema> {
     const system = this.#db
       .$with("sys")
       .as(
@@ -49,7 +79,17 @@ export class PublicSchemaRepository implements IPublicSchemaRepository {
 
     const result = await this.#db
       .with(system)
-      .select()
+      .select({
+        publicSchema: {
+          id: schema.publicSchema.id,
+          code: schema.publicSchema.code,
+          name: schema.publicSchema.name,
+          status: schema.publicSchema.status,
+        },
+        connection: {
+          slug: schema.connection.slug,
+        },
+      })
       .from(schema.publicSchema)
       .innerJoin(schema.dataStore, eq(schema.publicSchema.dataStoreId, schema.dataStore.id))
       .innerJoin(schema.connection, eq(schema.dataStore.connectionId, schema.connection.id))
@@ -77,137 +117,205 @@ export class PublicSchemaRepository implements IPublicSchemaRepository {
       });
     }
 
-    const { slug: dataStoreSlug } = result[0].connection;
-
-    const {
-      code,
-      name,
-      majorVersion,
-      minorVersion,
-      schema: publicSchemaSchema,
-    } = result[0].public_schema;
-
-    const parsedSchema = SchemaDefinition.safeParse(publicSchemaSchema);
-
-    if (!parsedSchema.success) {
-      throw new PublicSchemaError(PublicSchemaErrors.INVALID_SCHEMA).withContext({
-        publicSchemaId: publicSchemaCode,
-        systemSlug,
-        schemaError: parsedSchema.error,
-      });
-    }
-
-    return {
-      code,
-      name,
-      majorVersion,
-      minorVersion,
-      dataStoreSlug,
-      schema: parsedSchema.data,
-    };
-  }
-
-  async create(systemSlug: string, publicSchema: CreatePublicSchema): Promise<PublicSchemaEntity> {
-    // Get system and data store IDs using CTEs
-    const systemCte = this.#db
-      .$with("sys")
-      .as(
-        this.#db
-          .select({ id: schema.system.id })
-          .from(schema.system)
-          .where(eq(schema.system.slug, systemSlug)),
-      );
-
-    const dataStoreCte = this.#db
-      .$with("ds")
-      .as(
-        this.#db
-          .select({ id: schema.dataStore.id })
-          .from(schema.dataStore)
-          .innerJoin(schema.connection, eq(schema.dataStore.connectionId, schema.connection.id))
-          .where(eq(schema.connection.slug, publicSchema.connectionSlug)),
-      );
-
-    // Insert the public schema with systemId
-    const query = this.#db
-      .with(systemCte, dataStoreCte)
-      .insert(schema.publicSchema)
-      .values({
-        code: publicSchema.code,
-        name: publicSchema.name,
-        dataStoreId: sql`
-          (
-            SELECT
-              id
-            FROM
-              ds
-          )
-        `,
-        schema: publicSchema.schema,
+    // Get all transformations for this public schema
+    const transformations = await this.#db
+      .select({
+        transformation: {
+          majorVersion: schema.publicSchemaTransformation.majorVersion,
+          baseTable: schema.publicSchemaTransformation.baseTable,
+          schema: schema.publicSchemaTransformation.schema,
+        },
+        postgresql: {
+          sql: schema.publicSchemaTransformationPostgresql.sql,
+        },
       })
-      .returning({
-        code: schema.publicSchema.code,
-        name: schema.publicSchema.name,
-        majorVersion: schema.publicSchema.majorVersion,
-        minorVersion: schema.publicSchema.minorVersion,
-        schema: schema.publicSchema.schema,
-        dataStoreId: schema.publicSchema.dataStoreId,
-      });
+      .from(schema.publicSchemaTransformation)
+      .innerJoin(
+        schema.publicSchemaTransformationPostgresql,
+        eq(
+          schema.publicSchemaTransformation.id,
+          schema.publicSchemaTransformationPostgresql.publicSchemaTransformationId,
+        ),
+      )
+      .where(eq(schema.publicSchemaTransformation.publicSchemaId, result[0].publicSchema.id))
+      .orderBy(schema.publicSchemaTransformation.majorVersion);
 
-    const result = await query.catch((error) => {
-      if (isPostgresError(error, "NOT_NULL_VIOLATION") && error.column_name === "data_store_id") {
-        throw new PublicSchemaError(PublicSchemaErrors.INVALID_DATA_STORE)
-          .withContext({
-            systemSlug,
-            dataStoreSlug: publicSchema.connectionSlug,
-          })
-          .withCause(error);
+    const parsedTransformations = transformations.map((t) => {
+      const parsedSchema = SchemaDefinitionSchema.safeParse(t.transformation.schema);
+      if (!parsedSchema.success) {
+        throw new PublicSchemaError(PublicSchemaErrors.INVALID_SCHEMA).withContext({
+          publicSchemaId: publicSchemaCode,
+          systemSlug,
+          schemaError: parsedSchema.error,
+        });
       }
-
-      throw error;
+      return {
+        majorVersion: t.transformation.majorVersion,
+        baseTable: t.transformation.baseTable,
+        schema: parsedSchema.data,
+        details: {
+          type: "postgresql",
+          sql: t.postgresql.sql,
+        },
+      } satisfies Transformation;
     });
 
-    if (result.length === 0) {
-      throw new PublicSchemaError(PublicSchemaErrors.CREATION_FAILED).withContext({
-        systemSlug,
-      });
-    }
-
-    const parsedSchema = SchemaDefinition.safeParse(result[0].schema);
-
-    if (!parsedSchema.success) {
-      throw new PublicSchemaError(PublicSchemaErrors.INVALID_SCHEMA).withContext({
-        publicSchemaId: result[0].code,
-        systemSlug,
-        schemaError: parsedSchema.error,
-      });
-    }
-
-    // Get the dataStoreSlug
-    const dataStoreResult = await this.#db
-      .select({ slug: schema.connection.slug })
-      .from(schema.connection)
-      .innerJoin(schema.dataStore, eq(schema.dataStore.connectionId, schema.connection.id))
-      .where(eq(schema.dataStore.id, result[0].dataStoreId))
-      .limit(1);
-
-    if (dataStoreResult.length === 0) {
-      throw new PublicSchemaError(PublicSchemaErrors.CREATION_FAILED).withContext({
-        systemSlug,
-      });
-    }
-
     return {
-      code: result[0].code,
-      name: result[0].name,
-      majorVersion: result[0].majorVersion,
-      minorVersion: result[0].minorVersion,
-      dataStoreSlug: dataStoreResult[0].slug,
-      schema: parsedSchema.data,
+      code: result[0].publicSchema.code,
+      name: result[0].publicSchema.name,
+      status: result[0].publicSchema.status,
+      connection: {
+        slug: result[0].connection.slug,
+      },
+      transformations: parsedTransformations,
     };
   }
 
-  async getPublicSchemasBySystemSlug(systemSlug: string): Promise<PublicSchemaEntity[]> {
+  async create(systemSlug: string, publicSchema: CreatePublicSchema): Promise<PublicSchema> {
+    const { transformation } = publicSchema;
+
+    return this.#db.transaction(async (tx) => {
+      // Get system and data store IDs using CTEs
+      const systemCte = tx
+        .$with("sys")
+        .as(
+          tx
+            .select({ id: schema.system.id })
+            .from(schema.system)
+            .where(eq(schema.system.slug, systemSlug)),
+        );
+
+      const dataStoreCte = tx
+        .$with("ds")
+        .as(
+          tx
+            .select({ id: schema.dataStore.id, slug: schema.connection.slug })
+            .from(schema.dataStore)
+            .innerJoin(schema.connection, eq(schema.dataStore.connectionId, schema.connection.id))
+            .where(eq(schema.connection.slug, publicSchema.connectionSlug)),
+        );
+
+      // Insert the public schema with systemId
+      const publicSchemaResult = await tx
+        .with(systemCte, dataStoreCte)
+        .insert(schema.publicSchema)
+        .values({
+          code: publicSchema.code,
+          name: publicSchema.name,
+          dataStoreId: sql`
+            (
+              SELECT
+                id
+              FROM
+                ds
+            )
+          `,
+        })
+        .returning({
+          id: schema.publicSchema.id,
+          code: schema.publicSchema.code,
+          name: schema.publicSchema.name,
+          status: schema.publicSchema.status,
+          slug: sql<string>`
+            (
+              SELECT
+                slug
+              FROM
+                ds
+            )
+          `,
+        })
+        .catch((error) => {
+          if (
+            isPostgresError(error, "NOT_NULL_VIOLATION") &&
+            error.column_name === "data_store_id"
+          ) {
+            throw new PublicSchemaError(PublicSchemaErrors.INVALID_DATA_STORE)
+              .withContext({
+                systemSlug,
+                dataStoreSlug: publicSchema.connectionSlug,
+              })
+              .withCause(error);
+          }
+          throw error;
+        });
+
+      if (publicSchemaResult.length === 0) {
+        throw new PublicSchemaError(PublicSchemaErrors.CREATION_FAILED).withContext({
+          systemSlug,
+        });
+      }
+
+      // Create the transformation
+      const transformationResult = await tx
+        .insert(schema.publicSchemaTransformation)
+        .values({
+          publicSchemaId: publicSchemaResult[0].id,
+          type: transformation.details.type,
+          baseTable: transformation.baseTable,
+          schema: transformation.schema,
+        })
+        .returning({
+          id: schema.publicSchemaTransformation.id,
+          majorVersion: schema.publicSchemaTransformation.majorVersion,
+          baseTable: schema.publicSchemaTransformation.baseTable,
+          schema: schema.publicSchemaTransformation.schema,
+        });
+
+      if (transformationResult.length === 0) {
+        throw new PublicSchemaError(PublicSchemaErrors.CREATION_FAILED).withContext({
+          systemSlug,
+        });
+      }
+
+      let createdTransformationDetails: SchemaTransformationDetails;
+      if (transformation.details.type === "postgresql") {
+        // Create the PostgreSQL transformation
+        const [insertedTransformationDetails] = await tx
+          .insert(schema.publicSchemaTransformationPostgresql)
+          .values({
+            publicSchemaTransformationId: transformationResult[0].id,
+            sql: transformation.details.sql,
+          })
+          .returning();
+
+        createdTransformationDetails = {
+          type: "postgresql",
+          sql: insertedTransformationDetails.sql,
+        };
+      } else {
+        unreachable(transformation.details.type);
+      }
+
+      const parsedSchema = SchemaDefinitionSchema.safeParse(transformationResult[0].schema);
+      if (!parsedSchema.success) {
+        throw new PublicSchemaError(PublicSchemaErrors.INVALID_SCHEMA).withContext({
+          publicSchemaId: publicSchemaResult[0].code,
+          systemSlug,
+          schemaError: parsedSchema.error,
+        });
+      }
+
+      return {
+        name: publicSchemaResult[0].name,
+        code: publicSchemaResult[0].code,
+        status: publicSchemaResult[0].status,
+        connection: {
+          slug: publicSchemaResult[0].slug,
+        },
+        transformations: [
+          {
+            majorVersion: transformationResult[0].majorVersion,
+            baseTable: transformationResult[0].baseTable,
+            schema: parsedSchema.data,
+            details: createdTransformationDetails,
+          },
+        ],
+      };
+    });
+  }
+
+  async getPublicSchemasBySystemSlug(systemSlug: string): Promise<PublicSchemaListItem[]> {
     const system = this.#db
       .$with("sys")
       .as(
@@ -217,15 +325,14 @@ export class PublicSchemaRepository implements IPublicSchemaRepository {
           .where(eq(schema.system.slug, systemSlug)),
       );
 
-    const query = this.#db
+    const publicSchemas = await this.#db
       .with(system)
       .select({
         publicSchema: {
+          id: schema.publicSchema.id,
           code: schema.publicSchema.code,
           name: schema.publicSchema.name,
-          majorVersion: schema.publicSchema.majorVersion,
-          minorVersion: schema.publicSchema.minorVersion,
-          schema: schema.publicSchema.schema,
+          status: schema.publicSchema.status,
         },
         connection: {
           slug: schema.connection.slug,
@@ -248,27 +355,13 @@ export class PublicSchemaRepository implements IPublicSchemaRepository {
         ),
       );
 
-    const result = await query;
-
-    return result.map((row) => {
-      const parsedSchema = SchemaDefinition.safeParse(row.publicSchema.schema);
-
-      if (!parsedSchema.success) {
-        throw new PublicSchemaError(PublicSchemaErrors.INVALID_SCHEMA).withContext({
-          systemSlug,
-          publicSchemaId: row.publicSchema.code,
-          schemaError: parsedSchema.error,
-        });
-      }
-
-      return {
-        code: row.publicSchema.code,
-        name: row.publicSchema.name,
-        majorVersion: row.publicSchema.majorVersion,
-        minorVersion: row.publicSchema.minorVersion,
-        dataStoreSlug: row.connection.slug,
-        schema: parsedSchema.data,
-      };
-    });
+    return publicSchemas.map((ps) => ({
+      code: ps.publicSchema.code,
+      name: ps.publicSchema.name,
+      status: ps.publicSchema.status,
+      connection: {
+        slug: ps.connection.slug,
+      },
+    }));
   }
 }

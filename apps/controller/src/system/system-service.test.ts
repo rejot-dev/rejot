@@ -22,16 +22,15 @@ dbDescribe("SystemService tests", async (ctx) => {
     });
 
     assertExists(system);
-    assertMatch(system.code, /^SYS_/);
+    assertMatch(system.id, /^SYS_/);
     assertEquals(system.name, "Test System");
-    assertEquals(system.organization.id, organization.id);
-    assertMatch(system.organization.code, /^ORG_/);
-    assertEquals(system.organization.code, organization.code);
+    assertEquals(system.organization.id, organization.code);
+    assertMatch(system.organization.id, /^ORG_/);
     assertEquals(system.organization.name, "Test Organization");
 
     const retrievedSystem = await systemService.getSystem(organization.code, system.slug);
 
-    assertEquals(retrievedSystem.code, system.code);
+    assertEquals(retrievedSystem.id, system.id);
     assertEquals(retrievedSystem.name, system.name);
     assertExists(retrievedSystem.slug, system.slug);
     assertEquals(retrievedSystem.organization.code, organization.code);

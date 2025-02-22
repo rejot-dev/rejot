@@ -55,7 +55,7 @@ export function DataStoreList({ systemOverview }: DataStoreListProps) {
         <TableBody>
           {systemOverview.dataStores.map((dataStore) => (
             <TableRow key={dataStore.slug}>
-              <TableCell className="font-medium">{dataStore.publication.name}</TableCell>
+              <TableCell className="font-medium">{dataStore.publicationName}</TableCell>
               <TableCell>
                 <Link
                   to={`/connections/${dataStore.slug}`}
@@ -66,8 +66,8 @@ export function DataStoreList({ systemOverview }: DataStoreListProps) {
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
-                  {dataStore.publication.tables?.length ? (
-                    dataStore.publication.tables.map((table) => (
+                  {dataStore.tables?.length ? (
+                    dataStore.tables.map((table) => (
                       <Link
                         key={table}
                         to={`/connections/${dataStore.slug}/tables/${table}`}
