@@ -54,6 +54,10 @@ export const ConsumerSchemaPostRequest = z
       description: "Name of the consumer schema",
       example: "My Consumer Schema",
     }),
+    publicSchemaId: z.string().min(1).openapi({
+      description: "ID of the public schema to use",
+      example: "PUBS_123",
+    }),
     details: z
       .object({
         type: z.literal("postgresql"),
@@ -63,7 +67,7 @@ export const ConsumerSchemaPostRequest = z
         description: "Transformation details including SQL",
         example: {
           type: "postgresql",
-          sql: "SELECT id, name FROM users",
+          sql: "INSERT INTO users (id, name) VALUES (?, ?)",
         },
       }),
   })

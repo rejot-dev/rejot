@@ -57,6 +57,13 @@
       "when": 1740243710455,
       "tag": "0007_tense_toad",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1740248019186,
+      "tag": "0008_rainy_madame_web",
+      "breakpoints": true
     }
   ]
 }

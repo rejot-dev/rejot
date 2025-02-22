@@ -6,6 +6,7 @@ import { generateCodeForEntity } from "@/codes/codes.ts";
 export type CreateConsumerSchema = {
   name: string;
   connectionSlug: string;
+  publicSchemaCode: string;
 
   transformation: {
     details: SchemaTransformationDetails;
@@ -73,6 +74,7 @@ export class ConsumerSchemaService implements IConsumerSchemaService {
         name: consumerSchema.name,
         code: generateCodeForEntity("Consumer Schema"),
         connectionSlug: consumerSchema.connectionSlug,
+        publicSchemaCode: consumerSchema.publicSchemaCode,
         transformation: consumerSchema.transformation,
       });
 

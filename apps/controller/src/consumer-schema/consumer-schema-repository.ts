@@ -5,11 +5,14 @@ import { eq, and, sql } from "drizzle-orm";
 import { isPostgresError } from "@/postgres/postgres-error-codes.ts";
 import { unreachable } from "@std/assert";
 import { ConsumerSchemaError, ConsumerSchemaErrors } from "./consumer-schema.error.ts";
+import type { IDependencyRepository } from "../dependency/dependency.repository.ts";
 
 export type CreateConsumerSchema = {
   name: string;
   code: string;
   connectionSlug: string;
+
+  publicSchemaCode: string;
 
   transformation: {
     details: SchemaTransformationDetails;
@@ -54,12 +57,14 @@ export interface IConsumerSchemaRepository {
 }
 
 export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
-  static inject = tokens("postgres");
+  static inject = tokens("postgres", "dependencyRepository");
 
   #db: PostgresManager["db"];
+  #dependencyRepository: IDependencyRepository;
 
-  constructor(postgres: PostgresManager) {
+  constructor(postgres: PostgresManager, dependencyRepository: IDependencyRepository) {
     this.#db = postgres.db;
+    this.#dependencyRepository = dependencyRepository;
   }
 
   async get(systemSlug: string, consumerSchemaCode: string): Promise<ConsumerSchema> {
@@ -174,9 +179,18 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
             .where(eq(schema.connection.slug, consumerSchema.connectionSlug)),
         );
 
+      const publicSchemaCte = tx
+        .$with("ps")
+        .as(
+          tx
+            .select({ id: schema.publicSchema.id })
+            .from(schema.publicSchema)
+            .where(eq(schema.publicSchema.code, consumerSchema.publicSchemaCode)),
+        );
+
       // Insert the consumer schema with systemId
       const consumerSchemaResult = await tx
-        .with(systemCte, dataStoreCte)
+        .with(systemCte, dataStoreCte, publicSchemaCte)
         .insert(schema.consumerSchema)
         .values({
           code: consumerSchema.code,
@@ -203,6 +217,30 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
                 ds
             )
           `,
+          dataStoreId: sql<number>`
+            (
+              SELECT
+                id
+              FROM
+                ds
+            )
+          `,
+          systemId: sql<number>`
+            (
+              SELECT
+                id
+              FROM
+                sys
+            )
+          `,
+          publicSchemaId: sql<number>`
+            (
+              SELECT
+                id
+              FROM
+                ps
+            )
+          `,
         })
         .catch((error) => {
           if (
@@ -224,6 +262,12 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
           systemSlug,
         });
       }
+
+      await this.#dependencyRepository.createConsumerSchemaToPublicSchemaDependency(tx, {
+        systemId: consumerSchemaResult[0].systemId,
+        consumerSchemaId: consumerSchemaResult[0].id,
+        publicSchemaId: consumerSchemaResult[0].publicSchemaId,
+      });
 
       // Create the transformation
       const transformationResult = await tx

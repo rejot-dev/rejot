@@ -44,13 +44,14 @@ export class ConsumerSchemaRoutes {
         }),
         async (c) => {
           const { systemSlug, dataStoreSlug } = c.req.valid("param");
-          const { name, details } = c.req.valid("json");
+          const { name, details, publicSchemaId } = c.req.valid("json");
           const clerkUserId = c.get("clerkUserId");
           await authenticationMiddleware.requireSystemAccess(clerkUserId, systemSlug);
 
           const result = await consumerSchemaService.createConsumerSchema(systemSlug, {
             name,
             connectionSlug: dataStoreSlug,
+            publicSchemaCode: publicSchemaId,
             transformation: {
               details,
             },

@@ -33,6 +33,7 @@ import { PublicSchemaService } from "./public-schema/public-schema-service.ts";
 import { ConsumerSchemaRepository } from "./consumer-schema/consumer-schema-repository.ts";
 import { ConsumerSchemaService } from "./consumer-schema/consumer-schema-service.ts";
 import { ConsumerSchemaRoutes } from "./consumer-schema/consumer-schema-routes.ts";
+import { DependencyRepository } from "./dependency/dependency.repository.ts";
 
 export const appInjector = createInjectionContainer();
 
@@ -47,6 +48,7 @@ export function createInjectionContainer() {
     )
     .provideClass("postgresChangelogListener", PostgresChangelogListener)
     // Repositories
+    .provideClass("dependencyRepository", DependencyRepository)
     .provideClass("organizationRepository", OrganizationRepository)
     .provideClass("connectionRepository", ConnectionRepository)
     .provideClass("clerkRepository", ClerkRepository)

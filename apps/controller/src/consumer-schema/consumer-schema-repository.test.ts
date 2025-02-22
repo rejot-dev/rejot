@@ -64,17 +64,32 @@ dbDescribe("ConsumerSchemaRepository", async (ctx) => {
     return dataStore;
   }
 
+  async function createTestPublicSchema(dataStoreId: number) {
+    const db = ctx.resolve("postgres").db;
+    const [publicSchema] = await db
+      .insert(schema.publicSchema)
+      .values({
+        code: generateCode("PUBS"),
+        name: "Test Public Schema",
+        dataStoreId,
+      })
+      .returning();
+    return publicSchema;
+  }
+
   test("create - creates a consumer schema with transformation", async () => {
     const consumerSchemaRepository = ctx.resolve("consumerSchemaRepository");
     const organization = await createTestOrganization();
     const system = await createTestSystem(organization.id);
     const connection = await createTestConnection(organization.id);
-    await createTestDataStore(system.id, connection.id);
+    const dataStore = await createTestDataStore(system.id, connection.id);
+    const publicSchema = await createTestPublicSchema(dataStore.id);
 
     const consumerSchema = await consumerSchemaRepository.create(system.slug, {
       name: "Test Consumer Schema",
       code: generateCode("CONS"),
       connectionSlug: connection.slug,
+      publicSchemaCode: publicSchema.code,
       transformation: {
         details: {
           type: "postgresql",
@@ -96,12 +111,16 @@ dbDescribe("ConsumerSchemaRepository", async (ctx) => {
     const consumerSchemaRepository = ctx.resolve("consumerSchemaRepository");
     const organization = await createTestOrganization();
     const system = await createTestSystem(organization.id);
+    const connection = await createTestConnection(organization.id);
+    const dataStore = await createTestDataStore(system.id, connection.id);
+    const publicSchema = await createTestPublicSchema(dataStore.id);
 
     await expect(
       consumerSchemaRepository.create(system.slug, {
         name: "Test Consumer Schema",
         code: generateCode("CONS"),
         connectionSlug: "non-existent-connection",
+        publicSchemaCode: publicSchema.code,
         transformation: {
           details: {
             type: "postgresql",
@@ -117,12 +136,14 @@ dbDescribe("ConsumerSchemaRepository", async (ctx) => {
     const organization = await createTestOrganization();
     const system = await createTestSystem(organization.id);
     const connection = await createTestConnection(organization.id);
-    await createTestDataStore(system.id, connection.id);
+    const dataStore = await createTestDataStore(system.id, connection.id);
+    const publicSchema = await createTestPublicSchema(dataStore.id);
 
     const created = await consumerSchemaRepository.create(system.slug, {
       name: "Test Consumer Schema",
       code: generateCode("CONS"),
       connectionSlug: connection.slug,
+      publicSchemaCode: publicSchema.code,
       transformation: {
         details: {
           type: "postgresql",
@@ -158,13 +179,15 @@ dbDescribe("ConsumerSchemaRepository", async (ctx) => {
     const organization = await createTestOrganization();
     const system = await createTestSystem(organization.id);
     const connection = await createTestConnection(organization.id);
-    await createTestDataStore(system.id, connection.id);
+    const dataStore = await createTestDataStore(system.id, connection.id);
+    const publicSchema = await createTestPublicSchema(dataStore.id);
 
     // Create two consumer schemas
     await consumerSchemaRepository.create(system.slug, {
       name: "First Consumer Schema",
       code: generateCode("CONS"),
       connectionSlug: connection.slug,
+      publicSchemaCode: publicSchema.code,
       transformation: {
         details: {
           type: "postgresql",
@@ -177,6 +200,7 @@ dbDescribe("ConsumerSchemaRepository", async (ctx) => {
       name: "Second Consumer Schema",
       code: generateCode("CONS"),
       connectionSlug: connection.slug,
+      publicSchemaCode: publicSchema.code,
       transformation: {
         details: {
           type: "postgresql",

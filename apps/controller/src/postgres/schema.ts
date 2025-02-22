@@ -1,5 +1,5 @@
 import {
-  integer,
+  bigint,
   jsonb,
   pgEnum,
   pgTable,
@@ -8,16 +8,19 @@ import {
   varchar,
   boolean,
   text,
+  index,
 } from "drizzle-orm/pg-core";
+
+const bigIntNumber = () => bigint({ mode: "number" });
 
 export const publicSchemaStatus = pgEnum("public_schema_status", ["draft", "active", "archived"]);
 
 export const publicSchema = pgTable(
   "public_schema",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
     code: varchar({ length: 30 }).notNull(),
-    dataStoreId: integer()
+    dataStoreId: bigIntNumber()
       .references(() => dataStore.id)
       .notNull(),
     name: varchar({ length: 255 }).notNull(),
@@ -34,12 +37,12 @@ export const publicSchemaTransformationType = pgEnum("public_schema_transformati
 export const publicSchemaTransformation = pgTable(
   "public_schema_transformation",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    publicSchemaId: integer()
+    id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
+    publicSchemaId: bigIntNumber()
       .references(() => publicSchema.id)
       .notNull(),
     type: publicSchemaTransformationType().notNull(),
-    majorVersion: integer().notNull().default(1),
+    majorVersion: bigIntNumber().notNull().default(1),
     baseTable: varchar({ length: 255 }).notNull(),
     schema: jsonb().notNull(),
   },
@@ -49,8 +52,8 @@ export const publicSchemaTransformation = pgTable(
 export const publicSchemaTransformationPostgresql = pgTable(
   "public_schema_transformation_postgresql",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    publicSchemaTransformationId: integer()
+    id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
+    publicSchemaTransformationId: bigIntNumber()
       .references(() => publicSchemaTransformation.id)
       .notNull(),
     sql: text().notNull(),
@@ -70,9 +73,9 @@ export const consumerSchemaStatus = pgEnum("consumer_schema_status", [
 ]);
 
 export const consumerSchema = pgTable("consumer_schema", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
   code: varchar({ length: 30 }).notNull(),
-  dataStoreId: integer()
+  dataStoreId: bigIntNumber()
     .references(() => dataStore.id)
     .notNull(),
   name: varchar({ length: 255 }).notNull(),
@@ -83,12 +86,12 @@ export const consumerSchema = pgTable("consumer_schema", {
 export const consumerSchemaTransformation = pgTable(
   "consumer_schema_transformation",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    consumerSchemaId: integer()
+    id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
+    consumerSchemaId: bigIntNumber()
       .references(() => consumerSchema.id)
       .notNull(),
     type: consumerSchemaTransformationType().notNull(),
-    majorVersion: integer().notNull().default(1),
+    majorVersion: bigIntNumber().notNull().default(1),
   },
   (t) => [unique().on(t.consumerSchemaId, t.majorVersion)],
 );
@@ -96,8 +99,8 @@ export const consumerSchemaTransformation = pgTable(
 export const consumerSchemaTransformationPostgresql = pgTable(
   "consumer_schema_transformation_postgresql",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    consumerSchemaTransformationId: integer()
+    id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
+    consumerSchemaTransformationId: bigIntNumber()
       .references(() => consumerSchemaTransformation.id)
       .notNull(),
     sql: text().notNull(),
@@ -106,14 +109,14 @@ export const consumerSchemaTransformationPostgresql = pgTable(
 );
 
 export const organization = pgTable("organization", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
   code: varchar({ length: 30 }).notNull().unique(),
   name: varchar({ length: 255 }).notNull(),
   createdAt: timestamp().notNull().defaultNow(),
 });
 
 export const person = pgTable("person", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
   code: varchar({ length: 30 }).notNull().unique(),
   firstName: varchar({ length: 255 }).notNull(),
   lastName: varchar({ length: 255 }).notNull(),
@@ -124,10 +127,10 @@ export const person = pgTable("person", {
 export const personOrganization = pgTable(
   "person_organization",
   {
-    personId: integer()
+    personId: bigIntNumber()
       .references(() => person.id)
       .notNull(),
-    organizationId: integer()
+    organizationId: bigIntNumber()
       .references(() => organization.id)
       .notNull(),
   },
@@ -136,14 +139,14 @@ export const personOrganization = pgTable(
 
 export const clerkUser = pgTable("clerk_user", {
   clerkUserId: varchar({ length: 255 }).primaryKey(),
-  personId: integer()
+  personId: bigIntNumber()
     .references(() => person.id)
     .notNull(),
 });
 
 export const apiKey = pgTable("api_key", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  organizationId: integer()
+  id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
+  organizationId: bigIntNumber()
     .references(() => organization.id)
     .notNull(),
   key: varchar({ length: 255 }).notNull(),
@@ -153,10 +156,10 @@ export const apiKey = pgTable("api_key", {
 export const system = pgTable(
   "system",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
     code: varchar({ length: 30 }).notNull().unique(),
     slug: varchar({ length: 255 }).notNull(),
-    organizationId: integer()
+    organizationId: bigIntNumber()
       .references(() => organization.id)
       .notNull(),
     name: varchar({ length: 255 }).notNull(),
@@ -168,9 +171,9 @@ export const system = pgTable(
 export const syncServiceStatus = pgEnum("sync_service_status", ["onboarding", "active", "paused"]);
 
 export const syncService = pgTable("sync_service", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
   code: varchar({ length: 30 }).notNull().unique(),
-  systemId: integer()
+  systemId: bigIntNumber()
     .references(() => system.id)
     .notNull(),
   slug: varchar({ length: 255 }).notNull(),
@@ -183,8 +186,8 @@ export const connectionType = pgEnum("connection_type", ["postgres"]);
 export const connection = pgTable(
   "connection",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    organizationId: integer()
+    id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
+    organizationId: bigIntNumber()
       .references(() => organization.id)
       .notNull(),
     slug: varchar({ length: 255 }).notNull(),
@@ -196,12 +199,12 @@ export const connection = pgTable(
 export const connectionPostgres = pgTable(
   "connection_postgres",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    connectionId: integer()
+    id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
+    connectionId: bigIntNumber()
       .references(() => connection.id)
       .notNull(),
     host: varchar({ length: 255 }).notNull(),
-    port: integer().notNull(),
+    port: bigIntNumber().notNull(),
     user: varchar({ length: 255 }).notNull(),
     password: varchar({ length: 255 }).notNull(),
     database: varchar({ length: 255 }).notNull(),
@@ -213,11 +216,11 @@ export const connectionPostgres = pgTable(
 export const dataStore = pgTable(
   "data_store",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    connectionId: integer()
+    id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
+    connectionId: bigIntNumber()
       .references(() => connection.id)
       .notNull(),
-    systemId: integer()
+    systemId: bigIntNumber()
       .references(() => system.id)
       .notNull(),
     publicationName: varchar({ length: 255 }).notNull(),
@@ -230,8 +233,8 @@ export const dataStore = pgTable(
 export const eventStore = pgTable(
   "event_store",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    connectionId: integer()
+    id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
+    connectionId: bigIntNumber()
       .references(() => connection.id)
       .notNull(),
   },
@@ -241,8 +244,8 @@ export const eventStore = pgTable(
 export const schemaSnapshot = pgTable(
   "schema_snapshot",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    connectionId: integer()
+    id: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
+    connectionId: bigIntNumber()
       .references(() => connection.id)
       .notNull(),
     schemaName: varchar({ length: 255 }).notNull(),
@@ -251,6 +254,36 @@ export const schemaSnapshot = pgTable(
     createdAt: timestamp().notNull().defaultNow(),
   },
   (t) => [unique().on(t.connectionId, t.schemaName, t.tableName)],
+);
+
+export const dependencyType = pgEnum("dependency_type", ["consumer_schema-public_schema"]);
+
+export const dependency = pgTable("dependency", {
+  dependencyId: bigIntNumber().primaryKey().generatedAlwaysAsIdentity(),
+  systemId: bigIntNumber()
+    .references(() => system.id)
+    .notNull(),
+  type: dependencyType().notNull(),
+});
+
+export const dependencyConsumerSchemaToPublicSchema = pgTable(
+  "dependency_consumer_schema_to_public_schema",
+  {
+    dependencyId: bigIntNumber()
+      .references(() => dependency.dependencyId)
+      .notNull(),
+    consumerSchemaId: bigIntNumber()
+      .references(() => consumerSchema.id)
+      .notNull(),
+    publicSchemaId: bigIntNumber()
+      .references(() => publicSchema.id)
+      .notNull(),
+  },
+  (t) => [
+    unique().on(t.dependencyId, t.consumerSchemaId, t.publicSchemaId),
+    index().on(t.consumerSchemaId, t.publicSchemaId),
+    index().on(t.publicSchemaId, t.consumerSchemaId),
+  ],
 );
 
 export const schema = {
@@ -272,4 +305,6 @@ export const schema = {
   dataStore,
   eventStore,
   schemaSnapshot,
+  dependency,
+  dependencyConsumerSchemaToPublicSchema,
 };
