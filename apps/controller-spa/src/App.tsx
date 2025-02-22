@@ -26,6 +26,7 @@ import { PublicSchemaOverview } from "./app/public-schema/public-schema-overview
 import { PublicSchemaNew } from "./app/public-schema/public-schema-new.tsx";
 import { PublicSchemaDetail } from "./app/public-schema/public-schema-detail.tsx";
 import { ConsumerSchemaOverview } from "./app/consumer-schema/consumer-schema-overview.tsx";
+import { ConsumerSchemaNew } from "./app/consumer-schema/consumer-schema-new.tsx";
 
 const PUBLISHABLE_KEY: string | undefined = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const queryClient = new QueryClient();
@@ -125,6 +126,10 @@ export function App() {
                   </Route>
                   <Route path="/consumer-schemas">
                     <Route index element={<ConsumerSchemaOverview />} />
+                    <Route path="new">
+                      <Route index element={<Navigate to="select-data-store" replace />} />
+                      <Route path=":step" element={<ConsumerSchemaNew />} />
+                    </Route>
                   </Route>
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>

@@ -6,7 +6,6 @@ import {
   consumerSchemaListApi,
   consumerSchemaPostApi,
   ConsumerSchemaPostRequest,
-  ConsumerSchemaSchema,
   type ConsumerSchema,
   type ConsumerSchemaListItem,
 } from "@rejot/api-interface-controller/consumer-schema";
@@ -19,7 +18,7 @@ export function useConsumerSchemas(
   systemSlug: string | null,
 ): UseQueryResult<ConsumerSchemaListItem[]> {
   return useQuery({
-    queryKey: ["consumerSchemas", systemSlug],
+    queryKey: ["consumer-schemas", systemSlug],
     queryFn: () => getConsumerSchemas(systemSlug!),
     enabled: !!systemSlug,
   });
@@ -33,12 +32,12 @@ export function getConsumerSchema(
 }
 
 export function useConsumerSchema(
-  systemSlug: string,
-  consumerSchemaId: string,
+  systemSlug: string | null,
+  consumerSchemaId: string | null,
 ): UseQueryResult<ConsumerSchema> {
   return useQuery({
-    queryKey: ["consumerSchema", systemSlug, consumerSchemaId],
-    queryFn: () => getConsumerSchema(systemSlug, consumerSchemaId),
+    queryKey: ["consumer-schema", systemSlug, consumerSchemaId],
+    queryFn: () => getConsumerSchema(systemSlug!, consumerSchemaId!),
     enabled: !!systemSlug && !!consumerSchemaId,
   });
 }
@@ -49,12 +48,14 @@ export type CreateConsumerSchemaMutationVariables = {
   data: z.infer<typeof ConsumerSchemaPostRequest>;
 };
 
-export function createConsumerSchema(
-  variables: CreateConsumerSchemaMutationVariables,
-): Promise<z.infer<typeof ConsumerSchemaSchema>> {
+export function createConsumerSchema({
+  systemSlug,
+  dataStoreSlug,
+  data,
+}: CreateConsumerSchemaMutationVariables): Promise<ConsumerSchema> {
   return fetchRouteThrowing(consumerSchemaPostApi, {
-    params: { systemSlug: variables.systemSlug, dataStoreSlug: variables.dataStoreSlug },
-    body: variables.data,
+    params: { systemSlug, dataStoreSlug },
+    body: data,
   });
 }
 
