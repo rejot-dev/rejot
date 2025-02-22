@@ -15,63 +15,89 @@ export type ListDetail = {
 
 export type ArchitectureNode = {
   id: string;
-  type: "controlPlane" | "syncEngine" | "database" | "publication";
+  type: "controlPlane" | "syncEngine" | "database" | "publication" | "consumerSchema";
   label: string;
   detail?: ListDetail[];
   children?: ArchitectureNode[];
   parentSlug?: string; // Used to track which database a table belongs to
+  publicSchemaId?: string;
 };
 
 // Convert SystemOverview to ArchitectureNode structure
 export const systemOverviewToArchitectureNode = (system: SystemOverview): ArchitectureNode => {
   // Create sync engine nodes with their database children
-  const syncEngineNodes: ArchitectureNode[] = system.syncServices.map((syncService) => ({
-    id: syncService.code,
-    type: "syncEngine",
-    label: syncService.slug,
-    detail: [{ value: syncService.status, type: "status" }],
-    children: system.dataStores.map((store) => {
-      const tableDetails =
-        store.tables.map((table) => ({
-          value: table,
-          type: "source table",
-          link: `/connections/${store.slug}/tables/public.${table}`,
-        })) ?? [];
+  const syncEngineNodes: ArchitectureNode[] = system.syncServices.map((syncService) => {
+    const syncEngineNode: ArchitectureNode = {
+      id: syncService.code,
+      type: "syncEngine",
+      label: syncService.slug,
+      detail: [{ value: syncService.status, type: "status" }],
+      children: [
+        ...system.dataStores.map((store) => {
+          const tableDetails =
+            store.tables.map((table) => ({
+              value: table,
+              type: "source table",
+              link: `/connections/${store.slug}/tables/public.${table}`,
+            })) ?? [];
 
-      if (tableDetails.length === 0) {
-        tableDetails.push({
-          value: "all tables",
-          type: "source table",
-          link: `/connections/${store.slug}`,
-        });
-      }
+          if (tableDetails.length === 0) {
+            tableDetails.push({
+              value: "all tables",
+              type: "source table",
+              link: `/connections/${store.slug}`,
+            });
+          }
 
-      const databaseNode: ArchitectureNode = {
-        id: store.slug,
-        type: "database",
-        label: store.slug,
-        detail: [
-          { value: store.type, type: "driver", link: `/connections/${store.slug}` },
-          ...tableDetails,
-        ],
-      };
+          const databaseNode: ArchitectureNode = {
+            id: store.slug,
+            type: "database",
+            label: store.slug,
+            detail: [
+              { value: store.type, type: "driver", link: `/connections/${store.slug}` },
+              ...tableDetails,
+            ],
+          };
 
-      // If the store has publications, add them as children
-      if (store.publicSchemas.length) {
-        databaseNode.children = store.publicSchemas.map((ps) => ({
-          id: `${store.slug}-${ps.name}`,
-          type: "publication",
-          label: ps.name,
-          detail: ps.schema.map((column) => ({
-            value: column.columnName,
-            type: column.dataType,
-          })),
-        }));
-      }
+          // If the store has publications, add them as children
+          if (store.publicSchemas.length) {
+            databaseNode.children = store.publicSchemas.map((ps) => ({
+              id: `${store.slug}-${ps.id}`,
+              type: "publication",
+              label: ps.name,
+              detail: ps.schema.map((column) => ({
+                value: column.columnName,
+                type: column.dataType,
+              })),
+            }));
+          }
 
-      return databaseNode;
-    }),
-  }));
+          return databaseNode;
+        }),
+        // Add consumer schemas as children of the sync engine
+        ...system.consumerSchemas.map(
+          (cs): ArchitectureNode => ({
+            id: `consumer-${cs.id}`,
+            type: "consumerSchema",
+            label: cs.name,
+            parentSlug: cs.dataStore.slug,
+            publicSchemaId: cs.publicSchema?.code
+              ? `${cs.dataStore.slug}-${cs.publicSchema.code}`
+              : undefined,
+            detail: [
+              { value: cs.status, type: "status" },
+              {
+                value: cs.dataStore.slug,
+                type: "data store",
+                link: `/connections/${cs.dataStore.slug}`,
+              },
+            ],
+          }),
+        ),
+      ],
+    };
+    return syncEngineNode;
+  });
 
   // Create the root control plane node
   return {
@@ -127,21 +153,50 @@ function layoutTree(
       label: node.label,
       detail: node.detail,
       sourcePosition: node.children?.length ? Position.Bottom : undefined,
-      targetPosition: parentId && node.children?.length ? Position.Top : undefined,
+      targetPosition: parentId ? Position.Top : undefined,
     },
     position: { x, y },
   });
 
   // Draw edge from the parent to this node (if parent exists)
   if (parentId) {
-    edges.push({
-      id: `${parentId}-${node.id}`,
-      source: parentId,
-      target: node.id,
-      type: ConnectionLineType.SimpleBezier,
-      sourceHandle: `${parentId}-bottom`,
-      targetHandle: `${node.id}-top`,
-    });
+    // Only create parent-child edge if this is not a consumer schema node
+    if (node.type !== "consumerSchema") {
+      edges.push({
+        id: `${parentId}-${node.id}`,
+        source: parentId,
+        target: node.id,
+        type: ConnectionLineType.SimpleBezier,
+        sourceHandle: `${parentId}-bottom`,
+        targetHandle: `${node.id}-top`,
+      });
+    }
+
+    // If this is a consumer schema node, add an edge to its data store
+    if (node.type === "consumerSchema") {
+      if (node.parentSlug) {
+        edges.push({
+          id: `${node.id}-${node.parentSlug}`,
+          source: node.id,
+          target: node.parentSlug,
+          type: ConnectionLineType.SimpleBezier,
+          sourceHandle: `${node.id}-left`,
+          targetHandle: `${node.parentSlug}-right`,
+        });
+      }
+
+      // Add edge to public schema if it exists
+      if (node.publicSchemaId) {
+        edges.push({
+          id: `${node.id}-${node.publicSchemaId}`,
+          source: node.id,
+          target: node.publicSchemaId,
+          type: ConnectionLineType.SimpleBezier,
+          sourceHandle: `${node.id}-right`,
+          targetHandle: `${node.publicSchemaId}-left`,
+        });
+      }
+    }
   }
 
   // Lay out children if any

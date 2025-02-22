@@ -49,11 +49,12 @@ export function CreateTransformationStep({
   // Generate initial SQL if not set
   if (!sql) {
     const columns = latestTransformation.schema.map((col) => col.columnName).join(", ");
+    const values = latestTransformation.schema.map((_, idx) => `$${idx + 1}`).join(", ");
     const initialSql = `INSERT INTO consumer_table (
   ${columns}
 )
 VALUES (
-  'hello world'
+  ${values}
 );`;
     setSql(initialSql);
   }

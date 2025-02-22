@@ -43,6 +43,20 @@ export type OverviewDataStores = {
   publicSchemas: OverviewPublicSchema[];
 };
 
+export type OverviewConsumerSchema = {
+  id: string;
+  name: string;
+  status: "draft" | "backfill" | "active" | "archived";
+  dataStore: {
+    slug: string;
+  };
+  publicSchema: {
+    code: string;
+    name: string;
+    status: "draft" | "active" | "archived";
+  };
+};
+
 export type SystemOverview = {
   id: string;
   name: string;
@@ -60,6 +74,7 @@ export type SystemOverview = {
   };
 
   dataStores: OverviewDataStores[];
+  consumerSchemas: OverviewConsumerSchema[];
 };
 
 export type System = {
@@ -157,7 +172,7 @@ export async function getRealSystemOverview(
     throw new Error(result.message);
   }
 
-  const { id, name, slug, organization, dataStores } = result.data;
+  const { id, name, slug, organization, dataStores, consumerSchemas } = result.data;
 
   return {
     id,
@@ -189,6 +204,7 @@ export async function getRealSystemOverview(
           ),
         }) satisfies OverviewDataStores,
     ),
+    consumerSchemas,
   };
 
   // syncServices: [

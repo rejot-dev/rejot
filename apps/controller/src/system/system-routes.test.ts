@@ -39,6 +39,7 @@ class MockSystemService implements ISystemService {
         name: "Test Organization",
       },
       dataStores: [],
+      consumerSchemas: [],
     });
   }
 

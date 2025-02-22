@@ -30,6 +30,20 @@ export type OverviewDataStores = {
   publicSchemas: OverviewPublicSchema[];
 };
 
+export type OverviewConsumerSchema = {
+  id: string;
+  name: string;
+  status: "draft" | "backfill" | "active" | "archived";
+  dataStore: {
+    slug: string;
+  };
+  publicSchema: {
+    code: string;
+    name: string;
+    status: "draft" | "active" | "archived";
+  };
+};
+
 export type SystemOverview = {
   id: string;
   name: string;
@@ -41,6 +55,7 @@ export type SystemOverview = {
   };
 
   dataStores: OverviewDataStores[];
+  consumerSchemas: OverviewConsumerSchema[];
 };
 
 export type System = {
@@ -106,6 +121,10 @@ export class SystemService implements ISystemService {
           ...pub,
           id: pub.code,
         })),
+      })),
+      consumerSchemas: system.consumerSchemas.map((consumerSchema) => ({
+        ...consumerSchema,
+        id: consumerSchema.code,
       })),
     };
   }

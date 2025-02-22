@@ -24,7 +24,8 @@ import {
   ControlPlaneNode,
   DatabaseNode,
   SyncEngineNode,
-  PublicationNode,
+  PublicSchemaNode,
+  ConsumerSchemaNode,
 } from "./custom-nodes.tsx";
 import type { SystemOverview } from "@/data/system/system.data.ts";
 import { collide } from "./collide.ts";
@@ -172,7 +173,8 @@ export function LayoutFlow({
     controlPlane: ControlPlaneNode,
     syncEngine: SyncEngineNode,
     database: DatabaseNode,
-    publication: PublicationNode,
+    publication: PublicSchemaNode,
+    consumerSchema: ConsumerSchemaNode,
   };
 
   return (

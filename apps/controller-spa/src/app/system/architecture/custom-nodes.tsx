@@ -1,5 +1,5 @@
 import { Handle, Position } from "@xyflow/react";
-import { Database, Album, Bolt } from "lucide-react";
+import { Database, Album, Bolt, BookOpen } from "lucide-react";
 import { Link } from "react-router";
 import type { ListDetail } from "./process-architecture";
 import { RejotIcon } from "@/components/icons/rejot";
@@ -102,7 +102,7 @@ export const DatabaseNode = ({ id, data }: { id: string; data: NodeData }) => (
   </div>
 );
 
-export const PublicationNode = ({ id, data }: { id: string; data: NodeData }) => (
+export const PublicSchemaNode = ({ id, data }: { id: string; data: NodeData }) => (
   <div className="overflow-hidden rounded-lg border border-purple-600 dark:bg-purple-950">
     <div className="flex items-center gap-2 bg-purple-200 p-2 font-semibold dark:bg-purple-900">
       <Album />
@@ -112,6 +112,20 @@ export const PublicationNode = ({ id, data }: { id: string; data: NodeData }) =>
       <AllHandles type="target" active={data.targetPosition} nodeId={id} />
       {data.detail && data.detail.length > 0 && <DetailView detail={data.detail} />}
       <AllHandles type="source" active={data.sourcePosition} nodeId={id} />
+    </div>
+  </div>
+);
+
+export const ConsumerSchemaNode = ({ id, data }: { id: string; data: NodeData }) => (
+  <div className="overflow-hidden rounded-lg border border-orange-600 dark:bg-orange-950">
+    <div className="flex items-center gap-2 bg-orange-200 p-2 font-semibold dark:bg-orange-900">
+      <BookOpen />
+      {data.label}
+    </div>
+    <div>
+      <Handle type="source" position={Position.Left} id={`${id}-left`} className="opacity-100" />
+      <Handle type="source" position={Position.Right} id={`${id}-right`} className="opacity-100" />
+      {data.detail && data.detail.length > 0 && <DetailView detail={data.detail} />}
     </div>
   </div>
 );

@@ -27,6 +27,7 @@ export type SystemEntity = {
 };
 
 export type OverviewPublicSchema = {
+  id: number;
   code: string;
   name: string;
   version: number;
@@ -38,6 +39,20 @@ export type OverviewDataStores = {
   publicationName: string;
   tables: string[];
   publicSchemas: OverviewPublicSchema[];
+};
+
+export type OverviewConsumerSchemas = {
+  code: string;
+  name: string;
+  status: "draft" | "backfill" | "active" | "archived";
+  dataStore: {
+    slug: string;
+  };
+  publicSchema: {
+    code: string;
+    name: string;
+    status: "draft" | "active" | "archived";
+  };
 };
 
 export type SystemOverview = {
@@ -53,6 +68,7 @@ export type SystemOverview = {
   };
 
   dataStores: OverviewDataStores[];
+  consumerSchemas: OverviewConsumerSchemas[];
 };
 
 export type GetSystemBySlugParams = {
@@ -216,6 +232,28 @@ export class SystemRepository implements ISystemRepository {
       });
     }
 
+    const consumerSchemaQuery = this.#db
+      .selectDistinct()
+      .from(schema.dependency)
+      .innerJoin(
+        schema.dependencyConsumerSchemaToPublicSchema,
+        and(
+          eq(schema.dependency.type, "consumer_schema-public_schema"),
+          eq(
+            schema.dependency.dependencyId,
+            schema.dependencyConsumerSchemaToPublicSchema.dependencyId,
+          ),
+        ),
+      )
+      .innerJoin(
+        schema.consumerSchema,
+        eq(
+          schema.dependencyConsumerSchemaToPublicSchema.consumerSchemaId,
+          schema.consumerSchema.id,
+        ),
+      )
+      .where(eq(schema.dependency.systemId, res[0].system.id));
+
     // Group results by data store
     const dataStoreMap = new Map<number, OverviewDataStores>();
 
@@ -250,6 +288,7 @@ export class SystemRepository implements ISystemRepository {
 
         const dataStore = dataStoreMap.get(data_store.id)!;
         dataStore.publicSchemas.push({
+          id: public_schema.id,
           code: public_schema.code,
           name: public_schema.name,
           version: public_schema_transformation.majorVersion,
@@ -259,6 +298,39 @@ export class SystemRepository implements ISystemRepository {
     });
 
     const { system, organization } = res[0];
+
+    const consumerSchemas = (await consumerSchemaQuery).flatMap(
+      ({ consumer_schema, dependency_consumer_schema_to_public_schema }) => {
+        const publicSchema = res.find(
+          ({ public_schema }) =>
+            public_schema?.id === dependency_consumer_schema_to_public_schema.publicSchemaId,
+        )?.public_schema;
+
+        if (!publicSchema) {
+          return [];
+        }
+
+        const dataStore = dataStoreMap.get(publicSchema.dataStoreId);
+
+        if (!dataStore) {
+          return [];
+        }
+
+        return {
+          code: consumer_schema.code,
+          name: consumer_schema.name,
+          status: consumer_schema.status,
+          dataStore: {
+            slug: dataStore.slug,
+          },
+          publicSchema: {
+            code: publicSchema.code,
+            name: publicSchema.name,
+            status: publicSchema.status,
+          },
+        } satisfies OverviewConsumerSchemas;
+      },
+    );
 
     return {
       id: system.id,
@@ -271,6 +343,7 @@ export class SystemRepository implements ISystemRepository {
         name: organization.name,
       },
       dataStores: Array.from(dataStoreMap.values()),
+      consumerSchemas,
     };
   }
 

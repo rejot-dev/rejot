@@ -17,6 +17,22 @@ export const OverviewDataStoreSchema = z.object({
   publicSchemas: z.array(OverviewPublicSchemaSchema),
 });
 
+export const OverviewConsumerSchemaSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    status: z.enum(["draft", "backfill", "active", "archived"]),
+    dataStore: z.object({
+      slug: z.string(),
+    }),
+    publicSchema: z.object({
+      code: z.string(),
+      name: z.string(),
+      status: z.enum(["draft", "active", "archived"]),
+    }),
+  })
+  .openapi("OverviewConsumerSchema");
+
 export const SystemOverviewResponseSchema = z
   .object({
     id: z.string(),
@@ -27,6 +43,7 @@ export const SystemOverviewResponseSchema = z
       code: z.string(),
     }),
     dataStores: z.array(OverviewDataStoreSchema),
+    consumerSchemas: z.array(OverviewConsumerSchemaSchema),
   })
   .openapi("SystemOverviewResponse");
 
