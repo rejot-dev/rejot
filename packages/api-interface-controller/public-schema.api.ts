@@ -29,7 +29,7 @@ export const PublicSchemaTransformationSchema = z
   .object({
     majorVersion: z.number().int().min(1),
     baseTable: z.string().min(1).max(255),
-    schema: SchemaDefinitionColumnSchema,
+    schema: SchemaDefinitionSchema,
     details: z.object({
       type: z.literal("postgresql"),
       sql: z.string(),

@@ -6,15 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { useCreatePublicSchemaMutation } from "@/data/public-schema/public-schema.data";
 import { Loader2 } from "lucide-react";
-import CodeMirror from "@uiw/react-codemirror";
-import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
-import { sql, PostgreSQL } from "@codemirror/lang-sql";
-import { useSystemTheme } from "@/components/theme-provider";
 import { useConnectionTableSchema } from "@/data/connection/connection-health.data";
 import { useSelectedOrganizationCode } from "@/data/clerk/clerk-meta.data";
 import { SchemaConfigurationEditor } from "../components/schema-configuration-editor";
 import { postgresDataTypeToJsonType } from "@/lib/sql";
 import { getTopLevelSelectedColumns } from "@/lib/sql";
+import { SqlCodeMirror } from "../components/sql-code-mirror";
 
 interface SchemaColumn {
   id: string;
@@ -31,14 +28,29 @@ interface CreateTransformationStepProps {
 }
 
 function defaultQuery(baseTable: string, columns: string[]) {
+  const quotedColumns = columns.map((col) => `"${col}"`);
+  const columnsToSelect = quotedColumns.join(", ");
+
+  if (columnsToSelect.length <= 70) {
+    return `
+SELECT
+  ${columnsToSelect}
+FROM
+  "${baseTable}"
+WHERE
+  id = $1
+;
+  `;
+  }
+
   return `
-  SELECT
-    ${columns.map((col) => `"${col}"`).join(", ")}
-  FROM
-    "${baseTable}"
-  WHERE
-    id = $1
-  ;
+SELECT
+  ${quotedColumns.join(",\n  ")}
+FROM
+  "${baseTable}"
+WHERE
+  id = $1
+;
   `;
 }
 
@@ -50,8 +62,6 @@ export function CreateTransformationStep({
   onSuccess,
 }: CreateTransformationStepProps) {
   const createMutation = useCreatePublicSchemaMutation();
-
-  const theme = useSystemTheme();
 
   const organizationId = useSelectedOrganizationCode();
 
@@ -168,33 +178,13 @@ export function CreateTransformationStep({
               primary key parts are <code>$1</code>, <code>$2</code>, etc. Using <code>*</code> is
               not recommended.
             </p>
-            <div className="overflow-hidden rounded-md border">
-              <CodeMirror
-                value={sqlQuery}
-                height="240px"
-                extensions={[
-                  sql({
-                    dialect: PostgreSQL,
-                    upperCaseKeywords: true,
-                    defaultTable: baseTable,
-                    schema: {
-                      [baseTable]: {
-                        self: {
-                          type: "table",
-                          label: baseTable,
-                        },
-                        children: (tableColumns ?? []).map((column) => ({
-                          type: "column",
-                          label: column.columnName,
-                        })),
-                      },
-                    },
-                  }),
-                ]}
-                onChange={(value) => setSqlQuery(value)}
-                theme={theme === "dark" ? vscodeDark : vscodeLight}
-              />
-            </div>
+            <SqlCodeMirror
+              value={sqlQuery}
+              onChange={setSqlQuery}
+              baseTable={baseTable}
+              tableColumns={tableColumns ?? []}
+              className="h-[300px]"
+            />
           </div>
 
           <div className="space-y-2">
