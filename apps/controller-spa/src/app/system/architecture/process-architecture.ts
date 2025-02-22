@@ -89,135 +89,96 @@ const calculateNodeHeight = (detail?: ListDetail[]) => {
   );
 };
 
-export const generateNodesAndEdges = (
+/**
+ * Measures the total horizontal width for a node's subtree.
+ * If a node has children, sum the widths of each child subtree
+ * and add spacing. If no children, treat it as a single "slot."
+ */
+function measureSubtreeWidth(node: ArchitectureNode): number {
+  const children = node.children ?? [];
+  if (children.length === 0) {
+    // Base width for a leaf node
+    return ARCHITECTURE_CONFIG.horizontalSpacing;
+  }
+
+  // Sum widths of each child's subtree
+  return children.reduce((total, child) => total + measureSubtreeWidth(child), 0);
+}
+
+/**
+ * Recursively lays out the node and its children, centering children horizontally.
+ * Returns { nodes, edges } arrays for the entire subtree.
+ */
+function layoutTree(
   node: ArchitectureNode,
-  _parentId: string | null = null,
-  x = 0,
-  y = 0,
-  _level = 0,
-): { nodes: Node[]; edges: Edge[] } => {
+  x: number,
+  y: number,
+  parentId: string | null = null,
+): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
 
-  // Place the control plane node at the top
-  if (node.type === "controlPlane") {
-    const children = node.children ?? [];
+  // Create the current node
+  const thisNodeHeight = calculateNodeHeight(node.detail);
+  nodes.push({
+    id: node.id,
+    type: node.type,
+    data: {
+      label: node.label,
+      detail: node.detail,
+      sourcePosition: node.children?.length ? Position.Bottom : undefined,
+      targetPosition: parentId && node.children?.length ? Position.Top : undefined,
+    },
+    position: { x, y },
+  });
 
-    const controlPlaneHeight = calculateNodeHeight(node.detail);
-    nodes.push({
-      id: node.id,
-      type: node.type,
-      data: {
-        label: node.label,
-        sourcePosition: Position.Bottom,
-      },
-      position: { x, y },
+  // Draw edge from the parent to this node (if parent exists)
+  if (parentId) {
+    edges.push({
+      id: `${parentId}-${node.id}`,
+      source: parentId,
+      target: node.id,
+      type: ConnectionLineType.SimpleBezier,
+      sourceHandle: `${parentId}-bottom`,
+      targetHandle: `${node.id}-top`,
     });
+  }
 
-    // Calculate total width for sync engines and center them
-    const totalSyncWidth = (children.length - 1) * ARCHITECTURE_CONFIG.horizontalSpacing;
-    const syncStartX = x - totalSyncWidth / 2;
+  // Lay out children if any
+  const children = node.children ?? [];
+  if (children.length > 0) {
+    // Measure total width of this node's children
+    const totalChildrenWidth = measureSubtreeWidth(node);
+    // Center them around this node's x coordinate
+    let currentX = x - totalChildrenWidth / 2;
 
-    // Position sync engines below the control plane
-    let currentY = y + controlPlaneHeight;
-    children.forEach((syncEngine, index) => {
-      const syncX = syncStartX + index * ARCHITECTURE_CONFIG.horizontalSpacing;
-      const syncEngineHeight = calculateNodeHeight(syncEngine.detail);
-      nodes.push({
-        id: syncEngine.id,
-        type: syncEngine.type,
-        data: {
-          label: syncEngine.label,
-          sourcePosition: Position.Bottom,
-          targetPosition: Position.Top,
-          detail: syncEngine.detail,
-        },
-        position: { x: syncX, y: currentY },
-      });
+    // Position each child subtree
+    children.forEach((child) => {
+      const childWidth = measureSubtreeWidth(child);
+      // Move halfway into its width to center
+      currentX += childWidth / 2;
 
-      edges.push({
-        id: `${node.id}-${syncEngine.id}`,
-        source: node.id,
-        target: syncEngine.id,
-        type: ConnectionLineType.SimpleBezier,
-        sourceHandle: `${node.id}-bottom`,
-        targetHandle: `${syncEngine.id}-top`,
-      });
+      // Layout the child at the next vertical level
+      const childY = y + thisNodeHeight;
+      const childLayout = layoutTree(child, currentX, childY, node.id);
 
-      // Calculate total width for databases and center them
-      const dbChildren = syncEngine.children ?? [];
-      const dbWidths = dbChildren.map((database) => {
-        const publicationCount = database.children?.length || 0;
-        return Math.max(1, publicationCount) * ARCHITECTURE_CONFIG.horizontalSpacing;
-      });
-      const totalDbWidth = dbWidths.reduce((acc, width) => acc + width, 0);
-      const dbStartX = syncX - totalDbWidth / 2;
+      // Combine node/edge results
+      nodes.push(...childLayout.nodes);
+      edges.push(...childLayout.edges);
 
-      // Position databases below each sync engine
-      const dbY = currentY + syncEngineHeight;
-      let dbX = dbStartX;
-      dbChildren.forEach((database, dbIndex) => {
-        const databaseWidth = dbWidths[dbIndex] ?? 0;
-        dbX += databaseWidth / 2; // Center the database
-        const databaseHeight = calculateNodeHeight(database.detail);
-        nodes.push({
-          id: database.id,
-          type: database.type,
-          data: {
-            label: database.label,
-            sourcePosition: Position.Bottom,
-            targetPosition: Position.Top,
-            detail: database.detail,
-          },
-          position: { x: dbX, y: dbY },
-        });
-
-        edges.push({
-          id: `${syncEngine.id}-${database.id}`,
-          source: syncEngine.id,
-          target: database.id,
-          type: ConnectionLineType.SimpleBezier,
-          sourceHandle: `${syncEngine.id}-bottom`,
-          targetHandle: `${database.id}-top`,
-        });
-
-        // Calculate total width for publications and center them
-        const publicationChildren = database.children ?? [];
-        const totalPubWidth =
-          (publicationChildren.length - 1) * ARCHITECTURE_CONFIG.horizontalSpacing;
-        const pubStartX = dbX - totalPubWidth / 2;
-
-        // Position publications below each database
-        const pubY = dbY + databaseHeight;
-        publicationChildren.forEach((publication, pubIndex) => {
-          const pubX = pubStartX + pubIndex * ARCHITECTURE_CONFIG.horizontalSpacing;
-          nodes.push({
-            id: publication.id,
-            type: publication.type,
-            data: {
-              label: publication.label,
-              detail: publication.detail,
-              targetPosition: Position.Top,
-            },
-            position: { x: pubX, y: pubY },
-          });
-
-          edges.push({
-            id: `${database.id}-${publication.id}`,
-            source: database.id,
-            target: publication.id,
-            type: ConnectionLineType.SimpleBezier,
-            sourceHandle: `${database.id}-bottom`,
-            targetHandle: `${publication.id}-top`,
-          });
-        });
-
-        dbX += databaseWidth / 2; // Move to the next database position
-      });
-
-      currentY += syncEngineHeight;
+      // Move over the other half
+      currentX += childWidth / 2;
     });
   }
 
   return { nodes, edges };
-};
+}
+
+/**
+ * Main function. Pass in the root node and it will
+ * generate all the nodes and edges for the entire tree.
+ */
+export function generateNodesAndEdges(root: ArchitectureNode) {
+  // Position the root at (0,0) or wherever you like
+  return layoutTree(root, 0, 0);
+}
