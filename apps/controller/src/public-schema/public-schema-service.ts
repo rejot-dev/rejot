@@ -4,26 +4,52 @@ import type { IPublicSchemaRepository } from "./public-schema-repository.ts";
 import type { SchemaDefinition } from "./public-schema.ts";
 import { generateCodeForEntity } from "@/codes/codes.ts";
 
+export type CreatePublicSchema = {
+  name: string;
+  connectionSlug: string;
+
+  transformation: {
+    baseTable: string;
+    schema: SchemaDefinition;
+    details: SchemaTransformationDetails;
+  };
+};
+
+export type Transformation = {
+  majorVersion: number;
+  baseTable: string;
+  schema: SchemaDefinition;
+  details: SchemaTransformationDetails;
+};
+
 export type PublicSchema = {
   id: string;
   name: string;
-  version: string;
-  schema: SchemaDefinition;
-  dataStore: {
+  status: "draft" | "active" | "archived";
+  connection: {
+    slug: string;
+  };
+  transformations: Transformation[];
+};
+
+export type PublicSchemaListItem = {
+  id: string;
+  name: string;
+  status: "draft" | "active" | "archived";
+  connection: {
     slug: string;
   };
 };
 
-export type CreatePublicSchema = {
-  name: string;
-  dataStoreSlug: string;
-  schema: SchemaDefinition;
+export type SchemaTransformationDetails = {
+  type: "postgresql";
+  sql: string;
 };
 
 export interface IPublicSchemaService {
   createPublicSchema(systemSlug: string, publicSchema: CreatePublicSchema): Promise<PublicSchema>;
   getPublicSchemaById(systemSlug: string, publicSchemaId: string): Promise<PublicSchema>;
-  getPublicSchemasBySystemSlug(systemSlug: string): Promise<PublicSchema[]>;
+  getPublicSchemasBySystemSlug(systemSlug: string): Promise<PublicSchemaListItem[]>;
 }
 
 export class PublicSchemaService implements IPublicSchemaService {
@@ -44,12 +70,12 @@ export class PublicSchemaService implements IPublicSchemaService {
     systemSlug: string,
     publicSchema: CreatePublicSchema,
   ): Promise<PublicSchema> {
-    const { code, name, majorVersion, minorVersion, dataStoreSlug, schema } =
+    const { code, name, status, connection, transformations } =
       await this.#publicSchemaRepository.create(systemSlug, {
         name: publicSchema.name,
         code: generateCodeForEntity("Public Schema"),
-        connectionSlug: publicSchema.dataStoreSlug,
-        schema: publicSchema.schema,
+        connectionSlug: publicSchema.connectionSlug,
+        transformation: publicSchema.transformation,
       });
 
     this.#createdCounter.add(1);
@@ -57,40 +83,33 @@ export class PublicSchemaService implements IPublicSchemaService {
     return {
       id: code,
       name,
-      version: `${majorVersion}.${minorVersion}`,
-      dataStore: {
-        slug: dataStoreSlug,
-      },
-      schema,
+      status,
+      connection,
+      transformations,
     };
   }
 
   async getPublicSchemaById(systemSlug: string, publicSchemaId: string): Promise<PublicSchema> {
-    const { code, name, majorVersion, minorVersion, dataStoreSlug, schema } =
+    const { code, name, status, connection, transformations } =
       await this.#publicSchemaRepository.get(systemSlug, publicSchemaId);
 
     return {
       id: code,
       name,
-      version: `${majorVersion}.${minorVersion}`,
-      dataStore: {
-        slug: dataStoreSlug,
-      },
-      schema,
+      status,
+      connection,
+      transformations,
     };
   }
 
-  async getPublicSchemasBySystemSlug(systemSlug: string): Promise<PublicSchema[]> {
+  async getPublicSchemasBySystemSlug(systemSlug: string): Promise<PublicSchemaListItem[]> {
     const schemas = await this.#publicSchemaRepository.getPublicSchemasBySystemSlug(systemSlug);
 
-    return schemas.map(({ code, name, majorVersion, minorVersion, dataStoreSlug, schema }) => ({
+    return schemas.map(({ code, name, status, connection }) => ({
       id: code,
       name,
-      version: `${majorVersion}.${minorVersion}`,
-      dataStore: {
-        slug: dataStoreSlug,
-      },
-      schema,
+      status,
+      connection,
     }));
   }
 }

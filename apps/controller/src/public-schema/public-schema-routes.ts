@@ -29,19 +29,12 @@ export class PublicSchemaRoutes {
           const clerkUserId = c.get("clerkUserId");
           await authenticationMiddleware.requireSystemAccess(clerkUserId, systemSlug);
 
-          const { name, version, schema } = await publicSchemaService.getPublicSchemaById(
+          const publicSchema = await publicSchemaService.getPublicSchemaById(
             systemSlug,
             publicSchemaId,
           );
 
-          return c.json(
-            {
-              name,
-              version,
-              schema,
-            },
-            200,
-          );
+          return c.json(publicSchema, 200);
         },
       )
       .openapi(
@@ -51,14 +44,18 @@ export class PublicSchemaRoutes {
         }),
         async (c) => {
           const { systemSlug, dataStoreSlug } = c.req.valid("param");
-          const { name, schema } = c.req.valid("json");
+          const { name, baseTable, schema, details } = c.req.valid("json");
           const clerkUserId = c.get("clerkUserId");
           await authenticationMiddleware.requireSystemAccess(clerkUserId, systemSlug);
 
           const result = await publicSchemaService.createPublicSchema(systemSlug, {
             name,
-            schema,
-            dataStoreSlug,
+            connectionSlug: dataStoreSlug,
+            transformation: {
+              baseTable,
+              schema,
+              details,
+            },
           });
 
           return c.json(result, 201);
@@ -75,16 +72,7 @@ export class PublicSchemaRoutes {
           await authenticationMiddleware.requireSystemAccess(clerkUserId, systemSlug);
 
           const publicSchemas = await publicSchemaService.getPublicSchemasBySystemSlug(systemSlug);
-          return c.json(
-            publicSchemas.map((pub) => ({
-              id: pub.id,
-              name: pub.name,
-              version: pub.version,
-              schema: pub.schema,
-              dataStore: pub.dataStore,
-            })),
-            200,
-          );
+          return c.json(publicSchemas, 200);
         },
       );
   }

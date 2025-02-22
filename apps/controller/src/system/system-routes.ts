@@ -30,7 +30,16 @@ export class SystemRoutes {
           const clerkUserId = c.get("clerkUserId");
           await authenticationMiddleware.requireOrganizationAccess(clerkUserId, organizationId);
           const system = await systemService.getSystem(organizationId, systemSlug);
-          return c.json(system);
+          return c.json(
+            {
+              ...system,
+              dataStores: system.dataStores.map((ds) => ({
+                ...ds,
+                type: "postgres",
+              })),
+            },
+            200,
+          );
         },
       )
       .openapi(
@@ -48,11 +57,11 @@ export class SystemRoutes {
 
           clerkApiClient
             .mergeUserPublicMetadata(clerkUserId, {
-              defaultSystemSlug: system.code,
+              defaultSystemSlug: system.slug,
             })
-            .catch((e) => {
+            .catch((_e) => {
               // TODO: Observability for this.
-              console.log("Clerk threw an error, but we can ignore it.", e);
+              console.log("Clerk threw an error, but we can ignore it.");
             });
 
           return c.json(system, 201);

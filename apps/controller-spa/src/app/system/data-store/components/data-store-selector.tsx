@@ -90,7 +90,7 @@ export function DataStoreSelector({
                         <h4 className="text-base font-medium">{dataStore.slug}</h4>
                         <div className="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
                           <TableProperties className="size-4" />
-                          <span>{dataStore.publication.tables?.length ?? 0} Tables</span>
+                          <span>{dataStore.tables.length} Tables</span>
                         </div>
                       </div>
                     </div>

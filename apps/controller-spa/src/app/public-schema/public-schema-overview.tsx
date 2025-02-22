@@ -72,7 +72,7 @@ export function PublicSchemaOverview() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Version</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Data Store</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -81,8 +81,8 @@ export function PublicSchemaOverview() {
               {publicSchemas?.map((schema) => (
                 <TableRow key={schema.name}>
                   <TableCell>{schema.name}</TableCell>
-                  <TableCell>{schema.version}</TableCell>
-                  <TableCell>{schema.dataStore.slug}</TableCell>
+                  <TableCell>{schema.status}</TableCell>
+                  <TableCell>{schema.connection.slug}</TableCell>
                   <TableCell>
                     <Link to={`/public-schemas/${schema.id}`}>More Info</Link>
                   </TableCell>

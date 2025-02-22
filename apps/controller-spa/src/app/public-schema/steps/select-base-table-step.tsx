@@ -42,7 +42,7 @@ export function SelectBaseTableStep({
       <TableSelector
         value={selectedTable}
         onChange={setSelectedTable}
-        tables={dataStore.publication.tables}
+        tables={dataStore.tables}
         organizationId={organizationId}
         dataStoreSlug={dataStoreSlug}
       />

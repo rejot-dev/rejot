@@ -1,13 +1,14 @@
 import { z } from "zod";
 
-export const SchemaDefinition = z.array(
-  z.object({
-    columnName: z.string(),
-    dataType: z.string(),
-    isNullable: z.boolean(),
-    columnDefault: z.string().nullable(),
-    tableSchema: z.string(),
-  }),
-);
+export const SchemaDefinitionColumnSchema = z.object({
+  columnName: z.string(),
+  dataType: z.string(),
+  isNullable: z.boolean(),
+  default: z.string().nullable(),
+});
 
-export type SchemaDefinition = z.infer<typeof SchemaDefinition>;
+export type SchemaDefinitionColumn = z.infer<typeof SchemaDefinitionColumnSchema>;
+
+export const SchemaDefinitionSchema = z.array(SchemaDefinitionColumnSchema);
+
+export type SchemaDefinition = z.infer<typeof SchemaDefinitionSchema>;

@@ -110,11 +110,14 @@ export class ExampleRoutes {
 - Use CTEs with `with` and `$with` as needed
 - Schema defined in [schema.ts](mdc:apps/controller/src/postgres/schema.ts)
 - In repositories BE VERY MINDFUL about ids and codes. Usually we are only handed a string (code) from the API, the query is responsible for getting the assoicated id.
+- When doing multiple mutations in a single repository method, ALWAYS make sure they're in a transaction.
 
 ## Services & Repositories
 - Services and repositories generally have similar methods.
 - The types these methods take however, are per repository and service.
   - Repositories deal with more private data. The service layer converts those to public data.
+- When at all possible DO NOT export types from a repository or service. The only reason to export is when the type might be needed in tests.
+- PREFER to recreate types instead of importing them.
 
 ### Repository Pattern
 Example repository:
@@ -345,4 +348,5 @@ dbDescribe("SomeRepository tests", async (ctx) => {
   - Constructor parameter members
   - TypeScript constructs that don't work with type stripping
 - NEVER use Unsafe type casting unless EXPLICITELY asked for.
+
 

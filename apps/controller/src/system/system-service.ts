@@ -1,7 +1,7 @@
 import { generateCode } from "@/codes/codes.ts";
-import type { SystemEntity, SystemRepository } from "./system-repository.ts";
+import type { SystemRepository } from "./system-repository.ts";
 import type { CreateSystem } from "@rejot/api-interface-controller/system";
-import type { PublicSchema } from "@rejot/api-interface-controller/public-schema";
+import type { SchemaDefinition } from "@/public-schema/public-schema.ts";
 
 export type UpsertDataStoreServiceParams = {
   organizationId: string;
@@ -16,8 +16,22 @@ export type UpsertDataStoreServiceResult = {
   publicationTables: string[];
 };
 
-export type SystemOverviewResponse = {
-  code: string;
+export type OverviewPublicSchema = {
+  id: string;
+  name: string;
+  version: number;
+  schema: SchemaDefinition;
+};
+
+export type OverviewDataStores = {
+  slug: string;
+  publicationName: string;
+  tables: string[];
+  publicSchemas: OverviewPublicSchema[];
+};
+
+export type SystemOverview = {
+  id: string;
   name: string;
   slug: string;
 
@@ -26,25 +40,23 @@ export type SystemOverviewResponse = {
     name: string;
   };
 
-  dataStores: {
-    connectionSlug: string;
-    // Postgres publication
-    publicationName: string;
-    tables: string[];
-    // Rejot publications
-    publications: PublicSchema[];
-  }[];
+  dataStores: OverviewDataStores[];
 };
 
 export type System = {
-  code: string;
+  id: string;
   name: string;
   slug: string;
+
+  organization: {
+    id: string;
+    name: string;
+  };
 };
 
 export interface ISystemService {
-  createSystem(organizationCode: string, system: CreateSystem): Promise<SystemEntity>;
-  getSystem(organizationId: string, systemSlug: string): Promise<SystemOverviewResponse>;
+  createSystem(organizationCode: string, system: CreateSystem): Promise<System>;
+  getSystem(organizationId: string, systemSlug: string): Promise<SystemOverview>;
   getSystems(organizationId: string): Promise<System[]>;
   getSystemsForClerkUser(clerkUserId: string): Promise<System[]>;
   upsertDataStore(params: UpsertDataStoreServiceParams): Promise<UpsertDataStoreServiceResult>;
@@ -59,19 +71,29 @@ export class SystemService implements ISystemService {
     this.#systemRepository = systemRepository;
   }
 
-  createSystem(organizationId: string, { name, slug }: CreateSystem): Promise<SystemEntity> {
-    return this.#systemRepository.create(organizationId, {
+  async createSystem(organizationId: string, { name, slug }: CreateSystem): Promise<System> {
+    const system = await this.#systemRepository.create(organizationId, {
       name,
       code: generateCode("SYS"),
       slug,
     });
+
+    return {
+      id: system.code,
+      name: system.name,
+      slug: system.slug,
+      organization: {
+        id: system.organization.code,
+        name: system.organization.name,
+      },
+    };
   }
 
-  async getSystem(organizationId: string, systemSlug: string): Promise<SystemOverviewResponse> {
+  async getSystem(organizationId: string, systemSlug: string): Promise<SystemOverview> {
     const { id: _id, ...system } = await this.#systemRepository.get(organizationId, systemSlug);
 
     return {
-      code: system.code,
+      id: system.code,
       name: system.name,
       slug: system.slug,
       organization: {
@@ -80,12 +102,9 @@ export class SystemService implements ISystemService {
       },
       dataStores: system.dataStores.map((dataStore) => ({
         ...dataStore,
-        publications: dataStore.publications.map((pub) => ({
+        publicSchemas: dataStore.publicSchemas.map((pub) => ({
           ...pub,
           id: pub.code,
-          dataStore: {
-            slug: dataStore.connectionSlug,
-          },
         })),
       })),
     };
@@ -95,9 +114,13 @@ export class SystemService implements ISystemService {
     const systems = await this.#systemRepository.getSystems(organizationId);
 
     return systems.map((system) => ({
-      code: system.code,
+      id: system.code,
       name: system.name,
       slug: system.slug,
+      organization: {
+        id: system.organization.code,
+        name: system.organization.name,
+      },
     }));
   }
 
@@ -105,9 +128,13 @@ export class SystemService implements ISystemService {
     const systems = await this.#systemRepository.getSystemsForClerkUser(clerkUserId);
 
     return systems.map((system) => ({
-      code: system.code,
+      id: system.code,
       name: system.name,
       slug: system.slug,
+      organization: {
+        id: system.organization.code,
+        name: system.organization.name,
+      },
     }));
   }
 

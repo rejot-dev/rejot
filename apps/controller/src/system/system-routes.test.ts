@@ -5,10 +5,9 @@ import { assert } from "@std/assert/assert";
 
 import type { ISystemService, System } from "./system-service.ts";
 import { SystemRoutes } from "./system-routes.ts";
-import type { SystemEntity } from "./system-repository.ts";
 import { MockAuthenticationMiddleware } from "@/_test/mock-authentication.middleware.ts";
 import type { CreateSystem } from "@rejot/api-interface-controller/system";
-import type { SystemOverviewResponse } from "./system-service.ts";
+import type { SystemOverview } from "./system-service.ts";
 import type { ClerkUserMetadata, IClerkApiClient } from "@/clerk/clerk.api-client.ts";
 import { ClerkErrors } from "@/clerk/clerk.error.ts";
 import { ClerkError } from "@/clerk/clerk.error.ts";
@@ -18,23 +17,21 @@ class MockSystemService implements ISystemService {
     return Promise.resolve([]);
   }
 
-  createSystem(organizationCode: string, { name, slug }: CreateSystem): Promise<SystemEntity> {
+  createSystem(organizationCode: string, { name, slug }: CreateSystem): Promise<System> {
     return Promise.resolve({
-      id: 1,
-      code: "SYS_1",
+      id: "SYS_1",
       name,
       slug,
       organization: {
-        id: 1,
-        code: organizationCode,
+        id: organizationCode,
         name: "Test Organization",
       },
     });
   }
 
-  getSystem(organizationCode: string, systemSlug: string): Promise<SystemOverviewResponse> {
+  getSystem(organizationCode: string, systemSlug: string): Promise<SystemOverview> {
     return Promise.resolve({
-      code: "SYS_1",
+      id: "SYS_1",
       name: "Test System",
       slug: systemSlug,
       organization: {
@@ -45,12 +42,16 @@ class MockSystemService implements ISystemService {
     });
   }
 
-  getSystems(_organizationCode: string): Promise<{ code: string; name: string; slug: string }[]> {
+  getSystems(_organizationCode: string): Promise<System[]> {
     return Promise.resolve([
       {
-        code: "SYS_1",
+        id: "SYS_1",
         name: "Test System",
         slug: "test-system",
+        organization: {
+          id: "ORG_1",
+          name: "Test Organization",
+        },
       },
     ]);
   }
@@ -112,7 +113,7 @@ test("System Routes - Create System", async () => {
 
   assert(createSystemResponse.status === 201);
   const createSystemBody = await createSystemResponse.json();
-  expect(createSystemBody.code).toBe("SYS_1");
+  expect(createSystemBody.id).toBe("SYS_1");
 });
 
 test("System Routes - Create System - Invalid Slugs", async () => {
@@ -217,6 +218,6 @@ test("System Routes - Create System - Clerk API Error should not fail the reques
   if (createSystemResponse.ok) {
     expect(createSystemResponse.status).toBe(201);
     const createSystemBody = await createSystemResponse.json();
-    expect(createSystemBody.code).toBe("SYS_1");
+    expect(createSystemBody.id).toBe("SYS_1");
   }
 });

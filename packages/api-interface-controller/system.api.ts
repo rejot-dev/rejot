@@ -1,26 +1,34 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
 import { SlugSchema, ZodErrorSchema } from "@rejot/api-interface-controller/generic";
-import { PublicSchemaSchema } from "./public-schema.api";
+import { SchemaDefinitionColumnSchema } from "./public-schema.api";
 
-export const SystemResponse = z
+export const OverviewPublicSchemaSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  version: z.number(),
+  schema: z.array(SchemaDefinitionColumnSchema),
+});
+
+export const OverviewDataStoreSchema = z.object({
+  slug: z.string(),
+  type: z.literal("postgres"),
+  publicationName: z.string(),
+  tables: z.array(z.string()),
+  publicSchemas: z.array(OverviewPublicSchemaSchema),
+});
+
+export const SystemOverviewResponseSchema = z
   .object({
+    id: z.string(),
     name: z.string(),
     slug: z.string(),
-    code: z.string(),
     organization: z.object({
       name: z.string(),
       code: z.string(),
     }),
-    dataStores: z.array(
-      z.object({
-        connectionSlug: z.string(),
-        publicationName: z.string(),
-        tables: z.array(z.string()),
-        publications: z.array(PublicSchemaSchema),
-      }),
-    ),
+    dataStores: z.array(OverviewDataStoreSchema),
   })
-  .openapi("System");
+  .openapi("SystemOverviewResponse");
 
 export const SystemListResponse = z
   .array(
@@ -54,7 +62,7 @@ export const systemGetApi = {
     200: {
       content: {
         "application/json": {
-          schema: SystemResponse,
+          schema: SystemOverviewResponseSchema,
         },
       },
       description: "System retrieved successfully",
@@ -89,7 +97,7 @@ export const systemCreateApi = {
     201: {
       content: {
         "application/json": {
-          schema: SystemResponse,
+          schema: SystemOverviewResponseSchema,
         },
       },
       description: "System created successfully",
