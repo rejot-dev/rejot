@@ -8,12 +8,6 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const app_version = env["APP_VERSION"] || "dev";
 
-  if (env["VITEST_VSCODE"]) {
-    return {
-      plugins: [react(), tsconfigPaths()],
-    };
-  }
-
   if (!env["CONTROLLER_API_URL"] || !env["VITE_CLERK_PUBLISHABLE_KEY"]) {
     throw new Error("CONTROLLER_API_URL or VITE_CLERK_PUBLISHABLE_KEY env var not set.");
   }

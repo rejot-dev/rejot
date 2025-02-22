@@ -69,19 +69,20 @@ export function getConnectionTableSchema(
 }
 
 export function useConnectionTableSchema(
-  organizationId: string,
-  connectionSlug: string,
-  tableName: string,
+  organizationId: string | undefined,
+  connectionSlug: string | undefined,
+  tableName: string | undefined,
 ) {
   return useQuery({
     queryKey: ["connection-table-schema", organizationId, connectionSlug, tableName],
-    queryFn: () => getConnectionTableSchema(organizationId, connectionSlug, tableName),
+    queryFn: () => getConnectionTableSchema(organizationId!, connectionSlug!, tableName!),
     select: (result) => {
       if (result.status === "error") {
         throw new Error(result.message);
       }
       return result.data;
     },
+    enabled: !!organizationId && !!connectionSlug && !!tableName,
   });
 }
 

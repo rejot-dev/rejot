@@ -3,9 +3,24 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCreatePublicSchemaMutation } from "@/data/public-schema/public-schema.data";
 import { Loader2 } from "lucide-react";
+import CodeMirror from "@uiw/react-codemirror";
+import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
+import { sql, PostgreSQL } from "@codemirror/lang-sql";
+import { useSystemTheme } from "@/components/theme-provider";
+import { useConnectionTableSchema } from "@/data/connection/connection-health.data";
+import { useSelectedOrganizationCode } from "@/data/clerk/clerk-meta.data";
+import { SchemaConfigurationEditor } from "../components/schema-configuration-editor";
+import { postgresDataTypeToJsonType } from "@/lib/sql";
+import { getTopLevelSelectedColumns } from "@/lib/sql";
+
+interface SchemaColumn {
+  id: string;
+  columnName: string;
+  dataType: string;
+}
 
 interface CreateTransformationStepProps {
   systemSlug: string;
@@ -15,6 +30,18 @@ interface CreateTransformationStepProps {
   onSuccess: (publicSchemaId: string) => void;
 }
 
+function defaultQuery(baseTable: string, columns: string[]) {
+  return `
+  SELECT
+    ${columns.map((col) => `"${col}"`).join(", ")}
+  FROM
+    "${baseTable}"
+  WHERE
+    id = $1
+  ;
+  `;
+}
+
 export function CreateTransformationStep({
   systemSlug,
   dataStoreSlug,
@@ -22,17 +49,63 @@ export function CreateTransformationStep({
   onBack,
   onSuccess,
 }: CreateTransformationStepProps) {
+  const createMutation = useCreatePublicSchemaMutation();
+
+  const theme = useSystemTheme();
+
+  const organizationId = useSelectedOrganizationCode();
+
+  const { data: tableColumns } = useConnectionTableSchema(organizationId, dataStoreSlug, baseTable);
+
   const { toast } = useToast();
   const [name, setName] = useState("");
-  const [sqlQuery, setSqlQuery] = useState(`SELECT *\nFROM ${baseTable}`);
+  const [sqlQuery, setSqlQuery] = useState(
+    defaultQuery(baseTable, tableColumns?.map((col) => col.columnName) ?? []),
+  );
+  const [schema, setSchema] = useState<SchemaColumn[]>([]);
 
-  const createMutation = useCreatePublicSchemaMutation();
+  useEffect(() => {
+    setSqlQuery(defaultQuery(baseTable, tableColumns?.map((col) => col.columnName) ?? []));
+  }, [tableColumns]);
+
+  // Get suggestions from table columns
+  const tableSuggestions =
+    tableColumns?.map((col) => ({
+      columnName: col.columnName,
+      dataType: postgresDataTypeToJsonType(col.dataType),
+    })) ?? [];
+
+  // Track existing column names
+  const existingColumnNames = new Set(tableSuggestions.map((col) => col.columnName));
+
+  // Get additional suggestions from SQL query
+  const queryColumns = getTopLevelSelectedColumns(sqlQuery)
+    .map((col) => col.replaceAll('"', ""))
+    .filter((col) => col !== "*"); // Exclude wildcard
+
+  const querySuggestions = queryColumns
+    .filter((col) => !existingColumnNames.has(col))
+    .map((col) => ({
+      columnName: col,
+      dataType: col.toLowerCase().includes("id") ? "number" : "string",
+    }));
+
+  const allSuggestions = [...tableSuggestions, ...querySuggestions];
 
   const handleCreate = async () => {
     if (!name || !sqlQuery) {
       toast({
         title: "Missing required fields",
         description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (schema.length === 0) {
+      toast({
+        title: "Missing schema",
+        description: "Please define at least one column in the schema",
         variant: "destructive",
       });
       return;
@@ -45,7 +118,12 @@ export function CreateTransformationStep({
         data: {
           name,
           baseTable,
-          schema: [],
+          schema: schema.map((col) => ({
+            columnName: col.columnName,
+            dataType: col.dataType,
+            isNullable: true,
+            default: null,
+          })),
           details: {
             type: "postgresql",
             sql: sqlQuery,
@@ -68,7 +146,7 @@ export function CreateTransformationStep({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card className="p-4">
         <div className="space-y-4">
           <div className="space-y-2">
@@ -82,14 +160,54 @@ export function CreateTransformationStep({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sql">SQL Transformation</Label>
-            <textarea
-              id="sql"
-              placeholder="Enter your SQL transformation"
-              value={sqlQuery}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSqlQuery(e.target.value)}
-              className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 font-mono text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              rows={10}
+            <Label className="text-sm font-medium" htmlFor="sql">
+              SQL Transformation
+            </Label>
+            <p className="text-muted-foreground max-w-prose text-sm">
+              Enter a SQL query to transform the data from the base table. Placeholders for the
+              primary key parts are <code>$1</code>, <code>$2</code>, etc. Using <code>*</code> is
+              not recommended.
+            </p>
+            <div className="overflow-hidden rounded-md border">
+              <CodeMirror
+                value={sqlQuery}
+                height="240px"
+                extensions={[
+                  sql({
+                    dialect: PostgreSQL,
+                    upperCaseKeywords: true,
+                    defaultTable: baseTable,
+                    schema: {
+                      [baseTable]: {
+                        self: {
+                          type: "table",
+                          label: baseTable,
+                        },
+                        children: (tableColumns ?? []).map((column) => ({
+                          type: "column",
+                          label: column.columnName,
+                        })),
+                      },
+                    },
+                  }),
+                ]}
+                onChange={(value) => setSqlQuery(value)}
+                theme={theme === "dark" ? vscodeDark : vscodeLight}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Schema Configuration</Label>
+            <p className="text-muted-foreground max-w-prose text-sm">
+              Define the schema of this transformation, this is how your data will be published.
+              Make sure these are in the same order as the columns in the SQL query. The names do
+              not have to match.
+            </p>
+            <SchemaConfigurationEditor
+              schema={schema}
+              onChange={setSchema}
+              suggestedColumns={allSuggestions}
             />
           </div>
         </div>
