@@ -107,21 +107,55 @@ export class PostgresConnectionManager implements IConnectionManager {
     const client = new Client(config);
     try {
       await client.connect();
-      const result = await client.query(
+
+      const { rows } = await client.query(
         `
-        select column_name, data_type, is_nullable, column_default, table_schema 
-        from information_schema.columns
-        where table_name = $1 and table_schema = $2
-      `,
+        SELECT DISTINCT ON (c.column_name)
+          c.column_name,
+          c.data_type,
+          c.is_nullable,
+          c.column_default,
+          c.table_schema,
+          tc.constraint_name,
+          ccu.table_schema AS referenced_table_schema,
+          ccu.table_name AS referenced_table_name,
+          ccu.column_name AS referenced_column_name
+        FROM information_schema.columns c
+        LEFT JOIN information_schema.key_column_usage kcu
+          ON c.table_name = kcu.table_name
+         AND c.table_schema = kcu.table_schema
+         AND c.column_name = kcu.column_name
+        LEFT JOIN information_schema.table_constraints tc
+          ON tc.table_name = kcu.table_name
+         AND tc.table_schema = kcu.table_schema
+         AND tc.constraint_name = kcu.constraint_name
+         AND tc.constraint_type = 'FOREIGN KEY'
+        LEFT JOIN information_schema.constraint_column_usage ccu
+          ON ccu.constraint_name = tc.constraint_name
+         AND ccu.table_schema = tc.table_schema
+        WHERE c.table_name = $1
+          AND c.table_schema = $2
+        ORDER BY c.column_name, tc.constraint_name NULLS LAST
+        `,
         [normalizedTable.name, normalizedTable.schema],
       );
 
-      return result.rows.map((column: { [x: string]: unknown }) => ({
-        columnName: column["column_name"] as string,
-        dataType: column["data_type"] as string,
-        isNullable: column["is_nullable"] === "YES",
-        columnDefault: column["column_default"] as string | null,
-        tableSchema: column["table_schema"] as string,
+      return rows.map((column) => ({
+        columnName: column.column_name,
+        dataType: column.data_type,
+        isNullable: column.is_nullable === "YES",
+        columnDefault: column.column_default,
+        tableSchema: column.table_schema,
+        ...(column.constraint_name
+          ? {
+              foreignKey: {
+                constraintName: column.constraint_name,
+                referencedTableSchema: column.referenced_table_schema,
+                referencedTableName: column.referenced_table_name,
+                referencedColumnName: column.referenced_column_name,
+              },
+            }
+          : {}),
       }));
     } finally {
       await client.end();

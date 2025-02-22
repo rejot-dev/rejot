@@ -26,6 +26,12 @@ export type ConnectionTableColumn = {
   isNullable: boolean;
   columnDefault: string | null;
   tableSchema: string;
+  foreignKey?: {
+    constraintName: string;
+    referencedTableSchema: string;
+    referencedTableName: string;
+    referencedColumnName: string;
+  };
 };
 
 export type ConnectionPublication = {
