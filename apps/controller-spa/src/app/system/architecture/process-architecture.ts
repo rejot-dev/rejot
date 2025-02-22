@@ -69,7 +69,7 @@ export const systemOverviewToArchitectureNode = (system: SystemOverview): Archit
       };
 
       // If the store has publications, add them as children
-      if (store.publication.tables?.length) {
+      if (store.publications.length) {
         databaseNode.children = store.publications.map((publication) => ({
           id: `${store.slug}-${publication.name}`,
           type: "publication",
