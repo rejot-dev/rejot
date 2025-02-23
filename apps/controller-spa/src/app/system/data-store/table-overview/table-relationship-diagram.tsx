@@ -10,7 +10,7 @@ import {
   useNodesInitialized,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { type HTMLAttributes, useEffect } from "react";
+import { type HTMLAttributes, useEffect, useState } from "react";
 import { TableNode } from "./table-node";
 import type { TableColumn, TableOverview } from "./overview";
 import Dagre from "@dagrejs/dagre";
@@ -103,6 +103,7 @@ function LayoutFlow({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const nodesInitialized = useNodesInitialized();
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
   // Nodes need will be measured on initial render, then nodesInitialized will be true
   // so we can layout the nodes and edges using dagre
@@ -117,13 +118,31 @@ function LayoutFlow({
     }
   }, [nodesInitialized]);
 
+  // Style edges based on hovered node
+  const styledEdges = edges.map((edge) => ({
+    ...edge,
+    style: {
+      stroke:
+        hoveredNode && (edge.source === hoveredNode || edge.target === hoveredNode)
+          ? "#EE1E3C" // Highlight color
+          : "#b1b1b7", // Default color
+      strokeWidth:
+        hoveredNode && (edge.source === hoveredNode || edge.target === hoveredNode)
+          ? 2 // Thicker for highlighted
+          : 1, // Default width
+    },
+    animated: !!(hoveredNode && (edge.source === hoveredNode || edge.target === hoveredNode)),
+  }));
+
   return (
     <ReactFlow
       nodes={nodes}
-      edges={edges}
+      edges={styledEdges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       nodeTypes={nodeTypes}
+      onNodeMouseEnter={(_, node) => setHoveredNode(node.id)}
+      onNodeMouseLeave={() => setHoveredNode(null)}
       fitView
     >
       <Panel position="top-left">
