@@ -52,8 +52,6 @@ export const BaseConfigSchema = z.object({
 
   connections: z.array(ConnectionSchema),
 
-  sslRootCertPath: z.string().optional(),
-
   drizzle: z.object({
     verbose: z.boolean().default(false),
     logging: z.boolean().default(false),
@@ -125,14 +123,8 @@ export class ConfigManager {
 
   #eventStores: Record<string, z.infer<typeof EventStoreSchema>> = {};
 
-  #sslRootCert: string | undefined;
-
   constructor() {
     this.#config = getConfig();
-
-    if (this.#config.sslRootCertPath) {
-      this.#sslRootCert = readFileSync(this.#config.sslRootCertPath, "utf-8");
-    }
 
     for (const connection of this.#config.connections) {
       if (this.#connections[connection.slug]) {
@@ -192,10 +184,6 @@ export class ConfigManager {
       verbose: this.#config.drizzle.verbose,
       logging: this.#config.drizzle.logging,
     };
-  }
-
-  get sslRootCert(): string | undefined {
-    return this.#sslRootCert;
   }
 
   #verifyControllerConfig() {

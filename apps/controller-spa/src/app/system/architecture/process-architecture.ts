@@ -58,11 +58,12 @@ export const systemOverviewToArchitectureNode = (system: SystemOverview): Archit
               ...tableDetails,
             ],
           };
+          databaseNode.children = [];
 
           // If the store has publications, add them as children
           if (store.publicSchemas.length) {
             databaseNode.children = store.publicSchemas.map((ps) => ({
-              id: `${store.slug}-${ps.id}`,
+              id: `${ps.id}`,
               type: "publication",
               label: ps.name,
               detail: ps.schema.map((column) => ({
@@ -72,28 +73,30 @@ export const systemOverviewToArchitectureNode = (system: SystemOverview): Archit
             }));
           }
 
+          system.consumerSchemas.forEach((cs) => {
+            if (cs.dataStore.slug !== store.slug) {
+              return;
+            }
+
+            databaseNode.children!.push({
+              id: cs.id,
+              type: "consumerSchema",
+              label: cs.name,
+              parentSlug: cs.dataStore.slug,
+              publicSchemaId: cs.publicSchema.code,
+              detail: [
+                { value: cs.status, type: "status" },
+                {
+                  value: cs.dataStore.slug,
+                  type: "data store",
+                  link: `/connections/${cs.dataStore.slug}`,
+                },
+              ],
+            });
+          });
+
           return databaseNode;
         }),
-        // Add consumer schemas as children of the sync engine
-        ...system.consumerSchemas.map(
-          (cs): ArchitectureNode => ({
-            id: `consumer-${cs.id}`,
-            type: "consumerSchema",
-            label: cs.name,
-            parentSlug: cs.dataStore.slug,
-            publicSchemaId: cs.publicSchema?.code
-              ? `${cs.dataStore.slug}-${cs.publicSchema.code}`
-              : undefined,
-            detail: [
-              { value: cs.status, type: "status" },
-              {
-                value: cs.dataStore.slug,
-                type: "data store",
-                link: `/connections/${cs.dataStore.slug}`,
-              },
-            ],
-          }),
-        ),
       ],
     };
     return syncEngineNode;

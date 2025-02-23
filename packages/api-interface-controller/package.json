@@ -13,7 +13,8 @@
     "./connection": "./connection/index.ts",
     "./connection-health": "./connection/connection-health.api.ts",
     "./public-schema": "./public-schema.api.ts",
-    "./consumer-schema": "./consumer-schema.api.ts"
+    "./consumer-schema": "./consumer-schema.api.ts",
+    "./data-store": "./data-store.api.ts"
   },
   "private": true,
   "type": "module",

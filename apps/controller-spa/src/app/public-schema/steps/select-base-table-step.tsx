@@ -1,9 +1,9 @@
-import { useSystemOverview } from "@/data/system/system.data";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useSelectedOrganizationCode } from "@/data/clerk/clerk-meta.data";
 import { TableSelector } from "../components/table-selector";
+import { useDataStore } from "@/data/data-store/data-store.data";
 
 interface SelectBaseTableStepProps {
   systemSlug: string;
@@ -23,13 +23,11 @@ export function SelectBaseTableStep({
   if (!organizationId) {
     return null;
   }
+  const { data: dataStore, isLoading } = useDataStore(systemSlug, dataStoreSlug);
 
-  const { data: systemOverview, isLoading: isLoadingSystem } = useSystemOverview(systemSlug);
   const [selectedTable, setSelectedTable] = useState<string>();
 
-  const dataStore = systemOverview?.dataStores.find((ds) => ds.slug === dataStoreSlug);
-
-  if (isLoadingSystem || !systemOverview || !dataStore) {
+  if (isLoading || !dataStore) {
     return (
       <div className="flex justify-center p-8">
         <Loader2 className="size-8 animate-spin" />
@@ -42,7 +40,7 @@ export function SelectBaseTableStep({
       <TableSelector
         value={selectedTable}
         onChange={setSelectedTable}
-        tables={dataStore.tables}
+        tables={dataStore.tables.map((table) => `${table.schema}.${table.name}`)}
         organizationId={organizationId}
         dataStoreSlug={dataStoreSlug}
       />

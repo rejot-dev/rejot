@@ -87,7 +87,6 @@ export function ConsumerSchemaNew() {
         return (
           <SelectPublicSchemaStep
             systemSlug={systemSlug}
-            dataStoreSlug={searchParams.get("dataStoreSlug") ?? ""}
             onBack={handleBack}
             onSelected={(publicSchemaId: string) => {
               const params = new URLSearchParams(searchParams);

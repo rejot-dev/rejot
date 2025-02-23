@@ -11,6 +11,7 @@ import type {
   PostgresConnectionConfig,
 } from "@/connection/connection-manager.ts";
 import type { ConfigManager } from "@/app-config/config.ts";
+import { normalizePostgresTable } from "./postgres-util";
 
 export class PostgresConnectionManager implements IConnectionManager {
   static inject = tokens("config");
@@ -95,6 +96,8 @@ export class PostgresConnectionManager implements IConnectionManager {
       });
     }
 
+    const normalizedTable = normalizePostgresTable(tableName);
+
     const client = new Client(config);
     try {
       await client.connect();
@@ -102,9 +105,9 @@ export class PostgresConnectionManager implements IConnectionManager {
         `
         select column_name, data_type, is_nullable, column_default, table_schema 
         from information_schema.columns
-        where table_name = $1 and table_schema = 'public'
+        where table_name = $1 and table_schema = $2
       `,
-        [tableName],
+        [normalizedTable.name, normalizedTable.schema],
       );
 
       return result.rows.map((column: { [x: string]: unknown }) => ({

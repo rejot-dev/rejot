@@ -1,19 +1,25 @@
-import { AlertCircle, Database, TableProperties } from "lucide-react";
+import { AlertCircle, Database } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { SystemOverview } from "@/data/system/system.data";
 import { DataStoreDetailsSlot } from "./data-store-details-slot";
+
+type DataStore = {
+  slug: string;
+  name: string;
+  database: string;
+  host: string;
+};
 
 interface DataStoreSelectorProps {
   value?: string;
   onChange?: (value: string) => void;
   className?: string;
-  dataStores: SystemOverview["dataStores"];
+  dataStores: DataStore[];
   isLoading?: boolean;
-  dataStoreDetails?: (dataStore: SystemOverview["dataStores"][number]) => React.ReactNode;
+  dataStoreDetails?: (dataStoreSlug: string) => React.ReactNode;
   dataStoreDetailsEmpty?: () => React.ReactNode;
 }
 
@@ -32,12 +38,12 @@ export function DataStoreSelector({
   className,
   dataStores,
   isLoading,
-  dataStoreDetails = (dataStore) => <DataStoreDetailsSlot dataStore={dataStore} />,
+  dataStoreDetails = (dataStoreSlug) => <DataStoreDetailsSlot dataStoreSlug={dataStoreSlug} />,
   dataStoreDetailsEmpty = () => <DataStoreDetailsSlotEmpty />,
 }: DataStoreSelectorProps) {
   const selectedDataStore = value ? dataStores.find((ds) => ds.slug === value) : undefined;
 
-  if (!dataStores.length) {
+  if (!dataStores.length && !isLoading) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="size-4" />
@@ -87,10 +93,16 @@ export function DataStoreSelector({
                     <div className="flex items-start gap-3">
                       <Database className="text-primary mt-1 size-5 shrink-0" />
                       <div>
-                        <h4 className="text-base font-medium">{dataStore.slug}</h4>
-                        <div className="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
-                          <TableProperties className="size-4" />
-                          <span>{dataStore.tables.length} Tables</span>
+                        <h4 className="text-base font-medium">{dataStore.name}</h4>
+                        <div className="text-muted-foreground mt-1 flex flex-col gap-1 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground/75">Database:</span>
+                            <span>{dataStore.database}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground/75">Host:</span>
+                            <span>{dataStore.host}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -105,7 +117,7 @@ export function DataStoreSelector({
         )}
       </RadioGroup>
 
-      {selectedDataStore && dataStoreDetails(selectedDataStore)}
+      {selectedDataStore && dataStoreDetails(selectedDataStore.slug)}
       {!selectedDataStore && dataStoreDetailsEmpty()}
     </div>
   );

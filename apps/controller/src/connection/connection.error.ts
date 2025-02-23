@@ -10,6 +10,7 @@ export type ConnectionErrorContext = {
   organizationId?: string;
   slug?: string;
   type?: string;
+  slotName?: string;
 };
 
 export const ConnectionErrors = {

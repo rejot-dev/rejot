@@ -27,16 +27,19 @@ interface CreateTransformationStepProps {
   onSuccess: (publicSchemaId: string) => void;
 }
 
-function defaultQuery(baseTable: string, columns: string[]) {
+function defaultQuery(baseTable: PostgresTable, columns: string[]) {
   const quotedColumns = columns.map((col) => `"${col}"`);
   const columnsToSelect = quotedColumns.join(", ");
+
+  const fromClause =
+    baseTable.schema === "public" ? baseTable.name : `"${baseTable.schema}"."${baseTable.name}"`;
 
   if (columnsToSelect.length <= 70) {
     return `
 SELECT
   ${columnsToSelect}
 FROM
-  "${baseTable}"
+  ${fromClause}
 WHERE
   id = $1
 ;
@@ -47,11 +50,35 @@ WHERE
 SELECT
   ${quotedColumns.join(",\n  ")}
 FROM
-  "${baseTable}"
+  ${fromClause}
 WHERE
   id = $1
 ;
   `;
+}
+
+export type PostgresTable = {
+  schema: string;
+  name: string;
+};
+
+export function normalizePostgresTable(table: string): PostgresTable {
+  const parts = table.split(".");
+  if (parts.length === 1) {
+    return {
+      schema: "public",
+      name: parts[0]!,
+    };
+  }
+
+  if (parts.length !== 2) {
+    throw new Error(`Invalid table name: ${table}`);
+  }
+
+  return {
+    schema: parts[0]!,
+    name: parts[1]!,
+  };
 }
 
 export function CreateTransformationStep({
@@ -67,15 +94,17 @@ export function CreateTransformationStep({
 
   const { data: tableColumns } = useConnectionTableSchema(organizationId, dataStoreSlug, baseTable);
 
+  const table = normalizePostgresTable(baseTable);
+
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [sqlQuery, setSqlQuery] = useState(
-    defaultQuery(baseTable, tableColumns?.map((col) => col.columnName) ?? []),
+    defaultQuery(table, tableColumns?.map((col) => col.columnName) ?? []),
   );
   const [schema, setSchema] = useState<SchemaColumn[]>([]);
 
   useEffect(() => {
-    setSqlQuery(defaultQuery(baseTable, tableColumns?.map((col) => col.columnName) ?? []));
+    setSqlQuery(defaultQuery(table, tableColumns?.map((col) => col.columnName) ?? []));
   }, [tableColumns]);
 
   // Get suggestions from table columns

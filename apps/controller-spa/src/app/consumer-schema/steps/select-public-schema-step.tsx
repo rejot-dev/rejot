@@ -11,7 +11,6 @@ import { SchemaConfigurationEditor } from "@/app/public-schema/components/schema
 
 interface SelectPublicSchemaStepProps {
   systemSlug: string;
-  dataStoreSlug: string;
   onBack: () => void;
   onSelected: (publicSchemaId: string) => void;
 }
@@ -93,7 +92,6 @@ function PublicSchemaDetails({
 
 export function SelectPublicSchemaStep({
   systemSlug,
-  dataStoreSlug,
   onBack,
   onSelected,
 }: SelectPublicSchemaStepProps) {
@@ -101,7 +99,7 @@ export function SelectPublicSchemaStep({
   const [selectedSchema, setSelectedSchema] = useState<string | null>(null);
   const [isSelectedSchemaValid, setIsSelectedSchemaValid] = useState(false);
 
-  if (isLoading) {
+  if (isLoading || !publicSchemas) {
     return (
       <div className="flex justify-center p-8">
         <Loader2 className="size-8 animate-spin" />
@@ -109,11 +107,7 @@ export function SelectPublicSchemaStep({
     );
   }
 
-  const filteredSchemas = publicSchemas?.filter(
-    (schema) => schema.connection.slug === dataStoreSlug,
-  );
-
-  if (!filteredSchemas?.length) {
+  if (!publicSchemas?.length) {
     return (
       <Alert>
         <AlertDescription>
@@ -130,7 +124,7 @@ export function SelectPublicSchemaStep({
         onValueChange={setSelectedSchema}
         className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
       >
-        {filteredSchemas.map((schema) => (
+        {publicSchemas.map((schema) => (
           <div key={schema.id} className="relative">
             <RadioGroupItem value={schema.id} id={schema.id} className="sr-only" />
             <label htmlFor={schema.id} className="block cursor-pointer">

@@ -34,6 +34,9 @@ import { ConsumerSchemaRepository } from "./consumer-schema/consumer-schema-repo
 import { ConsumerSchemaService } from "./consumer-schema/consumer-schema-service.ts";
 import { ConsumerSchemaRoutes } from "./consumer-schema/consumer-schema-routes.ts";
 import { DependencyRepository } from "./dependency/dependency.repository.ts";
+import { DataStoreRepository } from "./data-store/data-store.repository.ts";
+import { DataStoreService } from "./data-store/data-store.service.ts";
+import { DataStoreRoutes } from "./data-store/data-store.routes.ts";
 
 export const appInjector = createInjectionContainer();
 
@@ -51,6 +54,7 @@ export function createInjectionContainer() {
     .provideClass("dependencyRepository", DependencyRepository)
     .provideClass("organizationRepository", OrganizationRepository)
     .provideClass("connectionRepository", ConnectionRepository)
+    .provideClass("dataStoreRepository", DataStoreRepository)
     .provideClass("clerkRepository", ClerkRepository)
     .provideClass("personRepository", PersonRepository)
     .provideClass("postgresConnectionManager", PostgresConnectionManager)
@@ -70,6 +74,7 @@ export function createInjectionContainer() {
     .provideClass("clerkPersonService", ClerkPersonService)
     .provideClass("systemService", SystemService)
     .provideClass("schemaService", SchemaService)
+    .provideClass("dataStoreService", DataStoreService)
     // Middleware
     .provideClass("authenticationMiddleware", AuthenticationMiddleware)
     // Routes
@@ -81,7 +86,8 @@ export function createInjectionContainer() {
     .provideClass("connectionHealthRoutes", ConnectionHealthRoutes)
     .provideClass("connectionRawRoutes", ConnectionRawRoutes)
     .provideClass("publicSchemaRoutes", PublicSchemaRoutes)
-    .provideClass("consumerSchemaRoutes", ConsumerSchemaRoutes);
+    .provideClass("consumerSchemaRoutes", ConsumerSchemaRoutes)
+    .provideClass("dataStoreRoutes", DataStoreRoutes);
 
   // Force disposer to be loaded.
   appInjector.resolve("postgresDisposer");

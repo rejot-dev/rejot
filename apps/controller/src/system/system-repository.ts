@@ -232,6 +232,7 @@ export class SystemRepository implements ISystemRepository {
       });
     }
 
+    // TODO: Should be in a transaction.
     const consumerSchemaQuery = this.#db
       .selectDistinct()
       .from(schema.dependency)
@@ -310,7 +311,7 @@ export class SystemRepository implements ISystemRepository {
           return [];
         }
 
-        const dataStore = dataStoreMap.get(publicSchema.dataStoreId);
+        const dataStore = dataStoreMap.get(consumer_schema.dataStoreId);
 
         if (!dataStore) {
           return [];

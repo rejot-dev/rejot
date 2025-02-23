@@ -1,4 +1,3 @@
-import { useSystemOverview } from "@/data/system/system.data";
 import { Loader2 } from "lucide-react";
 import { DataStoreSelector } from "@/app/system/data-store/components/data-store-selector";
 import { useState } from "react";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { usePublicSchemas } from "@/data/public-schema/public-schema.data";
 import { useSelectedSystemSlug } from "@/app/system/system.state";
+import { useSystemDataStores } from "@/data/data-store/data-store.data";
 
 interface SelectDataStoreStepProps {
   onSelected: (dataStoreSlug: string) => void;
@@ -51,10 +51,15 @@ function PublicSchemaDetailsSlot() {
 
 export function SelectDataStoreStep({ onSelected }: SelectDataStoreStepProps) {
   const systemSlug = useSelectedSystemSlug();
-  const { data: systemOverview, isLoading } = useSystemOverview(systemSlug);
   const [selectedDataStore, setSelectedDataStore] = useState<string | null>(null);
 
-  if (isLoading || !systemOverview) {
+  if (!systemSlug) {
+    return null;
+  }
+
+  const { data: dataStores, isLoading } = useSystemDataStores(systemSlug);
+
+  if (isLoading || !dataStores) {
     return (
       <div className="flex justify-center p-8">
         <Loader2 className="size-8 animate-spin" />
@@ -62,7 +67,7 @@ export function SelectDataStoreStep({ onSelected }: SelectDataStoreStepProps) {
     );
   }
 
-  if (!systemOverview.dataStores.length) {
+  if (!dataStores.length) {
     return (
       <div className="text-muted-foreground p-8 text-center">
         No data stores available. Please create a data store first.
@@ -74,7 +79,12 @@ export function SelectDataStoreStep({ onSelected }: SelectDataStoreStepProps) {
     <div className="space-y-6">
       <DataStoreSelector
         value={selectedDataStore ?? undefined}
-        dataStores={systemOverview.dataStores}
+        dataStores={dataStores.map((ds) => ({
+          slug: ds.slug,
+          name: ds.publicationName,
+          database: ds.connectionConfig.database,
+          host: ds.connectionConfig.host,
+        }))}
         isLoading={isLoading}
         onChange={(value) => {
           setSelectedDataStore(value);
