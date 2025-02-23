@@ -3,16 +3,17 @@ import {
   ReactFlowProvider,
   useNodesState,
   useEdgesState,
-  type NodeChange,
-  applyNodeChanges,
   type Edge,
   type Node,
   Panel,
+  useReactFlow,
+  useNodesInitialized,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { type HTMLAttributes } from "react";
+import { type HTMLAttributes, useEffect } from "react";
 import { TableNode } from "./table-node";
 import type { TableColumn, TableOverview } from "./overview";
+import Dagre from "@dagrejs/dagre";
 
 type FlowTableNode = Node<{
   name: string;
@@ -63,34 +64,66 @@ function generateNodesAndEdges(data: TableOverview): {
   return { nodes, edges };
 }
 
+const getLayoutedElements = (nodes: FlowTableNode[], edges: Edge[]) => {
+  const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+  g.setGraph({ rankdir: "RL", align: "UL" });
+
+  edges.forEach((edge) => g.setEdge(edge.source, edge.target));
+  nodes.forEach((node) =>
+    g.setNode(node.id, {
+      ...node,
+      width: node.measured?.width ?? 0,
+      height: node.measured?.height ?? 0,
+    }),
+  );
+
+  Dagre.layout(g);
+
+  return {
+    nodes: nodes.map((node) => {
+      const position = g.node(node.id);
+      // We are shifting the dagre node position (anchor=center center) to the top left
+      // so it matches the React Flow node anchor point (top left).
+      const x = position.x - (node.measured?.width ?? 0) / 2;
+      const y = position.y - (node.measured?.height ?? 0) / 2;
+
+      return { ...node, position: { x, y } };
+    }),
+    edges,
+  };
+};
+
 function LayoutFlow({
   tableOverview: dataStoreOverview,
   resourceName,
 }: TableRelationshipDiagramProps) {
+  const { fitView } = useReactFlow();
   const { nodes: initialNodes, edges: initialEdges } = generateNodesAndEdges(dataStoreOverview);
 
-  const initialPositionedNodes = initialNodes.map((node, index) => ({
-    ...node,
-    position: {
-      x: (index % 3) * 350, // 3 columns, 350px spacing
-      y: Math.floor(index / 3) * 300, // 300px vertical spacing
-    },
-    draggable: true as const,
-  }));
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const nodesInitialized = useNodesInitialized();
 
-  const [nodes, setNodes] = useNodesState<FlowTableNode>(initialPositionedNodes);
-  const [edges] = useEdgesState(initialEdges);
-
-  const onNodesChange = (changes: NodeChange<FlowTableNode>[]) => {
-    setNodes((nds) => applyNodeChanges(changes, nds));
-  };
+  // Nodes need will be measured on initial render, then nodesInitialized will be true
+  // so we can layout the nodes and edges using dagre
+  useEffect(() => {
+    if (nodesInitialized) {
+      const layouted = getLayoutedElements(nodes, edges);
+      setNodes([...layouted.nodes]);
+      setEdges([...layouted.edges]);
+      window.requestAnimationFrame(() => {
+        fitView();
+      });
+    }
+  }, [nodesInitialized]);
 
   return (
     <ReactFlow
       nodes={nodes}
       edges={edges}
-      nodeTypes={nodeTypes}
       onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      nodeTypes={nodeTypes}
       fitView
     >
       <Panel position="top-left">
