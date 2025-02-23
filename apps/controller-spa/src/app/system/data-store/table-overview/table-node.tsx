@@ -39,7 +39,10 @@ export function TableNode({ data }: { data: TableNodeData }) {
             className="relative flex flex-row items-center justify-between p-2 font-mono text-sm odd:bg-white even:bg-gray-100 dark:odd:bg-gray-600 dark:even:bg-gray-700"
           >
             <div className="flex items-center">{column.columnName}</div>
-            <div className="ml-2 text-xs text-gray-500 dark:text-gray-400">{column.dataType}</div>
+            <div className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+              {column.dataType}
+              {column.isNullable ? "?" : ""}
+            </div>
             {/* Source handle for this column */}
             <Handle
               type="source"
