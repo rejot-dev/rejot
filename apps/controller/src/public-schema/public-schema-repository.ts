@@ -52,10 +52,16 @@ export type PublicSchemaListItem = {
   };
 };
 
+export type TransformationAndId = Transformation & { publicSchemaId: number };
+
 export interface IPublicSchemaRepository {
   get(systemSlug: string, publicSchemaCode: string): Promise<PublicSchema>;
   create(systemSlug: string, publicSchema: CreatePublicSchema): Promise<PublicSchema>;
   getPublicSchemasBySystemSlug(systemSlug: string): Promise<PublicSchemaListItem[]>;
+  getPublicSchemasByConnectionAndBaseTable(
+    connectionId: number,
+    baseTable: string,
+  ): Promise<TransformationAndId[]>;
 }
 
 export class PublicSchemaRepository implements IPublicSchemaRepository {
@@ -363,5 +369,67 @@ export class PublicSchemaRepository implements IPublicSchemaRepository {
         slug: ps.connection.slug,
       },
     }));
+  }
+
+  async getPublicSchemasByConnectionAndBaseTable(
+    connectionId: number,
+    baseTable: string,
+  ): Promise<(Transformation & { publicSchemaId: number })[]> {
+    // TODO: Multiple public schema transformations might be defined for this connection/table,
+    //       not sure if those are handler properly.
+
+    const results = await this.#db
+      .select({
+        transformation: {
+          majorVersion: schema.publicSchemaTransformation.majorVersion,
+          baseTable: schema.publicSchemaTransformation.baseTable,
+          schema: schema.publicSchemaTransformation.schema,
+        },
+        postgresql: {
+          sql: schema.publicSchemaTransformationPostgresql.sql,
+        },
+        publicSchema: {
+          id: schema.publicSchema.id,
+        },
+      })
+      .from(schema.publicSchemaTransformation)
+      .innerJoin(
+        schema.publicSchemaTransformationPostgresql,
+        eq(
+          schema.publicSchemaTransformation.id,
+          schema.publicSchemaTransformationPostgresql.publicSchemaTransformationId,
+        ),
+      )
+      .innerJoin(
+        schema.publicSchema,
+        eq(schema.publicSchemaTransformation.publicSchemaId, schema.publicSchema.id),
+      )
+      .innerJoin(schema.dataStore, eq(schema.publicSchema.dataStoreId, schema.dataStore.id))
+      .where(
+        and(
+          eq(schema.dataStore.connectionId, connectionId),
+          eq(schema.publicSchemaTransformation.baseTable, baseTable),
+        ),
+      );
+
+    return results.map((result) => {
+      const parsedSchema = SchemaDefinitionSchema.safeParse(result.transformation.schema);
+      if (!parsedSchema.success) {
+        throw new PublicSchemaError(PublicSchemaErrors.INVALID_SCHEMA).withContext({
+          schemaError: parsedSchema.error,
+        });
+      }
+
+      return {
+        majorVersion: result.transformation.majorVersion,
+        baseTable: result.transformation.baseTable,
+        schema: parsedSchema.data,
+        details: {
+          type: "postgresql",
+          sql: result.postgresql.sql,
+        },
+        publicSchemaId: result.publicSchema.id,
+      };
+    });
   }
 }

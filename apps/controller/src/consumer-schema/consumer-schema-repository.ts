@@ -33,6 +33,7 @@ export type ConsumerSchema = {
   code: string;
   name: string;
   connection: {
+    id: number;
     slug: string;
   };
 
@@ -46,6 +47,7 @@ export type ConsumerSchemaListItem = {
   name: string;
   status: "draft" | "backfill" | "active" | "archived";
   connection: {
+    id: number;
     slug: string;
   };
 };
@@ -54,6 +56,7 @@ export interface IConsumerSchemaRepository {
   get(systemSlug: string, consumerSchemaCode: string): Promise<ConsumerSchema>;
   create(systemSlug: string, consumerSchema: CreateConsumerSchema): Promise<ConsumerSchema>;
   getConsumerSchemasBySystemSlug(systemSlug: string): Promise<ConsumerSchemaListItem[]>;
+  getByPublicSchemaId(publicSchemaId: number): Promise<ConsumerSchema[]>;
 }
 
 export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
@@ -87,6 +90,7 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
           status: schema.consumerSchema.status,
         },
         connection: {
+          id: schema.connection.id,
           slug: schema.connection.slug,
         },
       })
@@ -143,6 +147,7 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
       name: result[0].consumerSchema.name,
       status: result[0].consumerSchema.status,
       connection: {
+        id: result[0].connection.id,
         slug: result[0].connection.slug,
       },
       transformations: transformations.map((t) => ({
@@ -169,15 +174,17 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
             .where(eq(schema.system.slug, systemSlug)),
         );
 
-      const dataStoreCte = tx
-        .$with("ds")
-        .as(
-          tx
-            .select({ id: schema.dataStore.id, slug: schema.connection.slug })
-            .from(schema.dataStore)
-            .innerJoin(schema.connection, eq(schema.dataStore.connectionId, schema.connection.id))
-            .where(eq(schema.connection.slug, consumerSchema.connectionSlug)),
-        );
+      const dataStoreCte = tx.$with("ds").as(
+        tx
+          .select({
+            id: schema.dataStore.id,
+            slug: schema.connection.slug,
+            connectionId: sql<number>`${schema.connection.id}`.as("connection_id"),
+          })
+          .from(schema.dataStore)
+          .innerJoin(schema.connection, eq(schema.dataStore.connectionId, schema.connection.id))
+          .where(eq(schema.connection.slug, consumerSchema.connectionSlug)),
+      );
 
       const publicSchemaCte = tx
         .$with("ps")
@@ -189,7 +196,7 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
         );
 
       // Insert the consumer schema with systemId
-      const consumerSchemaResult = await tx
+      const query = tx
         .with(systemCte, dataStoreCte, publicSchemaCte)
         .insert(schema.consumerSchema)
         .values({
@@ -241,21 +248,27 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
                 ps
             )
           `,
-        })
-        .catch((error) => {
-          if (
-            isPostgresError(error, "NOT_NULL_VIOLATION") &&
-            error.column_name === "data_store_id"
-          ) {
-            throw new ConsumerSchemaError(ConsumerSchemaErrors.INVALID_DATA_STORE)
-              .withContext({
-                systemSlug,
-                dataStoreSlug: consumerSchema.connectionSlug,
-              })
-              .withCause(error);
-          }
-          throw error;
+          connectionId: sql<number>`
+            (
+              SELECT
+                connection_id
+              FROM
+                ds
+            )
+          `,
         });
+
+      const consumerSchemaResult = await query.catch((error) => {
+        if (isPostgresError(error, "NOT_NULL_VIOLATION") && error.column_name === "data_store_id") {
+          throw new ConsumerSchemaError(ConsumerSchemaErrors.INVALID_DATA_STORE)
+            .withContext({
+              systemSlug,
+              dataStoreSlug: consumerSchema.connectionSlug,
+            })
+            .withCause(error);
+        }
+        throw error;
+      });
 
       if (consumerSchemaResult.length === 0) {
         throw new ConsumerSchemaError(ConsumerSchemaErrors.CREATION_FAILED).withContext({
@@ -311,6 +324,7 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
         code: consumerSchemaResult[0].code,
         status: consumerSchemaResult[0].status,
         connection: {
+          id: consumerSchemaResult[0].connectionId,
           slug: consumerSchemaResult[0].slug,
         },
         transformations: [
@@ -343,6 +357,7 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
           status: schema.consumerSchema.status,
         },
         connection: {
+          id: schema.connection.id,
           slug: schema.connection.slug,
         },
       })
@@ -368,8 +383,88 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
       name: cs.consumerSchema.name,
       status: cs.consumerSchema.status,
       connection: {
+        id: cs.connection.id,
         slug: cs.connection.slug,
       },
     }));
+  }
+
+  async getByPublicSchemaId(publicSchemaId: number): Promise<ConsumerSchema[]> {
+    // TODO: This is AI slob.
+    const result = await this.#db
+      .select({
+        consumerSchema: {
+          id: schema.consumerSchema.id,
+          code: schema.consumerSchema.code,
+          name: schema.consumerSchema.name,
+          status: schema.consumerSchema.status,
+        },
+        connection: {
+          id: schema.connection.id,
+          slug: schema.connection.slug,
+        },
+        transformation: {
+          majorVersion: schema.consumerSchemaTransformation.majorVersion,
+        },
+        postgresql: {
+          sql: schema.consumerSchemaTransformationPostgresql.sql,
+        },
+      })
+      .from(schema.dependencyConsumerSchemaToPublicSchema)
+      .innerJoin(
+        schema.consumerSchema,
+        eq(
+          schema.dependencyConsumerSchemaToPublicSchema.consumerSchemaId,
+          schema.consumerSchema.id,
+        ),
+      )
+      .innerJoin(schema.dataStore, eq(schema.consumerSchema.dataStoreId, schema.dataStore.id))
+      .innerJoin(schema.connection, eq(schema.dataStore.connectionId, schema.connection.id))
+      .leftJoin(
+        schema.consumerSchemaTransformation,
+        eq(schema.consumerSchemaTransformation.consumerSchemaId, schema.consumerSchema.id),
+      )
+      .leftJoin(
+        schema.consumerSchemaTransformationPostgresql,
+        eq(
+          schema.consumerSchemaTransformation.id,
+          schema.consumerSchemaTransformationPostgresql.consumerSchemaTransformationId,
+        ),
+      )
+      .where(eq(schema.dependencyConsumerSchemaToPublicSchema.publicSchemaId, publicSchemaId))
+      .orderBy(schema.consumerSchemaTransformation.majorVersion);
+
+    // Group results by consumer schema
+    const consumerSchemaMap = new Map<string, ConsumerSchema>();
+
+    for (const row of result) {
+      if (!consumerSchemaMap.has(row.consumerSchema.code)) {
+        consumerSchemaMap.set(row.consumerSchema.code, {
+          code: row.consumerSchema.code,
+          name: row.consumerSchema.name,
+          status: row.consumerSchema.status,
+          connection: {
+            id: row.connection.id,
+            slug: row.connection.slug,
+          },
+          transformations: [],
+        });
+      }
+
+      const consumerSchema = consumerSchemaMap.get(row.consumerSchema.code)!;
+
+      // Only add transformation if both transformation and postgresql data exist
+      if (row.transformation?.majorVersion != null && row.postgresql?.sql != null) {
+        consumerSchema.transformations.push({
+          majorVersion: row.transformation.majorVersion,
+          details: {
+            type: "postgresql",
+            sql: row.postgresql.sql,
+          },
+        });
+      }
+    }
+
+    return Array.from(consumerSchemaMap.values());
   }
 }

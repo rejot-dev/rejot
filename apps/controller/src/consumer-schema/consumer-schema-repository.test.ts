@@ -101,6 +101,7 @@ dbDescribe("ConsumerSchemaRepository", async (ctx) => {
     expect(consumerSchema).toBeDefined();
     expect(consumerSchema.name).toBe("Test Consumer Schema");
     expect(consumerSchema.status).toBe("draft");
+    expect(consumerSchema.connection.id).toBeDefined();
     expect(consumerSchema.connection.slug).toBe(connection.slug);
     expect(consumerSchema.transformations).toHaveLength(1);
     expect(consumerSchema.transformations[0].majorVersion).toBe(1);

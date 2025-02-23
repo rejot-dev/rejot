@@ -99,8 +99,6 @@ export const PublicSchemaPostRequest = z
   })
   .openapi("NewPublicSchema");
 
-export type PublicSchemaPostRequest = z.infer<typeof PublicSchemaPostRequest>;
-
 export const publicSchemaGetApi = {
   method: "get",
   path: "/systems/{systemSlug}/public-schema/{publicSchemaId}",

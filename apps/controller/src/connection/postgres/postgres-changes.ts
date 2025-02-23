@@ -1,18 +1,16 @@
 import { Client } from "pg";
 import { tokens } from "typed-inject";
 
-import type { ConfigManager } from "@/app-config/config.ts";
-import { PostgresConnectionManager } from "./postgres-connection-manager.ts";
-
 import { sql } from "@/connection/postgres/sql-tag.ts";
 import { ConnectionError, ConnectionErrors } from "../connection.error.ts";
-import { LogicalReplicationService } from "pg-logical-replication";
-import { RejotPgOutputPlugin } from "./rejot-pgoutput-plugin.ts";
-import type { Message } from "pg-logical-replication/dist/output-plugins/pgoutput/pgoutput.types";
+import type { IConnectionRepository } from "../connection-repository.ts";
+import { PostgresReplicationListener } from "./postgres-replication-listener.ts";
+import type { IChangesService } from "@/changes/changes-service.ts";
+import type { IConsumerSchemaRepository } from "@/consumer-schema/consumer-schema-repository.ts";
 
 const REJOT_SLOT_NAME = "rejot_slot";
 
-type ConnectionConfig = {
+export type ConnectionConfig = {
   type: "postgres";
   host: string;
   port: number;
@@ -33,25 +31,61 @@ type SlotInfo = {
   inactiveSince: string;
 };
 
-type StartResult = {
-  status: "started" | "already-started" | "terminated";
-  slotInfo: SlotInfo;
+type StartResult =
+  | {
+      status: "started" | "already-started" | "terminated";
+      slotInfo: SlotInfo;
+    }
+  | {
+      status: "no-logical-replication";
+    };
+
+type StartParams = {
+  organizationId: string;
+  dataStoreSlug: string;
+  config: ConnectionConfig;
+  publicationName: string;
 };
 
 export class PostgresChanges {
-  static inject = tokens("config", "postgresConnectionManager");
+  static inject = tokens("connectionRepository", "changesService", "consumerSchemaRepository");
+
+  #connectionRepository: IConnectionRepository;
+  #changesService: IChangesService;
+  #consumerSchemaRepository: IConsumerSchemaRepository;
 
   constructor(
-    _configManager: ConfigManager,
-    _postgresConnectionManager: PostgresConnectionManager,
-  ) {}
+    connectionRepository: IConnectionRepository,
+    changesService: IChangesService,
+    consumerSchemaRepository: IConsumerSchemaRepository,
+  ) {
+    this.#connectionRepository = connectionRepository;
+    this.#changesService = changesService;
+    this.#consumerSchemaRepository = consumerSchemaRepository;
+  }
 
-  async start(config: ConnectionConfig, publicationName: string): Promise<StartResult> {
+  async start({
+    organizationId,
+    dataStoreSlug,
+    config,
+    publicationName,
+  }: StartParams): Promise<StartResult> {
+    const connection = await this.#connectionRepository.findByOrganizationCode(
+      organizationId,
+      dataStoreSlug,
+    );
+
     const client = new Client(config);
     await client.connect();
 
     if (!(await this.#hasSlot(client, REJOT_SLOT_NAME))) {
-      await this.#createSlot(client, REJOT_SLOT_NAME);
+      const slotCreated = await this.#createSlot(client, REJOT_SLOT_NAME);
+
+      if (!slotCreated) {
+        return {
+          status: "no-logical-replication",
+        };
+      }
     }
 
     const slotInfo = await this.#getSlotInfo(client, REJOT_SLOT_NAME);
@@ -63,65 +97,89 @@ export class PostgresChanges {
       };
     }
 
-    const logicalReplicationService = new LogicalReplicationService(config, {
-      acknowledge: {
-        auto: false,
-        timeoutSeconds: 0,
-      },
-    });
+    const listener = new PostgresReplicationListener(config, async (buffer) => {
+      const transformations = await this.#changesService.getTransformationsForOperations({
+        connectionId: connection.id,
+        changes: {
+          operations: buffer.operations.map((op) => ({
+            ...op,
+            table: `${op.tableSchema}.${op.table}`,
+          })),
+        },
+      });
 
-    logicalReplicationService.on("data", (lsn: string, log: Message) => {
-      if (log.tag === "commit") {
-        console.log("commit", lsn, log);
+      // 1. Transform
+      const transformedOperations = await Promise.all(
+        transformations.flatMap(async ({ operation, transformation, publicSchemaId }) => {
+          if (operation.type === "delete") {
+            // TODO: Support delete. (Were filtered before.)
+            throw new Error("Delete not supported");
+          }
+
+          const keyValues = operation.keyColumns.map((column) => operation.new[column]);
+
+          const result = await client.query(transformation.details.sql, keyValues);
+
+          if (result.rows.length !== 1) {
+            throw new Error("Expected 1 row, got " + result.rows.length);
+          }
+
+          const obj: Record<string, unknown> = {};
+
+          for (const column of operation.keyColumns) {
+            obj[column] = operation.new[column];
+          }
+
+          return {
+            obj: {
+              // NOTE: Order matter A LOT here.
+              ...obj,
+              ...result.rows[0],
+            },
+            publicSchemaId,
+          };
+        }),
+      );
+
+      try {
+        await Promise.all(
+          transformedOperations.map(async ({ obj, publicSchemaId }) => {
+            const consumerSchemas =
+              await this.#consumerSchemaRepository.getByPublicSchemaId(publicSchemaId);
+
+            for (const { transformations, connection } of consumerSchemas) {
+              // Get transformation with highest version
+              const latestTransformation = transformations.reduce((prev, current) => {
+                return prev.majorVersion > current.majorVersion ? prev : current;
+              });
+
+              const connectionConfig = await this.#connectionRepository.findById(connection.id);
+
+              if (!connectionConfig) {
+                throw new Error("Connection not found");
+              }
+
+              const sinkClient = new Client(connectionConfig.config);
+              await sinkClient.connect();
+
+              try {
+                await sinkClient.query(latestTransformation.details.sql, Object.values(obj));
+              } finally {
+                await sinkClient.end();
+              }
+            }
+          }),
+        );
+        return true;
+      } catch (error) {
+        console.error("Error during changes processing.", error);
+        return false;
       }
-
-      if (log.tag === "insert") {
-        const change = {
-          operation: log.tag,
-          table: log.relation.name,
-          schema: log.relation.schema,
-          data: log.new,
-        };
-
-        console.log("change", change);
-      } else if (log.tag === "update") {
-        const change = {
-          operation: log.tag,
-          table: log.relation.name,
-          schema: log.relation.schema,
-          data: log.new,
-        };
-
-        console.log("change", change);
-      } else if (log.tag === "delete") {
-        const change = {
-          operation: log.tag,
-          table: log.relation.name,
-          schema: log.relation.schema,
-        };
-
-        console.log("change", change);
-      }
     });
 
-    logicalReplicationService.on(
-      "heartbeat",
-      (lsn: string, timestamp: number, shouldRespond: boolean) => {
-        console.log("heartbeat", lsn, timestamp, shouldRespond);
-        logicalReplicationService.acknowledge(lsn);
-      },
-    );
+    const success = await listener.start(publicationName);
 
-    const plugin = new RejotPgOutputPlugin({
-      protoVersion: 2,
-      publicationNames: [publicationName],
-    });
-
-    console.log("subscribing to slot ", slotInfo);
-
-    try {
-      await logicalReplicationService.subscribe(plugin, REJOT_SLOT_NAME);
-    } catch {
+    if (!success) {
       return {
         status: "terminated",
         slotInfo,
@@ -146,11 +204,16 @@ export class PostgresChanges {
     return result.rows.length > 0;
   }
 
-  async #createSlot(client: Client, slotName: string) {
-    await client.query(sql`
-      SELECT
-        pg_create_logical_replication_slot(${slotName}, 'pgoutput')
-    `);
+  async #createSlot(client: Client, slotName: string): Promise<boolean> {
+    try {
+      await client.query(sql`
+        SELECT
+          pg_create_logical_replication_slot(${slotName}, 'pgoutput')
+      `);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async #getSlotInfo(client: Client, slotName: string): Promise<SlotInfo> {

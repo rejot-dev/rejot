@@ -4,7 +4,7 @@ import { schema } from "@/postgres/schema.ts";
 import { PublicSchemaError } from "./public-schema.error.ts";
 import type { CreatePublicSchema } from "./public-schema-repository.ts";
 import { generateCode } from "@/codes/codes.ts";
-import type { SchemaDefinition } from "./public-schema.ts";
+import type { SchemaDefinition, SchemaDefinitionColumn } from "./public-schema.ts";
 
 dbDescribe("PublicSchemaRepository", async (ctx) => {
   // Helper functions to set up test data
@@ -34,13 +34,13 @@ dbDescribe("PublicSchemaRepository", async (ctx) => {
     return system;
   }
 
-  async function createTestConnection(organizationId: number) {
+  async function createTestConnection(organizationId: number, slug = "test-connection") {
     const db = ctx.resolve("postgres").db;
     const [connection] = await db
       .insert(schema.connection)
       .values({
         organizationId,
-        slug: "test-connection",
+        slug,
         type: "postgres",
       })
       .returning();
@@ -331,5 +331,187 @@ dbDescribe("PublicSchemaRepository", async (ctx) => {
     expect(publicSchemaRepository.get(system.slug, publicSchema.code)).rejects.toThrow(
       PublicSchemaError,
     );
+  });
+
+  test("getPublicSchemasByConnectionAndBaseTable - returns transformations for matching connection and base table", async () => {
+    const publicSchemaRepository = ctx.resolve("publicSchemaRepository");
+    const validSchema: SchemaDefinition = [
+      {
+        columnName: "id",
+        dataType: "number",
+        isNullable: false,
+        default: null,
+      },
+      {
+        columnName: "name",
+        dataType: "string",
+        isNullable: false,
+        default: null,
+      },
+    ];
+
+    // Set up test data with proper relationships
+    const organization = await createTestOrganization();
+    const system = await createTestSystem(organization.id);
+    const connection1 = await createTestConnection(organization.id);
+    const connection2 = await createTestConnection(organization.id, "test-connection-2");
+    const dataStore1 = await createTestDataStore(system.id, connection1.id);
+    const dataStore2 = await createTestDataStore(system.id, connection2.id);
+
+    // Create public schema with transformation for first connection
+    const [publicSchema1] = await ctx.db
+      .insert(schema.publicSchema)
+      .values({
+        code: "TEST_SCHEMA_1",
+        name: "Test Schema 1",
+        status: "active",
+        dataStoreId: dataStore1.id,
+      })
+      .returning();
+
+    const [transformation1] = await ctx.db
+      .insert(schema.publicSchemaTransformation)
+      .values({
+        publicSchemaId: publicSchema1.id,
+        majorVersion: 1,
+        baseTable: "public.users",
+        schema: validSchema,
+        type: "postgresql",
+      })
+      .returning();
+
+    await ctx.db.insert(schema.publicSchemaTransformationPostgresql).values({
+      publicSchemaTransformationId: transformation1.id,
+      sql: "SELECT * FROM test",
+    });
+
+    // Create another transformation with different base table
+    const [publicSchema2] = await ctx.db
+      .insert(schema.publicSchema)
+      .values({
+        code: "TEST_SCHEMA_2",
+        name: "Test Schema 2",
+        status: "active",
+        dataStoreId: dataStore1.id,
+      })
+      .returning();
+
+    const [transformation2] = await ctx.db
+      .insert(schema.publicSchemaTransformation)
+      .values({
+        publicSchemaId: publicSchema2.id,
+        majorVersion: 1,
+        baseTable: "public.orders",
+        schema: validSchema,
+        type: "postgresql",
+      })
+      .returning();
+
+    await ctx.db.insert(schema.publicSchemaTransformationPostgresql).values({
+      publicSchemaTransformationId: transformation2.id,
+      sql: "SELECT * FROM test",
+    });
+
+    // Create another transformation with different connection
+    const [publicSchema3] = await ctx.db
+      .insert(schema.publicSchema)
+      .values({
+        code: "TEST_SCHEMA_3",
+        name: "Test Schema 3",
+        status: "active",
+        dataStoreId: dataStore2.id,
+      })
+      .returning();
+
+    const [transformation3] = await ctx.db
+      .insert(schema.publicSchemaTransformation)
+      .values({
+        publicSchemaId: publicSchema3.id,
+        majorVersion: 1,
+        baseTable: "public.users",
+        schema: validSchema,
+        type: "postgresql",
+      })
+      .returning();
+
+    await ctx.db.insert(schema.publicSchemaTransformationPostgresql).values({
+      publicSchemaTransformationId: transformation3.id,
+      sql: "SELECT * FROM test",
+    });
+
+    // Test retrieving transformations
+    const transformations = await publicSchemaRepository.getPublicSchemasByConnectionAndBaseTable(
+      connection1.id,
+      "public.users",
+    );
+
+    expect(transformations).toHaveLength(1);
+    expect(transformations[0]).toEqual({
+      majorVersion: 1,
+      baseTable: "public.users",
+      publicSchemaId: publicSchema1.id,
+      schema: validSchema,
+      details: {
+        type: "postgresql",
+        sql: "SELECT * FROM test",
+      },
+    });
+  });
+
+  test("getPublicSchemasByConnectionAndBaseTable - returns empty array when no matches found", async () => {
+    const publicSchemaRepository = ctx.resolve("publicSchemaRepository");
+    const organization = await createTestOrganization();
+    const connection = await createTestConnection(organization.id);
+
+    const transformations = await publicSchemaRepository.getPublicSchemasByConnectionAndBaseTable(
+      connection.id,
+      "non.existent",
+    );
+
+    expect(transformations).toHaveLength(0);
+  });
+
+  test("getPublicSchemasByConnectionAndBaseTable - throws error for invalid schema", async () => {
+    const publicSchemaRepository = ctx.resolve("publicSchemaRepository");
+
+    // Set up test data with proper relationships
+    const organization = await createTestOrganization();
+    const system = await createTestSystem(organization.id);
+    const connection = await createTestConnection(organization.id);
+    const dataStore = await createTestDataStore(system.id, connection.id);
+
+    // Create public schema with invalid transformation
+    const [publicSchema] = await ctx.db
+      .insert(schema.publicSchema)
+      .values({
+        code: "TEST_SCHEMA",
+        name: "Test Schema",
+        status: "active",
+        dataStoreId: dataStore.id,
+      })
+      .returning();
+
+    const [transformation] = await ctx.db
+      .insert(schema.publicSchemaTransformation)
+      .values({
+        publicSchemaId: publicSchema.id,
+        majorVersion: 1,
+        baseTable: "public.users",
+        schema: [{} as SchemaDefinitionColumn],
+        type: "postgresql",
+      })
+      .returning();
+
+    await ctx.db.insert(schema.publicSchemaTransformationPostgresql).values({
+      publicSchemaTransformationId: transformation.id,
+      sql: "SELECT * FROM test",
+    });
+
+    await expect(
+      publicSchemaRepository.getPublicSchemasByConnectionAndBaseTable(
+        connection.id,
+        "public.users",
+      ),
+    ).rejects.toThrow(PublicSchemaError);
   });
 });

@@ -37,7 +37,7 @@ import { DependencyRepository } from "./dependency/dependency.repository.ts";
 import { DataStoreRepository } from "./data-store/data-store.repository.ts";
 import { DataStoreService } from "./data-store/data-store.service.ts";
 import { DataStoreRoutes } from "./data-store/data-store.routes.ts";
-
+import { ChangesService } from "./changes/changes-service.ts";
 export const appInjector = createInjectionContainer();
 
 export function createInjectionContainer() {
@@ -75,6 +75,7 @@ export function createInjectionContainer() {
     .provideClass("systemService", SystemService)
     .provideClass("schemaService", SchemaService)
     .provideClass("dataStoreService", DataStoreService)
+    .provideClass("changesService", ChangesService)
     // Middleware
     .provideClass("authenticationMiddleware", AuthenticationMiddleware)
     // Routes
