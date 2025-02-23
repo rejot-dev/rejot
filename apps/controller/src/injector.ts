@@ -38,6 +38,7 @@ import { DataStoreRepository } from "./data-store/data-store.repository.ts";
 import { DataStoreService } from "./data-store/data-store.service.ts";
 import { DataStoreRoutes } from "./data-store/data-store.routes.ts";
 import { ChangesService } from "./changes/changes-service.ts";
+import { ConnectionTablesRoutes } from "./connection/connection-tables.routes.ts";
 export const appInjector = createInjectionContainer();
 
 export function createInjectionContainer() {
@@ -88,7 +89,8 @@ export function createInjectionContainer() {
     .provideClass("connectionRawRoutes", ConnectionRawRoutes)
     .provideClass("publicSchemaRoutes", PublicSchemaRoutes)
     .provideClass("consumerSchemaRoutes", ConsumerSchemaRoutes)
-    .provideClass("dataStoreRoutes", DataStoreRoutes);
+    .provideClass("dataStoreRoutes", DataStoreRoutes)
+    .provideClass("connectionTablesRoutes", ConnectionTablesRoutes);
 
   // Force disposer to be loaded.
   appInjector.resolve("postgresDisposer");

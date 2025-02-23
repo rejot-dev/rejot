@@ -19,6 +19,8 @@ import type { ConnectionRawRoutes } from "@/connection/connection-raw.routes.ts"
 import type { PublicSchemaRoutes } from "../public-schema/public-schema-routes.ts";
 import type { ConsumerSchemaRoutes } from "../consumer-schema/consumer-schema-routes.ts";
 import type { DataStoreRoutes } from "../data-store/data-store.routes.ts";
+import type { ConnectionTablesRoutes } from "../connection/connection-tables.routes.ts";
+
 export class ApiServer {
   static inject = [
     "config",
@@ -32,6 +34,7 @@ export class ApiServer {
     "publicSchemaRoutes",
     "consumerSchemaRoutes",
     "dataStoreRoutes",
+    "connectionTablesRoutes",
   ] as const;
 
   #app;
@@ -48,6 +51,8 @@ export class ApiServer {
     publicSchemaRoutes: PublicSchemaRoutes,
     consumerSchemaRoutes: ConsumerSchemaRoutes,
     dataStoreRoutes: DataStoreRoutes,
+    connectionTablesRoutes: ConnectionTablesRoutes,
+
   ) {
     this.#app = new OpenAPIHono()
       .doc("api", {
@@ -80,6 +85,7 @@ export class ApiServer {
       .route("/", connectionRoutes.routes)
       .route("/", connectionHealthRoutes.routes)
       .route("/", connectionRawRoutes.routes)
+      .route("/", connectionTablesRoutes.routes)
       .route("/", publicSchemaRoutes.routes)
       .route("/", consumerSchemaRoutes.routes)
       .route("/", dataStoreRoutes.routes)

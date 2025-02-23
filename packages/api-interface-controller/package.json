@@ -12,6 +12,7 @@
     "./system": "./system.api.ts",
     "./connection": "./connection/index.ts",
     "./connection-health": "./connection/connection-health.api.ts",
+    "./connection-tables": "./connection/connection-tables.api.ts",
     "./public-schema": "./public-schema.api.ts",
     "./consumer-schema": "./consumer-schema.api.ts",
     "./data-store": "./data-store.api.ts"
