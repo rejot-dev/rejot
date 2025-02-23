@@ -7,6 +7,7 @@ import type {
   ConnectionTable,
   ConnectionTableColumn,
   IConnectionManager,
+  TableToColumnsMap,
 } from "@/connection/connection-manager.ts";
 import type { PostgresConnectionManager } from "@/connection/postgres/postgres-connection-manager.ts";
 import { assertUnreachable } from "@/lib/assert";
@@ -54,6 +55,18 @@ export class ConnectionTypeMultiplexer implements IConnectionManager {
     switch (config.type) {
       case "postgres":
         return this.#postgresConnectionManager.getPublications(config);
+      default:
+        assertUnreachable(config.type);
+    }
+  }
+
+  async getAllTableSchemas(
+    config: ConnectionConfig,
+    schemaName: string,
+  ): Promise<TableToColumnsMap> {
+    switch (config.type) {
+      case "postgres":
+        return this.#postgresConnectionManager.getAllTableSchemas(config, schemaName);
       default:
         assertUnreachable(config.type);
     }

@@ -21,7 +21,7 @@ export type ConnectionPublicationTableOverview = {
   }>;
 };
 
-export const ConnectionPublicationTableOverviewSchema = z
+export const ConnectionSchemaOverviewSchema = z
   .object({
     tables: z.array(
       z.object({
@@ -49,9 +49,39 @@ export const ConnectionPublicationTableOverviewSchema = z
   })
   .openapi("ConnectionPublicationTableOverview");
 
-export const connectionPublicationTableOverviewApi = {
+export const connectionSchemaOverviewApi = {
   method: "get",
-  path: "/organizations/{organizationId}/connections/{connectionSlug}/publications/{publicationName}/tables",
+  path: "/organizations/{organizationId}/connections/{connectionSlug}/schema/{schemaName}/",
+  request: {
+    params: z.object({
+      organizationId: z.string(),
+      connectionSlug: z.string(),
+      schemaName: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: ConnectionSchemaOverviewSchema,
+        },
+      },
+      description: "Publication table overview retrieved successfully",
+    },
+    404: {
+      description: "Connection, publication, or table not found",
+    },
+    500: {
+      description: "Internal server error",
+    },
+  },
+  tags: ["connections"],
+  description: "Get overview of tables in a publication",
+} as const satisfies RouteConfig;
+
+export const connectionPublicationOverviewApi = {
+  method: "get",
+  path: "/organizations/{organizationId}/connections/{connectionSlug}/publications/{publicationName}/",
   request: {
     params: z.object({
       organizationId: z.string(),
@@ -63,7 +93,7 @@ export const connectionPublicationTableOverviewApi = {
     200: {
       content: {
         "application/json": {
-          schema: ConnectionPublicationTableOverviewSchema,
+          schema: ConnectionSchemaOverviewSchema,
         },
       },
       description: "Publication table overview retrieved successfully",

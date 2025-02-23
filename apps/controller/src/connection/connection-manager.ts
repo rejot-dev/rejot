@@ -34,6 +34,8 @@ export type ConnectionTableColumn = {
   };
 };
 
+export type TableToColumnsMap = Map<string, ConnectionTableColumn[]>;
+
 export type ConnectionPublication = {
   name: string;
   allTables: boolean;
@@ -44,5 +46,6 @@ export type IConnectionManager = {
   checkHealth(config: ConnectionConfig): Promise<ConnectionHealth>;
   getTables(config: ConnectionConfig): Promise<ConnectionTable[]>;
   getTableSchema(config: ConnectionConfig, tableName: string): Promise<ConnectionTableColumn[]>;
+  getAllTableSchemas(config: ConnectionConfig, schemaName: string): Promise<TableToColumnsMap>;
   getPublications(config: ConnectionConfig): Promise<ConnectionPublication[]>;
 };

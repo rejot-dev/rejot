@@ -7,16 +7,17 @@ import {
   applyNodeChanges,
   type Edge,
   type Node,
+  Panel,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { type HTMLAttributes } from "react";
 import { TableNode } from "./table-node";
-import type { DataStoreTableColumn, DataStoreTableOverview } from "./overview";
+import type { TableColumn, TableOverview } from "./overview";
 
 type FlowTableNode = Node<{
   name: string;
   schema: string;
-  columns: DataStoreTableColumn[];
+  columns: TableColumn[];
 }>;
 
 const nodeTypes = {
@@ -24,10 +25,11 @@ const nodeTypes = {
 };
 
 export type TableRelationshipDiagramProps = HTMLAttributes<HTMLDivElement> & {
-  dataStoreOverview: DataStoreTableOverview;
+  tableOverview: TableOverview;
+  resourceName: string;
 };
 
-function generateNodesAndEdges(data: DataStoreTableOverview): {
+function generateNodesAndEdges(data: TableOverview): {
   nodes: FlowTableNode[];
   edges: Edge[];
 } {
@@ -61,7 +63,10 @@ function generateNodesAndEdges(data: DataStoreTableOverview): {
   return { nodes, edges };
 }
 
-function LayoutFlow({ dataStoreOverview }: TableRelationshipDiagramProps) {
+function LayoutFlow({
+  tableOverview: dataStoreOverview,
+  resourceName,
+}: TableRelationshipDiagramProps) {
   const { nodes: initialNodes, edges: initialEdges } = generateNodesAndEdges(dataStoreOverview);
 
   const initialPositionedNodes = initialNodes.map((node, index) => ({
@@ -87,7 +92,11 @@ function LayoutFlow({ dataStoreOverview }: TableRelationshipDiagramProps) {
       nodeTypes={nodeTypes}
       onNodesChange={onNodesChange}
       fitView
-    />
+    >
+      <Panel position="top-left">
+        <h2 className="text-2xl font-bold">{resourceName}</h2>
+      </Panel>
+    </ReactFlow>
   );
 }
 
