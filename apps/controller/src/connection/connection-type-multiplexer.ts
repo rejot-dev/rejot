@@ -71,4 +71,16 @@ export class ConnectionTypeMultiplexer implements IConnectionManager {
         assertUnreachable(config.type);
     }
   }
+
+  async getPublicationTableSchemas(
+    config: ConnectionConfig,
+    publicationName: string,
+  ): Promise<TableToColumnsMap> {
+    switch (config.type) {
+      case "postgres":
+        return this.#postgresConnectionManager.getPublicationTableSchemas(config, publicationName);
+      default:
+        assertUnreachable(config.type);
+    }
+  }
 }

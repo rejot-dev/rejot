@@ -36,8 +36,6 @@ export class ConnectionTablesRoutes {
           const clerkUserId = c.get("clerkUserId");
           await authenticationMiddleware.requireOrganizationAccess(clerkUserId, organizationId);
 
-          // TODO: Move all this logic down to the service and repo layers
-
           const connection = await connectionService.getBySlugWithPassword(
             organizationId,
             connectionSlug,
@@ -50,40 +48,17 @@ export class ConnectionTablesRoutes {
             });
           }
 
-          // Get all publications to verify this one exists and get its tables
-          const publications = await connectionManager.getPublications(connection.config);
-          const publication = publications.find((pub) => pub.name === publicationName);
-
-          if (!publication) {
-            throw new ConnectionError({
-              ...ConnectionErrors.NOT_FOUND,
-              context: { connectionId: connectionSlug },
-            });
-          }
-
-          // Get tables to process - either all tables if publication.allTables is true,
-          // or just the ones specified in publication.tables
-          const allTables = publication.allTables
-            ? await connectionManager.getTables(connection.config)
-            : (publication.tables ?? []);
-
-          // Get schema for each table
-          const tablesWithSchema = await Promise.all(
-            allTables.map(async (table) => {
-              const columns = await connectionManager.getTableSchema(connection.config, table.name);
-              return {
-                tableName: table.name,
-                schema: table.schema,
-                columns,
-              };
-            }),
+          const tables = await connectionManager.getPublicationTableSchemas(
+            connection.config,
+            publicationName,
           );
-
-          const tablesWithDetails = tablesWithSchema.map((table) => ({
-            ...table,
+          // Transform the Map into the expected array structure
+          const formattedTables = Array.from(tables.entries()).map(([tableName, columns]) => ({
+            tableName,
+            schema: "public",
+            columns,
           }));
-
-          return c.json({ tables: tablesWithDetails });
+          return c.json(formattedTables);
         },
       )
       .openapi(
@@ -115,7 +90,7 @@ export class ConnectionTablesRoutes {
             schema: schemaName,
             columns,
           }));
-          return c.json({ tables: formattedTables });
+          return c.json(formattedTables);
         },
       );
   }

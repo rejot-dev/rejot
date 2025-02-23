@@ -300,4 +300,117 @@ export class PostgresConnectionManager implements IConnectionManager {
       await client.end();
     }
   }
+
+  async getPublicationTableSchemas(
+    config: PostgresConnectionConfig,
+    publicationName: string,
+  ): Promise<TableToColumnsMap> {
+    if (config.type !== "postgres") {
+      throw new ConnectionError({
+        ...ConnectionErrors.INVALID_TYPE,
+        context: { type: config.type },
+      });
+    }
+
+    const client = new Client(config);
+    try {
+      await client.connect();
+
+      const { rows } = await client.query(
+        `
+        WITH publication AS (
+          SELECT pubname, puballtables
+          FROM pg_publication
+          WHERE pubname = $1
+        ),
+        publication_tables AS (
+          SELECT DISTINCT t.table_schema, t.table_name
+          FROM publication p
+          CROSS JOIN LATERAL (
+            SELECT table_schema, table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+              AND EXISTS (
+                SELECT 1 FROM publication
+                WHERE pubname = $1
+                  AND puballtables = true
+              )
+            UNION ALL
+            SELECT schemaname as table_schema, tablename as table_name
+            FROM pg_publication_tables pt
+            WHERE pt.pubname = p.pubname
+              AND EXISTS (
+                SELECT 1 FROM publication
+                WHERE pubname = $1
+                  AND puballtables = false
+              )
+          ) t
+        ),
+        table_columns AS (
+          SELECT DISTINCT ON (pt.table_name, c.column_name)
+            pt.table_name,
+            c.column_name,
+            c.data_type,
+            c.is_nullable,
+            c.column_default,
+            c.table_schema,
+            tc.constraint_name,
+            ccu.table_schema AS referenced_table_schema,
+            ccu.table_name AS referenced_table_name,
+            ccu.column_name AS referenced_column_name
+          FROM publication_tables pt
+          JOIN information_schema.columns c
+            ON c.table_name = pt.table_name
+            AND c.table_schema = pt.table_schema
+          LEFT JOIN information_schema.key_column_usage kcu
+            ON c.table_name = kcu.table_name
+            AND c.table_schema = kcu.table_schema
+            AND c.column_name = kcu.column_name
+          LEFT JOIN information_schema.table_constraints tc
+            ON tc.table_name = kcu.table_name
+            AND tc.table_schema = kcu.table_schema
+            AND tc.constraint_name = kcu.constraint_name
+            AND tc.constraint_type = 'FOREIGN KEY'
+          LEFT JOIN information_schema.constraint_column_usage ccu
+            ON ccu.constraint_name = tc.constraint_name
+            AND ccu.table_schema = tc.table_schema
+          ORDER BY pt.table_name, c.column_name, tc.constraint_name NULLS LAST
+        )
+        SELECT * FROM table_columns
+        `,
+        [publicationName],
+      );
+
+      const tableSchemas = new Map<string, ConnectionTableColumn[]>();
+
+      for (const row of rows) {
+        const tableName = row.table_name;
+        if (!tableSchemas.has(tableName)) {
+          tableSchemas.set(tableName, []);
+        }
+
+        tableSchemas.get(tableName)?.push({
+          columnName: row.column_name,
+          dataType: row.data_type,
+          isNullable: row.is_nullable === "YES",
+          columnDefault: row.column_default,
+          tableSchema: row.table_schema,
+          ...(row.constraint_name
+            ? {
+                foreignKey: {
+                  constraintName: row.constraint_name,
+                  referencedTableSchema: row.referenced_table_schema,
+                  referencedTableName: row.referenced_table_name,
+                  referencedColumnName: row.referenced_column_name,
+                },
+              }
+            : {}),
+        });
+      }
+
+      return tableSchemas;
+    } finally {
+      await client.end();
+    }
+  }
 }

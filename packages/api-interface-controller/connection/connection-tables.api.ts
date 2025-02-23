@@ -22,32 +22,30 @@ export type ConnectionPublicationTableOverview = {
 };
 
 export const ConnectionSchemaOverviewSchema = z
-  .object({
-    tables: z.array(
-      z.object({
-        tableName: z.string(),
-        schema: z.string(),
-        columns: z.array(
-          z.object({
-            columnName: z.string(),
-            dataType: z.string(),
-            isNullable: z.boolean(),
-            columnDefault: z.string().nullable(),
-            tableSchema: z.string(),
-            foreignKey: z
-              .object({
-                constraintName: z.string(),
-                referencedTableSchema: z.string(),
-                referencedTableName: z.string(),
-                referencedColumnName: z.string(),
-              })
-              .optional(),
-          }),
-        ),
-      }),
-    ),
-  })
-  .openapi("ConnectionPublicationTableOverview");
+  .array(
+    z.object({
+      tableName: z.string(),
+      schema: z.string(),
+      columns: z.array(
+        z.object({
+          columnName: z.string(),
+          dataType: z.string(),
+          isNullable: z.boolean(),
+          columnDefault: z.string().nullable(),
+          tableSchema: z.string(),
+          foreignKey: z
+            .object({
+              constraintName: z.string(),
+              referencedTableSchema: z.string(),
+              referencedTableName: z.string(),
+              referencedColumnName: z.string(),
+            })
+            .optional(),
+        }),
+      ),
+    }),
+  )
+  .openapi("ConnectionSchemaOverviewSchema");
 
 export const connectionSchemaOverviewApi = {
   method: "get",

@@ -29,13 +29,11 @@ export type TableColumn = {
   };
 };
 
-export type TableOverview = {
-  tables: Array<{
-    tableName: string;
-    schema: string;
-    columns: Array<TableColumn>;
-  }>;
-};
+export type TableOverview = Array<{
+  tableName: string;
+  schema: string;
+  columns: Array<TableColumn>;
+}>;
 
 export function PublicationTableOverview() {
   const { systemSlug, dataStoreSlug, publicationName } = useParams();

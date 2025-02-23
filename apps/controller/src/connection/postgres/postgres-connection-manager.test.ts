@@ -108,6 +108,19 @@ describe("PostgresConnectionManager", () => {
     }
   });
 
+  test("Schemas of publication tables", async () => {
+    const publications = await connectionManager.getPublications(postgresConfig);
+    expect(Array.isArray(publications)).toBe(true);
+
+    if (publications.length > 0) {
+      const publicationTableSchemas = await connectionManager.getPublicationTableSchemas(
+        postgresConfig,
+        publications[0].name,
+      );
+      expect(publicationTableSchemas.size).toBeGreaterThan(0);
+    }
+  });
+
   describe("getAllTableSchemas", () => {
     test("includes foreign key information where applicable", async () => {
       const schemas = await connectionManager.getAllTableSchemas(postgresConfig, "public");

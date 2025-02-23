@@ -35,7 +35,7 @@ function generateNodesAndEdges(data: TableOverview): {
   edges: Edge[];
 } {
   // Transform the table data into nodes and edges for the diagram
-  const nodes = data.tables.map((table, index) => ({
+  const nodes = data.map((table, index) => ({
     id: `${table.schema}.${table.tableName}`,
     type: "table" as const,
     position: { x: (index % 3) * 350, y: Math.floor(index / 3) * 300 },
@@ -47,7 +47,7 @@ function generateNodesAndEdges(data: TableOverview): {
   }));
 
   // Create edges for foreign key relationships
-  const edges = data.tables.flatMap((table) =>
+  const edges = data.flatMap((table) =>
     table.columns
       .filter((column) => column.foreignKey)
       .map((column) => ({

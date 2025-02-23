@@ -47,5 +47,9 @@ export type IConnectionManager = {
   getTables(config: ConnectionConfig): Promise<ConnectionTable[]>;
   getTableSchema(config: ConnectionConfig, tableName: string): Promise<ConnectionTableColumn[]>;
   getAllTableSchemas(config: ConnectionConfig, schemaName: string): Promise<TableToColumnsMap>;
+  getPublicationTableSchemas(
+    config: ConnectionConfig,
+    publicationName: string,
+  ): Promise<TableToColumnsMap>;
   getPublications(config: ConnectionConfig): Promise<ConnectionPublication[]>;
 };
