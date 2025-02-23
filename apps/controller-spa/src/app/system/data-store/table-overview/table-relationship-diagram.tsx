@@ -57,7 +57,7 @@ function generateNodesAndEdges(data: TableOverview): {
         target: `${column.foreignKey?.referencedTableSchema}.${column.foreignKey?.referencedTableName}`,
         targetHandle: `${column.foreignKey?.referencedTableSchema}.${column.foreignKey?.referencedTableName}.${column.foreignKey?.referencedColumnName}`,
         type: "smoothstep",
-        animated: true,
+        animated: false,
       })),
   );
 
