@@ -28,11 +28,13 @@ export function PostgresPublicationDetails({
     error,
   } = useConnectionPublications(organizationId, connectionSlug);
 
+  // TODO Move this component to different folder.
+
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Publications</CardTitle>
+          <CardTitle>Postgres Publications</CardTitle>
           <CardDescription>Loading publication details...</CardDescription>
         </CardHeader>
       </Card>
@@ -43,7 +45,7 @@ export function PostgresPublicationDetails({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Publications</CardTitle>
+          <CardTitle>Postgres Publications</CardTitle>
           <CardDescription className="text-destructive">
             Failed to load publications
           </CardDescription>
@@ -56,7 +58,7 @@ export function PostgresPublicationDetails({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Publications</CardTitle>
+          <CardTitle>Postgres Publications</CardTitle>
           <CardDescription>No publications found for this connection</CardDescription>
         </CardHeader>
       </Card>
@@ -66,7 +68,7 @@ export function PostgresPublicationDetails({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Publications</CardTitle>
+        <CardTitle>Postgres Publications</CardTitle>
         <CardDescription>Active publications in the database</CardDescription>
       </CardHeader>
       <CardContent>

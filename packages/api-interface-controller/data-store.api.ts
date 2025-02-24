@@ -22,11 +22,7 @@ const DataStoreResponseSchema = z
     connectionConfig: z.object({
       type: z.literal("postgres"),
       host: z.string(),
-      port: z.number(),
-      user: z.string(),
-      password: z.string(),
       database: z.string(),
-      ssl: z.boolean(),
     }),
     organization: z.object({
       id: z.string(),

@@ -17,7 +17,7 @@ type Organization = {
   name: string;
 };
 
-type DataStore = {
+type DataStoreWithConnection = {
   slug: string;
   publicationName: string;
   connectionConfig: ConnectionConfig;
@@ -25,8 +25,8 @@ type DataStore = {
 };
 
 export interface IDataStoreService {
-  getByConnectionSlug(params: { connectionSlug: string }): Promise<DataStore>;
-  getAll(systemSlug: string): Promise<DataStore[]>;
+  getByConnectionSlug(params: { connectionSlug: string }): Promise<DataStoreWithConnection>;
+  getAll(systemSlug: string): Promise<DataStoreWithConnection[]>;
 }
 
 export class DataStoreService implements IDataStoreService {
@@ -38,7 +38,7 @@ export class DataStoreService implements IDataStoreService {
     this.#dataStoreRepository = dataStoreRepository;
   }
 
-  async getAll(systemSlug: string): Promise<DataStore[]> {
+  async getAll(systemSlug: string): Promise<DataStoreWithConnection[]> {
     const dataStores = await this.#dataStoreRepository.getBySystemSlug(systemSlug);
 
     return dataStores.map((dataStore) => ({
@@ -50,7 +50,7 @@ export class DataStoreService implements IDataStoreService {
     }));
   }
 
-  async getByConnectionSlug(params: { connectionSlug: string }): Promise<DataStore> {
+  async getByConnectionSlug(params: { connectionSlug: string }): Promise<DataStoreWithConnection> {
     const dataStore = await this.#dataStoreRepository.getByConnectionSlug(params);
 
     return {

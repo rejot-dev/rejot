@@ -12,6 +12,7 @@ import type {
 } from "@/connection/connection-manager.ts";
 import type { ConfigManager } from "@/app-config/config.ts";
 import { normalizePostgresTable } from "./postgres-util";
+import { sql } from "./sql-tag";
 
 export class PostgresConnectionManager implements IConnectionManager {
   static inject = tokens("config");
@@ -70,10 +71,15 @@ export class PostgresConnectionManager implements IConnectionManager {
     const client = new Client(config);
     try {
       await client.connect();
-      const result = await client.query(`
-        select table_schema, table_name 
-        from information_schema.tables 
-        where table_schema = 'public'
+      const result = await client.query(sql`
+        SELECT
+          table_schema,
+          table_name
+        FROM
+          information_schema.tables
+        WHERE
+          table_schema <> 'information_schema'
+          AND table_schema <> 'pg_catalog'
       `);
 
       return result.rows.map((table: { table_schema: string; table_name: string }) => ({

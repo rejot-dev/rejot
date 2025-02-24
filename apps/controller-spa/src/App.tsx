@@ -12,6 +12,7 @@ import { DashboardHome } from "./app/dashboard/dashboard-home.tsx";
 import { SystemHome } from "./app/system/system-home.tsx";
 import { SystemNew } from "./app/system/system-new.tsx";
 import { DataStoreNew } from "./app/system/data-store/data-store-new.tsx";
+import { DataStoreOverview } from "./app/system/data-store/data-store-overview.tsx";
 import { ThemeProvider, useTheme } from "./components/theme-provider.tsx";
 import { LoginHome } from "./app/login/login-home.tsx";
 import type { ReactNode } from "react";
@@ -28,6 +29,7 @@ import { PublicSchemaDetail } from "./app/public-schema/public-schema-detail.tsx
 import { ConsumerSchemaOverview } from "./app/consumer-schema/consumer-schema-overview.tsx";
 import { ConsumerSchemaNew } from "./app/consumer-schema/consumer-schema-new.tsx";
 import { ConsumerSchemaDetail } from "./app/consumer-schema/consumer-schema-detail.tsx";
+import { DataStoreDetail } from "./app/system/data-store/data-store-detail.tsx";
 
 const PUBLISHABLE_KEY: string | undefined = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const queryClient = new QueryClient();
@@ -101,8 +103,10 @@ export function App() {
                     <Route path=":systemSlug">
                       <Route index element={<SystemHome />} />
                       <Route path="data-stores">
+                        <Route index element={<DataStoreOverview />} />
                         <Route path="new" element={<Navigate to="select-connection" replace />} />
                         <Route path="new/:step" element={<DataStoreNew />} />
+                        <Route path=":dataStoreSlug" element={<DataStoreDetail />} />
                       </Route>
                     </Route>
                   </Route>

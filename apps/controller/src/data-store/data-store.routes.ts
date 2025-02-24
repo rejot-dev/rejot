@@ -5,8 +5,7 @@ import { createRoute } from "@hono/zod-openapi";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 import type { IDataStoreService } from "./data-store.service.ts";
 import type { IConnectionManager } from "@/connection/connection-manager.ts";
-import { dataStoreListApi, dataStoreGetApi } from "./data-store.api.ts";
-
+import { dataStoreListApi, dataStoreGetApi } from "@rejot/api-interface-controller/data-store";
 export class DataStoreRoutes {
   static inject = tokens(
     "dataStoreService",
@@ -34,7 +33,16 @@ export class DataStoreRoutes {
           await authenticationMiddleware.requireSystemAccess(clerkUserId, systemSlug);
 
           // We'll get one data store to check organization access
-          const dataStores = await dataStoreService.getAll(systemSlug);
+          const dataStores = (await dataStoreService.getAll(systemSlug)).map((dataStore) => ({
+            ...dataStore,
+            connectionConfig: {
+              ...dataStore.connectionConfig,
+              password: undefined,
+              port: undefined,
+              user: undefined,
+              ssl: undefined,
+            },
+          }));
 
           return c.json(dataStores);
         },
@@ -62,6 +70,13 @@ export class DataStoreRoutes {
 
           return c.json({
             ...dataStore,
+            connectionConfig: {
+              ...dataStore.connectionConfig,
+              password: undefined,
+              port: undefined,
+              user: undefined,
+              ssl: undefined,
+            },
             tables,
             publications,
           });

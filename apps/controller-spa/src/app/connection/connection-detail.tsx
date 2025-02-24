@@ -4,7 +4,6 @@ import { useConnections } from "@/data/connection/connection.data";
 import { ConnectionHeader } from "./components/connection-header";
 import { ConnectionConfigForm } from "./components/connection-config-form";
 import { ConnectionTables } from "./components/connection-tables";
-import { PostgresPublicationDetails } from "./components/postgres-publication-details";
 
 export function ConnectionDetail() {
   const { connectionSlug } = useParams();
@@ -32,10 +31,6 @@ export function ConnectionDetail() {
 
         <div className="grid gap-6">
           <ConnectionConfigForm type="postgres" connection={connection} />
-          <PostgresPublicationDetails
-            organizationId={organizationId}
-            connectionSlug={connectionSlug}
-          />
           <ConnectionTables organizationId={organizationId} connectionSlug={connectionSlug} />
         </div>
       </div>

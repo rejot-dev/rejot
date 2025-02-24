@@ -59,6 +59,17 @@ export function NavMain() {
                   <SidebarMenuSubButton
                     asChild
                     className={!hasSelectedSystem ? "pointer-events-none opacity-50" : ""}
+                    isActive={!!useMatch({ path: `/systems/${selectedSystemSlug}/data-stores` })}
+                  >
+                    <NavLink to={`/systems/${selectedSystemSlug}/data-stores`}>
+                      <span>Data Stores</span>
+                    </NavLink>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton
+                    asChild
+                    className={!hasSelectedSystem ? "pointer-events-none opacity-50" : ""}
                     isActive={!!useMatch({ path: "/public-schemas" })}
                   >
                     <NavLink to="/public-schemas">
