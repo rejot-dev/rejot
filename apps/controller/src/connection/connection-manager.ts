@@ -25,7 +25,6 @@ export type ConnectionTableColumn = {
   dataType: string;
   isNullable: boolean;
   columnDefault: string | null;
-  tableSchema: string;
   foreignKey?: {
     constraintName: string;
     referencedTableSchema: string;
@@ -46,10 +45,6 @@ export type IConnectionManager = {
   checkHealth(config: ConnectionConfig): Promise<ConnectionHealth>;
   getTables(config: ConnectionConfig): Promise<ConnectionTable[]>;
   getTableSchema(config: ConnectionConfig, tableName: string): Promise<ConnectionTableColumn[]>;
-  getAllTableSchemas(config: ConnectionConfig, schemaName: string): Promise<TableToColumnsMap>;
-  getPublicationTableSchemas(
-    config: ConnectionConfig,
-    publicationName: string,
-  ): Promise<TableToColumnsMap>;
+  getAllTableSchemas(config: ConnectionConfig): Promise<TableToColumnsMap>;
   getPublications(config: ConnectionConfig): Promise<ConnectionPublication[]>;
 };

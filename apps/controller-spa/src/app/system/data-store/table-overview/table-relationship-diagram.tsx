@@ -5,7 +5,6 @@ import {
   useEdgesState,
   type Edge,
   type Node,
-  Panel,
   useReactFlow,
   useNodesInitialized,
 } from "@xyflow/react";
@@ -27,7 +26,6 @@ const nodeTypes = {
 
 export type TableRelationshipDiagramProps = HTMLAttributes<HTMLDivElement> & {
   tableOverview: TableOverview;
-  resourceName: string;
 };
 
 function generateNodesAndEdges(data: TableOverview): {
@@ -36,7 +34,7 @@ function generateNodesAndEdges(data: TableOverview): {
 } {
   // Transform the table data into nodes and edges for the diagram
   const nodes = data.map((table, index) => ({
-    id: `${table.schema}.${table.tableName}`,
+    id: table.tableName,
     type: "table" as const,
     position: { x: (index % 3) * 350, y: Math.floor(index / 3) * 300 },
     data: {
@@ -52,8 +50,8 @@ function generateNodesAndEdges(data: TableOverview): {
       .filter((column) => column.foreignKey)
       .map((column) => ({
         id: `${table.tableName}.${column.columnName}->${column.foreignKey?.referencedTableName}.${column.foreignKey?.referencedColumnName}`,
-        source: `${table.schema}.${table.tableName}`,
-        sourceHandle: `${table.schema}.${table.tableName}.${column.columnName}`,
+        source: table.tableName,
+        sourceHandle: `${table.tableName}.${column.columnName}`,
         target: `${column.foreignKey?.referencedTableSchema}.${column.foreignKey?.referencedTableName}`,
         targetHandle: `${column.foreignKey?.referencedTableSchema}.${column.foreignKey?.referencedTableName}.${column.foreignKey?.referencedColumnName}`,
         type: "smoothstep",
@@ -93,10 +91,7 @@ const getLayoutedElements = (nodes: FlowTableNode[], edges: Edge[]) => {
   };
 };
 
-function LayoutFlow({
-  tableOverview: dataStoreOverview,
-  resourceName,
-}: TableRelationshipDiagramProps) {
+function LayoutFlow({ tableOverview: dataStoreOverview }: TableRelationshipDiagramProps) {
   const { fitView } = useReactFlow();
   const { nodes: initialNodes, edges: initialEdges } = generateNodesAndEdges(dataStoreOverview);
 
@@ -144,11 +139,7 @@ function LayoutFlow({
       onNodeMouseEnter={(_, node) => setHoveredNode(node.id)}
       onNodeMouseLeave={() => setHoveredNode(null)}
       fitView
-    >
-      <Panel position="top-left">
-        <h2 className="text-2xl font-bold">{resourceName}</h2>
-      </Panel>
-    </ReactFlow>
+    ></ReactFlow>
   );
 }
 

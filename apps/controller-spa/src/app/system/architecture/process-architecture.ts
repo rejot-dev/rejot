@@ -41,14 +41,9 @@ export const systemOverviewToArchitectureNode = (system: SystemOverview): Archit
             detail: [
               { value: store.type, type: "driver", link: `/connections/${store.slug}` },
               {
-                value: "public",
-                type: "schema",
-                link: `./data-stores/${store.slug}/schema/public`,
-              },
-              {
-                value: store.publicationName,
-                type: "publication",
-                link: `./data-stores/${store.slug}/publication/${store.publicationName}`,
+                value: "Tables",
+                type: "overview",
+                link: `./data-stores/${store.slug}/tables`,
               },
             ],
           };

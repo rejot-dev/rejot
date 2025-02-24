@@ -107,41 +107,25 @@ describe("PostgresConnectionManager", () => {
       expect(Array.isArray(publications[0].tables)).toBe(true);
     }
   });
+  test("includes foreign key information where applicable", async () => {
+    const schemas = await connectionManager.getAllTableSchemas(postgresConfig);
 
-  test("Schemas of publication tables", async () => {
-    const publications = await connectionManager.getPublications(postgresConfig);
-    expect(Array.isArray(publications)).toBe(true);
+    // Find the system table schema (we know it has foreign keys from previous tests)
+    const systemTableSchema = schemas.get("system");
 
-    if (publications.length > 0) {
-      const publicationTableSchemas = await connectionManager.getPublicationTableSchemas(
-        postgresConfig,
-        publications[0].name,
+    expect(systemTableSchema).toBeDefined();
+    if (systemTableSchema) {
+      const organizationIdColumn = systemTableSchema.find(
+        (col) => col.columnName === "organization_id",
       );
-      expect(publicationTableSchemas.size).toBeGreaterThan(0);
+      expect(organizationIdColumn).toBeDefined();
+      expect(organizationIdColumn?.foreignKey).toEqual({
+        constraintName: "system_organization_id_organization_id_fk",
+        referencedTableSchema: "public",
+        referencedTableName: "organization",
+        referencedColumnName: "id",
+      });
     }
-  });
-
-  describe("getAllTableSchemas", () => {
-    test("includes foreign key information where applicable", async () => {
-      const schemas = await connectionManager.getAllTableSchemas(postgresConfig, "public");
-
-      // Find the system table schema (we know it has foreign keys from previous tests)
-      const systemTableSchema = schemas.get("system");
-
-      expect(systemTableSchema).toBeDefined();
-      if (systemTableSchema) {
-        const organizationIdColumn = systemTableSchema.find(
-          (col) => col.columnName === "organization_id",
-        );
-        expect(organizationIdColumn).toBeDefined();
-        expect(organizationIdColumn?.foreignKey).toEqual({
-          constraintName: "system_organization_id_organization_id_fk",
-          referencedTableSchema: "public",
-          referencedTableName: "organization",
-          referencedColumnName: "id",
-        });
-      }
-    });
   });
 
   describe("type validation", () => {

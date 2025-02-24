@@ -15,7 +15,6 @@ export type ColumnSchema = {
   dataType: string;
   isNullable: boolean;
   columnDefault: string | null;
-  tableSchema: string;
 };
 
 export type ConnectionTableSchema = ColumnSchema[];

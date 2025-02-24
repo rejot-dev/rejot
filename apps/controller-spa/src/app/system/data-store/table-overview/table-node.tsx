@@ -6,7 +6,6 @@ type Column = {
   dataType: string;
   isNullable: boolean;
   columnDefault: string | null;
-  tableSchema: string;
   foreignKey?: {
     constraintName: string;
     referencedTableSchema: string;
@@ -17,12 +16,11 @@ type Column = {
 
 type TableNodeData = {
   name: string;
-  schema: string;
   columns: Column[];
 };
 
 function getForeignKeyHandleId(table: string, column: Column) {
-  return `${column.tableSchema}.${table}.${column.columnName}`;
+  return `${table}.${column.columnName}`;
 }
 
 export function TableNode({ data }: { data: TableNodeData }) {
@@ -30,7 +28,7 @@ export function TableNode({ data }: { data: TableNodeData }) {
     <div className="overflow-hidden rounded-lg border border-blue-600 dark:bg-blue-950">
       <div className="flex items-center gap-2 bg-blue-200 p-2 font-semibold dark:bg-blue-900">
         <TableProperties />
-        {data.schema}.{data.name}
+        {data.name}
       </div>
       <div>
         {data.columns.map((column, index) => (
@@ -53,7 +51,7 @@ export function TableNode({ data }: { data: TableNodeData }) {
             <Handle
               type="target"
               position={Position.Right}
-              id={`${data.schema}.${data.name}.${column.columnName}`}
+              id={`${data.name}.${column.columnName}`}
             />
           </div>
         ))}

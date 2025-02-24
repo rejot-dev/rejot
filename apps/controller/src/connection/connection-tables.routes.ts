@@ -1,7 +1,4 @@
-import {
-  connectionPublicationOverviewApi,
-  connectionSchemaOverviewApi,
-} from "@rejot/api-interface-controller/connection-tables";
+import { connectionSchemaOverviewApi } from "@rejot/api-interface-controller/connection-tables";
 
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { tokens } from "typed-inject";
@@ -25,74 +22,37 @@ export class ConnectionTablesRoutes {
     connectionManager: IConnectionManager,
     authenticationMiddleware: IAuthenticationMiddleware,
   ) {
-    this.#routes = new OpenAPIHono()
-      .openapi(
-        createRoute({
-          ...connectionPublicationOverviewApi,
-          middleware: [authenticationMiddleware.requireLogin()] as const,
-        }),
-        async (c) => {
-          const { organizationId, connectionSlug, publicationName } = c.req.valid("param");
-          const clerkUserId = c.get("clerkUserId");
-          await authenticationMiddleware.requireOrganizationAccess(clerkUserId, organizationId);
+    this.#routes = new OpenAPIHono().openapi(
+      createRoute({
+        ...connectionSchemaOverviewApi,
+        middleware: [authenticationMiddleware.requireLogin()] as const,
+      }),
+      async (c) => {
+        const { organizationId, connectionSlug } = c.req.valid("param");
+        const clerkUserId = c.get("clerkUserId");
+        await authenticationMiddleware.requireOrganizationAccess(clerkUserId, organizationId);
 
-          const connection = await connectionService.getBySlugWithPassword(
-            organizationId,
-            connectionSlug,
-          );
+        const connection = await connectionService.getBySlugWithPassword(
+          organizationId,
+          connectionSlug,
+        );
 
-          if (!connection) {
-            throw new ConnectionError({
-              ...ConnectionErrors.NOT_FOUND,
-              context: { connectionId: connectionSlug },
-            });
-          }
+        if (!connection) {
+          throw new ConnectionError({
+            ...ConnectionErrors.NOT_FOUND,
+            context: { connectionId: connectionSlug },
+          });
+        }
 
-          const tables = await connectionManager.getPublicationTableSchemas(
-            connection.config,
-            publicationName,
-          );
-          // Transform the Map into the expected array structure
-          const formattedTables = Array.from(tables.entries()).map(([tableName, columns]) => ({
-            tableName,
-            schema: "public",
-            columns,
-          }));
-          return c.json(formattedTables);
-        },
-      )
-      .openapi(
-        createRoute({
-          ...connectionSchemaOverviewApi,
-          middleware: [authenticationMiddleware.requireLogin()] as const,
-        }),
-        async (c) => {
-          const { organizationId, connectionSlug, schemaName } = c.req.valid("param");
-          const clerkUserId = c.get("clerkUserId");
-          await authenticationMiddleware.requireOrganizationAccess(clerkUserId, organizationId);
-
-          const connection = await connectionService.getBySlugWithPassword(
-            organizationId,
-            connectionSlug,
-          );
-
-          if (!connection) {
-            throw new ConnectionError({
-              ...ConnectionErrors.NOT_FOUND,
-              context: { connectionId: connectionSlug },
-            });
-          }
-
-          const tables = await connectionManager.getAllTableSchemas(connection.config, schemaName);
-          // Transform the Map into the expected array structure
-          const formattedTables = Array.from(tables.entries()).map(([tableName, columns]) => ({
-            tableName,
-            schema: schemaName,
-            columns,
-          }));
-          return c.json(formattedTables);
-        },
-      );
+        const tables = await connectionManager.getAllTableSchemas(connection.config);
+        // Transform the Map into the expected array structure
+        const formattedTables = Array.from(tables.entries()).map(([tableName, columns]) => ({
+          tableName,
+          columns,
+        }));
+        return c.json(formattedTables);
+      },
+    );
   }
 
   get routes() {
