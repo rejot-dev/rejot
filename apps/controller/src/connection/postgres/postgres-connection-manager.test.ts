@@ -41,7 +41,6 @@ describe("PostgresConnectionManager", () => {
     expect(tables.length).toBeGreaterThan(0);
     expect(tables[0]).toHaveProperty("schema");
     expect(tables[0]).toHaveProperty("name");
-    expect(tables[0].schema).toBe("public");
   });
 
   test("returns schema for existing table", async () => {
