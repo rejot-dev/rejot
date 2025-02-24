@@ -52,7 +52,6 @@ export class ApiServer {
     consumerSchemaRoutes: ConsumerSchemaRoutes,
     dataStoreRoutes: DataStoreRoutes,
     connectionTablesRoutes: ConnectionTablesRoutes,
-
   ) {
     this.#app = new OpenAPIHono()
       .doc("api", {

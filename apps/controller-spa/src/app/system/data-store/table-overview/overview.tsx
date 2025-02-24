@@ -68,7 +68,6 @@ export function SchemaTableOverview() {
               <BreadcrumbItem>
                 <BreadcrumbPage>{dataStoreSlug}</BreadcrumbPage>
               </BreadcrumbItem>
-              <BreadcrumbSeparator />
             </BreadcrumbList>
           </Breadcrumb>
         </div>

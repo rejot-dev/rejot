@@ -111,7 +111,7 @@ describe("PostgresConnectionManager", () => {
     const schemas = await connectionManager.getAllTableSchemas(postgresConfig);
 
     // Find the system table schema (we know it has foreign keys from previous tests)
-    const systemTableSchema = schemas.get("system");
+    const systemTableSchema = schemas.get("public.system");
 
     expect(systemTableSchema).toBeDefined();
     if (systemTableSchema) {

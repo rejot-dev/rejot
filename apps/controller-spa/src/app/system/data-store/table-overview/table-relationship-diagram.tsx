@@ -7,9 +7,10 @@ import {
   type Node,
   useReactFlow,
   useNodesInitialized,
+  Panel,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { type HTMLAttributes, useEffect, useState } from "react";
+import { type HTMLAttributes, useCallback, useEffect, useState } from "react";
 import { TableNode } from "./table-node";
 import type { TableColumn, TableOverview } from "./overview";
 import Dagre from "@dagrejs/dagre";
@@ -113,6 +114,12 @@ function LayoutFlow({ tableOverview: dataStoreOverview }: TableRelationshipDiagr
     }
   }, [nodesInitialized]);
 
+  const resetLayout = useCallback(() => {
+    const layouted = getLayoutedElements(nodes, edges);
+    setNodes([...layouted.nodes]);
+    setEdges([...layouted.edges]);
+  }, [nodes, edges, setNodes, setEdges]);
+
   // Style edges based on hovered node
   const styledEdges = edges.map((edge) => ({
     ...edge,
@@ -139,7 +146,24 @@ function LayoutFlow({ tableOverview: dataStoreOverview }: TableRelationshipDiagr
       onNodeMouseEnter={(_, node) => setHoveredNode(node.id)}
       onNodeMouseLeave={() => setHoveredNode(null)}
       fitView
-    ></ReactFlow>
+    >
+      <Panel position="top-right">
+        <div className="flex gap-2">
+          <button
+            className="rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+            onClick={() => fitView({ duration: 200 })}
+          >
+            Fit to view
+          </button>
+          <button
+            className="rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+            onClick={resetLayout}
+          >
+            Reset layout
+          </button>
+        </div>
+      </Panel>
+    </ReactFlow>
   );
 }
 
