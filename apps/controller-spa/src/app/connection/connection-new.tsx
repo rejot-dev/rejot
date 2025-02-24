@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ConnectionNewHeader } from "./connection-new-header";
 import { ProgressBar } from "@/components/progress-bar";
 import { ConfigurePostgresStep } from "./steps/configure-postgres-step";
-import { ConnectionCreationOverviewStep } from "./steps/connection-creation-overview-step";
 import { ConnectionTypeStep } from "./steps/connection-type-step";
 import { useToast } from "@/hooks/use-toast";
 import { ConnectionSearchParamsSchema, ConnectionStepSchema } from "./connection-step.types";
@@ -13,7 +12,6 @@ import { ConnectionSearchParamsSchema, ConnectionStepSchema } from "./connection
 const STEPS = {
   "select-type": 0,
   "configure-connection": 1,
-  overview: 2,
 } as const;
 
 export function ConnectionNew() {
@@ -51,26 +49,14 @@ export function ConnectionNew() {
       description: "Choose connection type",
     },
     {
-      label: "Configure",
+      label: "Configure Connection",
       children: <Database className="size-5" />,
-      description: "Configure connection",
-    },
-    {
-      label: "Overview",
-      children: <Database className="size-5" />,
-      description: "Review connection",
+      description: "Configure and verify connection",
     },
   ];
 
   const handleBack = () => {
-    if (currentStep === 2 && validatedParams.success && validatedParams.data.step === "overview") {
-      const params = new URLSearchParams();
-      params.set("type", "postgres");
-      params.set("config", JSON.stringify(validatedParams.data.config));
-      navigate(`/connections/new/configure-connection?${params.toString()}`);
-    } else {
-      navigate("/connections/new/select-type");
-    }
+    navigate("/connections/new/select-type");
   };
 
   return (
@@ -84,12 +70,11 @@ export function ConnectionNew() {
               <CardTitle>
                 {currentStep === 0 && "Select Connection Type"}
                 {currentStep === 1 && "Configure Connection"}
-                {currentStep === 2 && "Review Connection"}
               </CardTitle>
               <CardDescription>
                 {currentStep === 0 && "Choose the type of database you want to connect"}
-                {currentStep === 1 && "Configure your database connection settings"}
-                {currentStep === 2 && "Review and verify your connection settings"}
+                {currentStep === 1 &&
+                  "Configure your database connection settings and verify the connection"}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -99,25 +84,7 @@ export function ConnectionNew() {
                 validatedParams.data.step === "configure-connection" && (
                   <ConfigurePostgresStep
                     onBack={handleBack}
-                    onConfigured={(config) => {
-                      const params = new URLSearchParams();
-                      params.set("type", "postgres");
-                      params.set("config", JSON.stringify({ ...config, type: "postgres" }));
-                      navigate(`/connections/new/overview?${params.toString()}`);
-                    }}
-                  />
-                )}
-              {currentStep === 2 &&
-                validatedParams.success &&
-                validatedParams.data.step === "overview" && (
-                  <ConnectionCreationOverviewStep
-                    connection={{
-                      slug: validatedParams.data.config.slug,
-                      config: validatedParams.data.config,
-                    }}
-                    organizationId={organizationId}
-                    onBack={handleBack}
-                    onSuccess={() => {
+                    onConfigured={(_config) => {
                       toast({
                         title: "Connection created successfully",
                         description: "Your new database connection has been set up.",

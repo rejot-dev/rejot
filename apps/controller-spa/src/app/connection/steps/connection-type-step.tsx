@@ -71,9 +71,10 @@ export function ConnectionTypeStep() {
         {selectedType === "postgres" ? (
           <div className="text-muted-foreground grid gap-4 text-sm">
             <div className="space-y-2">
-              <div className="font-medium">Requirements</div>
               <ul className="list-disc space-y-1 pl-4">
-                <li>PostgreSQL 10 or higher</li>
+                <li>
+                  ReJot uses the Postgres write ahead log (WAL) to ingest changes from the database.
+                </li>
                 <li>Direct network access to database</li>
               </ul>
             </div>
