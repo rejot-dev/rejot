@@ -188,7 +188,9 @@ export function LayoutFlow({
     >
       <Panel position="top-left" className="space-y-2">
         <h2 className="text-2xl font-bold">{systemOverview.name}</h2>
-        <p className="text-muted-foreground text-sm">Hello World</p>
+        <p className="text-muted-foreground text-sm">
+          If there is nothing here, you might want to create some Data Stores and Schemas.
+        </p>
       </Panel>
     </ReactFlow>
   );

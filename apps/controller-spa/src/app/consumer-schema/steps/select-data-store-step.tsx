@@ -18,7 +18,7 @@ function PublicSchemaDetailsSlot() {
   if (isLoading) {
     return (
       <Card className="p-4">
-        <h4 className="mb-3 text-sm font-medium">Public Schemas</h4>
+        <h4 className="mb-3 text-sm font-medium">Available Public Schemas</h4>
         <div className="flex justify-center p-4">
           <Loader2 className="size-4 animate-spin" />
         </div>
@@ -29,7 +29,7 @@ function PublicSchemaDetailsSlot() {
   if (!publicSchemas?.length) {
     return (
       <Card className="p-4">
-        <h4 className="mb-3 text-sm font-medium">Public Schemas</h4>
+        <h4 className="mb-3 text-sm font-medium">Available Public Schemas</h4>
         <div className="text-muted-foreground text-sm">No public schemas available</div>
       </Card>
     );
@@ -37,7 +37,7 @@ function PublicSchemaDetailsSlot() {
 
   return (
     <Card className="p-4">
-      <h4 className="mb-3 text-sm font-medium">Public Schemas</h4>
+      <h4 className="mb-3 text-sm font-medium">Available Public Schemas</h4>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         {publicSchemas.map((schema) => (
           <div key={schema.id} className="bg-muted flex items-center gap-2 rounded-md p-2 text-sm">
@@ -81,7 +81,7 @@ export function SelectDataStoreStep({ onSelected }: SelectDataStoreStepProps) {
         value={selectedDataStore ?? undefined}
         dataStores={dataStores.map((ds) => ({
           slug: ds.slug,
-          name: ds.publicationName,
+          name: ds.slug,
           database: ds.connectionConfig.database,
           host: ds.connectionConfig.host,
         }))}

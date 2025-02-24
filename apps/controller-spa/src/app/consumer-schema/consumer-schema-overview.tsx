@@ -19,9 +19,10 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { PlusCircle } from "lucide-react";
+import { ExternalLink, PlusCircle } from "lucide-react";
 import { useSelectedSystemSlug } from "../system/system.state";
-
+import { Badge } from "@/components/ui/badge";
+import { SpanConsumerSchema } from "@/components/architecture-spans";
 export function ConsumerSchemaOverview() {
   const systemSlug = useSelectedSystemSlug();
 
@@ -57,7 +58,10 @@ export function ConsumerSchemaOverview() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="mb-2 text-3xl font-bold tracking-tight">Consumer Schemas</h2>
-            <p className="text-muted-foreground text-lg">Manage your consumer database schemas</p>
+            <p className="text-muted-foreground max-w-prose text-lg">
+              A <SpanConsumerSchema /> defines how a Public Schema is transformed into the internal
+              data model of the consuming team&apos;s Data Store.
+            </p>
           </div>
           <Button asChild>
             <Link to="new" className="gap-2">
@@ -73,18 +77,27 @@ export function ConsumerSchemaOverview() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Data Store</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Destination Data Store</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {consumerSchemas?.map((schema) => (
                 <TableRow key={schema.id}>
                   <TableCell>{schema.name}</TableCell>
-                  <TableCell>{schema.status}</TableCell>
-                  <TableCell>{schema.connection.slug}</TableCell>
                   <TableCell>
-                    <Link to={`/consumer-schemas/${schema.id}`}>More Info</Link>
+                    <Badge className="capitalize" variant="outline">
+                      {schema.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{schema.connection.slug}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" asChild>
+                      <Link to={`/consumer-schemas/${schema.id}`}>
+                        <ExternalLink className="size-4" />
+                        View Details
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

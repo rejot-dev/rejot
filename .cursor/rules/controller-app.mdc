@@ -195,6 +195,7 @@ export type CreatePublicSchema = { /*..*/ };
 - Always implement both route AND api files (`<domain>.api.ts` and `<domain>.routes.ts`)
 - Add `*.api.ts` files to relevant `package.json` exports
 - Import using `@rejot/api-interface-controller/<file>`
+- NEVER import a `*.api.ts` using the local path from any other package. Always use `@rejot/api-interface-controller/*` that you added to package.json
 
 Example API definition:
 ```ts

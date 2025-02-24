@@ -36,7 +36,7 @@ export function SelectDataStoreStep({ systemSlug, onSelected }: SelectDataStoreS
         value={selectedDataStore ?? undefined}
         dataStores={dataStores.map((ds) => ({
           slug: ds.slug,
-          name: ds.publicationName,
+          name: ds.slug,
           database: ds.connectionConfig.database,
           host: ds.connectionConfig.host,
         }))}

@@ -135,10 +135,10 @@ export function ConsumerSchemaNew() {
                 {currentStep === 0 && "Select Data Store"}
                 {currentStep === 1 && "Select Public Schema"}
                 {currentStep === 2 && "Choose Transformation Type"}
-                {currentStep === 3 && "Create Transformation"}
+                {currentStep === 3 && "Create Insertion Transformation"}
               </CardTitle>
               <CardDescription>
-                {currentStep === 0 && "Choose the data store to create a consumer schema from"}
+                {currentStep === 0 && "Choose the source of the data you want to consume"}
                 {currentStep === 1 && "Select the public schema to consume"}
                 {currentStep === 2 && "Select how you want to transform your data"}
                 {currentStep === 3 && "Define your transformation"}

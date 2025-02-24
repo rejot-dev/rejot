@@ -48,14 +48,22 @@ export function CreateTransformationStep({
 
   // Generate initial SQL if not set
   if (!sql) {
-    const columns = latestTransformation.schema.map((col) => col.columnName).join(", ");
-    const values = latestTransformation.schema.map((_, idx) => `$${idx + 1}`).join(", ");
-    const initialSql = `INSERT INTO consumer_table (
-  ${columns}
+    const columns = latestTransformation.schema.map((col) => col.columnName);
+    const columnsJoined = columns.join(", ");
+    const valuesJoined = columns.map((_, idx) => `$${idx + 1}`).join(", ");
+    const initialSql = `INSERT INTO destination_table (
+  ${columnsJoined}
 )
 VALUES (
-  ${values}
-);`;
+  ${valuesJoined}
+)
+ON CONFLICT (${columns[0]}) 
+DO UPDATE SET 
+${columns
+  .slice(1)
+  .map((col) => `  ${col} = EXCLUDED.${col}`)
+  .join(",\n")}
+;`;
     setSql(initialSql);
   }
 
@@ -91,6 +99,12 @@ VALUES (
 
   return (
     <div className="space-y-6">
+      <p className="max-w-prose text-sm">
+        The following SQL will be executed when a change to the data&apos;s source is detected. Note
+        that the table must exist already, we will <span className="font-bold">not</span> create the
+        table for you.
+      </p>
+
       <SqlCodeMirror
         className="h-[300px]"
         value={sql}

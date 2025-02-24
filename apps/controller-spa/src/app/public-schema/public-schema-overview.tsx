@@ -19,9 +19,10 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { PlusCircle } from "lucide-react";
+import { ExternalLink, PlusCircle } from "lucide-react";
 import { useSelectedSystemSlug } from "../system/system.state";
-
+import { Badge } from "@/components/ui/badge";
+import { SpanPublicSchema } from "@/components/architecture-spans";
 export function PublicSchemaOverview() {
   const systemSlug = useSelectedSystemSlug();
 
@@ -57,7 +58,11 @@ export function PublicSchemaOverview() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="mb-2 text-3xl font-bold tracking-tight">Public Schemas</h2>
-            <p className="text-muted-foreground text-lg">Manage your public database schemas</p>
+            <p className="text-muted-foreground max-w-prose text-lg">
+              A <SpanPublicSchema /> is a transformation, managed by the owners of the associated
+              Data Store. They&apos;re used as a layer of indirection to allow other teams to
+              consume data contained in a different Data Store.
+            </p>
           </div>
           <Button asChild>
             <Link to="new" className="gap-2">
@@ -74,17 +79,26 @@ export function PublicSchemaOverview() {
                 <TableHead>Name</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Data Store</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {publicSchemas?.map((schema) => (
                 <TableRow key={schema.name}>
                   <TableCell>{schema.name}</TableCell>
-                  <TableCell>{schema.status}</TableCell>
-                  <TableCell>{schema.connection.slug}</TableCell>
                   <TableCell>
-                    <Link to={`/public-schemas/${schema.id}`}>More Info</Link>
+                    <Badge className="capitalize" variant="outline">
+                      {schema.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{schema.connection.slug}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" asChild>
+                      <Link to={`/public-schemas/${schema.id}`}>
+                        <ExternalLink className="size-4" />
+                        View Details
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

@@ -33,7 +33,7 @@ type SlotInfo = {
 
 type StartResult =
   | {
-      status: "started" | "already-started" | "terminated";
+      status: "started" | "already-started" | "terminated" | "stopped";
       slotInfo: SlotInfo;
     }
   | {
@@ -45,6 +45,7 @@ type StartParams = {
   dataStoreSlug: string;
   config: ConnectionConfig;
   publicationName: string;
+  listenForMs?: number;
 };
 
 export class PostgresChanges {
@@ -69,6 +70,7 @@ export class PostgresChanges {
     dataStoreSlug,
     config,
     publicationName,
+    listenForMs,
   }: StartParams): Promise<StartResult> {
     const connection = await this.#connectionRepository.findByOrganizationCode(
       organizationId,
@@ -177,7 +179,23 @@ export class PostgresChanges {
       }
     });
 
-    const success = await listener.start(publicationName);
+    const listenerPromise = listener.start(publicationName);
+    const timeoutPromise = listenForMs
+      ? new Promise<"timeout">((resolve) => {
+          setTimeout(() => resolve("timeout"), listenForMs);
+        })
+      : undefined;
+
+    const success = await Promise.race([listenerPromise, timeoutPromise]);
+
+    if (typeof success === "string") {
+      await listener.stop();
+
+      return {
+        status: "stopped",
+        slotInfo,
+      };
+    }
 
     if (!success) {
       return {

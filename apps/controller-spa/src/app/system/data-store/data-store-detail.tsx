@@ -13,7 +13,7 @@ import { useDataStore } from "@/data/data-store/data-store.data";
 import { useSelectedSystemSlug } from "@/app/system/system.state";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LockOpen, ExternalLink } from "lucide-react";
+import { LockOpen, ExternalLink, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -24,11 +24,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PostgresPublicationDetails } from "@/app/connection/components/postgres-publication-details";
+import { useStartSyncMutation } from "@/data/sync-service/sync-service.data";
+import { useUser } from "@clerk/clerk-react";
 
 export function DataStoreDetail() {
   const { dataStoreSlug } = useParams();
   const systemSlug = useSelectedSystemSlug();
   const { data: dataStore, isLoading } = useDataStore(systemSlug, dataStoreSlug ?? null);
+  const { user } = useUser();
+  const startSyncMutation = useStartSyncMutation();
+
+  const isRejotUser = user?.emailAddresses[0]?.emailAddress?.endsWith("@rejot.dev") ?? false;
 
   if (!systemSlug || !dataStoreSlug) {
     return null;
@@ -41,6 +47,23 @@ export function DataStoreDetail() {
   if (!dataStore) {
     return <div>Data store not found</div>;
   }
+
+  const handleSync = () => {
+    startSyncMutation.mutate({
+      systemSlug,
+      dataStoreSlug,
+    });
+  };
+
+  const getSyncStatusText = () => {
+    if (startSyncMutation.isError) {
+      return <span className="text-destructive">Sync failed</span>;
+    }
+    if (startSyncMutation.isSuccess) {
+      return <span className="text-muted-foreground">Last sync completed successfully</span>;
+    }
+    return null;
+  };
 
   return (
     <>
@@ -78,6 +101,23 @@ export function DataStoreDetail() {
               <LockOpen className="size-4" />
               Insecure
             </Badge>
+            {isRejotUser && (
+              <>
+                <div className="ml-auto text-sm">{getSyncStatusText()}</div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSync}
+                  disabled={startSyncMutation.isPending}
+                  className="gap-2"
+                >
+                  <RefreshCw
+                    className={`size-4 ${startSyncMutation.isPending ? "animate-spin" : ""}`}
+                  />
+                  {startSyncMutation.isPending ? "Syncing..." : "Sync Now"}
+                </Button>
+              </>
+            )}
           </div>
           <p className="text-muted-foreground text-lg">Data store details and configuration</p>
         </div>

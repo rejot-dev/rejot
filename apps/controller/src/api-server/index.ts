@@ -20,6 +20,7 @@ import type { PublicSchemaRoutes } from "../public-schema/public-schema-routes.t
 import type { ConsumerSchemaRoutes } from "../consumer-schema/consumer-schema-routes.ts";
 import type { DataStoreRoutes } from "../data-store/data-store.routes.ts";
 import type { ConnectionTablesRoutes } from "../connection/connection-tables.routes.ts";
+import type { SyncServiceRoutes } from "../sync/sync-service.routes.ts";
 
 export class ApiServer {
   static inject = [
@@ -35,6 +36,7 @@ export class ApiServer {
     "consumerSchemaRoutes",
     "dataStoreRoutes",
     "connectionTablesRoutes",
+    "syncServiceRoutes",
   ] as const;
 
   #app;
@@ -52,6 +54,7 @@ export class ApiServer {
     consumerSchemaRoutes: ConsumerSchemaRoutes,
     dataStoreRoutes: DataStoreRoutes,
     connectionTablesRoutes: ConnectionTablesRoutes,
+    syncServiceRoutes: SyncServiceRoutes,
   ) {
     this.#app = new OpenAPIHono()
       .doc("api", {
@@ -88,6 +91,7 @@ export class ApiServer {
       .route("/", publicSchemaRoutes.routes)
       .route("/", consumerSchemaRoutes.routes)
       .route("/", dataStoreRoutes.routes)
+      .route("/", syncServiceRoutes.routes)
       .onError((err, c) => {
         if (err instanceof BaseError) {
           // Get first stack trace element if available

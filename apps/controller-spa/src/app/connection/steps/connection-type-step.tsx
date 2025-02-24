@@ -75,7 +75,32 @@ export function ConnectionTypeStep() {
                 <li>
                   ReJot uses the Postgres write ahead log (WAL) to ingest changes from the database.
                 </li>
-                <li>Direct network access to database</li>
+                <li>
+                  In ReJot&apos;s managed cloud service, we require direct network access to the
+                  database.
+                </li>
+                <li>
+                  If you currently do not have a network accessible database, we recommend creating
+                  one with{" "}
+                  <a
+                    className="underline"
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://supabase.com"
+                  >
+                    Supabase
+                  </a>{" "}
+                  or{" "}
+                  <a
+                    className="underline"
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://neon.tech"
+                  >
+                    Neon
+                  </a>
+                  .
+                </li>
               </ul>
             </div>
           </div>
