@@ -5,13 +5,13 @@
 ReJot is a synchronization engine for enterprises that modernizes sharing data between backend services, while avoiding the complexities of Kafka.
 Remote data is queried as if it were local, accelerating development by eliminating lengthy integration processes.
 
-🔗 **Find our hosted solution here:** [app.rejot.dev](https://app.rejot.dev/)
+**Find our hosted solution here:** [app.rejot.dev](https://app.rejot.dev/)
 
-## 🚀 Open Source Release
+## Open Source Release
 
 We are open-sourcing all components of our platform in this repository. Currently, we have released our control plane application, with plans to open-source the synchronization engine in the near future.
 
-## 🏛️ Architecture Overview
+## Architecture Overview
 
 ReJot allows an application to integrate data from other data stores or services through its data catalog.
 
@@ -20,7 +20,7 @@ ReJot allows an application to integrate data from other data stores or services
 
 ![ReJot Architecture Overview](resources/rejot-diagram.svg)
 
-## 🛠️ Project Structure
+## Project Structure
 
 This monorepo will contain all components needed to operate ReJot.
 
@@ -36,6 +36,6 @@ rejot/
 
 We're looking for design partners in need of a better distributed architecture. You can [contact us here!](https://rejot.dev/contact)
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Since the project is evolving rapidly, please **create an [issue](https://github.com/rejot-dev/rejot/issues/new) before submitting a pull request** to discuss your changes.
