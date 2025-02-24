@@ -106,6 +106,10 @@ export async function fetchRoute<TConfig extends SafeRouteConfig>(
 
     const data = await response.json();
 
+    if (__APP_VERSION__ === "dev") {
+      verifySchema(route, statusCode, data);
+    }
+
     return {
       status: "success",
       data,
@@ -118,6 +122,48 @@ export async function fetchRoute<TConfig extends SafeRouteConfig>(
       statusCode: 500,
       code: "UNKNOWN_ERROR",
     };
+  }
+}
+
+function verifySchema<TConfig extends SafeRouteConfig>(
+  route: TConfig,
+  statusCode: number,
+  data: unknown,
+) {
+  const definitionForStatus = route.responses[statusCode as SuccessStatusCode];
+
+  if (!definitionForStatus) {
+    console.error(
+      `[${route.method} ${route.path}] verifySchema: No definition for status ${statusCode}`,
+    );
+    return;
+  }
+
+  const content = definitionForStatus.content;
+
+  if (!content) {
+    console.error(
+      `[${route.method} ${route.path}] verifySchema: No content for status ${statusCode}`,
+    );
+    return;
+  }
+
+  const schema = content["application/json"]?.schema;
+
+  if (!schema) {
+    console.error(
+      `[${route.method} ${route.path}] verifySchema: No schema for status ${statusCode}`,
+    );
+    return;
+  }
+
+  const result = schema.safeParse(data);
+
+  if (!result.success) {
+    console.warn(
+      `[${route.method} ${route.path}] verifySchema: Invalid data for status ${statusCode}`,
+    );
+    console.warn(result.error);
   }
 }
 

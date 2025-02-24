@@ -33,7 +33,7 @@ dbDescribe("SystemService tests", async (ctx) => {
     assertEquals(retrievedSystem.id, system.id);
     assertEquals(retrievedSystem.name, system.name);
     assertExists(retrievedSystem.slug, system.slug);
-    assertEquals(retrievedSystem.organization.code, organization.code);
+    assertEquals(retrievedSystem.organization.id, organization.code);
     assertEquals(retrievedSystem.organization.name, "Test Organization");
   });
 });

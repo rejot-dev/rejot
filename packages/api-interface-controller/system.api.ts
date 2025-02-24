@@ -39,8 +39,8 @@ export const SystemOverviewResponseSchema = z
     name: z.string(),
     slug: z.string(),
     organization: z.object({
+      id: z.string(),
       name: z.string(),
-      code: z.string(),
     }),
     dataStores: z.array(OverviewDataStoreSchema),
     consumerSchemas: z.array(OverviewConsumerSchemaSchema),
@@ -50,9 +50,9 @@ export const SystemOverviewResponseSchema = z
 export const SystemListResponse = z
   .array(
     z.object({
+      id: z.string(),
       name: z.string(),
       slug: z.string(),
-      code: z.string(),
     }),
   )
   .openapi("SystemList");

@@ -128,7 +128,7 @@ export function DataStoreDetail() {
                 <CardTitle>Tables</CardTitle>
               </div>
               <Button variant="outline" size="sm" asChild className="gap-2">
-                <Link to={`/systems/${systemSlug}/data-stores/${dataStoreSlug}`}>
+                <Link to={`/systems/${systemSlug}/data-stores/${dataStore.slug}/tables`}>
                   <ExternalLink className="size-4" />
                   View Diagram
                 </Link>

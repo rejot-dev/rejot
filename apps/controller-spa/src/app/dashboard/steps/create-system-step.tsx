@@ -1,7 +1,8 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, Plus } from "lucide-react";
+import { Link } from "react-router";
 import { SystemList } from "../../system/system-list";
 import { useToast } from "@/hooks/use-toast";
 import { SystemNewForm } from "../../system/system-new.form";
@@ -39,7 +40,7 @@ export function CreateSystemStep({ completed = false, onComplete }: CreateSystem
             <p className="text-muted-foreground max-w-prose">
               Click any of the systems below to manage your connections and data stores.
             </p>
-            <SystemList />
+            <SystemList showNewSystemButton={false} />
           </>
         ) : (
           <></>
@@ -71,6 +72,16 @@ export function CreateSystemStep({ completed = false, onComplete }: CreateSystem
               </Button>
             )}
           />
+        </CardFooter>
+      )}
+      {completed && (
+        <CardFooter className="border-t px-6 py-4">
+          <Button asChild>
+            <Link to="/systems/new" className="gap-2">
+              <Plus className="size-4" />
+              Add System
+            </Link>
+          </Button>
         </CardFooter>
       )}
     </Card>

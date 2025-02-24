@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+
 export type TableColumn = {
   columnName: string;
   dataType: string;
@@ -61,12 +62,20 @@ export function SchemaTableOverview() {
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <NavLink to={`/systems/${systemSlug}`}>{systemSlug}</NavLink>
+                  <NavLink to={`/systems/${systemSlug}/data-stores`}>Data Stores</NavLink>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>{dataStoreSlug}</BreadcrumbPage>
+                <BreadcrumbLink asChild>
+                  <NavLink to={`/systems/${systemSlug}/data-stores/${dataStoreSlug}`}>
+                    {dataStoreSlug}
+                  </NavLink>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Tables</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>

@@ -6,29 +6,38 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import type { SystemOverview } from "@/data/system/system.data";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Database, ExternalLink } from "lucide-react";
+import { useSystemDataStores } from "@/data/data-store/data-store.data";
 
 interface DataStoreListProps {
-  systemOverview: SystemOverview;
+  systemSlug: string;
+  showNewDataStoreButton?: boolean;
 }
 
-export function DataStoreList({ systemOverview }: DataStoreListProps) {
-  const systemSlug = systemOverview.slug;
+export function DataStoreList({ systemSlug, showNewDataStoreButton = true }: DataStoreListProps) {
+  const { data: dataStores, isLoading } = useSystemDataStores(systemSlug);
 
-  if (!systemOverview.dataStores.length) {
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!dataStores?.length) {
     return (
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Your Data Stores</h2>
-        <Button asChild>
-          <Link to={`/systems/${systemSlug}/data-stores/new`} className="gap-2">
-            <PlusCircle className="size-4" />
-            New Data Store
-          </Link>
-        </Button>
+        <div>
+          <h2 className="mb-2 text-3xl font-bold tracking-tight">Data Stores</h2>
+          <p className="text-muted-foreground text-lg">Manage your data store connections</p>
+        </div>
+        {showNewDataStoreButton && (
+          <Button asChild>
+            <Link to={`/systems/${systemSlug}/data-stores/new`} className="gap-2">
+              <PlusCircle className="size-4" />
+              Create Data Store
+            </Link>
+          </Button>
+        )}
       </div>
     );
   }
@@ -36,60 +45,58 @@ export function DataStoreList({ systemOverview }: DataStoreListProps) {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Your Data Stores</h2>
-        <Button asChild>
-          <Link to={`/systems/${systemSlug}/data-stores/new`} className="gap-2">
-            <PlusCircle className="size-4" />
-            New Data Store
-          </Link>
-        </Button>
+        <div>
+          <h2 className="mb-2 text-3xl font-bold tracking-tight">Data Stores</h2>
+          <p className="text-muted-foreground text-lg">Manage your data store connections</p>
+        </div>
+        {showNewDataStoreButton && (
+          <Button asChild>
+            <Link to={`/systems/${systemSlug}/data-stores/new`} className="gap-2">
+              <PlusCircle className="size-4" />
+              Create Data Store
+            </Link>
+          </Button>
+        )}
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-40">Publication</TableHead>
-            <TableHead className="w-40">Connection</TableHead>
-            <TableHead>Tables</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {systemOverview.dataStores.map((dataStore) => (
-            <TableRow key={dataStore.slug}>
-              <TableCell className="font-medium">{dataStore.publicationName}</TableCell>
-              <TableCell>
-                <Link
-                  to={`/connections/${dataStore.slug}`}
-                  className="text-primary hover:underline"
-                >
-                  {dataStore.slug}
-                </Link>
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-wrap gap-1">
-                  {dataStore.tables?.length ? (
-                    dataStore.tables.map((table) => (
-                      <Link
-                        key={table}
-                        to={`/connections/${dataStore.slug}/tables/${table}`}
-                        className="transition-colors"
-                      >
-                        <Badge
-                          variant="outline"
-                          className="hover:bg-primary hover:text-primary-foreground cursor-pointer transition-colors"
-                        >
-                          {table}
-                        </Badge>
-                      </Link>
-                    ))
-                  ) : (
-                    <span className="text-muted-foreground">No tables specified.</span>
-                  )}
-                </div>
-              </TableCell>
+      <div className="mt-6 rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Connection</TableHead>
+              <TableHead>Database</TableHead>
+              <TableHead>Host</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {dataStores.map((dataStore) => (
+              <TableRow key={dataStore.slug}>
+                <TableCell>{dataStore.slug}</TableCell>
+                <TableCell>{dataStore.connectionConfig.database}</TableCell>
+                <TableCell>{dataStore.connectionConfig.host}</TableCell>
+                <TableCell className="capitalize">{dataStore.connectionConfig.type}</TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-end gap-2">
+                    <Button variant="ghost" asChild>
+                      <Link to={`/systems/${systemSlug}/data-stores/${dataStore.slug}`}>
+                        <ExternalLink className="size-4" />
+                        View Details
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" asChild>
+                      <Link to={`/systems/${systemSlug}/data-stores/${dataStore.slug}/tables`}>
+                        <Database className="size-4" />
+                        Show Database Diagram
+                      </Link>
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

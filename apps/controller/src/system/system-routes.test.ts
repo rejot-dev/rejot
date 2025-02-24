@@ -35,7 +35,7 @@ class MockSystemService implements ISystemService {
       name: "Test System",
       slug: systemSlug,
       organization: {
-        code: organizationCode,
+        id: organizationCode,
         name: "Test Organization",
       },
       dataStores: [],

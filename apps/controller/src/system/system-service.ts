@@ -50,7 +50,7 @@ export type SystemOverview = {
   slug: string;
 
   organization: {
-    code: string;
+    id: string;
     name: string;
   };
 
@@ -112,7 +112,7 @@ export class SystemService implements ISystemService {
       name: system.name,
       slug: system.slug,
       organization: {
-        code: system.organization.code,
+        id: system.organization.code,
         name: system.organization.name,
       },
       dataStores: system.dataStores.map((dataStore) => ({

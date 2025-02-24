@@ -69,7 +69,7 @@ export type SystemOverview = {
   }[];
 
   organization: {
-    code: string;
+    id: string;
     name: string;
   };
 

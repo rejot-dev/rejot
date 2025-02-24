@@ -8,6 +8,7 @@ import { CreateDataStoreStep } from "./steps/create-data-store-step";
 import type { Connection } from "@/data/connection/connection.data";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SystemOverview } from "@/data/system/system.data";
+import { useSearchParams } from "react-router";
 
 interface OnboardingStep {
   id: string;
@@ -50,12 +51,18 @@ export function OnboardingSteps({
   isLoading,
   systemOverview,
 }: OnboardingStepsProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedStep, setSelectedStep] = useState<OnboardingStepId | null>(() => {
     if (isLoading) {
       return null;
     }
 
-    // Find the first incomplete step
+    // Try to get step from URL, otherwise find first incomplete step
+    const stepFromUrl = searchParams.get("step") as OnboardingStepId | null;
+    if (stepFromUrl && steps.some((step) => step.id === stepFromUrl)) {
+      return stepFromUrl;
+    }
+
     const nextIncompleteStep = steps.find((step) => !completedSteps.includes(step.id));
     return nextIncompleteStep?.id ?? null;
   });
@@ -63,17 +70,34 @@ export function OnboardingSteps({
   // Update selected step when loading completes
   useEffect(() => {
     if (!isLoading) {
-      const nextIncompleteStep = steps.find((step) => !completedSteps.includes(step.id));
-      setSelectedStep(nextIncompleteStep?.id ?? null);
+      const stepFromUrl = searchParams.get("step") as OnboardingStepId | null;
+      if (stepFromUrl && steps.some((step) => step.id === stepFromUrl)) {
+        setSelectedStep(stepFromUrl);
+      } else {
+        const nextIncompleteStep = steps.find((step) => !completedSteps.includes(step.id));
+        setSelectedStep(nextIncompleteStep?.id ?? null);
+      }
     }
-  }, [isLoading, completedSteps]);
+  }, [isLoading, completedSteps, searchParams]);
+
+  const handleStepSelect = (stepId: OnboardingStepId | null) => {
+    setSelectedStep(stepId);
+    if (stepId) {
+      searchParams.set("step", stepId);
+    } else {
+      searchParams.delete("step");
+    }
+    setSearchParams(searchParams);
+  };
 
   const handleStepComplete = (stepId: OnboardingStepId) => {
     // Move to the next step if available
     const currentIndex = steps.findIndex((step) => step.id === stepId);
     const nextStep = steps[currentIndex + 1];
     if (nextStep) {
-      setSelectedStep(nextStep.id);
+      handleStepSelect(nextStep.id);
+    } else {
+      handleStepSelect(null);
     }
   };
 
@@ -117,7 +141,7 @@ export function OnboardingSteps({
                 !completedSteps.includes(step.id) &&
                 "border-primary/30 bg-primary/5",
             )}
-            onClick={() => setSelectedStep(selectedStep === step.id ? null : step.id)}
+            onClick={() => handleStepSelect(selectedStep === step.id ? null : step.id)}
           >
             <CardHeader>
               <div className="flex items-center justify-between">

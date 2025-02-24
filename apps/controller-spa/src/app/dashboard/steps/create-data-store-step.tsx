@@ -41,12 +41,8 @@ export function CreateDataStoreStep({
           Data stores are the sources and destinations for your synchronized data. Publications will
           be synchronized between data stores.
         </p>
-        {completed && systemOverview && !isLoading && systemOverview.dataStores.length > 0 ? (
-          <>
-            <DataStoreList systemOverview={systemOverview} />
-          </>
-        ) : (
-          <></>
+        {completed && systemOverview && !isLoading && systemOverview.dataStores.length > 0 && (
+          <DataStoreList systemSlug={systemSlug} showNewDataStoreButton={false} />
         )}
       </CardContent>
       <CardFooter className="border-t px-6 py-4">
