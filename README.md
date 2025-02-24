@@ -2,8 +2,11 @@
 
 # ReJot - Synchronization Engine
 
-ReJot is a synchronization engine for enterprises that modernizes sharing data between backend services, while avoiding the complexities of Kafka.
-Remote data is queried as if it were local, accelerating development by eliminating lengthy integration processes.
+ReJot is a database to database synchronization engine and data catalog for enterprises with distributed architectures and teams.
+Our aim is to replace event sourcing and gRPC/REST as a means of sharing data between (micro)services.
+
+Services use their existing database as an interface for remote datasets.
+Data owners can publish datasets in a shared catalog, allowing other teams to consume them. Our sync engine tracks changes to these datasets and propagates updates to consumer database in real time.
 
 **Find our hosted solution here:** [app.rejot.dev](https://app.rejot.dev/)
 
@@ -12,8 +15,6 @@ Remote data is queried as if it were local, accelerating development by eliminat
 We are open-sourcing all components of our platform in this repository. Currently, we have released our control plane application, with plans to open-source the synchronization engine in the near future.
 
 ## Architecture Overview
-
-ReJot allows an application to integrate data from other data stores or services through its data catalog.
 
 - **Control plane**: Services publish their public schema to the data catalog for other services in the organization to consume. Keeps track of clients subscribed to these schemas and orchestrates the sync engine(s) to move data where needed.
 - **Sync Engine**: Consumes the write-ahead-log of a data store and pushes updates to published schemas to clients subscribed to those schemas. This data is made available to services in their local data store.
