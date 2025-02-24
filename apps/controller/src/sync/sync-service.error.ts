@@ -6,7 +6,8 @@ export type SyncServiceErrorContext = {
   clerkUserId?: string;
   systemSlug?: string;
   dataStoreSlug?: string;
-  error?: string;
+  errorMessage?: string;
+  causeErrorMessage?: string;
 };
 
 export const SyncServiceErrors = {
@@ -30,5 +31,13 @@ export const SyncServiceErrors = {
 export class SyncServiceError extends BaseError<SyncServiceErrorCode, SyncServiceErrorContext> {
   constructor(definition: ErrorDefinition<SyncServiceErrorCode, SyncServiceErrorContext>) {
     super(definition);
+  }
+
+  override getPublicContext(): Record<string, unknown> {
+    console.log(this.context);
+    return {
+      errorMessage: this.context?.errorMessage,
+      causeErrorMessage: this.context?.causeErrorMessage,
+    };
   }
 }

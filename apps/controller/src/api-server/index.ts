@@ -115,7 +115,11 @@ export class ApiServer {
           }
 
           return c.json(
-            { message: serviceError.message, code: serviceError.code },
+            {
+              message: serviceError.message,
+              code: serviceError.code,
+              context: serviceError.getPublicContext(),
+            },
             // @ts-expect-error we might give a wrong http status code.
             serviceError.httpStatus,
           );

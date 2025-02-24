@@ -69,7 +69,7 @@ export class SyncServiceRoutes implements ISyncServiceRoutes {
                 dataStoreSlug: dataStore.slug,
                 config: dataStore.connectionConfig,
                 publicationName: dataStore.publicationName,
-                listenForMs: 1000,
+                listenForMs: 10_000,
               });
 
               return {
@@ -82,12 +82,36 @@ export class SyncServiceRoutes implements ISyncServiceRoutes {
                 context: {
                   systemSlug,
                   dataStoreSlug: dataStore.slug,
-                  error: error instanceof Error ? error.message : String(error),
+                  errorMessage: error instanceof Error ? error.message : String(error),
+                  causeErrorMessage:
+                    error instanceof Error
+                      ? error.cause instanceof Error
+                        ? error.cause.message
+                        : String(error.cause)
+                      : undefined,
                 },
               });
             }
           }),
         );
+
+        for (const result of results) {
+          if (result.status === "rejected") {
+            if (result.reason instanceof SyncServiceError) {
+              throw result.reason;
+            } else if (result.reason instanceof Error) {
+              throw new SyncServiceError({
+                ...SyncServiceErrors.START_FAILED,
+                context: { systemSlug, dataStoreSlug, errorMessage: result.reason.message },
+              });
+            } else {
+              throw new SyncServiceError({
+                ...SyncServiceErrors.START_FAILED,
+                context: { systemSlug, dataStoreSlug },
+              });
+            }
+          }
+        }
 
         return c.json({
           status: "success",

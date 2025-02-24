@@ -99,8 +99,8 @@ export class PostgresReplicationListener {
 
     try {
       await this.#logicalReplicationService.subscribe(plugin, REJOT_SLOT_NAME);
-    } catch {
-      return false;
+    } catch (error) {
+      throw new Error("Failed to subscribe to logical replication service", { cause: error });
     }
 
     return true;

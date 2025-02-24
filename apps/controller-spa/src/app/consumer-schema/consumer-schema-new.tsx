@@ -132,13 +132,14 @@ export function ConsumerSchemaNew() {
           <Card className="mx-6 w-full max-w-5xl">
             <CardHeader className="space-y-1">
               <CardTitle>
-                {currentStep === 0 && "Select Data Store"}
-                {currentStep === 1 && "Select Public Schema"}
+                {currentStep === 0 && "Select Sink Data Store"}
+                {currentStep === 1 && "Select Source Public Schema"}
                 {currentStep === 2 && "Choose Transformation Type"}
                 {currentStep === 3 && "Create Insertion Transformation"}
               </CardTitle>
               <CardDescription>
-                {currentStep === 0 && "Choose the source of the data you want to consume"}
+                {currentStep === 0 &&
+                  "Choose the Data Store containing the data you want to consume"}
                 {currentStep === 1 && "Select the public schema to consume"}
                 {currentStep === 2 && "Select how you want to transform your data"}
                 {currentStep === 3 && "Define your transformation"}

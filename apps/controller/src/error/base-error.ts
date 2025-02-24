@@ -52,6 +52,10 @@ export class BaseError<
   convertToServiceError(): BaseError<string, Record<string, unknown>> {
     return this;
   }
+
+  getPublicContext(): Record<string, unknown> {
+    return {};
+  }
 }
 
 /**

@@ -28,7 +28,6 @@ type SlotInfo = {
   restartLsn: string;
   confirmedFlushLsn: string;
   twoPhase: boolean;
-  inactiveSince: string;
 };
 
 type StartResult =
@@ -117,6 +116,7 @@ export class PostgresChanges {
             // TODO: Support delete. (Were filtered before.)
             throw new Error("Delete not supported");
           }
+          console.log("Transformation:", transformation.details.sql);
 
           const keyValues = operation.keyColumns.map((column) => operation.new[column]);
 
@@ -243,8 +243,7 @@ export class PostgresChanges {
         active_pid,
         restart_lsn,
         confirmed_flush_lsn,
-        two_phase,
-        inactive_since
+        two_phase
       FROM
         pg_replication_slots
       WHERE
@@ -268,7 +267,6 @@ export class PostgresChanges {
       restartLsn: row.restart_lsn,
       confirmedFlushLsn: row.confirmed_flush_lsn,
       twoPhase: row.two_phase,
-      inactiveSince: row.inactive_since,
     };
   }
 }
