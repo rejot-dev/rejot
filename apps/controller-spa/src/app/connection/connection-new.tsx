@@ -1,4 +1,4 @@
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router";
 import { useSelectedOrganizationCode } from "@/data/clerk/clerk-meta.data";
 import { Database } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,31 +6,43 @@ import { ConnectionNewHeader } from "./connection-new-header";
 import { ProgressBar } from "@/components/progress-bar";
 import { ConfigurePostgresStep } from "./steps/configure-postgres-step";
 import { ConnectionTypeStep } from "./steps/connection-type-step";
-import { useToast } from "@/hooks/use-toast";
-import { ConnectionSearchParamsSchema, ConnectionStepSchema } from "./connection-step.types";
+import { PostgresReadonlyUserInstruction } from "./steps/postgres-readonly-user-instruction";
+import type { Connection } from "@/data/connection/connection.data";
+import { z } from "zod";
 
 const STEPS = {
   "select-type": 0,
-  "configure-connection": 1,
+  "readonly-user": 1,
+  "configure-connection": 2,
 } as const;
+
+const ExtendedStepSchema = z.enum(["select-type", "readonly-user", "configure-connection"]);
+
+const ExtendedSearchParamsSchema = z.object({
+  step: ExtendedStepSchema,
+  type: z.enum(["postgres"]).optional(),
+});
 
 export function ConnectionNew() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { step } = useParams();
   const [searchParams] = useSearchParams();
   const organizationId = useSelectedOrganizationCode();
-  const { toast } = useToast();
 
   // Validate step parameter
-  const validatedStep = ConnectionStepSchema.safeParse(step);
+  const validatedStep = ExtendedStepSchema.safeParse(step);
   const currentStep = validatedStep.success ? STEPS[validatedStep.data] : 0;
 
   // Validate search parameters based on current step
   const searchParamsObj = Object.fromEntries(searchParams.entries());
-  const validatedParams = ConnectionSearchParamsSchema.safeParse({
+  const validatedParams = ExtendedSearchParamsSchema.safeParse({
     step: validatedStep.success ? validatedStep.data : "select-type",
     ...searchParamsObj,
   });
+
+  // Get the connection from location state
+  const connectionState = location.state as { connection: Connection } | undefined;
 
   if (!organizationId) {
     return null;
@@ -49,6 +61,11 @@ export function ConnectionNew() {
       description: "Choose connection type",
     },
     {
+      label: "Setup Readonly User",
+      children: <Database className="size-5" />,
+      description: "Configure readonly database access",
+    },
+    {
       label: "Configure Connection",
       children: <Database className="size-5" />,
       description: "Configure and verify connection",
@@ -56,6 +73,10 @@ export function ConnectionNew() {
   ];
 
   const handleBack = () => {
+    if (currentStep === STEPS["configure-connection"]) {
+      navigate("/connections/new/readonly-user");
+      return;
+    }
     navigate("/connections/new/select-type");
   };
 
@@ -68,27 +89,38 @@ export function ConnectionNew() {
           <Card className="mx-6 w-full max-w-5xl">
             <CardHeader className="space-y-1">
               <CardTitle>
-                {currentStep === 0 && "Select Connection Type"}
-                {currentStep === 1 && "Configure Connection"}
+                {currentStep === STEPS["select-type"] && "Select Connection Type"}
+                {currentStep === STEPS["readonly-user"] && "Setup Readonly User"}
+                {currentStep === STEPS["configure-connection"] && "Configure Connection"}
               </CardTitle>
               <CardDescription>
-                {currentStep === 0 && "Choose the type of database you want to connect"}
-                {currentStep === 1 &&
+                {currentStep === STEPS["select-type"] &&
+                  "Choose the type of database you want to connect"}
+                {currentStep === STEPS["readonly-user"] &&
+                  "Follow these steps to create a readonly user for your database"}
+                {currentStep === STEPS["configure-connection"] &&
                   "Configure your database connection settings and verify the connection"}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {currentStep === 0 && <ConnectionTypeStep />}
-              {currentStep === 1 &&
+              {currentStep === STEPS["select-type"] && <ConnectionTypeStep />}
+              {currentStep === STEPS["readonly-user"] &&
+                validatedParams.success &&
+                validatedParams.data.step === "readonly-user" && (
+                  <PostgresReadonlyUserInstruction
+                    onNext={() => {
+                      navigate("/connections/new/configure-connection", {
+                        state: { connection: connectionState?.connection },
+                      });
+                    }}
+                  />
+                )}
+              {currentStep === STEPS["configure-connection"] &&
                 validatedParams.success &&
                 validatedParams.data.step === "configure-connection" && (
                   <ConfigurePostgresStep
                     onBack={handleBack}
                     onConfigured={(_config) => {
-                      toast({
-                        title: "Connection created successfully",
-                        description: "Your new database connection has been set up.",
-                      });
                       navigate("/connections");
                     }}
                   />

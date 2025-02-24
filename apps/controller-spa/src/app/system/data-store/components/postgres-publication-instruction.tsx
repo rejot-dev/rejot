@@ -32,10 +32,12 @@ function PublicationStep({ stepNumber, title, description, code }: PublicationSt
 
 interface PostgresPublicationInstructionProps {
   connection: Connection;
+  showRealInstructions?: boolean;
 }
 
 export function PostgresPublicationInstruction({
   connection,
+  showRealInstructions = true,
 }: PostgresPublicationInstructionProps) {
   return (
     <Card>
@@ -56,36 +58,48 @@ export function PostgresPublicationInstruction({
 
         <p className="text-muted-foreground text-sm">
           Before you can synchronize data, you need to create a publication in your PostgreSQL
-          database. Follow these steps:
+          database.
         </p>
 
-        <PublicationStep
-          stepNumber={1}
-          title="Connect to Your Database"
-          description="First, connect to your PostgreSQL database using psql or your preferred database client.
+        {showRealInstructions ? (
+          <>
+            <PublicationStep
+              stepNumber={1}
+              title="Connect to Your Database"
+              description="First, connect to your PostgreSQL database using psql or your preferred database client.
           You can also use your database provider's web interface to connect to your database."
-          code={`psql ${getPostgresConnectionString(connection)}`}
-        />
+              code={`psql ${getPostgresConnectionString(connection)}`}
+            />
 
-        <PublicationStep
-          stepNumber={2}
-          title="Create the Publication"
-          description="Create a publication for the tables you want to synchronize. You can create a publication for all tables or specific ones."
-          code={`-- For all tables:
+            <PublicationStep
+              stepNumber={2}
+              title="Create the Publication"
+              description="Create a publication for the tables you want to synchronize. You can create a publication for all tables or specific ones."
+              code={`-- For all tables:
 CREATE PUBLICATION rejot_publication FOR ALL TABLES;
 
 -- For specific tables:
 CREATE PUBLICATION rejot_publication FOR TABLE table1, table2;`}
-        />
+            />
 
-        <PublicationStep
-          stepNumber={3}
-          title="Verify the Publication"
-          description="Check that your publication was created correctly and includes the expected tables.
+            <PublicationStep
+              stepNumber={3}
+              title="Verify the Publication"
+              description="Check that your publication was created correctly and includes the expected tables.
 The next step in this wizard will show the created publications(s)."
-          code={`-- List all publications:
+              code={`-- List all publications:
 SELECT pubname, puballtables FROM pg_publication;`}
-        />
+            />
+          </>
+        ) : (
+          <PublicationStep
+            stepNumber={0}
+            title="Skip this step"
+            description="You don't currently have access to the sync functionality, 
+            so we're skipping the creation of a publication for now."
+            code={`psql ${getPostgresConnectionString(connection)}`}
+          />
+        )}
       </CardContent>
     </Card>
   );

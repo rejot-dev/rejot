@@ -88,7 +88,7 @@ export function ConnectionTypeStep() {
 
       <div className="flex justify-end">
         {selectedType === "postgres" ? (
-          <Link to="/connections/new/configure-connection?type=postgres">
+          <Link to="/connections/new/readonly-user?type=postgres">
             <Button>Continue</Button>
           </Link>
         ) : (

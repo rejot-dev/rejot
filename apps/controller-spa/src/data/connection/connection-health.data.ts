@@ -86,12 +86,24 @@ export function useConnectionTableSchema(
   });
 }
 
-export function getConnectionPublications(
+export function getConnectionPublicationsReal(
   organizationId: string,
   connectionSlug: string,
 ): Promise<ApiResult<ConnectionPublication[]>> {
   return fetchRoute(connectionPublicationsApi, {
     params: { organizationId, connectionSlug },
+  });
+}
+
+export function getConnectionPublications(
+  _organizationId: string,
+  connectionSlug: string,
+): Promise<ApiResult<ConnectionPublication[]>> {
+  // TODO: Skip this for the limited access preview.s
+  return Promise.resolve({
+    status: "success",
+    statusCode: 200,
+    data: [{ name: connectionSlug, allTables: false, tables: [] }],
   });
 }
 

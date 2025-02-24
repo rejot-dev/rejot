@@ -111,32 +111,44 @@ export class PostgresConnectionManager implements IConnectionManager {
 
       const { rows } = await client.query(
         `
-        SELECT DISTINCT ON (c.column_name)
-          c.column_name,
-          c.data_type,
-          c.is_nullable,
-          c.column_default,
-          c.table_schema,
-          tc.constraint_name,
-          ccu.table_schema AS referenced_table_schema,
-          ccu.table_name AS referenced_table_name,
-          ccu.column_name AS referenced_column_name
-        FROM information_schema.columns c
-        LEFT JOIN information_schema.key_column_usage kcu
-          ON c.table_name = kcu.table_name
-         AND c.table_schema = kcu.table_schema
-         AND c.column_name = kcu.column_name
-        LEFT JOIN information_schema.table_constraints tc
-          ON tc.table_name = kcu.table_name
-         AND tc.table_schema = kcu.table_schema
-         AND tc.constraint_name = kcu.constraint_name
-         AND tc.constraint_type = 'FOREIGN KEY'
-        LEFT JOIN information_schema.constraint_column_usage ccu
-          ON ccu.constraint_name = tc.constraint_name
-         AND ccu.table_schema = tc.table_schema
-        WHERE c.table_name = $1
-          AND c.table_schema = $2
-        ORDER BY c.column_name, tc.constraint_name NULLS LAST
+        SELECT DISTINCT
+          ON (c.oid, a.attname) n.nspname || '.' || c.relname AS table_name,
+          a.attname AS column_name,
+          pg_catalog.format_type (a.atttypid, a.atttypmod) AS data_type,
+          CASE
+            WHEN a.attnotnull THEN 'NO'
+            ELSE 'YES'
+          END AS is_nullable,
+          pg_catalog.pg_get_expr (ad.adbin, ad.adrelid) AS column_default,
+          n.nspname AS table_schema,
+          con.conname AS constraint_name,
+          rn.nspname AS referenced_table_schema,
+          ref.relname AS referenced_table_name,
+          refatt.attname AS referenced_column_name
+        FROM
+          pg_catalog.pg_class c
+          JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+          JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
+          LEFT JOIN pg_catalog.pg_attrdef ad ON ad.adrelid = c.oid
+          AND ad.adnum = a.attnum
+          LEFT JOIN pg_catalog.pg_constraint con ON con.conrelid = c.oid
+          AND a.attnum = ANY (con.conkey)
+          AND con.contype = 'f'
+          LEFT JOIN pg_catalog.pg_class ref ON ref.oid = con.confrelid
+          LEFT JOIN pg_catalog.pg_namespace rn ON rn.oid = ref.relnamespace
+          LEFT JOIN pg_catalog.pg_attribute refatt ON refatt.attrelid = ref.oid
+          AND refatt.attnum = con.confkey[1]
+        WHERE
+          n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast') -- Exclude internal schemas
+          AND c.relkind = 'r' -- Only regular tables
+          AND a.attnum > 0 -- Exclude system columns
+          AND NOT a.attisdropped -- Exclude dropped columns
+          AND c.relname = $1
+          AND n.nspname = $2
+        ORDER BY
+          c.oid,
+          a.attname,
+          con.conname NULLS LAST;
         `,
         [normalizedTable.name, normalizedTable.schema],
       );
@@ -175,34 +187,44 @@ export class PostgresConnectionManager implements IConnectionManager {
     try {
       await client.connect();
 
-      const { rows } = await client.query(`
-        SELECT DISTINCT ON (c.table_name, c.column_name)
-          c.table_schema || '.' || c.table_name AS table_name,
-          c.column_name,
-          c.data_type,
-          c.is_nullable,
-          c.column_default,
-          c.table_schema,
-          tc.constraint_name,
-          ccu.table_schema AS referenced_table_schema,
-          ccu.table_name AS referenced_table_name,
-          ccu.column_name AS referenced_column_name
-        FROM information_schema.columns c
-        LEFT JOIN information_schema.key_column_usage kcu
-          ON c.table_name = kcu.table_name
-         AND c.table_schema = kcu.table_schema
-         AND c.column_name = kcu.column_name
-        LEFT JOIN information_schema.table_constraints tc
-          ON tc.table_name = kcu.table_name
-         AND tc.table_schema = kcu.table_schema
-         AND tc.constraint_name = kcu.constraint_name
-         AND tc.constraint_type = 'FOREIGN KEY'
-        LEFT JOIN information_schema.constraint_column_usage ccu
-          ON ccu.constraint_name = tc.constraint_name
-         AND ccu.table_schema = tc.table_schema
-        WHERE c.table_schema NOT IN ('pg_catalog', 'information_schema')
-        ORDER BY c.table_name, c.column_name, tc.constraint_name NULLS LAST
-        `);
+      const { rows } = await client.query(sql`
+        SELECT DISTINCT
+          ON (c.oid, a.attname) n.nspname || '.' || c.relname AS table_name,
+          a.attname AS column_name,
+          pg_catalog.format_type (a.atttypid, a.atttypmod) AS data_type,
+          CASE
+            WHEN a.attnotnull THEN 'NO'
+            ELSE 'YES'
+          END AS is_nullable,
+          pg_catalog.pg_get_expr (ad.adbin, ad.adrelid) AS column_default,
+          n.nspname AS table_schema,
+          con.conname AS constraint_name,
+          rn.nspname AS referenced_table_schema,
+          ref.relname AS referenced_table_name,
+          refatt.attname AS referenced_column_name
+        FROM
+          pg_catalog.pg_class c
+          JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+          JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
+          LEFT JOIN pg_catalog.pg_attrdef ad ON ad.adrelid = c.oid
+          AND ad.adnum = a.attnum
+          LEFT JOIN pg_catalog.pg_constraint con ON con.conrelid = c.oid
+          AND a.attnum = ANY (con.conkey)
+          AND con.contype = 'f'
+          LEFT JOIN pg_catalog.pg_class ref ON ref.oid = con.confrelid
+          LEFT JOIN pg_catalog.pg_namespace rn ON rn.oid = ref.relnamespace
+          LEFT JOIN pg_catalog.pg_attribute refatt ON refatt.attrelid = ref.oid
+          AND refatt.attnum = con.confkey[1]
+        WHERE
+          n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast') -- Exclude internal schemas
+          AND c.relkind = 'r' -- Only regular tables
+          AND a.attnum > 0 -- Exclude system columns
+          AND NOT a.attisdropped -- Exclude dropped columns
+        ORDER BY
+          c.oid,
+          a.attname,
+          con.conname NULLS LAST;
+      `);
 
       // Group rows by table_name
       const tableSchemas = new Map<string, ConnectionTableColumn[]>();

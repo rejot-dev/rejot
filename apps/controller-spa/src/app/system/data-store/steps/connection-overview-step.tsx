@@ -41,7 +41,7 @@ export function ConnectionOverviewStep({
       )}
       <ConnectionDetailsSlot connection={connection} />
 
-      <PostgresPublicationInstruction connection={connection} />
+      <PostgresPublicationInstruction connection={connection} showRealInstructions={false} />
 
       <div className="flex justify-end gap-4">
         <Button type="button" variant="outline" onClick={onBack}>
