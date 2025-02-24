@@ -30,6 +30,7 @@ import { ConsumerSchemaOverview } from "./app/consumer-schema/consumer-schema-ov
 import { ConsumerSchemaNew } from "./app/consumer-schema/consumer-schema-new.tsx";
 import { ConsumerSchemaDetail } from "./app/consumer-schema/consumer-schema-detail.tsx";
 import { DataStoreDetail } from "./app/system/data-store/data-store-detail.tsx";
+import { SchemaTableOverview } from "./app/system/data-store/table-overview/overview.tsx";
 
 const PUBLISHABLE_KEY: string | undefined = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const queryClient = new QueryClient();
@@ -107,6 +108,7 @@ export function App() {
                         <Route path="new" element={<Navigate to="select-connection" replace />} />
                         <Route path="new/:step" element={<DataStoreNew />} />
                         <Route path=":dataStoreSlug" element={<DataStoreDetail />} />
+                        <Route path=":dataStoreSlug/tables" element={<SchemaTableOverview />} />
                       </Route>
                     </Route>
                   </Route>

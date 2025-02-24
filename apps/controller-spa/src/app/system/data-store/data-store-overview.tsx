@@ -98,7 +98,7 @@ export function DataStoreOverview() {
                         </Link>
                       </Button>
                       <Button variant="ghost" size="icon" asChild>
-                        <Link to={`/systems/${systemSlug}/data-stores/${dataStore.slug}`}>
+                        <Link to={`/systems/${systemSlug}/data-stores/${dataStore.slug}/tables`}>
                           <Database className="size-4" />
                           <span className="sr-only">Show Database Diagram</span>
                         </Link>

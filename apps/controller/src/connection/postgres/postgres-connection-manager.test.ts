@@ -56,6 +56,38 @@ describe("PostgresConnectionManager", () => {
     expect(schema[0]).toHaveProperty("tableSchema");
   });
 
+  test("returns schema with foreign key information for table with foreign keys", async () => {
+    // Using the system table which has a foreign key to organization
+    const schema = await connectionManager.getTableSchema(postgresConfig, "system");
+
+    expect(Array.isArray(schema)).toBe(true);
+    expect(schema.length).toBeGreaterThan(0);
+
+    // Find the organization_id column which should have a foreign key
+    const organizationIdColumn = schema.find((col) => col.columnName === "organization_id");
+    expect(organizationIdColumn).toBeDefined();
+    expect(organizationIdColumn).toHaveProperty("foreignKey");
+    expect(organizationIdColumn?.foreignKey).toEqual({
+      constraintName: "system_organization_id_organization_id_fk",
+      referencedTableSchema: "public",
+      referencedTableName: "organization",
+      referencedColumnName: "id",
+    });
+  });
+
+  test("returns schema without foreign key information for columns without foreign keys", async () => {
+    // Using the organization table which has an id column without foreign key
+    const schema = await connectionManager.getTableSchema(postgresConfig, "organization");
+
+    expect(Array.isArray(schema)).toBe(true);
+    expect(schema.length).toBeGreaterThan(0);
+
+    // Find the id column which should not have a foreign key
+    const idColumn = schema.find((col) => col.columnName === "id");
+    expect(idColumn).toBeDefined();
+    expect(idColumn?.foreignKey).toBeUndefined();
+  });
+
   test("returns empty array for non-existent table", async () => {
     const schema = await connectionManager.getTableSchema(postgresConfig, "non_existent_table");
 
@@ -73,6 +105,26 @@ describe("PostgresConnectionManager", () => {
       expect(publications[0]).toHaveProperty("allTables");
       expect(publications[0]).toHaveProperty("tables");
       expect(Array.isArray(publications[0].tables)).toBe(true);
+    }
+  });
+  test("includes foreign key information where applicable", async () => {
+    const schemas = await connectionManager.getAllTableSchemas(postgresConfig);
+
+    // Find the system table schema (we know it has foreign keys from previous tests)
+    const systemTableSchema = schemas.get("public.system");
+
+    expect(systemTableSchema).toBeDefined();
+    if (systemTableSchema) {
+      const organizationIdColumn = systemTableSchema.find(
+        (col) => col.columnName === "organization_id",
+      );
+      expect(organizationIdColumn).toBeDefined();
+      expect(organizationIdColumn?.foreignKey).toEqual({
+        constraintName: "system_organization_id_organization_id_fk",
+        referencedTableSchema: "public",
+        referencedTableName: "organization",
+        referencedColumnName: "id",
+      });
     }
   });
 

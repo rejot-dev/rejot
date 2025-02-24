@@ -35,6 +35,7 @@ export class SQLColumnParser {
     "ORDER",
     "HAVING",
     "LIMIT",
+    "DISTINCT",
   ]);
   private readonly OPERATORS = new Set([
     "=",
