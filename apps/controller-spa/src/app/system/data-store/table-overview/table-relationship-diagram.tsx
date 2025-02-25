@@ -17,7 +17,6 @@ import Dagre from "@dagrejs/dagre";
 
 type FlowTableNode = Node<{
   name: string;
-  schema: string;
   columns: TableColumn[];
 }>;
 
@@ -34,31 +33,37 @@ function generateNodesAndEdges(data: TableOverview): {
   edges: Edge[];
 } {
   // Transform the table data into nodes and edges for the diagram
-  const nodes = data.map((table, index) => ({
-    id: table.tableName,
-    type: "table" as const,
-    position: { x: (index % 3) * 350, y: Math.floor(index / 3) * 300 },
-    data: {
-      name: table.tableName,
-      schema: table.schema,
-      columns: table.columns,
-    },
-  }));
+  const nodes = data
+    // TODO: provide filter for tables
+    .filter((table) => table.tableName.startsWith("public"))
+    .map((table, index) => ({
+      id: table.tableName,
+      type: "table" as const,
+      position: { x: (index % 3) * 350, y: Math.floor(index / 3) * 300 },
+      data: {
+        name: table.tableName,
+        schema: table.schema,
+        columns: table.columns,
+      },
+    }));
 
   // Create edges for foreign key relationships
-  const edges = data.flatMap((table) =>
-    table.columns
-      .filter((column) => column.foreignKey)
-      .map((column) => ({
-        id: `${table.tableName}.${column.columnName}->${column.foreignKey?.referencedTableName}.${column.foreignKey?.referencedColumnName}`,
-        source: table.tableName,
-        sourceHandle: `${table.tableName}.${column.columnName}`,
-        target: `${column.foreignKey?.referencedTableSchema}.${column.foreignKey?.referencedTableName}`,
-        targetHandle: `${column.foreignKey?.referencedTableSchema}.${column.foreignKey?.referencedTableName}.${column.foreignKey?.referencedColumnName}`,
-        type: "smoothstep",
-        animated: false,
-      })),
-  );
+  const edges = data
+    // TODO: provide filter for tables
+    .filter((table) => table.tableName.startsWith("public"))
+    .flatMap((table) =>
+      table.columns
+        .filter((column) => column.foreignKey)
+        .map((column) => ({
+          id: `${table.tableName}.${column.columnName}->${column.foreignKey?.referencedTableName}.${column.foreignKey?.referencedColumnName}`,
+          source: table.tableName,
+          sourceHandle: `${table.tableName}.${column.columnName}`,
+          target: `${column.foreignKey?.referencedTableSchema}.${column.foreignKey?.referencedTableName}`,
+          targetHandle: `${column.foreignKey?.referencedTableSchema}.${column.foreignKey?.referencedTableName}.${column.foreignKey?.referencedColumnName}`,
+          type: "smoothstep",
+          animated: false,
+        })),
+    );
 
   return { nodes, edges };
 }
