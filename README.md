@@ -14,6 +14,8 @@ Data owners can publish datasets in a shared catalog, allowing other teams to co
 
 We are open-sourcing all components of our platform in this repository. Currently, we have released our control plane application, with plans to open-source the synchronization engine in the near future.
 
+![Screenshot of ReJot's data catalog system overview](resources/rejot-system-overview.webp)
+
 ## How it works
 
 - Data dependencies in ReJot are modeled through contracts known as **"Public Schemas"** and **"Consumer Schemas."**
