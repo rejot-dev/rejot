@@ -67,14 +67,14 @@ export default class SyncCommand extends Command {
     const publicSchemaSQL = await readSQLFile(publicSchemaPath);
     const consumerSchemaSQL = await readSQLFile(consumerSchemaPath);
 
-    const syncService = new PostgresSyncService(
+    const syncService = new PostgresSyncService({
       sourceConn,
       destConn,
       publicSchemaSQL,
       consumerSchemaSQL,
       publicationName,
       createPublication,
-    );
+    });
 
     // Set up signal handlers for graceful shutdown
     process.on("SIGINT", async () => {

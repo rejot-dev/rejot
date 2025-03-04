@@ -7,6 +7,14 @@ import {
 import { DEFAULT_SLOT_NAME } from "../const.ts";
 import { clientToConfig } from "../connections.ts";
 
+type PostgresSyncServiceConfig = {
+  sourceConn: string;
+  destConn: string;
+  publicSchemaSQL: string;
+  consumerSchemaSQL: string;
+  publicationName: string;
+  createPublication: boolean;
+};
 export class PostgresSyncService {
   #sourceClient: Client;
   #destClient: Client;
@@ -15,14 +23,15 @@ export class PostgresSyncService {
   #publicationName: string;
   #createPublication: boolean;
   #replicationListener: PostgresReplicationListener;
-  constructor(
-    sourceConn: string,
-    destConn: string,
-    publicSchemaSQL: string,
-    consumerSchemaSQL: string,
-    publicationName: string,
-    createPublication: boolean,
-  ) {
+
+  constructor({
+    sourceConn,
+    destConn,
+    publicSchemaSQL,
+    consumerSchemaSQL,
+    publicationName,
+    createPublication,
+  }: PostgresSyncServiceConfig) {
     this.#sourceClient = new Client(sourceConn);
     this.#destClient = new Client(destConn);
     this.#publicSchemaSQL = publicSchemaSQL;
