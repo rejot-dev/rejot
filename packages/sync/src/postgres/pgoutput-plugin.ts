@@ -7,7 +7,6 @@ export class RejotPgOutputPlugin extends PgoutputPlugin {
   }
 
   override start(client: Client, slotName: string, lastLsn: string) {
-    console.log("start", slotName, lastLsn);
     return super.start(client, slotName, lastLsn);
   }
 }

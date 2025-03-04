@@ -143,6 +143,14 @@
         "zod": "^3.24.2",
       },
     },
+    "packages/sync": {
+      "name": "@rejot/sync",
+      "version": "0.0.0",
+      "dependencies": {
+        "pg": "^8.13.3",
+        "pg-logical-replication": "^2.0.7",
+      },
+    },
   },
   "packages": {
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
@@ -688,6 +696,8 @@
     "@rejot/basic": ["@rejot/basic@workspace:apps/controller-spa"],
 
     "@rejot/controller": ["@rejot/controller@workspace:apps/controller"],
+
+    "@rejot/sync": ["@rejot/sync@workspace:packages/sync"],
 
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.34.7", "", { "os": "android", "cpu": "arm" }, "sha512-l6CtzHYo8D2TQ3J7qJNpp3Q1Iye56ssIAtqbM2H8axxCEEwvN7o8Ze9PuIapbxFL3OHrJU2JBX6FIIVnP/rYyw=="],
 

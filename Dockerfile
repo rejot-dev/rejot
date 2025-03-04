@@ -15,6 +15,7 @@ COPY apps/controller/package.json apps/controller/package.json
 COPY apps/sync-cli/package.json apps/sync-cli/package.json
 
 COPY packages/api-interface-controller/package.json packages/api-interface-controller/package.json
+COPY packages/sync/package.json packages/sync/package.json
 
 RUN bun install --filter ./apps/${REJOT_APP} --production --no-progress
 

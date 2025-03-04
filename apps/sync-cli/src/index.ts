@@ -1,7 +1,9 @@
 import { Command, Flags } from "@oclif/core";
-import { SyncService } from "./sync.ts";
-import fs from "node:fs/promises";
-import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./const.ts";
+import { PostgresSyncService } from "./postgres/postgres-sync-service.ts";
+
+import { DEFAULT_PUBLICATION_NAME } from "./const.ts";
+import { readSQLFile } from "./connections.ts";
+import { maskConnectionString } from "./connections.ts";
 
 export default class SyncCommand extends Command {
   static override description = "Start a syncing between two datastores";
@@ -36,10 +38,6 @@ export default class SyncCommand extends Command {
       default: true,
       allowNo: true,
     }),
-    "slot-name": Flags.string({
-      description: `Name of the PostgreSQL replication slot to use (default: ${DEFAULT_SLOT_NAME})`,
-      default: DEFAULT_SLOT_NAME,
-    }),
   };
 
   static override args = {};
@@ -56,29 +54,26 @@ export default class SyncCommand extends Command {
       "consumer-schema": consumerSchemaPath,
       "publication-name": publicationName,
       "create-publication": createPublication,
-      "slot-name": slotName,
     } = flags;
 
     this.log(`Starting sync process:`);
-    this.log(`- Source connection: ${this.maskConnectionString(sourceConn)}`);
-    this.log(`- Destination connection: ${this.maskConnectionString(destConn)}`);
+    this.log(`- Source connection: ${maskConnectionString(sourceConn)}`);
+    this.log(`- Destination connection: ${maskConnectionString(destConn)}`);
     this.log(`- Public schema file: ${publicSchemaPath}`);
     this.log(`- Consumer schema file: ${consumerSchemaPath}`);
 
     // Read SQL files
     this.log("Reading SQL transformation files...");
-    const publicSchemaSQL = await this.readSQLFile(publicSchemaPath);
-    const consumerSchemaSQL = await this.readSQLFile(consumerSchemaPath);
+    const publicSchemaSQL = await readSQLFile(publicSchemaPath);
+    const consumerSchemaSQL = await readSQLFile(consumerSchemaPath);
 
-    // Create and start sync service
-    const syncService = new SyncService(
+    const syncService = new PostgresSyncService(
       sourceConn,
       destConn,
       publicSchemaSQL,
       consumerSchemaSQL,
       publicationName,
       createPublication,
-      slotName,
     );
 
     // Set up signal handlers for graceful shutdown
@@ -99,27 +94,5 @@ export default class SyncCommand extends Command {
 
     // Keep the process running
     await new Promise(() => {});
-  }
-
-  private maskConnectionString(connString: string): string {
-    try {
-      const url = new URL(connString);
-      // Mask password if present
-      if (url.password) {
-        url.password = "****";
-      }
-      return url.toString();
-    } catch {
-      // If parsing fails, return a generic masked string
-      return connString.replace(/:[^:@]+@/, ":****@");
-    }
-  }
-
-  private async readSQLFile(path: string): Promise<string> {
-    try {
-      return await fs.readFile(path, "utf-8");
-    } catch (error) {
-      throw new Error(`Failed to read SQL file at ${path}: ${error}`);
-    }
   }
 }
