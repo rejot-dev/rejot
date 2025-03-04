@@ -26,6 +26,7 @@
     "@hono/zod-validator": "^0.4.3",
     "@opentelemetry/api": "^1.9.0",
     "@rejot/api-interface-controller": "*",
+    "@rejot/sync": "*",
     "@sentry/bun": "^9.1.0",
     "@std/assert": "npm:@jsr/std__assert@^1.0.11",
     "@types/bun": "^1.2.2",
@@ -34,7 +35,6 @@
     "hono": "^4.7.2",
     "nanoid": "^5.1.0",
     "pg": "^8.13.3",
-    "pg-logical-replication": "^2.0.7",
     "postgres": "^3.4.5",
     "typed-inject": "^5.0.0",
     "zod": "^3.24.2"

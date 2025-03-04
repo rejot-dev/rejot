@@ -1,0 +1,32 @@
+{
+  "name": "sync-cli",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "bin": {
+    "sync": "./bin/run.js"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.2",
+    "@types/node": "^22.13.4"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@oclif/core": "^4.2.8",
+    "oclif": "^4.17.34",
+    "@rejot/sync": "*"
+  },
+  "oclif": {
+    "bin": "sync",
+    "commands": {
+      "strategy": "single",
+      "target": "./src/index.ts"
+    },
+    "dirname": "sync",
+    "topicSeparator": " "
+  }
+}

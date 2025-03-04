@@ -5,15 +5,23 @@ import type {
   MessageUpdate,
   MessageDelete,
 } from "pg-logical-replication/dist/output-plugins/pgoutput/pgoutput.types";
-import type { ConnectionConfig } from "./postgres-changes.ts";
-import { RejotPgOutputPlugin } from "./rejot-pgoutput-plugin.ts";
-import { assertUnreachable } from "@/lib/assert.ts";
+import { RejotPgOutputPlugin } from "./pgoutput-plugin.ts";
+import { assertUnreachable } from "../asserts.ts";
 
 const REJOT_SLOT_NAME = "rejot_slot";
 
+export type ConnectionConfig = {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+  ssl: boolean;
+};
+
 type OperationType = "insert" | "update" | "delete";
 
-type Operation = {
+export type Operation = {
   type: OperationType;
 } & (
   | {
@@ -53,7 +61,7 @@ type Relation = {
   columns: RelationColumn[];
 };
 
-type TransactionBuffer = {
+export type TransactionBuffer = {
   commitLsn: string | null;
   commitEndLsn: string;
   commitTime: bigint;
