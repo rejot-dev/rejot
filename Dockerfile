@@ -10,6 +10,8 @@ COPY package.json bun.lock .npmrc ./
 # bun.lock is based on all workspace packages, so all must be included for controller build
 COPY apps/controller-spa/package.json apps/controller-spa/package.json
 COPY apps/controller/package.json apps/controller/package.json
+COPY apps/sync-cli/package.json apps/sync-cli/package.json
+
 COPY packages/api-interface-controller/package.json packages/api-interface-controller/package.json
 
 RUN bun install --filter ./apps/controller --production --no-progress
