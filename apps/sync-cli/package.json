@@ -9,8 +9,8 @@
     "sync": "./bin/run.js"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/node": "^18.19.79"
+    "@types/bun": "^1.2.2",
+    "@types/node": "^22.13.4"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -18,8 +18,7 @@
   "dependencies": {
     "@oclif/core": "^4.2.8",
     "oclif": "^4.17.34",
-    "pg": "^8.13.3",
-    "pg-logical-replication": "^2.0.7"
+    "@rejot/sync": "*"
   },
   "oclif": {
     "bin": "sync",

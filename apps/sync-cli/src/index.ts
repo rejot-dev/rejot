@@ -6,7 +6,7 @@ import { readSQLFile } from "./connections.ts";
 import { maskConnectionString } from "./connections.ts";
 
 export default class SyncCommand extends Command {
-  static override description = "Start a syncing between two datastores";
+  static override description = "Start syncing between two datastores";
 
   static override examples = [
     '<%= config.bin %> --source-conn "postgresql://user:pass@host:port/db" --dest-conn "postgresql://user:pass@host:port/db" --public-schema ./public-schema.sql --consumer-schema ./consumer-schema.sql',
@@ -14,11 +14,11 @@ export default class SyncCommand extends Command {
 
   static override flags = {
     "source-conn": Flags.string({
-      description: "PostgreSQL connection string for the source database",
+      description: "Connection string for the source database",
       required: true,
     }),
     "dest-conn": Flags.string({
-      description: "PostgreSQL connection string for the destination database",
+      description: "Connection string for the destination database",
       required: true,
     }),
     "public-schema": Flags.string({
@@ -29,12 +29,12 @@ export default class SyncCommand extends Command {
       description: "Path to the SQL file containing the consumer schema transformation",
       required: true,
     }),
-    "publication-name": Flags.string({
+    "pg-publication-name": Flags.string({
       description: `Name of the PostgreSQL publication to use (default: ${DEFAULT_PUBLICATION_NAME})`,
       default: DEFAULT_PUBLICATION_NAME,
     }),
-    "create-publication": Flags.boolean({
-      description: "Create the publication if it doesn't exist",
+    "pg-create-publication": Flags.boolean({
+      description: "Create the PostgreSQL publication if it doesn't exist",
       default: true,
       allowNo: true,
     }),
@@ -52,8 +52,8 @@ export default class SyncCommand extends Command {
       "dest-conn": destConn,
       "public-schema": publicSchemaPath,
       "consumer-schema": consumerSchemaPath,
-      "publication-name": publicationName,
-      "create-publication": createPublication,
+      "pg-publication-name": publicationName,
+      "pg-create-publication": createPublication,
     } = flags;
 
     this.log(`Starting sync process:`);
