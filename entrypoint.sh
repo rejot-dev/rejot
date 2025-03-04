@@ -16,7 +16,7 @@ case "$REJOT_APP" in
     ;;
     
   "sync-cli")
-    exec bun run apps/sync-cli/bin/run.js
+    exec bun run apps/sync-cli/bin/run.js "$@"
     ;;
     
   *)
