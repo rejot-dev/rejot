@@ -10,13 +10,13 @@ import { assertUnreachable } from "../asserts.ts";
 
 const REJOT_SLOT_NAME = "rejot_slot";
 
-export type ConnectionConfig = {
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-  ssl: boolean;
+type ConnectionConfig = {
+  host?: string;
+  port?: number;
+  user?: string;
+  password?: string;
+  database?: string;
+  ssl?: boolean;
 };
 
 type OperationType = "insert" | "update" | "delete";

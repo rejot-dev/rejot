@@ -17,8 +17,10 @@
   },
   "dependencies": {
     "@oclif/core": "^4.2.8",
-    "oclif": "^4.17.34",
-    "@rejot/sync": "*"
+    "@rejot/sync": "*",
+    "@types/debug": "^4.1.12",
+    "debug": "^4.4.0",
+    "oclif": "^4.17.34"
   },
   "oclif": {
     "bin": "sync",
