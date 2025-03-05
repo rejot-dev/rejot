@@ -2,9 +2,10 @@ import { Command, Flags } from "@oclif/core";
 import { PostgresSyncService } from "./postgres/postgres-sync-service.ts";
 
 import { DEFAULT_PUBLICATION_NAME } from "./const.ts";
-import { readSQLFile } from "./connections.ts";
-import { maskConnectionString } from "./connections.ts";
+import { readSQLFile } from "./transforms.ts";
+import logger, { setLogLevel, type LogLevel } from "./logger.ts";
 
+const log = logger.createLogger("cli");
 export default class SyncCommand extends Command {
   static override description = "Start syncing between two datastores";
 
@@ -14,11 +15,13 @@ export default class SyncCommand extends Command {
 
   static override flags = {
     "source-conn": Flags.string({
-      description: "Connection string for the source database",
+      description:
+        "Connection string for the source database (format: postgresql://user[:pass]@host[:port]/db)",
       required: true,
     }),
     "dest-conn": Flags.string({
-      description: "Connection string for the destination database",
+      description:
+        "Connection string for the destination database (format: postgresql://user[:pass]@host[:port]/db)",
       required: true,
     }),
     "public-schema": Flags.string({
@@ -38,14 +41,17 @@ export default class SyncCommand extends Command {
       default: true,
       allowNo: true,
     }),
+    "log-level": Flags.string({
+      description: "Set the log level (error, warn, info, debug, trace)",
+      options: ["error", "warn", "info", "debug", "trace"],
+      default: "info",
+    }),
   };
 
   static override args = {};
 
   public async run(): Promise<void> {
     const { args: _args, flags } = await this.parse(SyncCommand);
-
-    // Extract connection strings and schema files
 
     const {
       "source-conn": sourceConn,
@@ -54,18 +60,28 @@ export default class SyncCommand extends Command {
       "consumer-schema": consumerSchemaPath,
       "pg-publication-name": publicationName,
       "pg-create-publication": createPublication,
+      "log-level": logLevel,
     } = flags;
 
-    this.log(`Starting sync process:`);
-    this.log(`- Source connection: ${maskConnectionString(sourceConn)}`);
-    this.log(`- Destination connection: ${maskConnectionString(destConn)}`);
-    this.log(`- Public schema file: ${publicSchemaPath}`);
-    this.log(`- Consumer schema file: ${consumerSchemaPath}`);
+    // Casting because oclif checks the values for us
+    setLogLevel(logLevel as LogLevel);
+
+    // Override console methods with custom logger to capture logs from libraries that are not using namespaced loggers
+    const consoleLogger = logger.createLogger("console");
+    console.log = consoleLogger.info.bind(logger);
+    console.info = consoleLogger.info.bind(logger);
+    console.warn = consoleLogger.warn.bind(logger);
+    console.error = consoleLogger.error.bind(logger);
+    console.debug = consoleLogger.debug.bind(logger);
+
+    log.debug(`Public schema file: ${publicSchemaPath}`);
+    log.debug(`Consumer schema file: ${consumerSchemaPath}`);
 
     // Read SQL files
-    this.log("Reading SQL transformation files...");
+    log.debug("Reading SQL transformation files...");
     const publicSchemaSQL = await readSQLFile(publicSchemaPath);
     const consumerSchemaSQL = await readSQLFile(consumerSchemaPath);
+    log.info("SQL transformation files read successfully");
 
     const syncService = new PostgresSyncService({
       sourceConn,
@@ -78,21 +94,23 @@ export default class SyncCommand extends Command {
 
     // Set up signal handlers for graceful shutdown
     process.on("SIGINT", async () => {
-      this.log("\nReceived SIGINT, shutting down...");
+      log.info("\nReceived SIGINT, shutting down...");
       await syncService.stop();
       process.exit(0);
     });
 
     process.on("SIGTERM", async () => {
-      this.log("\nReceived SIGTERM, shutting down...");
+      log.info("\nReceived SIGTERM, shutting down...");
       await syncService.stop();
       process.exit(0);
     });
 
     // Start the sync process
-    await syncService.start();
-
-    // Keep the process running
-    await new Promise(() => {});
+    try {
+      await syncService.start();
+    } catch (error) {
+      log.error("Failed to start sync", error);
+      await syncService.stop();
+    }
   }
 }

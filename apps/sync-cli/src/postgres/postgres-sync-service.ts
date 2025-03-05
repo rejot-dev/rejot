@@ -5,7 +5,9 @@ import {
   type TransactionBuffer,
 } from "@rejot/sync/postgres";
 import { DEFAULT_SLOT_NAME } from "../const.ts";
-import { clientToConfig } from "../connections.ts";
+import logger from "../logger.ts";
+
+const log = logger.createLogger("pg-sync");
 
 type PostgresSyncServiceConfig = {
   sourceConn: string;
@@ -38,46 +40,47 @@ export class PostgresSyncService {
     this.#consumerSchemaSQL = consumerSchemaSQL;
     this.#publicationName = publicationName;
     this.#createPublication = createPublication;
+
     this.#replicationListener = new PostgresReplicationListener(
-      clientToConfig(this.#sourceClient),
+      {
+        host: this.#sourceClient.host,
+        port: this.#sourceClient.port,
+        user: this.#sourceClient.user,
+        password: this.#sourceClient.password,
+        database: this.#sourceClient.database,
+        ssl: this.#sourceClient.ssl,
+      },
       async (buffer) => this.#processTransactionBuffer(buffer),
     );
   }
 
   async start(): Promise<void> {
-    console.log("Initializing sync process...");
+    log.info("Initializing sync process...");
 
-    try {
-      // Connect to both databases
-      await this.#sourceClient.connect();
-      console.log("Connected to source database");
+    // Connect to both databases
+    await this.#sourceClient.connect();
+    log.info("Connected to source database");
 
-      await this.#destClient.connect();
-      console.log("Connected to destination database");
+    await this.#destClient.connect();
+    log.info("Connected to destination database");
 
-      // Check if logical replication is enabled on source
-      const hasLogicalReplication = await this.#checkLogicalReplication();
-      if (!hasLogicalReplication) {
-        throw new Error(
-          "Logical replication is not enabled on the source database. Please set wal_level=logical",
-        );
-      }
-
-      // Create replication slot if it doesn't exist
-      await this.#ensureReplicationSlot();
-
-      // Create publication if it doesn't exist
-      await this.#ensurePublication();
-
-      // Start listening for changes
-      await this.#startReplication();
-
-      console.log("Sync process started successfully");
-    } catch (error) {
-      console.error("Failed to start sync process:", error);
-      await this.stop();
-      throw error;
+    // Check if logical replication is enabled on source
+    const hasLogicalReplication = await this.#checkLogicalReplication();
+    if (!hasLogicalReplication) {
+      throw new Error(
+        "Logical replication is not enabled on the source database. Please set wal_level=logical",
+      );
     }
+
+    // Create replication slot if it doesn't exist
+    await this.#ensureReplicationSlot();
+
+    // Create publication if it doesn't exist
+    await this.#ensurePublication();
+
+    // Start listening for changes
+    log.info(`Starting to listen for changes on slot '${DEFAULT_SLOT_NAME}'`);
+    await this.#replicationListener.start(this.#publicationName);
   }
 
   async stop(): Promise<void> {
@@ -85,7 +88,7 @@ export class PostgresSyncService {
       try {
         await this.#replicationListener.stop();
       } catch (error) {
-        console.error("Error stopping replication listener:", error);
+        log.error("Error stopping replication listener:", error);
       }
     }
 
@@ -94,7 +97,7 @@ export class PostgresSyncService {
         await this.#sourceClient.end();
       }
     } catch (error) {
-      console.error("Error disconnecting from source database:", error);
+      log.error("Error disconnecting from source database:", error);
     }
 
     try {
@@ -102,10 +105,8 @@ export class PostgresSyncService {
         await this.#destClient.end();
       }
     } catch (error) {
-      console.error("Error disconnecting from destination database:", error);
+      log.error("Error disconnecting from destination database:", error);
     }
-
-    console.log("Sync process stopped");
   }
 
   async #checkLogicalReplication(): Promise<boolean> {
@@ -126,7 +127,7 @@ export class PostgresSyncService {
     );
 
     if (slotResult.rows.length === 0) {
-      console.debug(`Creating replication slot '${DEFAULT_SLOT_NAME}'...`);
+      log.debug(`Creating replication slot '${DEFAULT_SLOT_NAME}'...`);
       try {
         await this.#sourceClient.query(
           `
@@ -134,12 +135,12 @@ export class PostgresSyncService {
         `,
           [DEFAULT_SLOT_NAME],
         );
-        console.debug(`Replication slot '${DEFAULT_SLOT_NAME}' created successfully`);
+        log.debug(`Replication slot '${DEFAULT_SLOT_NAME}' created successfully`);
       } catch (error) {
         throw new Error(`Failed to create replication slot: ${error}`);
       }
     } else {
-      console.debug(`Replication slot '${DEFAULT_SLOT_NAME}' already exists`);
+      log.debug(`Replication slot '${DEFAULT_SLOT_NAME}' already exists`);
     }
   }
 
@@ -159,32 +160,22 @@ export class PostgresSyncService {
         );
       }
 
-      console.debug(`Creating publication '${this.#publicationName}'...`);
+      log.debug(`Creating publication '${this.#publicationName}'...`);
       try {
         await this.#sourceClient.query(`
           CREATE PUBLICATION ${this.#publicationName} FOR ALL TABLES
         `);
-        console.debug(`Publication '${this.#publicationName}' created successfully`);
+        log.debug(`Publication '${this.#publicationName}' created successfully`);
       } catch (error) {
         throw new Error(`Failed to create publication: ${error}`);
       }
     } else {
-      console.debug(`Publication '${this.#publicationName}' already exists`);
-    }
-  }
-
-  async #startReplication(): Promise<void> {
-    // Start listening
-    try {
-      await this.#replicationListener.start(this.#publicationName);
-      console.log(`Started listening for changes on slot '${DEFAULT_SLOT_NAME}'`);
-    } catch (error) {
-      throw new Error(`Failed to start replication: ${error}`);
+      log.debug(`Publication '${this.#publicationName}' already exists`);
     }
   }
 
   async #processTransactionBuffer(buffer: TransactionBuffer): Promise<boolean> {
-    console.log(`Processing transaction ${buffer.xid} with ${buffer.operations.length} operations`);
+    log.info(`Processing transaction ${buffer.xid} with ${buffer.operations.length} operations`);
 
     try {
       // Process each operation in the transaction
@@ -204,7 +195,7 @@ export class PostgresSyncService {
 
       return true;
     } catch (error) {
-      console.error("Error processing transaction buffer:", error);
+      log.error("Error processing transaction buffer:", error);
       return false;
     }
   }
@@ -225,7 +216,7 @@ export class PostgresSyncService {
       const result = await this.#sourceClient.query(this.#publicSchemaSQL, keyValues);
 
       if (result.rows.length !== 1) {
-        console.warn(`Expected 1 row from public schema transformation, got ${result.rows.length}`);
+        log.warn(`Expected 1 row from public schema transformation, got ${result.rows.length}`);
         return null;
       }
 
@@ -241,7 +232,7 @@ export class PostgresSyncService {
         ...result.rows[0],
       };
     } catch (error) {
-      console.error("Error applying public schema transformation:", error);
+      log.error("Error applying public schema transformation:", error);
       return null;
     }
   }
@@ -250,9 +241,9 @@ export class PostgresSyncService {
     try {
       // Execute the consumer schema transformation
       await this.#destClient.query(this.#consumerSchemaSQL, Object.values(data));
-      console.log("Successfully applied consumer schema transformation");
+      log.info("Successfully applied consumer schema transformation");
     } catch (error) {
-      console.error("Error applying consumer schema transformation:", error);
+      log.error("Error applying consumer schema transformation:", error);
     }
   }
 }
