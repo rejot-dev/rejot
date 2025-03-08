@@ -1,38 +1,47 @@
 import { Command, Flags } from "@oclif/core";
-import { PostgresSyncService } from "./postgres/postgres-sync-service.ts";
+import fs from "node:fs/promises";
 
-import { DEFAULT_PUBLICATION_NAME } from "./const.ts";
-import { readSQLFile } from "./transforms.ts";
+import {
+  DEFAULT_PUBLICATION_NAME,
+  SUPPORTED_SINK_SCHEMES,
+  SUPPORTED_SOURCE_SCHEMES,
+} from "./const.ts";
 import logger, { setLogLevel, type LogLevel } from "./logger.ts";
+import { createSourceAndSink, parseConnectionString } from "./factory.ts";
+import { SyncController } from "./sync-controller.ts";
 
 const log = logger.createLogger("cli");
 export default class SyncCommand extends Command {
   static override description = `Setup point-to-point sync between two data stores.\n
     Opens a replication slot in the source data store, transforms writes to the store using the public schema.
-    These writes are then replicated to the destination data store and upserted using the consumer schema.`;
+    These writes are then replicated to the sink data store and upserted using the consumer schema.`;
 
   static override examples = [
-    '<%= config.bin %> --source-conn "postgresql://user:pass@host:port/db" --dest-conn "postgresql://user:pass@host:port/db" --public-schema ./public-schema.sql --consumer-schema ./consumer-schema.sql',
+    '<%= config.bin %> --source "postgresql://user:pass@host:port/db" --sink "postgresql://user:pass@host:port/db" --public-schema ./public-schema.sql --consumer-schema ./consumer-schema.sql',
+    '<%= config.bin %> --source "postgresql://user:pass@host:port/db" --sink "stdout://" --public-schema ./public-schema.sql',
+    '<%= config.bin %> --source "postgresql://user:pass@host:port/db" --sink "file:///path/to/output.json" --public-schema ./public-schema.sql',
   ];
 
   static override flags = {
-    "source-conn": Flags.string({
+    source: Flags.string({
       description:
         "Connection string for the source database (format: postgresql://user[:pass]@host[:port]/db)",
       required: true,
     }),
-    "dest-conn": Flags.string({
+    sink: Flags.string({
       description:
-        "Connection string for the destination database (format: postgresql://user[:pass]@host[:port]/db)",
+        "Connection string for the sink (formats: postgresql://user[:pass]@host[:port]/db, stdout://, file:///path/to/file)",
       required: true,
+      default: "stdout://",
     }),
     "public-schema": Flags.string({
       description: "Path to the SQL file containing the public schema transformation",
       required: true,
     }),
     "consumer-schema": Flags.string({
-      description: "Path to the SQL file containing the consumer schema transformation",
-      required: true,
+      description:
+        "Path to the SQL file containing the consumer schema transformation (required for postgresql sink)",
+      required: false,
     }),
     "pg-publication-name": Flags.string({
       description: `Name of the PostgreSQL publication to use (default: ${DEFAULT_PUBLICATION_NAME})`,
@@ -52,18 +61,54 @@ export default class SyncCommand extends Command {
 
   static override args = {};
 
+  /**
+   * Validates the input flags and connection strings
+   * @param flags Command flags
+   * @throws Error if validation fails
+   */
+  private validateInputs(flags: {
+    source: string;
+    sink: string;
+    "consumer-schema"?: string;
+  }): void {
+    const { source: sourceConn, sink: sinkConn, "consumer-schema": consumerSchemaPath } = flags;
+
+    const sourceConnection = parseConnectionString(sourceConn);
+    if (!SUPPORTED_SOURCE_SCHEMES.includes(sourceConnection.scheme)) {
+      this.error(
+        `Invalid source connection scheme: ${sourceConnection.scheme}, supported schemes: ${SUPPORTED_SOURCE_SCHEMES.join(
+          ", ",
+        )}`,
+      );
+    }
+
+    const sinkConnection = parseConnectionString(sinkConn);
+    if (!SUPPORTED_SINK_SCHEMES.includes(sinkConnection.scheme)) {
+      this.error(
+        `Invalid sink connection scheme: ${sinkConnection.scheme}, supported schemes: ${SUPPORTED_SINK_SCHEMES.join(
+          ", ",
+        )}`,
+      );
+    }
+    if (sinkConnection.scheme === "postgresql" && !consumerSchemaPath) {
+      this.error("Consumer schema is required for PostgreSQL sink");
+    }
+  }
+
   public async run(): Promise<void> {
     const { args: _args, flags } = await this.parse(SyncCommand);
 
     const {
-      "source-conn": sourceConn,
-      "dest-conn": destConn,
+      source: sourceConn,
+      sink: sinkConn,
       "public-schema": publicSchemaPath,
       "consumer-schema": consumerSchemaPath,
       "pg-publication-name": publicationName,
       "pg-create-publication": createPublication,
       "log-level": logLevel,
     } = flags;
+
+    this.validateInputs(flags);
 
     // Casting because oclif checks the values for us
     setLogLevel(logLevel as LogLevel);
@@ -77,42 +122,59 @@ export default class SyncCommand extends Command {
     console.debug = consoleLogger.debug.bind(logger);
 
     log.debug(`Public schema file: ${publicSchemaPath}`);
-    log.debug(`Consumer schema file: ${consumerSchemaPath}`);
+    if (consumerSchemaPath) {
+      log.debug(`Consumer schema file: ${consumerSchemaPath}`);
+    }
 
     // Read SQL files
     log.debug("Reading SQL transformation files...");
-    const publicSchemaSQL = await readSQLFile(publicSchemaPath);
-    const consumerSchemaSQL = await readSQLFile(consumerSchemaPath);
-    log.info("SQL transformation files read successfully");
+    const publicSchemaSQL = await fs.readFile(publicSchemaPath, "utf-8");
 
-    const syncService = new PostgresSyncService({
+    // Read consumer schema SQL if provided
+    let consumerSchemaSQL: string | undefined = undefined;
+    if (consumerSchemaPath) {
+      consumerSchemaSQL = await fs.readFile(consumerSchemaPath, "utf-8");
+    }
+
+    log.info("SQL transformation file(s) read successfully");
+
+    const { source, sink } = createSourceAndSink(
       sourceConn,
-      destConn,
+      sinkConn,
       publicSchemaSQL,
       consumerSchemaSQL,
-      publicationName,
-      createPublication,
+      {
+        publicationName,
+        createPublication,
+      },
+    );
+
+    // Create sync controller
+    const syncController = new SyncController({
+      source,
+      sink,
     });
 
     // Set up signal handlers for graceful shutdown
     process.on("SIGINT", async () => {
       log.info("\nReceived SIGINT, shutting down...");
-      await syncService.stop();
+      await syncController.stop();
       process.exit(0);
     });
 
     process.on("SIGTERM", async () => {
       log.info("\nReceived SIGTERM, shutting down...");
-      await syncService.stop();
+      await syncController.stop();
       process.exit(0);
     });
 
     // Start the sync process
     try {
-      await syncService.start();
+      await syncController.start();
     } catch (error) {
       log.error("Failed to start sync", error);
-      await syncService.stop();
+      await syncController.stop();
+      this.exit(1);
     }
   }
 }

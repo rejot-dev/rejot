@@ -179,7 +179,7 @@ export class PostgresChanges {
       }
     });
 
-    const listenerPromise = listener.start(publicationName);
+    const listenerPromise = listener.start(publicationName, REJOT_SLOT_NAME);
     const timeoutPromise = listenForMs
       ? new Promise<"timeout">((resolve) => {
           setTimeout(() => resolve("timeout"), listenForMs);
