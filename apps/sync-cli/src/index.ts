@@ -7,7 +7,9 @@ import logger, { setLogLevel, type LogLevel } from "./logger.ts";
 
 const log = logger.createLogger("cli");
 export default class SyncCommand extends Command {
-  static override description = "Start syncing between two datastores";
+  static override description = `Setup point-to-point sync between two data stores.\n
+    Opens a replication slot in the source data store, transforms writes to the store using the public schema.
+    These writes are then replicated to the destination data store and upserted using the consumer schema.`;
 
   static override examples = [
     '<%= config.bin %> --source-conn "postgresql://user:pass@host:port/db" --dest-conn "postgresql://user:pass@host:port/db" --public-schema ./public-schema.sql --consumer-schema ./consumer-schema.sql',
