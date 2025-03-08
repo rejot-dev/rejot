@@ -8,8 +8,6 @@ import type {
 import { RejotPgOutputPlugin } from "./pgoutput-plugin.ts";
 import { assertUnreachable } from "../asserts.ts";
 
-const REJOT_SLOT_NAME = "rejot_slot";
-
 type ConnectionConfig = {
   host?: string;
   port?: number;
@@ -99,14 +97,14 @@ export class PostgresReplicationListener {
     };
   }
 
-  async start(publicationName: string): Promise<boolean> {
+  async start(publicationName: string, slotName: string): Promise<boolean> {
     const plugin = new RejotPgOutputPlugin({
       protoVersion: 2,
       publicationNames: [publicationName],
     });
 
     try {
-      await this.#logicalReplicationService.subscribe(plugin, REJOT_SLOT_NAME);
+      await this.#logicalReplicationService.subscribe(plugin, slotName);
     } catch (error) {
       throw new Error("Failed to subscribe to logical replication service", { cause: error });
     }

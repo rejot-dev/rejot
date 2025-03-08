@@ -196,8 +196,14 @@ jobs:
             exit 1
           fi
 
-      - name: Run database tests
+      - name: Run controller database tests
         working-directory: apps/controller
         env:
           REJOT_CONTROLLER_CONFIG_PATH: ./_ci/ci-test-config.json
+        run: bun test
+
+      - name: Run sync-cli database tests
+        working-directory: apps/sync-cli
+        env:
+          REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
         run: bun test
