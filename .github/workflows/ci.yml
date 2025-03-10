@@ -163,6 +163,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: "Set wal_level=logical"
+        run: |
+          docker exec ${{ job.services.postgres.id }} sh -c 'echo "wal_level=logical" >> /var/lib/postgresql/data/postgresql.conf'
+          docker restart ${{ job.services.postgres.id }}
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
