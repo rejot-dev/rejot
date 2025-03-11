@@ -1,12 +1,12 @@
 {
-  "name": "sync-cli",
-  "module": "index.ts",
+  "name": "@rejot/cli",
   "type": "module",
   "scripts": {
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "bun test"
   },
   "bin": {
-    "sync": "./bin/run.js"
+    "rejot-cli": "./bin/run.js"
   },
   "devDependencies": {
     "@types/bun": "^1.2.2",
@@ -23,10 +23,11 @@
     "oclif": "^4.17.34"
   },
   "oclif": {
-    "bin": "sync",
+    "bin": "rejot-cli",
     "commands": {
-      "strategy": "single",
-      "target": "./src/index.ts"
+      "strategy": "explicit",
+      "target": "./src/index.ts",
+      "identifier": "commands"
     },
     "dirname": "sync",
     "topicSeparator": " "

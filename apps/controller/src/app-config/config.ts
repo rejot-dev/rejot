@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// Using node compat so drizzle works properly
 import { readFileSync } from "node:fs";
 import { env } from "node:process";
 
