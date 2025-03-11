@@ -12,5 +12,5 @@ pre-commit:
       run: cd apps/controller && bun check
     - name: type-check controller-spa
       run: cd apps/controller-spa && bun check
-    - name: type-check sync-cli
-      run: cd apps/sync-cli && bun check
+    - name: type-check rejot-cli
+      run: cd apps/rejot-cli && bun check

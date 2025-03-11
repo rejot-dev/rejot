@@ -5,13 +5,15 @@ import {
   DEFAULT_PUBLICATION_NAME,
   SUPPORTED_SINK_SCHEMES,
   SUPPORTED_SOURCE_SCHEMES,
-} from "./const.ts";
-import logger, { setLogLevel, type LogLevel } from "./logger.ts";
-import { createSourceAndSink, parseConnectionString } from "./factory.ts";
-import { SyncController } from "./sync-controller.ts";
+} from "../const.ts";
+import logger, { setLogLevel, type LogLevel } from "../logger.ts";
+import { createSourceAndSink, parseConnectionString } from "../factory.ts";
+import { SyncController } from "../sync-controller.ts";
 
 const log = logger.createLogger("cli");
 export default class SyncCommand extends Command {
+  static override id = "sync";
+
   static override description = `Setup point-to-point sync between two data stores.\n
     Opens a replication slot in the source data store, transforms writes to the store using the public schema.
     These writes are then replicated to the sink data store and upserted using the consumer schema.`;
