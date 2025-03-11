@@ -207,7 +207,7 @@ jobs:
           REJOT_CONTROLLER_CONFIG_PATH: ./_ci/ci-test-config.json
         run: bun test
 
-      - name: Run sync-cli database tests
+      - name: Run rejot-cli database tests
         working-directory: apps/rejot-cli
         env:
           REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test

@@ -73,9 +73,9 @@ export default class SyncCommand extends Command {
     sink: string;
     "consumer-schema"?: string;
   }): void {
-    const { source: sourceConn, sink: sinkConn, "consumer-schema": consumerSchemaPath } = flags;
+    const { source, sink, "consumer-schema": consumerSchemaPath } = flags;
 
-    const sourceConnection = parseConnectionString(sourceConn);
+    const sourceConnection = parseConnectionString(source);
     if (!SUPPORTED_SOURCE_SCHEMES.includes(sourceConnection.scheme)) {
       this.error(
         `Invalid source connection scheme: ${sourceConnection.scheme}, supported schemes: ${SUPPORTED_SOURCE_SCHEMES.join(
@@ -84,7 +84,7 @@ export default class SyncCommand extends Command {
       );
     }
 
-    const sinkConnection = parseConnectionString(sinkConn);
+    const sinkConnection = parseConnectionString(sink);
     if (!SUPPORTED_SINK_SCHEMES.includes(sinkConnection.scheme)) {
       this.error(
         `Invalid sink connection scheme: ${sinkConnection.scheme}, supported schemes: ${SUPPORTED_SINK_SCHEMES.join(

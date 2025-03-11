@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   REPOSITORY: ${{ github.repository_owner }}
-  IMAGE_NAME: sync
+  IMAGE_NAME: rejot-cli
 
 jobs:
   build-and-push-images:
@@ -33,8 +33,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build and push sync-cli image
-      - name: Extract metadata for sync image
+      # Build and push rejot-cli image
+      - name: Extract metadata for rejot-cli image
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -45,18 +45,18 @@ jobs:
             type=ref,event=tag
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
 
-      - name: Build and push sync image
+      - name: Build and push rejot-cli image
         id: push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           build-args: |
-            REJOT_APP=sync-cli
+            REJOT_APP=rejot-cli
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Generate artifact attestation for sync
+      - name: Generate artifact attestation for rejot-cli
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}

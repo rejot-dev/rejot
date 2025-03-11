@@ -15,13 +15,13 @@ case "$REJOT_APP" in
     exec bun run apps/controller/src/index.ts
     ;;
     
-  "sync-cli")
-    exec bun run apps/sync-cli/bin/run.js "$@"
+  "rejot-cli")
+    exec bun run apps/rejot-cli/bin/run.js "$@"
     ;;
     
   *)
     echo "Unknown app type: $REJOT_APP"
-    echo "Supported values: controller, sync-cli"
+    echo "Supported values: controller, rejot-cli"
     exit 1
     ;;
 esac
