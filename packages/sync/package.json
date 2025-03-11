@@ -10,6 +10,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "mysql2": "file:../../../node-mysql2",
     "pg": "^8.13.3",
     "pg-logical-replication": "^2.0.7"
   }
