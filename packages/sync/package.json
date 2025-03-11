@@ -10,6 +10,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "mysql2": "^3.13.0",
     "pg": "^8.13.3",
     "pg-logical-replication": "^2.0.7"
   }
