@@ -68,6 +68,13 @@ export interface IDataSource {
    * @param onData Callback function to handle data changes
    */
   subscribe(onData: (buffer: TransactionBuffer) => Promise<boolean>): Promise<void>;
+
+  /**
+   * Apply a transformations to the data
+   * @param operation The operation to transform
+   * @returns The transformed data
+   */
+  applyTransformations(operation: Operation): Promise<Record<string, unknown> | null>;
 }
 
 /**

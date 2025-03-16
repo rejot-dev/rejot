@@ -174,9 +174,7 @@ export class PostgresSource implements IDataSource {
    * @param operation The operation to transform
    * @returns The transformed data or null if transformation failed
    */
-  async applyPublicSchemaTransformation(
-    operation: Operation,
-  ): Promise<Record<string, unknown> | null> {
+  async applyTransformations(operation: Operation): Promise<Record<string, unknown> | null> {
     if (!this.#publicSchemaSql) {
       log.warn("No public schema SQL provided for transformation");
       return null;

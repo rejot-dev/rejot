@@ -1,6 +1,5 @@
 import type { IDataSource, IDataSink, TransactionBuffer } from "./source-sink-protocol.ts";
 import logger from "./logger.ts";
-import { PostgresSource } from "./sources/postgres-source.ts";
 
 const log = logger.createLogger("sync-controller");
 
@@ -48,25 +47,15 @@ export class SyncController {
     try {
       // Process each operation in the transaction
       for (const operation of buffer.operations) {
-        if (operation.type === "delete") {
-          // Skip delete operations for now
-          continue;
-        }
-
-        // Apply public schema transformation
-        let transformedData: Record<string, unknown> | null = null;
-
-        if (this.#source instanceof PostgresSource) {
-          transformedData = await this.#source.applyPublicSchemaTransformation(operation);
-        } else {
-          log.warn("Unsupported source type for transformation");
-          continue;
-        }
-
-        if (!transformedData) continue;
+        // Apply transformations
+        const transformedData = await this.#source.applyTransformations(operation);
 
         // Write to sink
-        await this.#sink.writeData(transformedData, operation);
+        if (transformedData) {
+          await this.#sink.writeData(transformedData, operation);
+        } else {
+          log.warn("No transformed data for operation", operation);
+        }
       }
 
       return true;
