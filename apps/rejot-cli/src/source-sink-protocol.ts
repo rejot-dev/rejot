@@ -1,52 +1,52 @@
 type OperationType = "insert" | "update" | "delete";
 
-export type Operation = {
+export type TableOperation = {
   type: OperationType;
 } & (
   | {
       type: "insert";
+      keyColumns: string[];
       table: string;
       tableSchema: string;
+      new: Record<string, unknown>;
+    }
+  | {
+      type: "update";
+      keyColumns: string[];
+      table: string;
+      tableSchema: string;
+      new: Record<string, unknown>;
+    }
+  | {
+      type: "delete";
+      keyColumns: string[];
+      table: string;
+      tableSchema: string;
+    }
+);
+
+export type PublicSchemaOperation = {
+  type: OperationType;
+} & (
+  | {
+      type: "insert";
       keyColumns: string[];
       new: Record<string, unknown>;
     }
   | {
       type: "update";
-      table: string;
-      tableSchema: string;
       keyColumns: string[];
       new: Record<string, unknown>;
     }
   | {
       type: "delete";
-      table: string;
       keyColumns: string[];
-      tableSchema: string;
     }
 );
 
-type RelationColumn = {
-  flags: number;
-  name: string;
-  typeOid: number;
-  typeMod: number;
-};
-
-type Relation = {
-  schema: string;
-  name: string;
-  keyColumns: string[];
-  relationOid: number;
-  columns: RelationColumn[];
-};
-
-export type TransactionBuffer = {
-  commitLsn: string | null;
-  commitEndLsn: string;
-  commitTime: bigint;
-  xid: number;
-  operations: Operation[];
-  relations: Map<number, Relation>;
+export type Transaction = {
+  id: string;
+  operations: TableOperation[];
 };
 
 /**
@@ -67,14 +67,27 @@ export interface IDataSource {
    * Start listening for changes
    * @param onData Callback function to handle data changes
    */
-  subscribe(onData: (buffer: TransactionBuffer) => Promise<boolean>): Promise<void>;
+  subscribe(onData: (transaction: Transaction) => Promise<boolean>): Promise<void>;
+
+  /**
+   * Write a watermark to the data source
+   * @param watermark The watermark to write
+   */
+  writeWatermark(watermark: "low" | "high", backfillId: string): Promise<void>;
+
+  /**
+   * Execute query to get backfill records
+   * @param sql The SQL query to use for the backfill
+   * @param values The values to bind to the query
+   */
+  getBackfillRecords(sql: string, values?: unknown[]): Promise<Record<string, unknown>[]>;
 
   /**
    * Apply a transformations to the data
    * @param operation The operation to transform
    * @returns The transformed data
    */
-  applyTransformations(operation: Operation): Promise<Record<string, unknown> | null>;
+  applyTransformations(operation: TableOperation): Promise<PublicSchemaOperation | null>;
 }
 
 /**
@@ -93,8 +106,7 @@ export interface IDataSink {
 
   /**
    * Write data to the sink
-   * @param data The data to write
    * @param operation The operation that generated the data
    */
-  writeData(data: Record<string, unknown>, operation: Operation): Promise<void>;
+  writeData(operation: PublicSchemaOperation): Promise<void>;
 }

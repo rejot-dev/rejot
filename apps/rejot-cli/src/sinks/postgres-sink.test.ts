@@ -1,10 +1,10 @@
 import { pgRollbackDescribe } from "../postgres/postgres-test-utils.ts";
 import { test, expect } from "bun:test";
 import { PostgresSink } from "./postgres-sink.ts";
-import type { Operation } from "../source-sink-protocol.ts";
 import type { Client } from "pg";
 
 const TEST_TABLE_NAME = "test_pg_sink";
+const TEST_CONSUMER_SCHEMA = `INSERT INTO ${TEST_TABLE_NAME} (id, name) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET name = $2`;
 
 async function createTestTable(client: Client) {
   await client.query(`
@@ -16,26 +16,68 @@ async function createTestTable(client: Client) {
 }
 
 pgRollbackDescribe("PostgreSQL Sink tests", (ctx) => {
-  test("should write data to PostgreSQL", async () => {
+  test("should insert data", async () => {
     await createTestTable(ctx.client);
 
     const sink = new PostgresSink({
       client: ctx.client,
-      consumerSchemaSQL: `
-        INSERT INTO ${TEST_TABLE_NAME} (id, name) VALUES ($1, $2)
-      `,
+      consumerSchemaSQL: TEST_CONSUMER_SCHEMA,
     });
 
-    await sink.writeData(
-      {
+    await sink.writeData({
+      type: "insert",
+      keyColumns: ["id"],
+      new: {
         id: "1",
         name: "John Doe",
       },
-      {} as Operation,
-    );
+    });
     const res = await ctx.client.query(`SELECT * FROM ${TEST_TABLE_NAME}`);
     expect(res.rows.length).toBe(1);
     expect(res.rows[0].id).toBe("1");
     expect(res.rows[0].name).toBe("John Doe");
+  });
+
+  test("should update data", async () => {
+    await createTestTable(ctx.client);
+
+    await ctx.client.query(`INSERT INTO ${TEST_TABLE_NAME} (id, name) VALUES ($1, $2)`, [
+      "1",
+      "John Doe",
+    ]);
+
+    const sink = new PostgresSink({
+      client: ctx.client,
+      consumerSchemaSQL: TEST_CONSUMER_SCHEMA,
+    });
+
+    await sink.writeData({
+      type: "update",
+      keyColumns: ["id"],
+      new: {
+        id: "1",
+        name: "Jane Doe",
+      },
+    });
+    const res = await ctx.client.query(`SELECT * FROM ${TEST_TABLE_NAME} WHERE id = $1`, ["1"]);
+    expect(res.rows.length).toBe(1);
+    expect(res.rows[0].id).toBe("1");
+    expect(res.rows[0].name).toBe("Jane Doe");
+  });
+
+  test("should delete data", async () => {
+    await createTestTable(ctx.client);
+
+    const sink = new PostgresSink({
+      client: ctx.client,
+      consumerSchemaSQL: TEST_CONSUMER_SCHEMA,
+    });
+
+    await expect(
+      sink.writeData({
+        type: "delete",
+        keyColumns: ["id"],
+      }),
+    ).rejects.toThrow("Not implemented!");
   });
 });
