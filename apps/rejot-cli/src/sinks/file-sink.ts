@@ -1,16 +1,12 @@
 import fs from "node:fs/promises";
 import logger from "../logger.ts";
-import type { IDataSink, Operation } from "../source-sink-protocol.ts";
+import type { IDataSink, PublicSchemaOperation } from "../source-sink-protocol.ts";
 
 const log = logger.createLogger("file-sink");
 
 type FileOutputSchema = {
   operation: string;
-  source: {
-    tableSchema: string;
-    tableName: string;
-  };
-  data: Record<string, unknown>;
+  data?: Record<string, unknown>;
 };
 
 type FileSinkConfig = {
@@ -48,18 +44,14 @@ export class FileSink implements IDataSink {
     }
   }
 
-  async writeData(data: Record<string, unknown>, operation: Operation): Promise<void> {
+  async writeData(operation: PublicSchemaOperation): Promise<void> {
     if (!this.#fileHandle) {
       throw new Error(`File ${this.#filePath} not open for writing`);
     }
 
     const jsonData: FileOutputSchema = {
       operation: operation.type,
-      source: {
-        tableSchema: operation.tableSchema,
-        tableName: operation.table,
-      },
-      data,
+      data: operation.type === "insert" || operation.type === "update" ? operation.new : undefined,
     };
     const output = JSON.stringify(jsonData) + "\n";
     await this.#fileHandle.write(output);

@@ -36,6 +36,10 @@ export default class SyncCommand extends Command {
       required: true,
       default: "stdout://",
     }),
+    "backfill-from": Flags.string({
+      description: "SQL Condition to start backfill from (e.g. 'id > 100')",
+      required: false,
+    }),
     "public-schema": Flags.string({
       description: "Path to the SQL file containing the public schema transformation",
       required: true,
@@ -103,6 +107,7 @@ export default class SyncCommand extends Command {
     const {
       source: sourceConn,
       sink: sinkConn,
+      "backfill-from": backfillFrom,
       "public-schema": publicSchemaPath,
       "consumer-schema": consumerSchemaPath,
       "pg-publication-name": publicationName,
@@ -172,7 +177,15 @@ export default class SyncCommand extends Command {
 
     // Start the sync process
     try {
-      await syncController.start();
+      const syncProcess = syncController.start();
+
+      if (backfillFrom) {
+        // TODO: hacky af?
+        const backfillSql = publicSchemaSQL.replace("id = $1", backfillFrom);
+        await syncController.startBackfill(backfillSql, ["id"]);
+      }
+
+      await syncProcess;
     } catch (error) {
       log.error("Failed to start sync", error);
       await syncController.stop();

@@ -147,17 +147,15 @@ export class PostgresReplicationListener {
       this.#transactionBuffer.commitTime = log.commitTime.valueOf();
 
       try {
-        const processed = await this.#onCommit(this.#transactionBuffer as TransactionBuffer);
+        // Store the LSN we need for acknowledgment before any processing
+        const commitEndLsn = this.#transactionBuffer.commitEndLsn;
+
+        // Make sure to pass a copy of the transaction buffer, to prevent modifications by the callback from changing it
+        const processed = await this.#onCommit({ ...this.#transactionBuffer } as TransactionBuffer);
 
         if (processed) {
-          console.log(
-            "transaction buffer processed, acknowledging.",
-            this.#transactionBuffer.commitLsn,
-            this.#transactionBuffer.commitEndLsn,
-          );
-
-          await this.#logicalReplicationService.acknowledge(this.#transactionBuffer.commitEndLsn);
-
+          console.log("transaction buffer processed, acknowledging.", commitEndLsn);
+          await this.#logicalReplicationService.acknowledge(commitEndLsn);
           this.#transactionBuffer = {
             state: "empty",
           };

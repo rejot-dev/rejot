@@ -1,4 +1,4 @@
-import { describe, beforeEach, afterEach } from "bun:test";
+import { describe, beforeEach, afterEach, afterAll, beforeAll } from "bun:test";
 import { Client } from "pg";
 
 export interface DbTestContext {
@@ -20,14 +20,20 @@ export function pgRollbackDescribe(name: string, fn: (ctx: DbTestContext) => voi
   };
 
   describe(name, () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       await context.client.connect();
+    });
+
+    beforeEach(async () => {
       await context.client.query("SELECT 1 as connection_test");
       await context.client.query("BEGIN");
     });
 
     afterEach(async () => {
       await context.client.query("ROLLBACK");
+    });
+
+    afterAll(async () => {
       await context.client.end();
     });
 

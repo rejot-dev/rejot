@@ -1,12 +1,8 @@
-import type { IDataSink, Operation } from "../source-sink-protocol.ts";
+import type { IDataSink, PublicSchemaOperation } from "../source-sink-protocol.ts";
 
 type StdoutOutputSchema = {
   operation: string;
-  source: {
-    tableSchema: string;
-    tableName: string;
-  };
-  data: Record<string, unknown>;
+  data?: Record<string, unknown>;
 };
 
 export class StdoutSink implements IDataSink {
@@ -16,14 +12,10 @@ export class StdoutSink implements IDataSink {
 
   async stop(): Promise<void> {}
 
-  async writeData(data: Record<string, unknown>, operation: Operation): Promise<void> {
+  async writeData(operation: PublicSchemaOperation): Promise<void> {
     const output: StdoutOutputSchema = {
       operation: operation.type,
-      source: {
-        tableSchema: operation.tableSchema,
-        tableName: operation.table,
-      },
-      data,
+      data: operation.type === "insert" || operation.type === "update" ? operation.new : undefined,
     };
     process.stdout.write(JSON.stringify(output) + "\n");
   }

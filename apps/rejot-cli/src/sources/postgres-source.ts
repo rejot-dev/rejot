@@ -1,10 +1,15 @@
 import { Client } from "pg";
-import { PostgresReplicationListener, type TransactionBuffer } from "@rejot/sync/postgres";
+import { PostgresReplicationListener } from "@rejot/sync/postgres";
 import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "../const.ts";
 import logger from "../logger.ts";
-import type { IDataSource, Operation } from "../source-sink-protocol.ts";
+import type {
+  IDataSource,
+  TableOperation,
+  PublicSchemaOperation,
+  Transaction,
+} from "../source-sink-protocol.ts";
 
-const log = logger.createLogger("postgres-source");
+const log = logger.createLogger("pg-source");
 
 type PostgresOptions = {
   publicationName?: string;
@@ -24,7 +29,6 @@ export class PostgresSource implements IDataSource {
   #publicationName: string;
   #slotName: string;
   #createPublication: boolean;
-  #onDataCallback: ((buffer: TransactionBuffer) => Promise<boolean>) | null = null;
   #publicSchemaSql: string;
 
   constructor({
@@ -62,6 +66,8 @@ export class PostgresSource implements IDataSource {
       );
     }
 
+    await this.#ensureWatermarkTable();
+
     // Create replication slot if it doesn't exist
     await this.#ensureReplicationSlot();
 
@@ -80,9 +86,7 @@ export class PostgresSource implements IDataSource {
     }
   }
 
-  async subscribe(onData: (buffer: TransactionBuffer) => Promise<boolean>): Promise<void> {
-    this.#onDataCallback = onData;
-
+  async subscribe(onData: (transaction: Transaction) => Promise<boolean>): Promise<void> {
     this.#replicationListener = new PostgresReplicationListener(
       {
         host: this.#client.host,
@@ -92,12 +96,11 @@ export class PostgresSource implements IDataSource {
         database: this.#client.database,
         ssl: this.#client.ssl,
       },
-      async (buffer) => {
-        if (this.#onDataCallback) {
-          return this.#onDataCallback(buffer);
-        }
-        return false;
-      },
+      (buffer) =>
+        onData({
+          id: buffer.commitEndLsn.toString(),
+          operations: buffer.operations,
+        }),
     );
 
     log.info(`Starting to listen for changes on slot '${this.#slotName}'`);
@@ -110,6 +113,11 @@ export class PostgresSource implements IDataSource {
     `);
 
     return result.rows.length > 0 && result.rows[0].setting === "logical";
+  }
+
+  async getBackfillRecords(sql: string, values?: unknown[]): Promise<Record<string, unknown>[]> {
+    const result = await this.#client.query(sql, values);
+    return result.rows;
   }
 
   async #ensureReplicationSlot(): Promise<void> {
@@ -139,6 +147,26 @@ export class PostgresSource implements IDataSource {
     }
   }
 
+  async #ensureWatermarkTable(): Promise<void> {
+    await this.#client.query(`CREATE SCHEMA IF NOT EXISTS rejot`);
+    await this.#client.query(`
+      CREATE TABLE IF NOT EXISTS rejot.watermarks (
+        id SERIAL PRIMARY KEY,
+        backfill TEXT NOT NULL,
+        type TEXT NOT NULL CHECK (type IN ('low', 'high'))
+      );
+    `);
+  }
+
+  async writeWatermark(type: "low" | "high", backfillId: string): Promise<void> {
+    await this.#client.query(
+      `
+      INSERT INTO rejot.watermarks (type, backfill) VALUES ($1, $2)
+    `,
+      [type, backfillId],
+    );
+  }
+
   async #ensurePublication(): Promise<void> {
     // Check if publication exists
     const pubResult = await this.#client.query(
@@ -156,15 +184,29 @@ export class PostgresSource implements IDataSource {
       }
 
       log.debug(`Creating publication '${this.#publicationName}'...`);
-      try {
-        await this.#client.query(`
+
+      await this.#client.query(`
           CREATE PUBLICATION ${this.#publicationName} FOR ALL TABLES
         `);
-        log.debug(`Publication '${this.#publicationName}' created successfully`);
-      } catch (error) {
-        throw new Error(`Failed to create publication: ${error}`);
-      }
+      log.debug(`Publication '${this.#publicationName}' created successfully`);
     } else {
+      // Check if watermarks table is already in the publication
+      const tableInPublication = await this.#client.query(
+        `
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = $1 
+        AND schemaname = 'rejot' 
+        AND tablename = 'watermarks'
+      `,
+        [this.#publicationName],
+      );
+
+      if (tableInPublication.rows.length === 0) {
+        await this.#client.query(`
+          ALTER PUBLICATION ${this.#publicationName} ADD TABLE rejot.watermarks
+        `);
+        log.debug(`Added rejot.watermarks table to publication '${this.#publicationName}'`);
+      }
       log.debug(`Publication '${this.#publicationName}' already exists`);
     }
   }
@@ -174,14 +216,13 @@ export class PostgresSource implements IDataSource {
    * @param operation The operation to transform
    * @returns The transformed data or null if transformation failed
    */
-  async applyTransformations(operation: Operation): Promise<Record<string, unknown> | null> {
+  async applyTransformations(operation: TableOperation): Promise<PublicSchemaOperation | null> {
     if (!this.#publicSchemaSql) {
       log.warn("No public schema SQL provided for transformation");
       return null;
     }
 
     if (operation.type === "delete") {
-      log.warn("Skipping delete operation for now!");
       return null;
     }
 
@@ -192,32 +233,20 @@ export class PostgresSource implements IDataSource {
       const result = await this.#client.query(this.#publicSchemaSql, keyValues);
 
       if (result.rows.length !== 1) {
-        log.warn(`Expected 1 row from public schema transformation, got ${result.rows.length}`);
+        log.warn(
+          `Expected 1 row from public schema transformation, got ${result.rows.length}, operation: ${JSON.stringify(operation)}`,
+        );
         return null;
       }
 
-      // Combine key columns with transformed data
-      const transformedData: Record<string, unknown> = {};
-
-      for (const column of operation.keyColumns) {
-        transformedData[column] = operation.new[column];
-      }
-
       return {
-        ...transformedData,
-        ...result.rows[0],
+        type: operation.type,
+        keyColumns: operation.keyColumns,
+        new: result.rows[0],
       };
     } catch (error) {
       log.error("Error applying public schema transformation:", error);
       return null;
     }
-  }
-
-  /**
-   * Get the PostgreSQL client for executing queries
-   * This is used by the sync service to execute the public schema transformation
-   */
-  getClient(): Client {
-    return this.#client;
   }
 }
