@@ -2,11 +2,11 @@ import type {
   IDataSource,
   IDataSink,
   Transaction,
-  TableOperation,
   PublicSchemaOperation,
 } from "./source-sink-protocol.ts";
 import logger from "./logger.ts";
 import { BACKFILL_TIMEOUT_SECONDS } from "./const.ts";
+import { type BackfillSource, ResultSetStore } from "./result-set-store.ts";
 
 const log = logger.createLogger("sync-controller");
 
@@ -15,26 +15,10 @@ type SyncControllerConfig = {
   sink: IDataSink;
 };
 
-type ResultSetKey = string;
-
 type BackfillWatermark = {
   type: "low" | "high";
   backfillId: string;
 };
-
-export function getResultSetKey(operation: TableOperation | PublicSchemaOperation): ResultSetKey {
-  if (operation.type === "delete") {
-    throw new Error("Delete operations are not supported yet");
-  }
-  const columnValues = operation.keyColumns
-    .sort()
-    .map((column) => `${column}=${operation.new[column]}`);
-  return columnValues.join(",");
-}
-
-export function getKeyColumns(resultSetKey: ResultSetKey): string[] {
-  return resultSetKey.split(",").map((column) => column.split("=")[0]);
-}
 
 export function watermarkFromTransaction(transaction: Transaction): BackfillWatermark | null {
   for (const operation of transaction.operations) {
@@ -76,8 +60,7 @@ export class SyncController {
   #currentBackfillId?: string;
   #currentBackfillStartTime?: Date;
 
-  #resultSet: Map<ResultSetKey, Record<string, unknown>> = new Map();
-  #dropSet: Set<ResultSetKey> = new Set();
+  #resultSet: ResultSetStore = new ResultSetStore();
 
   constructor({ source, sink }: SyncControllerConfig) {
     this.#source = source;
@@ -110,19 +93,15 @@ export class SyncController {
 
   async flushResultSet(): Promise<void> {
     let flushCount = 0;
-    for (const [key, record] of this.#resultSet) {
-      if (this.#dropSet.has(key)) {
-        continue;
-      }
-      const operation = recordToPublicSchemaOperation(getKeyColumns(key), record);
+    for (const [keyColumns, record] of this.#resultSet.getRecordsWithoutDropKeys()) {
+      const operation = recordToPublicSchemaOperation(keyColumns, record);
       await this.#sink.writeData(operation);
       flushCount++;
     }
     log.info(
-      `Flushed ${flushCount}/${this.#resultSet.size} records to sink, ${this.#resultSet.size - flushCount} records were stale`,
+      `Flushed ${flushCount}/${this.#resultSet.size()} records to sink, ${this.#resultSet.size() - flushCount} records were stale`,
     );
     this.#resultSet.clear();
-    this.#dropSet.clear();
   }
 
   async #processTransaction(transaction: Transaction): Promise<boolean> {
@@ -160,8 +139,7 @@ export class SyncController {
       // Any writes happening to records during the backfill will be applied normally but must be
       // dropped from the backfill result set, to prevent backfill records from overwriting newer records in the destination
       for (const operation of transaction.operations) {
-        const key = getResultSetKey(operation);
-        this.#dropSet.add(key);
+        this.#resultSet.addDropKey(operation);
       }
 
       // Check here for backfill timeout
@@ -172,7 +150,7 @@ export class SyncController {
             `Backfill ${this.#currentBackfillId} timed out after ${BACKFILL_TIMEOUT_SECONDS} seconds`,
           );
           this.#backfillLowMarkerSeen = false;
-          this.#dropSet.clear();
+          this.#resultSet.clear();
           this.#currentBackfillId = undefined;
         }
       }
@@ -190,7 +168,11 @@ export class SyncController {
     return true;
   }
 
-  async startBackfill(sql: string, keyColumns: string[], values?: unknown[]): Promise<string> {
+  async startBackfill(
+    sourceTables: BackfillSource[],
+    sql: string,
+    values?: unknown[],
+  ): Promise<string> {
     if (this.#backfillLowMarkerSeen) {
       throw new Error("Starting new backfill while we haven't completed a previous one!");
     }
@@ -205,10 +187,9 @@ export class SyncController {
 
     const result = await this.#source.getBackfillRecords(sql, values);
 
-    this.#resultSet = new Map(
-      result.map((row) => [getResultSetKey(recordToPublicSchemaOperation(keyColumns, row)), row]),
-    );
+    this.#resultSet.addRecords(sourceTables, result);
     log.debug(`Fetched ${result.length} records for backfill ${backfillId}`);
+
     await this.#source.writeWatermark("high", backfillId);
     return backfillId;
   }

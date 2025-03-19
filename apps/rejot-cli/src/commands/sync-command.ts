@@ -9,6 +9,7 @@ import {
 import logger, { setLogLevel, type LogLevel } from "../logger.ts";
 import { createSourceAndSink, parseConnectionString } from "../factory.ts";
 import { SyncController } from "../sync-controller.ts";
+import type { BackfillSource } from "../result-set-store.ts";
 
 const log = logger.createLogger("cli");
 export default class SyncCommand extends Command {
@@ -22,6 +23,7 @@ export default class SyncCommand extends Command {
     '<%= config.bin %> --source "postgresql://user:pass@host:port/db" --sink "postgresql://user:pass@host:port/db" --public-schema ./public-schema.sql --consumer-schema ./consumer-schema.sql',
     '<%= config.bin %> --source "postgresql://user:pass@host:port/db" --sink "stdout://" --public-schema ./public-schema.sql',
     '<%= config.bin %> --source "postgresql://user:pass@host:port/db" --sink "file:///path/to/output.json" --public-schema ./public-schema.sql',
+    '<%= config.bin %> --source "postgresql://user:pass@host:port/db" --sink "file:///path/to/output.json" --public-schema ./public-schema.sql --backfill-from "id > 100" --backfill-primary-key "public.table.id:id"',
   ];
 
   static override flags = {
@@ -38,6 +40,12 @@ export default class SyncCommand extends Command {
     }),
     "backfill-from": Flags.string({
       description: "SQL Condition to start backfill from (e.g. 'id > 100')",
+      required: false,
+    }),
+    "backfill-primary-key": Flags.string({
+      multiple: true,
+      description:
+        "Mapping of source table primary key to that same column in the public schema, potentially aliased (format: schema.table_name.column_name[:alias])",
       required: false,
     }),
     "public-schema": Flags.string({
@@ -65,6 +73,26 @@ export default class SyncCommand extends Command {
     }),
   };
 
+  private parseBackfillPrimaryKeys(backfillPrimaryKeys: string[]): BackfillSource[] {
+    // Parses cli argument for backfill primary keys into BackfillSource
+    // Doesn't support tables with more than one primary key
+    // Examples:
+    //  With a column alias:
+    //   "public.table.id:aliased_id" -> {tableRef: public.table, primaryKeyAliases: {"id": "aliased_id"}}
+    //  Without a column alias:
+    //   "public.table.id" -> {tableRef: public.table, primaryKeyAliases: {"id": "id"}}
+
+    return backfillPrimaryKeys.map((key) => {
+      const [tableRef, maybeAlias] = key.split(":");
+      const columnName = tableRef.split(".").pop();
+      if (!columnName) {
+        throw new Error(`Invalid backfill-primary-key: ${key}`);
+      }
+      const alias = maybeAlias || columnName;
+      return { tableRef, primaryKeyAliases: new Map([[columnName, alias]]) };
+    });
+  }
+
   static override args = {};
 
   /**
@@ -76,8 +104,16 @@ export default class SyncCommand extends Command {
     source: string;
     sink: string;
     "consumer-schema"?: string;
+    "backfill-from"?: string;
+    "backfill-primary-key"?: string[];
   }): void {
-    const { source, sink, "consumer-schema": consumerSchemaPath } = flags;
+    const {
+      source,
+      sink,
+      "consumer-schema": consumerSchemaPath,
+      "backfill-from": backfillFrom,
+      "backfill-primary-key": backfillPrimaryKeys,
+    } = flags;
 
     const sourceConnection = parseConnectionString(source);
     if (!SUPPORTED_SOURCE_SCHEMES.includes(sourceConnection.scheme)) {
@@ -99,6 +135,12 @@ export default class SyncCommand extends Command {
     if (sinkConnection.scheme === "postgresql" && !consumerSchemaPath) {
       this.error("Consumer schema is required for PostgreSQL sink");
     }
+    if (backfillFrom && !backfillPrimaryKeys) {
+      this.error("backfill-primary-key is required when using backfill-from");
+    }
+    if (!backfillFrom && backfillPrimaryKeys) {
+      this.error("backfill-from is required when using backfill-primary-key");
+    }
   }
 
   public async run(): Promise<void> {
@@ -113,6 +155,7 @@ export default class SyncCommand extends Command {
       "pg-publication-name": publicationName,
       "pg-create-publication": createPublication,
       "log-level": logLevel,
+      "backfill-primary-key": backfillPrimaryKeys,
     } = flags;
 
     this.validateInputs(flags);
@@ -182,7 +225,12 @@ export default class SyncCommand extends Command {
       if (backfillFrom) {
         // TODO: hacky af?
         const backfillSql = publicSchemaSQL.replace("id = $1", backfillFrom);
-        await syncController.startBackfill(backfillSql, ["id"]);
+
+        if (backfillPrimaryKeys) {
+          const backfillSources = this.parseBackfillPrimaryKeys(backfillPrimaryKeys);
+          log.debug("Basing backfill on primary keys", backfillSources);
+          await syncController.startBackfill(backfillSources, backfillSql);
+        }
       }
 
       await syncProcess;

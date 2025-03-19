@@ -1,5 +1,6 @@
 type OperationType = "insert" | "update" | "delete";
 
+// Table operations, i.e. data mutations to a table used to generate a public schema
 export type TableOperation = {
   type: OperationType;
 } & (
@@ -25,6 +26,8 @@ export type TableOperation = {
     }
 );
 
+// Public schema operations, i.e. data mutations after the public schema transformations have been applied
+// TODO: Check if we can omit "keyColumns" here
 export type PublicSchemaOperation = {
   type: OperationType;
 } & (
