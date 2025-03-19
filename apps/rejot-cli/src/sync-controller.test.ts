@@ -5,7 +5,7 @@ import type {
   PublicSchemaOperation,
   Transaction,
 } from "./source-sink-protocol.ts";
-import { getKeyColumns, getResultSetKey, SyncController } from "./sync-controller.ts";
+import { SyncController } from "./sync-controller.ts";
 import { describe, test, expect } from "bun:test";
 
 function createWatermarkTransaction(type: "low" | "high", backfillId: string): Transaction {
@@ -100,29 +100,6 @@ class TestSink implements IDataSink {
 }
 
 describe("Simple Sync Controller Operations", () => {
-  test("Result set key parsing", () => {
-    expect(getKeyColumns("id=1,name=test")).toEqual(["id", "name"]);
-    expect(getKeyColumns("id=1")).toEqual(["id"]);
-    expect(
-      getResultSetKey({
-        type: "insert",
-        keyColumns: ["id"],
-        table: "test",
-        tableSchema: "test",
-        new: { id: 1, name: "test" },
-      }),
-    ).toEqual("id=1");
-    expect(
-      getResultSetKey({
-        type: "update",
-        keyColumns: ["id", "name"],
-        table: "test",
-        tableSchema: "test",
-        new: { id: 1, name: "test" },
-      }),
-    ).toEqual("id=1,name=test");
-  });
-
   test("insert operation", async () => {
     const sink = new TestSink();
     const source = new TestSource();
@@ -217,8 +194,8 @@ describe("Backfills for Sync Controller", () => {
 
     // NOTE: this sql in not executed by the TestSource, just illustrative for the test case
     const backfillPromise = syncController.startBackfill(
-      `SELECT * FROM backfill WHERE id >= $1`,
-      ["id"],
+      [{ tableRef: "public.test", primaryKeyAliases: new Map([["id", "id"]]) }],
+      `SELECT * FROM public.test WHERE id >= $1`,
       [1],
     );
 
@@ -228,14 +205,14 @@ describe("Backfills for Sync Controller", () => {
         type: "update",
         keyColumns: ["id"],
         table: "test",
-        tableSchema: "test",
+        tableSchema: "public",
         new: { id: 2, name: "updated value" }, // note that "name" is different from backfill
       },
       {
         type: "insert",
         keyColumns: ["id"],
         table: "test",
-        tableSchema: "test",
+        tableSchema: "public",
         new: { id: 4, name: "d" },
       },
     ]);
@@ -299,9 +276,17 @@ describe("Backfills for Sync Controller", () => {
 
     // NOTE: this sql in not executed by the TestSource, just illustrative for the test case
     const backfillPromise = syncController.startBackfill(
+      [
+        {
+          tableRef: "backfill",
+          primaryKeyAliases: new Map([
+            ["pkeya", "pkeya"],
+            ["pkeyb", "pkeyb"],
+          ]),
+        },
+      ],
       `SELECT * FROM backfill WHERE pkeya >= $1 AND pkeyb >= $2`,
-      ["pkeya", "pkeyb"],
-      [1],
+      [1, 1],
     );
 
     source.getBackfillRecordsResolve();
