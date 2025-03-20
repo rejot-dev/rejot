@@ -1,26 +1,41 @@
 import { Args, Command, Flags } from "@oclif/core";
+import { collectPublicSchemas } from "@rejot/contract/collect";
+import { writeManifest } from "@rejot/contract/manifest";
+import { readManifest } from "@rejot/contract/manifest.fs";
 
 export default class Collect extends Command {
   static override args = {
-    file: Args.string({ description: "file to read" }),
+    schema: Args.string({
+      description: "The schema (TypeScript file) to collect.",
+      required: true,
+    }),
   };
 
-  static override description = "describe the command here";
+  static override description = "Collect public schemas from a TypeScript file.";
   static override examples = ["<%= config.bin %> <%= command.id %>"];
   static override flags = {
-    // flag with no value (-f, --force)
-    force: Flags.boolean({ char: "f" }),
-    // flag with a value (-n, --name=VALUE)
-    name: Flags.string({ char: "n", description: "name to print" }),
+    manifest: Flags.string({
+      description: "Path to the manifest file to write to.",
+      required: true,
+      default: "./rejot-manifest.json",
+    }),
   };
 
   public async run(): Promise<void> {
     const { args, flags } = await this.parse(Collect);
+    const { manifest: manifestPath } = flags;
 
-    const name = flags.name ?? "world";
-    this.log(`hello ${name} from /Users/wilco/dev/rejot/apps/sync-cli/src/commands/collect.ts`);
-    if (args.file && flags.force) {
-      this.log(`you input --force and --file: ${args.file}`);
-    }
+    const publicSchemas = await collectPublicSchemas(args.schema);
+
+    const currentManifest = await readManifest(manifestPath);
+    await writeManifest(
+      {
+        ...currentManifest,
+        publicSchemas,
+      },
+      manifestPath,
+    );
+
+    console.log(`Manifest written to ${manifestPath}`);
   }
 }

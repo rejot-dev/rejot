@@ -141,6 +141,29 @@ jobs:
         working-directory: packages/api-interface-controller
         run: bun check
 
+  typecheck-contract:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
+
+      - name: Type check contract
+        working-directory: packages/contract
+        run: bun check
+
   test-postgres:
     needs: install
     runs-on: ubuntu-latest
@@ -201,13 +224,13 @@ jobs:
             exit 1
           fi
 
-      - name: Run controller database tests
+      - name: Run controller (database) tests
         working-directory: apps/controller
         env:
           REJOT_CONTROLLER_CONFIG_PATH: ./_ci/ci-test-config.json
         run: bun test
 
-      - name: Run rejot-cli database tests
+      - name: Run rejot-cli (database) tests
         working-directory: apps/rejot-cli
         env:
           REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test

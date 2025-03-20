@@ -5,12 +5,16 @@
     "check": "tsc --noEmit"
   },
   "exports": {
-    ".": "./index.ts",
-    "./public-schema": "./public-schema.ts"
+    "./manifest": "./manifest/manifest.ts",
+    "./manifest.fs": "./manifest/manifest.fs.ts",
+    "./collect": "./collect/collect.ts",
+    "./public-schema": "./public-schema/public-schema.ts",
+    "./postgres": "./postgres/postgres.ts"
   },
   "private": true,
   "type": "module",
   "dependencies": {
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "zod-to-json-schema": "^3.24.3"
   }
 }
