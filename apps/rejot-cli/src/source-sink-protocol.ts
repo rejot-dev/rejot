@@ -27,7 +27,6 @@ export type TableOperation = {
 );
 
 // Public schema operations, i.e. data mutations after the public schema transformations have been applied
-// TODO: Check if we can omit "keyColumns" here
 export type PublicSchemaOperation = {
   type: OperationType;
 } & (

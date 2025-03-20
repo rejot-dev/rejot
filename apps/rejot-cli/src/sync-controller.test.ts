@@ -38,13 +38,19 @@ class TestSource implements IDataSource {
 
   backfillRecords: Record<string, unknown>[] = [];
 
-  getBackfillRecordsPromise: Promise<void>;
-  getBackfillRecordsResolve: () => void;
+  backfillPromise: Promise<void>;
+  backfillResolve: () => void;
 
   constructor() {
     const { promise, resolve } = Promise.withResolvers<void>();
-    this.getBackfillRecordsPromise = promise;
-    this.getBackfillRecordsResolve = resolve;
+    this.backfillPromise = promise;
+    this.backfillResolve = resolve;
+  }
+
+  resetBackfillPromises() {
+    const { promise, resolve } = Promise.withResolvers<void>();
+    this.backfillPromise = promise;
+    this.backfillResolve = resolve;
   }
 
   async prepare() {}
@@ -57,7 +63,7 @@ class TestSource implements IDataSource {
   }
 
   async getBackfillRecords(_sql: string, _values?: unknown[]) {
-    await this.getBackfillRecordsPromise;
+    await this.backfillPromise;
     return this.backfillRecords;
   }
 
@@ -181,8 +187,6 @@ describe("Simple Sync Controller Operations", () => {
 });
 
 describe("Backfills for Sync Controller", () => {
-  // TODO: test what happens if we never see the 'high' watermark
-  // TODO: The replication stream can include updates from multiple tables, currently store just the primary key
   test("backfill while updates come in", async () => {
     const sink = new TestSink();
     const source = new TestSource();
@@ -196,11 +200,9 @@ describe("Backfills for Sync Controller", () => {
     await syncController.prepare();
     await syncController.start();
 
-    // NOTE: this sql in not executed by the TestSource, just illustrative for the test case
     const backfillPromise = syncController.startBackfill(
       [{ tableRef: "public.test", primaryKeyAliases: new Map([["id", "id"]]) }],
-      "SELECT * FROM public.test WHERE id >= $1",
-      [1],
+      "",
     );
 
     // After starting backfill, updates and new inserts occur
@@ -238,7 +240,7 @@ describe("Backfills for Sync Controller", () => {
     // Backfill select statement completes
     // Source should only see backfill records for which we have not seen any updates in the meantime
     // This should also write the high watermark
-    source.getBackfillRecordsResolve();
+    source.backfillResolve();
 
     await backfillPromise;
     await syncController.stop();
@@ -279,7 +281,6 @@ describe("Backfills for Sync Controller", () => {
     await syncController.prepare();
     await syncController.start();
 
-    // NOTE: this sql in not executed by the TestSource, just illustrative for the test case
     const backfillPromise = syncController.startBackfill(
       [
         {
@@ -290,11 +291,10 @@ describe("Backfills for Sync Controller", () => {
           ]),
         },
       ],
-      "SELECT * FROM backfill WHERE pkeya >= $1 AND pkeyb >= $2",
-      [1, 1],
+      "",
     );
 
-    source.getBackfillRecordsResolve();
+    source.backfillResolve();
 
     await backfillPromise;
     await syncController.stop();
@@ -313,6 +313,246 @@ describe("Backfills for Sync Controller", () => {
         type: "insert",
         keyColumns: ["pkeya", "pkeyb"],
         new: { pkeya: 3, pkeyb: 3, name: "c" },
+      },
+    ]);
+  });
+
+  test("backfill with multiple source tables", async () => {
+    const sink = new TestSink();
+    const source = new TestSource();
+    source.backfillRecords = [
+      { address_id: 1, user_id: 1, name: "backfill" },
+      { address_id: 2, user_id: 2, name: "backfill" },
+      { address_id: 3, user_id: 3, name: "backfill" },
+    ];
+
+    const syncController = new SyncController({ source, sink });
+    await syncController.prepare();
+    await syncController.start();
+
+    const backfillPromise = syncController.startBackfill(
+      [
+        {
+          tableRef: "public.address",
+          primaryKeyAliases: new Map([["id", "address_id"]]),
+        },
+        {
+          tableRef: "public.user",
+          primaryKeyAliases: new Map([["id", "user_id"]]),
+        },
+      ],
+      "",
+    );
+
+    // Updates coming in while backfill is "running"
+    await source.emit([
+      {
+        type: "insert",
+        keyColumns: ["id"],
+        table: "address",
+        tableSchema: "public",
+        new: { id: 1, name: "wal" }, // invalidates item 1 in backfill
+      },
+      {
+        type: "insert",
+        keyColumns: ["id"],
+        table: "user",
+        tableSchema: "public",
+        new: { id: 2, name: "wal" }, // invalidates item 2 in backfill
+      },
+    ]);
+
+    source.backfillResolve();
+
+    await backfillPromise;
+    await syncController.stop();
+    expect(sink.receivedOperations).toEqual([
+      {
+        type: "insert",
+        keyColumns: ["id"],
+        new: { id: 1, name: "wal" },
+      },
+      {
+        type: "insert",
+        keyColumns: ["id"],
+        new: { id: 2, name: "wal" },
+      },
+      {
+        type: "insert",
+        keyColumns: ["address_id", "user_id"],
+        new: { address_id: 3, user_id: 3, name: "backfill" },
+      },
+    ]);
+  });
+  test("backfill ignores failed backfill watermarks", async () => {
+    const sink = new TestSink();
+    const source = new TestSource();
+    source.backfillRecords = [
+      { id: 1, name: "backfill" },
+      { id: 2, name: "backfill" },
+    ];
+
+    const syncController = new SyncController({ source, sink });
+    await syncController.prepare();
+    await syncController.start();
+
+    await source.writeWatermark("low", "failed-backfill");
+
+    // This becomes a regular insert operation, should not trigger drops from the backfill result set
+    await source.emit([
+      {
+        type: "insert",
+        keyColumns: ["id"],
+        table: "test",
+        tableSchema: "public",
+        new: { id: 1, name: "wal" },
+      },
+    ]);
+
+    const backfillPromise = syncController.startBackfill(
+      [{ tableRef: "public.test", primaryKeyAliases: new Map([["id", "id"]]) }],
+      "",
+    );
+
+    await source.emit([
+      {
+        type: "insert",
+        keyColumns: ["id"],
+        table: "test",
+        tableSchema: "public",
+        new: { id: 2, name: "wal" },
+      },
+    ]);
+
+    await source.writeWatermark("high", "failed-backfill");
+
+    source.backfillResolve();
+
+    await backfillPromise;
+    await syncController.stop();
+    expect(sink.receivedOperations).toEqual([
+      {
+        type: "insert",
+        keyColumns: ["id"],
+        new: { id: 1, name: "wal" },
+      },
+      {
+        type: "insert",
+        keyColumns: ["id"],
+        new: { id: 2, name: "wal" },
+      },
+      {
+        type: "insert",
+        keyColumns: ["id"],
+        new: { id: 1, name: "backfill" },
+      },
+    ]);
+  });
+
+  test("no concurrent backfills", async () => {
+    const sink = new TestSink();
+    const source = new TestSource();
+
+    const syncController = new SyncController({ source, sink });
+    await syncController.prepare();
+    await syncController.start();
+
+    // Not awaited on purpose
+    syncController.startBackfill(
+      [{ tableRef: "public.test", primaryKeyAliases: new Map([["id", "id"]]) }],
+      "",
+    );
+
+    await expect(
+      syncController.startBackfill(
+        [{ tableRef: "public.test", primaryKeyAliases: new Map([["id", "id"]]) }],
+        "",
+      ),
+    ).rejects.toThrow();
+  });
+
+  test("sequential backfills", async () => {
+    const sink = new TestSink();
+    const source = new TestSource();
+    const syncController = new SyncController({ source, sink });
+
+    await syncController.prepare();
+    await syncController.start();
+
+    // First backfill
+    source.backfillRecords = [{ id: 1, name: "backfill-1" }];
+
+    const backfillPromise = syncController.startBackfill(
+      [{ tableRef: "public.test", primaryKeyAliases: new Map([["id", "id"]]) }],
+      "",
+    );
+
+    source.backfillResolve();
+    await backfillPromise;
+
+    // Second backfill
+    source.resetBackfillPromises();
+    source.backfillRecords = [{ id: 1, name: "backfill-2" }];
+
+    const secondBackfillPromise = syncController.startBackfill(
+      [{ tableRef: "public.test", primaryKeyAliases: new Map([["id", "id"]]) }],
+      "",
+    );
+
+    source.backfillResolve();
+    await secondBackfillPromise;
+
+    await syncController.stop();
+    expect(sink.receivedOperations).toEqual([
+      {
+        type: "insert",
+        keyColumns: ["id"],
+        new: { id: 1, name: "backfill-1" },
+      },
+      {
+        type: "insert",
+        keyColumns: ["id"],
+        new: { id: 1, name: "backfill-2" },
+      },
+    ]);
+  });
+
+  test("backfill times out", async () => {
+    const sink = new TestSink();
+    const source = new TestSource();
+    const syncController = new SyncController({ source, sink, backfillTimeoutMs: 1 });
+
+    await syncController.prepare();
+    await syncController.start();
+
+    source.backfillRecords = [{ id: 1, name: "backfill" }];
+    const backfillPromise = syncController.startBackfill(
+      [{ tableRef: "public.test", primaryKeyAliases: new Map([["id", "id"]]) }],
+      "",
+    );
+
+    setTimeout(() => {
+      // Timeouts are only evaluated as new transactions come in
+      source.emit([
+        {
+          type: "insert",
+          keyColumns: ["id"],
+          table: "test",
+          tableSchema: "public",
+          new: { id: 1, name: "wal" },
+        },
+      ]);
+
+      source.backfillResolve();
+    }, 5);
+
+    await backfillPromise;
+    await syncController.stop();
+    expect(sink.receivedOperations).toEqual([
+      {
+        type: "insert",
+        keyColumns: ["id"],
+        new: { id: 1, name: "wal" },
       },
     ]);
   });
