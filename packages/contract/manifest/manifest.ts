@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { PostgresConnectionSchema, PostgresTransformationSchema } from "./postgres/postgres";
-import JsonSchemaSchema from "./json-schema";
+import { PostgresConnectionSchema, PostgresTransformationSchema } from "../postgres/postgres";
+import { JsonSchemaSchema } from "../json-schema";
 
 export const ConnectionConfigSchema = z.discriminatedUnion("connectionType", [
   PostgresConnectionSchema,
@@ -32,12 +32,20 @@ export const PublicSchemaSchema = z.object({
   }),
   outputSchema: JsonSchemaSchema,
   transformations: z.array(TransformationSchema),
-  version: z.string(),
+  version: z.object({
+    major: z.number(),
+    minor: z.number(),
+  }),
 });
 
 export const SyncManifestSchema = z.object({
+  slug: z.string(),
+  manifestVersion: z.number(),
+
   connections: z.array(ConnectionSchema),
   dataStores: z.array(DataStoreSchema),
   eventStores: z.array(EventStoreSchema),
-  schemas: z.array(PublicSchemaSchema),
+  publicSchemas: z.array(PublicSchemaSchema),
 });
+
+export { writeManifest } from "./manifest.fs.ts";

@@ -14,3 +14,7 @@ pre-commit:
       run: cd apps/controller-spa && bun check
     - name: type-check rejot-cli
       run: cd apps/rejot-cli && bun check
+    - name: type-check api-interface-controller
+      run: cd packages/api-interface-controller && bun check
+    - name: type-check contract
+      run: cd packages/contract && bun check

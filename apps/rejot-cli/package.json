@@ -9,6 +9,7 @@
     "rejot-cli": "./bin/run.js"
   },
   "devDependencies": {
+    "@oclif/test": "^4.1.12",
     "@types/bun": "^1.2.2",
     "@types/node": "^22.13.4"
   },
@@ -18,6 +19,7 @@
   "dependencies": {
     "@oclif/core": "^4.2.8",
     "@rejot/sync": "*",
+    "@rejot/contract": "*",
     "@types/debug": "^4.1.12",
     "debug": "^4.4.0",
     "oclif": "^4.17.34"
@@ -29,7 +31,7 @@
       "target": "./src/index.ts",
       "identifier": "commands"
     },
-    "dirname": "sync",
+    "dirname": "rejot-cli",
     "topicSeparator": " "
   }
 }

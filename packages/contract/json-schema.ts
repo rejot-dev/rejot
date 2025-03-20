@@ -172,6 +172,3 @@ export const ObjectSchema = createSpecializedSchema("object", {
   dependsOn: z.record(z.string(), z.unknown()).optional(),
   dependencies: z.record(z.string(), z.union([z.array(z.string()), JsonSchemaSchema])).optional(),
 });
-
-// Export the main schema
-export default JsonSchemaSchema;
