@@ -8,6 +8,7 @@ import type {
   PublicSchemaOperation,
   Transaction,
 } from "../source-sink-protocol.ts";
+import { PG_DUPLICATE_OBJECT } from "../postgres/postgres-error-codes.ts";
 
 const log = logger.createLogger("pg-source");
 
@@ -190,22 +191,18 @@ export class PostgresSource implements IDataSource {
         `);
       log.debug(`Publication '${this.#publicationName}' created successfully`);
     } else {
-      // Check if watermarks table is already in the publication
-      const tableInPublication = await this.#client.query(
-        `
-        SELECT 1 FROM pg_publication_tables 
-        WHERE pubname = $1 
-        AND schemaname = 'rejot' 
-        AND tablename = 'watermarks'
-      `,
-        [this.#publicationName],
-      );
-
-      if (tableInPublication.rows.length === 0) {
+      // Ensure watermarks table is in publication
+      try {
         await this.#client.query(`
           ALTER PUBLICATION ${this.#publicationName} ADD TABLE rejot.watermarks
         `);
         log.debug(`Added rejot.watermarks table to publication '${this.#publicationName}'`);
+      } catch (error) {
+        if (error instanceof Error && "code" in error && error.code === PG_DUPLICATE_OBJECT) {
+          log.debug(`ReJot watermark table already in '${this.#publicationName}' publication`);
+        } else {
+          throw error;
+        }
       }
       log.debug(`Publication '${this.#publicationName}' already exists`);
     }

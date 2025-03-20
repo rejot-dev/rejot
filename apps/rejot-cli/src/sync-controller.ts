@@ -62,36 +62,40 @@ export class SyncController {
 
   #resultSet: ResultSetStore = new ResultSetStore();
 
+  #ready: boolean = false;
+
   constructor({ source, sink }: SyncControllerConfig) {
     this.#source = source;
     this.#sink = sink;
   }
 
+  async prepare(): Promise<void> {
+    if (this.#ready) {
+      return;
+    }
+    await Promise.all([this.#source.prepare(), this.#sink.prepare()]);
+    this.#ready = true;
+  }
+
   async start(): Promise<void> {
+    if (!this.#ready) {
+      throw new Error("Sync Controller is not ready, call prepare() first.");
+    }
+
     log.info("Initializing sync process...");
-
-    // Connect to source and sink
-    await this.#source.prepare();
-    await this.#sink.prepare();
-
     // Start listening for changes
     await this.#source.subscribe(this.#processTransaction.bind(this));
   }
 
   async stop(): Promise<void> {
     try {
-      await this.#source.stop();
+      await Promise.all([this.#source.stop(), this.#sink.stop()]);
     } catch (error) {
-      log.error("Error stopping source:", error);
-    }
-    try {
-      await this.#sink.stop();
-    } catch (error) {
-      log.error("Error stopping sink:", error);
+      log.error("Error stopping source or sink:", error);
     }
   }
 
-  async flushResultSet(): Promise<void> {
+  async #flushResultSet(): Promise<void> {
     let flushCount = 0;
     for (const [keyColumns, record] of this.#resultSet.getRecordsWithoutDropKeys()) {
       const operation = recordToPublicSchemaOperation(keyColumns, record);
@@ -127,7 +131,7 @@ export class SyncController {
         this.#backfillLowMarkerSeen = true;
       } else {
         this.#backfillLowMarkerSeen = false;
-        await this.flushResultSet();
+        await this.#flushResultSet();
       }
       log.trace(
         `Backfill ${watermark.type} watermark received: ${transaction.id} for backfill ${watermark.backfillId}`,
@@ -175,6 +179,11 @@ export class SyncController {
   ): Promise<string> {
     if (this.#backfillLowMarkerSeen) {
       throw new Error("Starting new backfill while we haven't completed a previous one!");
+    }
+    if (!this.#ready) {
+      throw new Error(
+        "Sync controller not ready, a replication slot must have been created before starting backfill process.",
+      );
     }
 
     const backfillId = crypto.randomUUID();
