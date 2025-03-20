@@ -220,6 +220,7 @@ export default class SyncCommand extends Command {
 
     // Start the sync process
     try {
+      await syncController.prepare();
       const syncProcess = syncController.start();
 
       if (backfillFrom) {

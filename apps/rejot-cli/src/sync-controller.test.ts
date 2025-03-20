@@ -104,6 +104,7 @@ describe("Simple Sync Controller Operations", () => {
     const sink = new TestSink();
     const source = new TestSource();
     const syncController = new SyncController({ source, sink });
+    await syncController.prepare();
     await syncController.start();
 
     await source.emit([
@@ -130,6 +131,7 @@ describe("Simple Sync Controller Operations", () => {
     const sink = new TestSink();
     const source = new TestSource();
     const syncController = new SyncController({ source, sink });
+    await syncController.prepare();
     await syncController.start();
 
     await source.emit([
@@ -156,6 +158,7 @@ describe("Simple Sync Controller Operations", () => {
     const sink = new TestSink();
     const source = new TestSource();
     const syncController = new SyncController({ source, sink });
+    await syncController.prepare();
     await syncController.start();
 
     await source.emit([
@@ -180,7 +183,7 @@ describe("Simple Sync Controller Operations", () => {
 describe("Backfills for Sync Controller", () => {
   // TODO: test what happens if we never see the 'high' watermark
   // TODO: The replication stream can include updates from multiple tables, currently store just the primary key
-  test("backfill with updates", async () => {
+  test("backfill while updates come in", async () => {
     const sink = new TestSink();
     const source = new TestSource();
     source.backfillRecords = [
@@ -190,12 +193,13 @@ describe("Backfills for Sync Controller", () => {
     ];
 
     const syncController = new SyncController({ source, sink });
+    await syncController.prepare();
     await syncController.start();
 
     // NOTE: this sql in not executed by the TestSource, just illustrative for the test case
     const backfillPromise = syncController.startBackfill(
       [{ tableRef: "public.test", primaryKeyAliases: new Map([["id", "id"]]) }],
-      `SELECT * FROM public.test WHERE id >= $1`,
+      "SELECT * FROM public.test WHERE id >= $1",
       [1],
     );
 
@@ -272,6 +276,7 @@ describe("Backfills for Sync Controller", () => {
     ];
 
     const syncController = new SyncController({ source, sink });
+    await syncController.prepare();
     await syncController.start();
 
     // NOTE: this sql in not executed by the TestSource, just illustrative for the test case
@@ -285,7 +290,7 @@ describe("Backfills for Sync Controller", () => {
           ]),
         },
       ],
-      `SELECT * FROM backfill WHERE pkeya >= $1 AND pkeyb >= $2`,
+      "SELECT * FROM backfill WHERE pkeya >= $1 AND pkeyb >= $2",
       [1, 1],
     );
 
