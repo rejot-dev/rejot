@@ -5,7 +5,7 @@ import type {
   PublicSchemaOperation,
 } from "./source-sink-protocol.ts";
 import logger from "./logger.ts";
-import { BACKFILL_TIMEOUT_SECONDS } from "./const.ts";
+import { DEFAULT_BACKFILL_TIMEOUT_MS } from "./const.ts";
 import { type BackfillSource, ResultSetStore } from "./result-set-store.ts";
 
 const log = logger.createLogger("sync-controller");
@@ -13,6 +13,7 @@ const log = logger.createLogger("sync-controller");
 type SyncControllerConfig = {
   source: IDataSource;
   sink: IDataSink;
+  backfillTimeoutMs?: number;
 };
 
 type BackfillWatermark = {
@@ -63,10 +64,15 @@ export class SyncController {
   #resultSet: ResultSetStore = new ResultSetStore();
 
   #ready: boolean = false;
+  #backfillTimeoutMs: number = DEFAULT_BACKFILL_TIMEOUT_MS;
 
-  constructor({ source, sink }: SyncControllerConfig) {
+  constructor({ source, sink, backfillTimeoutMs }: SyncControllerConfig) {
     this.#source = source;
     this.#sink = sink;
+
+    if (backfillTimeoutMs) {
+      this.#backfillTimeoutMs = backfillTimeoutMs;
+    }
   }
 
   async prepare(): Promise<void> {
@@ -148,10 +154,10 @@ export class SyncController {
 
       // Check here for backfill timeout
       if (this.#currentBackfillStartTime) {
-        const backfillDuration = new Date().getTime() - this.#currentBackfillStartTime.getTime();
-        if (backfillDuration > BACKFILL_TIMEOUT_SECONDS) {
+        const backfillDurationMs = new Date().getTime() - this.#currentBackfillStartTime.getTime();
+        if (backfillDurationMs > this.#backfillTimeoutMs) {
           log.warn(
-            `Backfill ${this.#currentBackfillId} timed out after ${BACKFILL_TIMEOUT_SECONDS} seconds`,
+            `Backfill ${this.#currentBackfillId} timed out after ${this.#backfillTimeoutMs} ms`,
           );
           this.#backfillLowMarkerSeen = false;
           this.#resultSet.clear();
