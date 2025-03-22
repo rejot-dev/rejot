@@ -6,7 +6,7 @@ import type {
   MessageDelete,
 } from "pg-logical-replication/dist/output-plugins/pgoutput/pgoutput.types";
 import { RejotPgOutputPlugin } from "./pgoutput-plugin.ts";
-import { assertUnreachable } from "../asserts.ts";
+import { assertUnreachable } from "./util/asserts.ts";
 
 type ConnectionConfig = {
   host?: string;

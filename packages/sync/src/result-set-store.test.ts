@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { ResultSetStore } from "./result-set-store";
+import { ResultSetStore } from "./result-set-store.ts";
 
 describe("Result set store", () => {
   test("Result set key parsing", () => {

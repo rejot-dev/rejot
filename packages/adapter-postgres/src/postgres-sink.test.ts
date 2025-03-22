@@ -1,7 +1,7 @@
-import { pgRollbackDescribe } from "../postgres/postgres-test-utils.ts";
 import { test, expect } from "bun:test";
-import { PostgresSink } from "./postgres-sink.ts";
 import type { Client } from "pg";
+import { pgRollbackDescribe } from "./util/postgres-test-utils";
+import { PostgresSink } from "./postgres-sink.ts";
 
 const TEST_TABLE_NAME = "test_pg_sink";
 const TEST_CONSUMER_SCHEMA = `INSERT INTO ${TEST_TABLE_NAME} (id, name) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET name = $2`;

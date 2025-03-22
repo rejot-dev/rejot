@@ -1,10 +1,10 @@
 import type {
   IDataSink,
   IDataSource,
+  Transaction,
   TableOperation,
   PublicSchemaOperation,
-  Transaction,
-} from "./source-sink-protocol.ts";
+} from "@rejot/contract/sync";
 import { SyncController } from "./sync-controller.ts";
 import { describe, test, expect } from "bun:test";
 

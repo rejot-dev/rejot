@@ -1,4 +1,4 @@
-import type { TableOperation } from "./source-sink-protocol";
+import type { TableOperation } from "@rejot/contract/sync";
 
 type ResultSetKey = string;
 

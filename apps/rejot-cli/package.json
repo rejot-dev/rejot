@@ -20,6 +20,7 @@
     "@oclif/core": "^4.2.8",
     "@rejot/sync": "*",
     "@rejot/contract": "*",
+    "@rejot/adapter-postgres": "*",
     "@types/debug": "^4.1.12",
     "debug": "^4.4.0",
     "oclif": "^4.17.34"

@@ -1,4 +1,4 @@
-import type { IDataSink, PublicSchemaOperation } from "../source-sink-protocol.ts";
+import type { IDataSink, PublicSchemaOperation } from "@rejot/contract/sync";
 
 type StdoutOutputSchema = {
   operation: string;

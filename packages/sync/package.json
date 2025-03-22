@@ -1,16 +1,16 @@
 {
   "name": "@rejot/sync",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "exports": {
+    "./consts": "./src/sync-consts.ts",
+    "./sync-controller": "./src/sync-controller.ts"
+  },
+  "private": true,
   "scripts": {
     "check": "tsc --noEmit"
   },
-  "exports": {
-    "./postgres": "./src/postgres/postgres-replication-listener.ts"
-  },
-  "private": true,
   "type": "module",
   "dependencies": {
-    "pg": "^8.13.3",
-    "pg-logical-replication": "^2.0.7"
+    "@rejot/contract": "*"
   }
 }

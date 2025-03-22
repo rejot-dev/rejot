@@ -3,10 +3,10 @@ import type {
   IDataSink,
   Transaction,
   PublicSchemaOperation,
-} from "./source-sink-protocol.ts";
-import logger from "./logger.ts";
-import { DEFAULT_BACKFILL_TIMEOUT_MS } from "./const.ts";
-import { type BackfillSource, ResultSetStore } from "./result-set-store.ts";
+} from "@rejot/contract/sync";
+import logger from "@rejot/contract/logger";
+import { ResultSetStore, type BackfillSource } from "./result-set-store";
+import { DEFAULT_BACKFILL_TIMEOUT_MS } from "./sync-consts";
 
 const log = logger.createLogger("sync-controller");
 
@@ -28,11 +28,11 @@ export function watermarkFromTransaction(transaction: Transaction): BackfillWate
       operation.table === "watermarks" &&
       operation.tableSchema == "rejot"
     ) {
-      const watermark = operation.new.type;
+      const watermark = operation.new["type"];
       if (watermark === "low" || watermark === "high") {
         return {
           type: watermark,
-          backfillId: operation.new.backfill as string,
+          backfillId: operation.new["backfill"] as string,
         };
       } else {
         throw new Error(`Unknown watermark type: ${watermark}`);
