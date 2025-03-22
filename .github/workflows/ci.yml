@@ -9,6 +9,9 @@ on:
 jobs:
   install:
     runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.get-packages.outputs.packages }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -27,6 +30,10 @@ jobs:
             node_modules
             */*/node_modules
           key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
+
+      - name: Define packages
+        id: get-packages
+        run: echo "packages=$(./scripts/list_workspace_packages.sh)" >> $GITHUB_OUTPUT
 
   check-prettier:
     needs: install
@@ -72,9 +79,14 @@ jobs:
       - name: Run linter
         run: bun run lint
 
-  typecheck-controller:
+  typecheck:
     needs: install
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{ fromJSON(needs.install.outputs.packages) }}
+      fail-fast: false
+
     steps:
       - uses: actions/checkout@v4
 
@@ -91,123 +103,8 @@ jobs:
             */*/node_modules
           key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
-      - name: Type check controller
-        working-directory: apps/controller
-        run: bun check
-
-  typecheck-controller-spa:
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Restore dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            node_modules
-            */*/node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
-
-      - name: Type check controller-spa
-        working-directory: apps/controller-spa
-        run: bun check
-
-  typecheck-api-interface:
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Restore dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            node_modules
-            */*/node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
-
-      - name: Type check api-interface-controller
-        working-directory: packages/api-interface-controller
-        run: bun check
-
-  typecheck-contract:
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Restore dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            node_modules
-            */*/node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
-
-      - name: Type check contract
-        working-directory: packages/contract
-        run: bun check
-
-  typecheck-rejot-cli:
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Restore dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            node_modules
-            */*/node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
-
-      - name: Type check rejot-cli
-        working-directory: apps/rejot-cli
-        run: bun check
-
-  typecheck-adapter-postgres:
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Restore dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            node_modules
-            */*/node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
-
-      - name: Type check adapter-postgres
-        working-directory: packages/adapter-postgres
+      - name: Type check ${{ matrix.package }}
+        working-directory: ${{ matrix.package }}
         run: bun check
 
   check-package-sync:
