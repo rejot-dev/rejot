@@ -1,10 +1,10 @@
-import type { IDataSource, IDataSink } from "./source-sink-protocol.ts";
-import { PostgresSource } from "./sources/postgres-source.ts";
-import { PostgresSink } from "./sinks/postgres-sink.ts";
+import type { IDataSource, IDataSink } from "@rejot/contract/sync";
 import { StdoutSink } from "./sinks/stdout-sink.ts";
 import { FileSink } from "./sinks/file-sink.ts";
 import { Client } from "pg";
-import { SUPPORTED_SCHEMES, type ConnectionScheme } from "./const.ts";
+import { SUPPORTED_SCHEMES, type ConnectionScheme } from "./rejot-cli-consts.ts";
+import { PostgresSource } from "@rejot/adapter-postgres/source";
+import { PostgresSink } from "@rejot/adapter-postgres/sink";
 
 /**
  * Create a source and sink based on the connection strings

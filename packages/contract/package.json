@@ -9,7 +9,9 @@
     "./manifest.fs": "./manifest/manifest.fs.ts",
     "./collect": "./collect/collect.ts",
     "./public-schema": "./public-schema/public-schema.ts",
-    "./postgres": "./postgres/postgres.ts"
+    "./postgres": "./postgres/postgres.ts",
+    "./sync": "./sync/sync.ts",
+    "./logger": "./logger/logger.ts"
   },
   "private": true,
   "type": "module",

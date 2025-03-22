@@ -3,7 +3,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "lint:fix": "eslint --fix ."
+    "lint:fix": "eslint --fix .",
+    "pre-commit": "bunx lefthook run pre-commit"
   },
   "engines": {
     "node": ">=22"

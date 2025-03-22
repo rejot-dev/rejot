@@ -1,14 +1,15 @@
 import { Client } from "pg";
-import { PostgresReplicationListener } from "@rejot/sync/postgres";
-import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "../const.ts";
-import logger from "../logger.ts";
+import logger from "@rejot/contract/logger";
 import type {
   IDataSource,
-  TableOperation,
-  PublicSchemaOperation,
   Transaction,
-} from "../source-sink-protocol.ts";
-import { PG_DUPLICATE_OBJECT } from "../postgres/postgres-error-codes.ts";
+  PublicSchemaOperation,
+  TableOperation,
+} from "@rejot/contract/sync";
+import { DEFAULT_SLOT_NAME } from "./postgres-consts";
+import { PostgresReplicationListener } from "./postgres-replication-listener";
+import { DEFAULT_PUBLICATION_NAME } from "./postgres-consts";
+import { PG_DUPLICATE_OBJECT } from "./util/postgres-error-codes";
 
 const log = logger.createLogger("pg-source");
 

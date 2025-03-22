@@ -1,7 +1,7 @@
-import { pgDescribe } from "../postgres/postgres-test-utils.ts";
 import { test, expect, beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
 import { PostgresSource } from "./postgres-source.ts";
-import { watermarkFromTransaction } from "../sync-controller.ts";
+import { pgDescribe } from "./util/postgres-test-utils.ts";
+import { watermarkFromTransaction } from "@rejot/sync/sync-controller";
 
 const TEST_TABLE_NAME = "test_pg_source";
 const TEST_PUBLICATION_NAME = "test_publication";
@@ -112,7 +112,7 @@ pgDescribe("PostgreSQL Source tests", (ctx) => {
       expect(operation.type).toBe("insert");
       expect(operation.keyColumns).toEqual(["id"]);
       if (operation.type === "insert") {
-        expect(operation.new.type).toBe("low");
+        expect(operation.new["type"]).toBe("low");
       }
       expect(watermarkFromTransaction(transaction)).toEqual({
         type: "low",
@@ -134,7 +134,7 @@ pgDescribe("PostgreSQL Source tests", (ctx) => {
       [1],
     );
     expect(result.length).toBe(1);
-    expect(result[0].id).toBe("1");
-    expect(result[0].name).toBe("Pre-existing row");
+    expect(result[0]["id"]).toBe("1");
+    expect(result[0]["name"]).toBe("Pre-existing row");
   });
 });

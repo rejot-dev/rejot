@@ -1,0 +1,20 @@
+{
+  "name": "@rejot/adapter-postgres",
+  "version": "0.0.1",
+  "exports": {
+    "./replication-listener": "./src/postgres-replication-listener.ts",
+    "./consts": "./src/postgres-consts.ts",
+    "./source": "./src/postgres-source.ts",
+    "./sink": "./src/postgres-sink.ts"
+  },
+  "private": true,
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "type": "module",
+  "dependencies": {
+    "@rejot/contract": "*",
+    "pg": "^8.14.1",
+    "pg-logical-replication": "^2.0.7"
+  }
+}

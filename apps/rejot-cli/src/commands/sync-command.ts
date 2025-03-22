@@ -1,15 +1,11 @@
 import { Command, Flags } from "@oclif/core";
 import fs from "node:fs/promises";
 
-import {
-  DEFAULT_PUBLICATION_NAME,
-  SUPPORTED_SINK_SCHEMES,
-  SUPPORTED_SOURCE_SCHEMES,
-} from "../const.ts";
-import logger, { setLogLevel, type LogLevel } from "../logger.ts";
+import { SUPPORTED_SINK_SCHEMES, SUPPORTED_SOURCE_SCHEMES } from "../rejot-cli-consts.ts";
+import logger, { setLogLevel, type LogLevel } from "@rejot/contract/logger";
 import { createSourceAndSink, parseConnectionString } from "../factory.ts";
-import { SyncController } from "../sync-controller.ts";
-import type { BackfillSource } from "../result-set-store.ts";
+import { DEFAULT_PUBLICATION_NAME } from "@rejot/adapter-postgres/consts";
+import { SyncController } from "@rejot/sync/sync-controller";
 
 const log = logger.createLogger("cli");
 export default class SyncCommand extends Command {
@@ -73,7 +69,7 @@ export default class SyncCommand extends Command {
     }),
   };
 
-  private parseBackfillPrimaryKeys(backfillPrimaryKeys: string[]): BackfillSource[] {
+  private parseBackfillPrimaryKeys(backfillPrimaryKeys: string[]) {
     // Parses cli argument for backfill primary keys into BackfillSource
     // Doesn't support tables with more than one primary key
     // Examples:
@@ -147,15 +143,15 @@ export default class SyncCommand extends Command {
     const { args: _args, flags } = await this.parse(SyncCommand);
 
     const {
-      source: sourceConn,
-      sink: sinkConn,
-      "backfill-from": backfillFrom,
+      source: sourceConnection,
+      sink: sinkConnection,
       "public-schema": publicSchemaPath,
       "consumer-schema": consumerSchemaPath,
       "pg-publication-name": publicationName,
       "pg-create-publication": createPublication,
       "log-level": logLevel,
       "backfill-primary-key": backfillPrimaryKeys,
+      "backfill-from": backfillFrom,
     } = flags;
 
     this.validateInputs(flags);
@@ -189,8 +185,8 @@ export default class SyncCommand extends Command {
     log.info("SQL transformation file(s) read successfully");
 
     const { source, sink } = createSourceAndSink(
-      sourceConn,
-      sinkConn,
+      sourceConnection,
+      sinkConnection,
       publicSchemaSQL,
       consumerSchemaSQL,
       {

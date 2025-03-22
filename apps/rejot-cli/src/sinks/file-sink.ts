@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
-import logger from "../logger.ts";
-import type { IDataSink, PublicSchemaOperation } from "../source-sink-protocol.ts";
+import logger from "@rejot/contract/logger";
+import type { IDataSink, PublicSchemaOperation } from "@rejot/contract/sync";
 
 const log = logger.createLogger("file-sink");
 

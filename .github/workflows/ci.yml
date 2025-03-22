@@ -164,6 +164,79 @@ jobs:
         working-directory: packages/contract
         run: bun check
 
+  typecheck-rejot-cli:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
+
+      - name: Type check rejot-cli
+        working-directory: apps/rejot-cli
+        run: bun check
+
+  typecheck-adapter-postgres:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
+
+      - name: Type check adapter-postgres
+        working-directory: packages/adapter-postgres
+        run: bun check
+
+  check-package-sync:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
+
+      - name: Type check sync
+        working-directory: packages/sync
+        run: bun check
+
+      - name: Run sync tests
+        working-directory: packages/sync
+        run: bun test
+
   test-postgres:
     needs: install
     runs-on: ubuntu-latest
@@ -232,6 +305,12 @@ jobs:
 
       - name: Run rejot-cli (database) tests
         working-directory: apps/rejot-cli
+        env:
+          REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
+        run: bun test
+
+      - name: Run adapter-postgres (database) tests
+        working-directory: packages/adapter-postgres
         env:
           REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
         run: bun test
