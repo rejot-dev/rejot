@@ -50,9 +50,7 @@ describe("ManifestDataStore commands", () => {
     test("error on missing required flags", async () => {
       const result = await runCommand(`manifest:datastore:add --manifest ${manifestPath}`);
 
-      expect(result.error?.message).toContain(
-        "--connection and --publication are required for add",
-      );
+      expect(result.error?.message).toContain("--connection is required for add");
     });
   });
 

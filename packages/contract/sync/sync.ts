@@ -1,52 +1,63 @@
 type OperationType = "insert" | "update" | "delete";
 
-// Table operations, i.e. data mutations to a table used to generate a public schema
-export type TableOperation = {
+/**
+ * Table operations, i.e. data mutations to a table used to generate a public schema.
+ *
+ * @TODO tableSchema is postgres specific and should be removed.
+ */
+export interface TableOperationBase {
   type: OperationType;
-} & (
-  | {
-      type: "insert";
-      keyColumns: string[];
-      table: string;
-      tableSchema: string;
-      new: Record<string, unknown>;
-    }
-  | {
-      type: "update";
-      keyColumns: string[];
-      table: string;
-      tableSchema: string;
-      new: Record<string, unknown>;
-    }
-  | {
-      type: "delete";
-      keyColumns: string[];
-      table: string;
-      tableSchema: string;
-    }
-);
+  keyColumns: string[];
+  table: string;
+  tableSchema: string;
+}
 
-// Public schema operations, i.e. data mutations after the public schema transformations have been applied
-export type PublicSchemaOperation = {
+export interface TableOperationInsert extends TableOperationBase {
+  type: "insert";
+  new: Record<string, unknown>;
+}
+
+export interface TableOperationUpdate extends TableOperationBase {
+  type: "update";
+  new: Record<string, unknown>;
+}
+
+export interface TableOperationDelete extends TableOperationBase {
+  type: "delete";
+}
+
+export type TableOperation = TableOperationInsert | TableOperationUpdate | TableOperationDelete;
+
+/** Public schema operations, i.e. data mutations after the public schema transformations have been applied */
+export interface PublicSchemaOperationBase {
   type: OperationType;
-} & (
-  | {
-      type: "insert";
-      keyColumns: string[];
-      new: Record<string, unknown>;
-    }
-  | {
-      type: "update";
-      keyColumns: string[];
-      new: Record<string, unknown>;
-    }
-  | {
-      type: "delete";
-      keyColumns: string[];
-    }
-);
+  keyColumns: string[];
+}
+
+export interface PublicSchemaOperationInsert extends PublicSchemaOperationBase {
+  type: "insert";
+  new: Record<string, unknown>;
+}
+
+export interface PublicSchemaOperationUpdate extends PublicSchemaOperationBase {
+  type: "update";
+  new: Record<string, unknown>;
+}
+
+export interface PublicSchemaOperationDelete extends PublicSchemaOperationBase {
+  type: "delete";
+}
+
+export type PublicSchemaOperation =
+  | PublicSchemaOperationInsert
+  | PublicSchemaOperationUpdate
+  | PublicSchemaOperationDelete;
 
 export type Transaction = {
+  /** Unique identifier of the transaction, should indicate position in the log and be monotonically increasing.
+   *
+   * @example the Postgres WAL's LSN
+   */
   id: string;
   operations: TableOperation[];
 };

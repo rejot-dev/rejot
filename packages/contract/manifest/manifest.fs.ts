@@ -15,6 +15,7 @@ const emptyManifest: Manifest = {
   dataStores: [],
   eventStores: [],
   publicSchemas: [],
+  consumerSchemas: [],
 };
 
 export async function writeManifest(manifest: Manifest, path: string) {

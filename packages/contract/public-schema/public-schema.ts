@@ -4,7 +4,7 @@ import type { z } from "zod";
 import { PublicSchemaSchema } from "../manifest/manifest.ts";
 import type { JsonSchemaSchema } from "../json-schema.ts";
 
-export type Transformation = {
+export type PublicSchemaTransformation = {
   transformationType: "postgresql";
   table: string;
   sql: string;
@@ -23,7 +23,7 @@ export type CreatePublicSchemaOptions<T extends z.ZodSchema> = {
 
   outputSchema: T;
 
-  transformations: Transformation[];
+  transformation: PublicSchemaTransformation;
 
   version: Version;
 };
@@ -36,7 +36,7 @@ export type PublicSchemaOptions = {
 
   outputSchema: z.infer<typeof JsonSchemaSchema>;
 
-  transformations: Transformation[];
+  transformation: PublicSchemaTransformation;
 
   version: Version;
 };
@@ -60,22 +60,18 @@ export class PublicSchema {
       throw new InvalidPublicationError("Publication must have at least one table");
     }
 
-    if (options.transformations.length === 0) {
-      throw new InvalidPublicationError("Publication must have at least one transformation");
-    }
-
     this.#name = name;
     this.#options = options;
   }
 
   get data(): z.infer<typeof PublicSchemaSchema> {
-    const { source, outputSchema, transformations, version } = this.#options;
+    const { source, outputSchema, transformation, version } = this.#options;
 
     return {
       name: this.#name,
       source,
       outputSchema,
-      transformations,
+      transformation,
       version,
     };
   }
@@ -92,15 +88,22 @@ export function createPublicSchema<T extends z.ZodSchema>(
   return new PublicSchema(publicSchemaName, {
     source: options.source,
     outputSchema: jsonSchema,
-    transformations: options.transformations,
+    transformation: options.transformation,
     version: options.version,
   });
 }
 
 export function deserializePublicSchema(schema: string): PublicSchema {
-  const { name, source, outputSchema, transformations, version } = PublicSchemaSchema.parse(
+  const { name, source, outputSchema, transformation, version } = PublicSchemaSchema.parse(
     JSON.parse(schema),
   );
 
-  return new PublicSchema(name, { source, outputSchema, transformations, version });
+  return new PublicSchema(name, {
+    source,
+    outputSchema,
+    transformation,
+    version,
+  });
 }
+
+export { type IPublicSchemaTransformationRepository } from "./public-schema-transformation.repository";

@@ -2,8 +2,9 @@ import { resolve } from "node:path";
 
 import { z } from "zod";
 
-import { PublicSchemaSchema } from "../manifest/manifest.ts";
+import { PublicSchemaSchema, ConsumerSchemaSchema } from "../manifest/manifest.ts";
 import { PublicSchema } from "../public-schema/public-schema.ts";
+import { ConsumerSchema } from "../consumer-schema/consumer-schema.ts";
 
 export async function collectPublicSchemas(
   modulePath: string,
@@ -33,4 +34,31 @@ export async function collectPublicSchemas(
   }
 
   return publicSchemas.map((schema) => schema.data);
+}
+
+export async function collectConsumerSchemas(
+  modulePath: string,
+): Promise<z.infer<typeof ConsumerSchemaSchema>[]> {
+  const module = await import(resolve(process.cwd(), modulePath));
+
+  const consumerSchemas: ConsumerSchema[] = [];
+
+  if (!module.default) {
+    console.warn(`No default export found in ${modulePath}`);
+    return [];
+  }
+
+  for (const item of Object.values(module.default)) {
+    if (Array.isArray(item)) {
+      for (const arrayItem of item) {
+        if (arrayItem instanceof ConsumerSchema) {
+          consumerSchemas.push(arrayItem);
+        }
+      }
+    } else if (item instanceof ConsumerSchema) {
+      consumerSchemas.push(item);
+    }
+  }
+
+  return consumerSchemas.map((schema) => schema.data);
 }

@@ -1,7 +1,7 @@
 import SyncCommand from "./commands/sync-command.ts";
 import CollectCommand from "./commands/collect-command.ts";
-import ManifestCommand from "./commands/manifest-command.ts";
-import ManifestInitCommand from "./commands/manifest-init.command.ts";
+import { ManifestInfoCommand } from "./commands/manifest/manifest-info.command.ts";
+import { ManifestInitCommand } from "./commands/manifest/manifest-init.command.ts";
 import { ManifestConnectionAddCommand } from "./commands/manifest-connection/manifest-connection-add.command.ts";
 import { ManifestConnectionRemoveCommand } from "./commands/manifest-connection/manifest-connection-remove.command.ts";
 import { ManifestConnectionListCommand } from "./commands/manifest-connection/manifest-connection-list.command.ts";
@@ -12,11 +12,12 @@ import { ManifestDataStoreListCommand } from "./commands/manifest-datastore/mani
 import { ManifestEventStoreAddCommand } from "./commands/manifest-eventstore/manifest-eventstore-add.command.ts";
 import { ManifestEventStoreRemoveCommand } from "./commands/manifest-eventstore/manifest-eventstore-remove.command.ts";
 import { ManifestEventStoreListCommand } from "./commands/manifest-eventstore/manifest-eventstore-list.command.ts";
+import { ManifestSyncCommand } from "./commands/manifest/manifest-sync.command.ts";
 
 export const commands = {
   sync: SyncCommand,
   collect: CollectCommand,
-  manifest: ManifestCommand,
+  "manifest:info": ManifestInfoCommand,
   "manifest:init": ManifestInitCommand,
   "manifest:connection:add": ManifestConnectionAddCommand,
   "manifest:connection:remove": ManifestConnectionRemoveCommand,
@@ -28,4 +29,5 @@ export const commands = {
   "manifest:eventstore:add": ManifestEventStoreAddCommand,
   "manifest:eventstore:remove": ManifestEventStoreRemoveCommand,
   "manifest:eventstore:list": ManifestEventStoreListCommand,
+  "manifest:sync": ManifestSyncCommand,
 };
