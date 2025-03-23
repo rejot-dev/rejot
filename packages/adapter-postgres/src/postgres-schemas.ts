@@ -1,4 +1,3 @@
-import type { Transformation } from "../public-schema/public-schema.ts";
 import { z } from "zod";
 
 export const PostgresConnectionSchema = z.object({
@@ -10,16 +9,13 @@ export const PostgresConnectionSchema = z.object({
   database: z.string(),
 });
 
-export const PostgresTransformationSchema = z.object({
+export const PostgresPublicSchemaTransformationSchema = z.object({
   transformationType: z.literal("postgresql"),
   table: z.string(),
   sql: z.string(),
 });
 
-export function createPostgresTransformation(table: string, sql: string): Transformation {
-  return {
-    transformationType: "postgresql",
-    table,
-    sql,
-  };
-}
+export const PostgresConsumerSchemaTransformationSchema = z.object({
+  transformationType: z.literal("postgresql"),
+  sql: z.string(),
+});

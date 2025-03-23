@@ -1,8 +1,9 @@
 import { Command, Flags } from "@oclif/core";
 import path from "node:path";
 import { readManifest } from "@rejot/contract/manifest.fs";
+import { verifyManifests } from "@rejot/contract/manifest";
 
-export default class ManifestCommand extends Command {
+export class ManifestInfoCommand extends Command {
   static override id = "manifest";
   static override description = `Display and manage Rejot manifest file for configuring data synchronization.
   
@@ -33,22 +34,30 @@ export default class ManifestCommand extends Command {
       description: "Path to manifest file",
       default: "./rejot-manifest.json",
     }),
-    json: Flags.boolean({
-      description: "Output in JSON format",
-      default: false,
-    }),
   };
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(ManifestCommand);
+    const { flags } = await this.parse(ManifestInfoCommand);
     const manifestPath = path.resolve(flags.manifest);
 
     try {
       const manifest = await readManifest(manifestPath);
 
-      if (flags.json) {
-        this.log(JSON.stringify(manifest, null, 2));
-        return;
+      const errors = verifyManifests([manifest]);
+
+      if (!errors.isValid) {
+        this.log("Manifest contains errors:");
+        for (const error of errors.errors) {
+          this.log(`  - ${error.message}`);
+          if (error.hint) {
+            this.log(`      Hint: ${error.hint.message}`);
+            if (error.hint.suggestions) {
+              this.log(`      Suggestions: ${error.hint.suggestions}`);
+            }
+          }
+          this.log("");
+        }
+        this.exit(1);
       }
 
       // Pretty print the manifest
@@ -102,13 +111,10 @@ export default class ManifestCommand extends Command {
         this.log("3. Add an event store:  rejot manifest eventstore add --connection my-target");
       }
     } catch (error) {
-      if (error instanceof Error) {
-        if ("code" in error && error.code === "ENOENT") {
-          this.error(
-            `Manifest file not found at ${manifestPath}. Use 'rejot manifest init' to create one.`,
-          );
-        }
-        this.error(`Failed to read manifest: ${error.message}`);
+      if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+        this.error(
+          `Manifest file not found at ${manifestPath}. Use 'rejot manifest init' to create one.`,
+        );
       }
       throw error;
     }

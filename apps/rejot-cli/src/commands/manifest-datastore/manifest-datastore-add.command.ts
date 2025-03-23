@@ -21,8 +21,8 @@ export class ManifestDataStoreAddCommand extends Command {
     const { flags } = await this.parse(ManifestDataStoreAddCommand);
     const manifestPath = path.resolve(flags.manifest);
 
-    if (!flags.connection || !flags.publication) {
-      this.error("--connection and --publication are required for add");
+    if (!flags.connection) {
+      this.error("--connection is required for add");
     }
 
     await validateConnection(manifestPath, flags.connection);
@@ -32,6 +32,7 @@ export class ManifestDataStoreAddCommand extends Command {
     manifest.dataStores.push({
       connectionSlug: flags.connection,
       publicationName: flags.publication,
+      slotName: flags.slot,
     });
 
     await writeManifest(manifest, manifestPath);

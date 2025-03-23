@@ -5,13 +5,16 @@
     "check": "tsc --noEmit"
   },
   "exports": {
+    "./adapter": "./adapter/adapter.ts",
+    "./collect": "./collect/collect.ts",
+    "./consumer-schema": "./consumer-schema/consumer-schema.ts",
+    "./event-store": "./event-store/event-store.ts",
+    "./logger": "./logger/logger.ts",
     "./manifest": "./manifest/manifest.ts",
     "./manifest.fs": "./manifest/manifest.fs.ts",
-    "./collect": "./collect/collect.ts",
-    "./public-schema": "./public-schema/public-schema.ts",
     "./postgres": "./postgres/postgres.ts",
-    "./sync": "./sync/sync.ts",
-    "./logger": "./logger/logger.ts"
+    "./public-schema": "./public-schema/public-schema.ts",
+    "./sync": "./sync/sync.ts"
   },
   "private": true,
   "type": "module",

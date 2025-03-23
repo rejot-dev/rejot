@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "exports": {
     "./consts": "./src/sync-consts.ts",
-    "./sync-controller": "./src/sync-controller.ts"
+    "./sync-controller": "./src/sync-controller.ts",
+    "./sync-manifest-controller": "./src/sync-manifest-controller.ts"
   },
   "private": true,
   "scripts": {

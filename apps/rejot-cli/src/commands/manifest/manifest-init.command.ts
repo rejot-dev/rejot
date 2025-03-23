@@ -2,7 +2,7 @@ import { Command, Flags } from "@oclif/core";
 import path from "node:path";
 import { initManifest } from "@rejot/contract/manifest.fs";
 
-export default class ManifestInitCommand extends Command {
+export class ManifestInitCommand extends Command {
   static override id = "manifest init";
   static override description = "Initialize a new manifest file";
 

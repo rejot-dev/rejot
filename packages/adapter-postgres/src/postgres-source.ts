@@ -9,7 +9,7 @@ import type {
 import { DEFAULT_SLOT_NAME } from "./postgres-consts";
 import { PostgresReplicationListener } from "./postgres-replication-listener";
 import { DEFAULT_PUBLICATION_NAME } from "./postgres-consts";
-import { PG_DUPLICATE_OBJECT } from "./util/postgres-error-codes";
+import { isPostgresError, PG_DUPLICATE_OBJECT } from "./util/postgres-error-codes";
 
 const log = logger.createLogger("pg-source");
 
@@ -75,6 +75,8 @@ export class PostgresSource implements IDataSource {
 
     // Create publication if it doesn't exist
     await this.#ensurePublication();
+
+    log.info("PostgresSource prepared");
   }
 
   async stop(): Promise<void> {
@@ -126,10 +128,29 @@ export class PostgresSource implements IDataSource {
     // Check if slot exists
     const slotResult = await this.#client.query(
       `
-      SELECT slot_name FROM pg_replication_slots WHERE slot_name = $1
+      SELECT slot_name, plugin, database FROM pg_replication_slots WHERE slot_name = $1
     `,
       [this.#slotName],
     );
+
+    log.debug(`Slot result: ${JSON.stringify(slotResult.rows)}`);
+
+    if (slotResult.rows.length === 1) {
+      const { plugin, database } = slotResult.rows[0];
+
+      if (this.#client.database !== database) {
+        throw new Error(
+          `Replication slot '${this.#slotName}' exists but is for a different database: '${database}'. ` +
+            `Expected database: '${this.#client.database}'. Please pick a different slot.`,
+        );
+      }
+
+      if (plugin !== "pgoutput") {
+        throw new Error(
+          `Replication slot '${this.#slotName}' exists but is using a different plugin: ${plugin}. Expected plugin: pgoutput`,
+        );
+      }
+    }
 
     if (slotResult.rows.length === 0) {
       log.debug(`Creating replication slot '${this.#slotName}'...`);
@@ -144,8 +165,6 @@ export class PostgresSource implements IDataSource {
       } catch (error) {
         throw new Error(`Failed to create replication slot: ${error}`);
       }
-    } else {
-      log.debug(`Replication slot '${this.#slotName}' already exists`);
     }
   }
 
@@ -173,12 +192,16 @@ export class PostgresSource implements IDataSource {
     // Check if publication exists
     const pubResult = await this.#client.query(
       `
-      SELECT pubname FROM pg_publication WHERE pubname = $1
+      SELECT pubname, puballtables FROM pg_publication WHERE pubname = $1
     `,
       [this.#publicationName],
     );
 
-    if (pubResult.rows.length === 0) {
+    log.debug(`Publication result: ${JSON.stringify(pubResult.rows)}`);
+
+    if (pubResult.rows.length === 1 && pubResult.rows[0].puballtables) {
+      log.debug(`Publication '${this.#publicationName}' exists FOR ALL TABLES.`);
+    } else if (pubResult.rows.length === 0) {
       if (!this.#createPublication) {
         throw new Error(
           `Publication '${this.#publicationName}' does not exist and create-publication is set to false`,
@@ -199,7 +222,7 @@ export class PostgresSource implements IDataSource {
         `);
         log.debug(`Added rejot.watermarks table to publication '${this.#publicationName}'`);
       } catch (error) {
-        if (error instanceof Error && "code" in error && error.code === PG_DUPLICATE_OBJECT) {
+        if (isPostgresError(error, PG_DUPLICATE_OBJECT)) {
           log.debug(`ReJot watermark table already in '${this.#publicationName}' publication`);
         } else {
           throw error;

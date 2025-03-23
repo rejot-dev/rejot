@@ -11,7 +11,11 @@ export const manifestFlags = {
     required: false,
   }),
   publication: Flags.string({
-    description: "Publication name (required for add)",
+    description: "Publication name",
+    required: false,
+  }),
+  slot: Flags.string({
+    description: "Slot name",
     required: false,
   }),
 };
