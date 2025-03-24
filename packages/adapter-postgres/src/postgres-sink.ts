@@ -1,20 +1,21 @@
-import { Client } from "pg";
+import type { Client } from "pg";
+import { PostgresClient } from "./util/postgres-client";
 import logger from "@rejot/contract/logger";
 import type { IDataSink, PublicSchemaOperation } from "@rejot/contract/sync";
 
 const log = logger.createLogger("pg-sink");
 
 type PostgresSinkConfig = {
-  client: Client;
+  client: Client | PostgresClient;
   consumerSchemaSQL: string;
 };
 
 export class PostgresSink implements IDataSink {
-  #client: Client;
+  #client: PostgresClient;
   #consumerSchemaSQL: string;
 
   constructor({ client, consumerSchemaSQL }: PostgresSinkConfig) {
-    this.#client = client;
+    this.#client = client instanceof PostgresClient ? client : new PostgresClient(client);
     this.#consumerSchemaSQL = consumerSchemaSQL;
   }
 
