@@ -25,6 +25,13 @@ export interface TransformedOperationDelete extends TransformedOperationBase {
   operation: "delete";
 }
 
+export interface PublicSchemaReference {
+  name: string;
+  version: {
+    major: number;
+  };
+}
+
 export type TransformedOperation =
   | TransformedOperationInsert
   | TransformedOperationUpdate
@@ -43,7 +50,7 @@ export interface IEventStore {
   /**
    * Get the last written transaction id
    */
-  tail(): Promise<string | null>;
+  tail(publicSchemas: string[]): Promise<string | null>;
 
   /**
    * Read the event store from the given transaction id.
@@ -52,5 +59,9 @@ export interface IEventStore {
    * @param limit - The maximum number of operations to read.
    * @returns The operations read from the event store.
    */
-  read(fromTransactionId: string | null, limit: number): Promise<TransformedOperation[]>;
+  read(
+    schemas: PublicSchemaReference[],
+    fromTransactionId: string | null,
+    limit: number,
+  ): Promise<TransformedOperation[]>;
 }

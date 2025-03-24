@@ -61,13 +61,58 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     expect(writeResult).toBe(true);
 
     // Read operations
-    const readOps = await store.read(null, 10);
+    const readOps = await store.read([{ name: "test-schema", version: { major: 1 } }], null, 10);
     expect(readOps.length).toBe(2);
     expect(readOps[0].operation).toBe("insert");
     expect(readOps[1].operation).toBe("update");
     expect(readOps[0].sourceDataStoreSlug).toBe("test-store");
     expect((readOps[0] as TransformedOperationInsert).object["name"]).toBe("Test 1");
     expect((readOps[1] as TransformedOperationUpdate).object["name"]).toBe("Test 1 Updated");
+  });
+
+  test("should read multiple operations", async () => {
+    const store = new PostgresEventStore(ctx.client);
+
+    const testOps: TransformedOperation[] = [
+      {
+        operation: "insert",
+        sourceDataStoreSlug: "test-store",
+        sourcePublicSchema: {
+          name: "test-schema",
+          version: { major: 1, minor: 0 },
+        },
+        object: { id: "1", name: "Test 1" },
+      },
+      {
+        operation: "insert",
+        sourceDataStoreSlug: "test-store",
+        sourcePublicSchema: {
+          name: "another-schema",
+          version: { major: 2, minor: 0 },
+        },
+        object: { id: "2", name: "Another Test" },
+      },
+    ];
+
+    // Write operations
+    const writeResult = await store.write("tx1", testOps);
+    expect(writeResult).toBe(true);
+
+    // Read operations
+    const readOps = await store.read(
+      [
+        { name: "test-schema", version: { major: 1 } },
+        { name: "another-schema", version: { major: 2 } },
+      ],
+      null,
+      10,
+    );
+    expect(readOps.length).toBe(2);
+    expect(readOps[0].operation).toBe("insert");
+    expect(readOps[1].operation).toBe("insert");
+    expect(readOps[0].sourceDataStoreSlug).toBe("test-store");
+    expect((readOps[0] as TransformedOperationInsert).object["name"]).toBe("Test 1");
+    expect((readOps[1] as TransformedOperationInsert).object["name"]).toBe("Another Test");
   });
 
   test("should handle delete operations correctly", async () => {
@@ -85,7 +130,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     const writeResult = await store.write("tx2", [deleteOp]);
     expect(writeResult).toBe(true);
 
-    const readOps = await store.read(null, 10);
+    const readOps = await store.read([{ name: "test-schema", version: { major: 1 } }], null, 10);
     expect(readOps.length).toBe(1);
     expect(readOps[0].operation).toBe("delete");
     expect("object" in readOps[0]).toBe(false);
@@ -95,7 +140,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     const store = new PostgresEventStore(ctx.client);
 
     // Initially should be null
-    const emptyTail = await store.tail();
+    const emptyTail = await store.tail(["test-schema"]);
     expect(emptyTail).toBeNull();
 
     // Write some data
@@ -112,7 +157,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     await store.write("tx3", [testOp]);
 
     // Should return the last transaction ID
-    const tail = await store.tail();
+    const tail = await store.tail(["test-schema"]);
     expect(tail).toBe("tx3");
   });
 
@@ -120,8 +165,12 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     const store = new PostgresEventStore(ctx.client);
 
     // Should throw for invalid limits
-    expect(store.read(null, 0)).rejects.toThrow("Limit must be greater than 0");
-    expect(store.read(null, 1001)).rejects.toThrow("Limit must be less than or equal to 1000");
+    expect(store.read([{ name: "test-schema", version: { major: 1 } }], null, 0)).rejects.toThrow(
+      "Limit must be greater than 0",
+    );
+    expect(
+      store.read([{ name: "test-schema", version: { major: 1 } }], null, 1001),
+    ).rejects.toThrow("Limit must be less than or equal to 1000");
   });
 
   test("should read from specific transaction ID", async () => {
@@ -152,7 +201,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     await store.write("tx5", [op2]);
 
     // Read from tx4
-    const readOps = await store.read("tx4", 10);
+    const readOps = await store.read([{ name: "test-schema", version: { major: 1 } }], "tx4", 10);
     expect(readOps.length).toBe(1);
     expect((readOps[0] as TransformedOperationInsert).object["name"]).toBe("Second");
   });
