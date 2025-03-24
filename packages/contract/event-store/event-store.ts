@@ -39,4 +39,18 @@ export interface IEventStore {
   stop(): Promise<void>;
 
   write(transactionId: string, ops: TransformedOperation[]): Promise<boolean>;
+
+  /**
+   * Get the last written transaction id
+   */
+  tail(): Promise<string | null>;
+
+  /**
+   * Read the event store from the given transaction id.
+   *
+   * @param fromTransactionId - The transaction id to start reading from.
+   * @param limit - The maximum number of operations to read.
+   * @returns The operations read from the event store.
+   */
+  read(fromTransactionId: string | null, limit: number): Promise<TransformedOperation[]>;
 }

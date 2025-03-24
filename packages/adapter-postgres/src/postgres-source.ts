@@ -1,4 +1,5 @@
-import { Client } from "pg";
+import type { Client } from "pg";
+import { PostgresClient } from "./util/postgres-client";
 import logger from "@rejot/contract/logger";
 import type {
   IDataSource,
@@ -20,18 +21,19 @@ type PostgresOptions = {
 };
 
 type PostgresSourceConfig = {
-  client: Client;
+  client: Client | PostgresClient;
   publicSchemaSql: string;
   options: PostgresOptions;
 };
 
 export class PostgresSource implements IDataSource {
-  #client: Client;
+  #client: PostgresClient;
   #replicationListener: PostgresReplicationListener | null = null;
   #publicationName: string;
   #slotName: string;
   #createPublication: boolean;
   #publicSchemaSql: string;
+  #rawClient: Client;
 
   constructor({
     client,
@@ -42,7 +44,8 @@ export class PostgresSource implements IDataSource {
       slotName = DEFAULT_SLOT_NAME,
     },
   }: PostgresSourceConfig) {
-    this.#client = client;
+    this.#client = client instanceof PostgresClient ? client : new PostgresClient(client);
+    this.#rawClient = client instanceof PostgresClient ? client.getRawClient() : client;
     this.#publicationName = publicationName;
     this.#createPublication = createPublication;
     this.#publicSchemaSql = publicSchemaSql;
@@ -93,12 +96,12 @@ export class PostgresSource implements IDataSource {
   async subscribe(onData: (transaction: Transaction) => Promise<boolean>): Promise<void> {
     this.#replicationListener = new PostgresReplicationListener(
       {
-        host: this.#client.host,
-        port: this.#client.port,
-        user: this.#client.user,
-        password: this.#client.password,
-        database: this.#client.database,
-        ssl: this.#client.ssl,
+        host: this.#rawClient.host,
+        port: this.#rawClient.port,
+        user: this.#rawClient.user,
+        password: this.#rawClient.password,
+        database: this.#rawClient.database,
+        ssl: this.#rawClient.ssl,
       },
       (buffer) =>
         onData({
@@ -116,7 +119,7 @@ export class PostgresSource implements IDataSource {
       SELECT name, setting FROM pg_settings WHERE name = 'wal_level'
     `);
 
-    return result.rows.length > 0 && result.rows[0].setting === "logical";
+    return result.rows.length > 0 && result.rows[0]["setting"] === "logical";
   }
 
   async getBackfillRecords(sql: string, values?: unknown[]): Promise<Record<string, unknown>[]> {
@@ -138,10 +141,10 @@ export class PostgresSource implements IDataSource {
     if (slotResult.rows.length === 1) {
       const { plugin, database } = slotResult.rows[0];
 
-      if (this.#client.database !== database) {
+      if (this.#rawClient.database !== database) {
         throw new Error(
           `Replication slot '${this.#slotName}' exists but is for a different database: '${database}'. ` +
-            `Expected database: '${this.#client.database}'. Please pick a different slot.`,
+            `Expected database: '${this.#rawClient.database}'. Please pick a different slot.`,
         );
       }
 
@@ -199,7 +202,7 @@ export class PostgresSource implements IDataSource {
 
     log.debug(`Publication result: ${JSON.stringify(pubResult.rows)}`);
 
-    if (pubResult.rows.length === 1 && pubResult.rows[0].puballtables) {
+    if (pubResult.rows.length === 1 && pubResult.rows[0]["puballtables"]) {
       log.debug(`Publication '${this.#publicationName}' exists FOR ALL TABLES.`);
     } else if (pubResult.rows.length === 0) {
       if (!this.#createPublication) {

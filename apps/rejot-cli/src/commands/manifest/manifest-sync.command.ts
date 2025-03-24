@@ -92,7 +92,7 @@ export class ManifestSyncCommand extends Command {
         );
       }
 
-      const eventStore = new PostgresEventStore(eventStoreConnection.config);
+      const eventStore = PostgresEventStore.fromConnection(eventStoreConnection.config);
 
       // Create sync controller
       const syncController = new SyncManifestController(

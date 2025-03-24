@@ -1,16 +1,17 @@
 import { describe, beforeEach, afterEach, afterAll, beforeAll } from "bun:test";
 import { Client } from "pg";
+import { PostgresClient } from "./postgres-client.ts";
 
 export interface DbTestContext {
-  client: Client;
+  client: PostgresClient;
 }
 
-function getTestClient(): Client {
+function getTestClient(): PostgresClient {
   const connectionString = process.env["REJOT_SYNC_CLI_TEST_CONNECTION"];
   if (!connectionString) {
     throw new Error("REJOT_SYNC_CLI_TEST_CONNECTION is not set");
   }
-  return new Client(connectionString);
+  return new PostgresClient(new Client(connectionString));
 }
 
 // Auto rollback any writes that happend during tests
@@ -26,11 +27,11 @@ export function pgRollbackDescribe(name: string, fn: (ctx: DbTestContext) => voi
 
     beforeEach(async () => {
       await context.client.query("SELECT 1 as connection_test");
-      await context.client.query("BEGIN");
+      await context.client.beginTransaction();
     });
 
     afterEach(async () => {
-      await context.client.query("ROLLBACK");
+      await context.client.rollbackTransaction();
     });
 
     afterAll(async () => {
