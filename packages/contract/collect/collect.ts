@@ -26,15 +26,19 @@ export async function collectPublicSchemas(
     return [];
   }
 
-  for (const item of Object.values(module.default)) {
-    if (Array.isArray(item)) {
-      for (const arrayItem of item) {
-        if (arrayItem instanceof PublicSchema) {
-          publicSchemas.push(arrayItem);
+  if (module.default instanceof PublicSchema) {
+    publicSchemas.push(module.default);
+  } else {
+    for (const item of Object.values(module.default)) {
+      if (Array.isArray(item)) {
+        for (const arrayItem of item) {
+          if (arrayItem instanceof PublicSchema) {
+            publicSchemas.push(arrayItem);
+          }
         }
+      } else if (item instanceof PublicSchema) {
+        publicSchemas.push(item);
       }
-    } else if (item instanceof PublicSchema) {
-      publicSchemas.push(item);
     }
   }
 
@@ -56,16 +60,19 @@ export async function collectConsumerSchemas(
     console.warn(`No default export found in ${modulePath}`);
     return [];
   }
-
-  for (const item of Object.values(module.default)) {
-    if (Array.isArray(item)) {
-      for (const arrayItem of item) {
-        if (arrayItem instanceof ConsumerSchema) {
-          consumerSchemas.push(arrayItem);
+  if (module.default instanceof ConsumerSchema) {
+    consumerSchemas.push(module.default);
+  } else {
+    for (const item of Object.values(module.default)) {
+      if (Array.isArray(item)) {
+        for (const arrayItem of item) {
+          if (arrayItem instanceof ConsumerSchema) {
+            consumerSchemas.push(arrayItem);
+          }
         }
+      } else if (item instanceof ConsumerSchema) {
+        consumerSchemas.push(item);
       }
-    } else if (item instanceof ConsumerSchema) {
-      consumerSchemas.push(item);
     }
   }
 
