@@ -103,26 +103,37 @@ export class ManifestSyncCommand extends Command {
       );
 
       // Set up signal handlers for graceful shutdown
+      const abortController = new AbortController();
       process.on("SIGINT", async () => {
         log.info("\nReceived SIGINT, shutting down...");
-        await syncController.stop();
+        abortController.abort();
+
+        await new Promise((resolve) => {
+          setTimeout(resolve, 3000);
+        });
+
         process.exit(0);
       });
 
-      process.on("SIGTERM", async () => {
+      process.on("SIGTERM", () => {
         log.info("\nReceived SIGTERM, shutting down...");
-        await syncController.stop();
+        abortController.abort();
+
         process.exit(0);
       });
 
       // Start the sync process
       try {
         await syncController.prepare();
-        await syncController.start();
-        log.info("Sync process started successfully");
+        log.info("Starting sync process...");
+
+        for await (const transformedOps of syncController.start(abortController.signal)) {
+          log.debug(`Processed ${transformedOps.length} operations`);
+        }
+
+        log.info("Sync process completed");
       } catch (error) {
         log.error("Failed to start sync", error);
-        await syncController.stop();
         this.exit(1);
       }
     } catch (error) {

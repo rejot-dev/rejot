@@ -34,7 +34,7 @@ export class PostgresEventStore implements IEventStore {
 
     await this.#ensureTable();
 
-    log.debug("Event store prepared. Database:", this.#client.query("SELECT current_database()"));
+    log.debug("Event store prepared. Database:", this.#client.pgClient.database);
   }
 
   async #ensureTable(): Promise<void> {

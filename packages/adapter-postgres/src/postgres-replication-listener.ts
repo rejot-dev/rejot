@@ -7,6 +7,8 @@ import type {
 } from "pg-logical-replication/dist/output-plugins/pgoutput/pgoutput.types";
 import { RejotPgOutputPlugin } from "./pgoutput-plugin.ts";
 import { assertUnreachable } from "./util/asserts.ts";
+import type { Transaction } from "@rejot/contract/sync";
+import logger from "@rejot/contract/logger";
 
 type ConnectionConfig = {
   host?: string;
@@ -72,13 +74,16 @@ type TransactionBufferState = "empty" | "begin";
 
 type OnCommitCallback = (buffer: TransactionBuffer) => Promise<boolean>;
 
+const log = logger.createLogger("postgres-replication-listener");
+
 export class PostgresReplicationListener {
   #logicalReplicationService: LogicalReplicationService;
-
   #transactionBuffer: Partial<TransactionBuffer> & { state: TransactionBufferState };
-  #onCommit: OnCommitCallback;
+  #onCommit?: OnCommitCallback;
 
-  constructor(config: ConnectionConfig, onCommit: OnCommitCallback) {
+  #isRunning = false;
+
+  constructor(config: ConnectionConfig, onCommit?: OnCommitCallback) {
     this.#logicalReplicationService = new LogicalReplicationService(config, {
       acknowledge: {
         auto: false,
@@ -105,6 +110,7 @@ export class PostgresReplicationListener {
 
     try {
       await this.#logicalReplicationService.subscribe(plugin, slotName);
+      this.#isRunning = true;
     } catch (error) {
       throw new Error("Failed to subscribe to logical replication service", { cause: error });
     }
@@ -112,7 +118,62 @@ export class PostgresReplicationListener {
     return true;
   }
 
+  async *startIteration(
+    publicationName: string,
+    slotName: string,
+    abortSignal: AbortSignal,
+  ): AsyncIterator<Transaction> {
+    if (this.#isRunning) {
+      throw new Error("PostgresReplicationListener is already running.");
+    }
+
+    // This is a very shitty way of unwrapping a callback to iterator.
+    let next = Promise.withResolvers<TransactionBuffer>();
+    let ack = Promise.withResolvers<boolean>();
+
+    this.#onCommit = async (buffer) => {
+      next.resolve(buffer);
+      const didAck = await ack.promise;
+      ack = Promise.withResolvers<boolean>();
+      return didAck;
+    };
+
+    const plugin = new RejotPgOutputPlugin({
+      protoVersion: 2,
+      publicationNames: [publicationName],
+    });
+
+    this.#logicalReplicationService
+      .subscribe(plugin, slotName)
+      .then(() => {
+        log.info("Finished subscribing to logical replication service.");
+      })
+      .catch((error) => {
+        log.error("Error in subscribing to logical replication service.", { error });
+      });
+
+    abortSignal.addEventListener("abort", () => {
+      log.info("Abort signal received, stopping listener.");
+      this.stop();
+    });
+
+    this.#isRunning = true;
+
+    while (!abortSignal.aborted) {
+      const x = await next.promise;
+
+      yield {
+        id: x.commitEndLsn,
+        operations: x.operations,
+        ack: ack.resolve,
+      };
+
+      next = Promise.withResolvers<TransactionBuffer>();
+    }
+  }
+
   async stop(): Promise<void> {
+    this.#isRunning = false;
     await this.#logicalReplicationService.stop();
   }
 
@@ -149,9 +210,14 @@ export class PostgresReplicationListener {
       try {
         // Store the LSN we need for acknowledgment before any processing
         const commitEndLsn = this.#transactionBuffer.commitEndLsn;
+        const transactionBuffer = { ...this.#transactionBuffer } as TransactionBuffer;
 
-        // Make sure to pass a copy of the transaction buffer, to prevent modifications by the callback from changing it
-        const processed = await this.#onCommit({ ...this.#transactionBuffer } as TransactionBuffer);
+        let processed = true;
+        if (this.#onCommit) {
+          processed = await this.#onCommit(transactionBuffer);
+        } else {
+          throw new Error("No onCommit callback set");
+        }
 
         if (processed) {
           console.log("transaction buffer processed, acknowledging.", commitEndLsn);
@@ -161,12 +227,12 @@ export class PostgresReplicationListener {
           };
         } else {
           console.log("transaction buffer not processed, stopping listener.");
-          await this.#logicalReplicationService.stop();
+          await this.stop();
         }
       } catch (error) {
         console.error("ERROR during processing of onCommit transaction buffer.", error);
         console.log("stopping listener");
-        await this.#logicalReplicationService.stop();
+        await this.stop();
       }
     } else if (log.tag === "relation") {
       if (!this.#transactionBuffer?.relations) {

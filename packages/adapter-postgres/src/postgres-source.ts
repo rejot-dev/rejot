@@ -45,7 +45,7 @@ export class PostgresSource implements IDataSource {
     },
   }: PostgresSourceConfig) {
     this.#client = client instanceof PostgresClient ? client : new PostgresClient(client);
-    this.#rawClient = client instanceof PostgresClient ? client.getRawClient() : client;
+    this.#rawClient = client instanceof PostgresClient ? client.pgClient : client;
     this.#publicationName = publicationName;
     this.#createPublication = createPublication;
     this.#publicSchemaSql = publicSchemaSql;
@@ -103,15 +103,40 @@ export class PostgresSource implements IDataSource {
         database: this.#rawClient.database,
         ssl: this.#rawClient.ssl,
       },
-      (buffer) =>
-        onData({
+      async (buffer) => {
+        const didConsume = await onData({
           id: buffer.commitEndLsn.toString(),
           operations: buffer.operations,
-        }),
+          ack: () => {},
+        });
+
+        return didConsume;
+      },
     );
 
     log.info(`Starting to listen for changes on slot '${this.#slotName}'`);
     await this.#replicationListener.start(this.#publicationName, this.#slotName);
+  }
+
+  startIteration(abortSignal: AbortSignal): AsyncIterator<Transaction> {
+    if (this.#replicationListener) {
+      throw new Error("PostgresSource is already subscribed to a publication");
+    }
+
+    this.#replicationListener = new PostgresReplicationListener({
+      host: this.#rawClient.host,
+      port: this.#rawClient.port,
+      user: this.#rawClient.user,
+      password: this.#rawClient.password,
+      database: this.#rawClient.database,
+      ssl: this.#rawClient.ssl,
+    });
+
+    return this.#replicationListener.startIteration(
+      this.#publicationName,
+      this.#slotName,
+      abortSignal,
+    );
   }
 
   async #checkLogicalReplication(): Promise<boolean> {

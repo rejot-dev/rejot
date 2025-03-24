@@ -11,7 +11,7 @@ export class PostgresClient {
     this.#client = client;
   }
 
-  getRawClient(): Client {
+  get pgClient() {
     return this.#client;
   }
 

@@ -60,6 +60,7 @@ export type Transaction = {
    */
   id: string;
   operations: TableOperation[];
+  ack: (didConsume: boolean) => void;
 };
 
 /**
@@ -101,6 +102,13 @@ export interface IDataSource {
    * @returns The transformed data
    */
   applyTransformations(operation: TableOperation): Promise<PublicSchemaOperation | null>;
+
+  /**
+   * Start iterating over transactions
+   * @param abortSignal Signal to abort the iteration
+   * @returns An async iterator for consuming transactions
+   */
+  startIteration(abortSignal: AbortSignal): AsyncIterator<Transaction>;
 }
 
 /**
