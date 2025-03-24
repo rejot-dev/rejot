@@ -101,25 +101,68 @@ export class SyncManifestController {
     log.debug("SyncManifestController prepared");
   }
 
-  async stop(): Promise<void> {
-    await Promise.all(this.#sources.values().map((source) => source.stop()));
-    await this.#eventStore.stop();
-
-    this.#state = "stopped";
-    log.debug("SyncManifestController stopped");
-  }
-
-  async start(): Promise<void> {
+  async *start(abortSignal: AbortSignal): AsyncIterable<TransformedOperation[]> {
     if (this.#state !== "prepared") {
       throw new Error("SyncManifestController is not prepared, call prepare() first.");
     }
 
     this.#state = "running";
 
-    for (const [slug, source] of this.#sources.entries()) {
-      await source.subscribe((tx) => {
-        return this.#processTransaction(slug, tx);
-      });
+    const childAbortController = new AbortController();
+
+    abortSignal.addEventListener("abort", () => {
+      childAbortController.abort();
+    });
+
+    try {
+      const sourceIterators = Array.from(this.#sources.entries()).map(([slug, source]) => ({
+        slug,
+        iterator: source.startIteration(childAbortController.signal),
+      }));
+
+      while (!abortSignal.aborted) {
+        try {
+          // Wait for any source to produce a transaction
+          const results = await Promise.race(
+            sourceIterators.map(async ({ slug, iterator }) => {
+              const result = await iterator.next();
+              if (result.done) {
+                return { slug, result: null };
+              }
+              return { slug, result: result.value };
+            }),
+          );
+
+          const { slug, result: transaction } = results;
+          if (!transaction) {
+            log.warn(`Source '${slug}' stopped iterating.`);
+            childAbortController.abort();
+            break;
+          }
+
+          const transformedOps = await this.#processTransaction(slug, transaction);
+
+          if (transformedOps) {
+            transaction.ack(true);
+            yield transformedOps;
+          } else {
+            log.warn(`Failed to write transaction ${transaction.id} to event store.`);
+            transaction.ack(false);
+            childAbortController.abort();
+            break;
+          }
+        } catch (error) {
+          console.error("Error processing transaction:", error);
+          throw error;
+        }
+      }
+    } finally {
+      // Clean up when aborted or done
+      await Promise.all([
+        ...Array.from(this.#sources.values()).map((source) => source.stop()),
+        this.#eventStore.stop(),
+      ]);
+      this.#state = "stopped";
     }
   }
 
@@ -127,7 +170,17 @@ export class SyncManifestController {
     return this.#manifests;
   }
 
-  async #processTransaction(dataStoreSlug: string, transaction: Transaction): Promise<boolean> {
+  /**
+   * Process a transaction and return the transformed operations.
+   *
+   * @param dataStoreSlug - The slug of the data store to process the transaction for.
+   * @param transaction - The transaction to process.
+   * @returns The transformed operations. Returns NULL when the transactions were NOT persisted.
+   */
+  async #processTransaction(
+    dataStoreSlug: string,
+    transaction: Transaction,
+  ): Promise<TransformedOperation[] | null> {
     log.info(
       `Processing transaction ${transaction.id} with ${transaction.operations.length} operation(s) for data store '${dataStoreSlug}'.`,
     );
@@ -193,6 +246,7 @@ export class SyncManifestController {
       }
     }
 
-    return this.#eventStore.write(transaction.id, transformedOperations);
+    const didConsume = await this.#eventStore.write(transaction.id, transformedOperations);
+    return didConsume ? transformedOperations : null;
   }
 }

@@ -24,12 +24,14 @@ function createWatermarkTransaction(type: "low" | "high", backfillId: string): T
         },
       },
     ],
+    ack: () => {},
   };
 }
 function createTestTransaction(operations: TableOperation[]): Transaction {
   return {
     id: "1",
     operations: operations,
+    ack: () => {},
   };
 }
 
@@ -55,6 +57,10 @@ class TestSource implements IDataSource {
 
   async prepare() {}
   async stop() {}
+  startIteration(_abortSignal: AbortSignal): AsyncIterator<Transaction> {
+    throw new Error("Not implemented");
+  }
+
   async writeWatermark(type: "low" | "high", backfillId: string) {
     if (!this.onDataCallback) {
       throw new Error("No subscriber registered. Call subscribe() first.");
