@@ -66,6 +66,9 @@ export const SyncManifestSchema = z.object({
   /** Version of the manifest file format. */
   manifestVersion: z.number(),
 
+  /** HTTP Port the HTTP Sync service will listen on. */
+  apiPort: z.number().optional(),
+
   connections: z.array(ConnectionSchema),
   dataStores: z.array(DataStoreSchema),
   eventStores: z.array(EventStoreSchema),
