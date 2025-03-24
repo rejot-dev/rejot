@@ -1,6 +1,10 @@
 import { Client } from "pg";
 import { z } from "zod";
-import type { IEventStore, TransformedOperation } from "@rejot/contract/event-store";
+import type {
+  IEventStore,
+  PublicSchemaReference,
+  TransformedOperation,
+} from "@rejot/contract/event-store";
 import logger from "@rejot/contract/logger";
 import type { PostgresConnectionSchema } from "./postgres-schemas";
 import { PostgresClient } from "./util/postgres-client";
@@ -114,13 +118,15 @@ export class PostgresEventStore implements IEventStore {
     }
   }
 
-  async tail(): Promise<string | null> {
+  async tail(publicSchemas: string[]): Promise<string | null> {
     try {
       const result = await this.#client.query<{ transaction_id: string }>(
         `SELECT transaction_id 
          FROM ${SCHEMA_NAME}.${EVENTS_TABLE_NAME} 
+         WHERE public_schema_name = ANY($1)
          ORDER BY created_at DESC, operation_idx DESC 
          LIMIT 1`,
+        [publicSchemas],
       );
 
       return result.rows.length > 0 ? result.rows[0]["transaction_id"] : null;
@@ -130,7 +136,11 @@ export class PostgresEventStore implements IEventStore {
     }
   }
 
-  async read(fromTransactionId: string | null, limit: number): Promise<TransformedOperation[]> {
+  async read(
+    schemas: PublicSchemaReference[],
+    fromTransactionId: string | null,
+    limit: number,
+  ): Promise<TransformedOperation[]> {
     if (limit <= 0) {
       throw new Error("Limit must be greater than 0");
     }
@@ -140,6 +150,9 @@ export class PostgresEventStore implements IEventStore {
     }
 
     try {
+      const publicSchemaNames = schemas.map((schema) => schema.name);
+      const publicSchemaMajorVersions = schemas.map((schema) => schema.version.major);
+
       const query = fromTransactionId
         ? `SELECT 
             operation,
@@ -149,9 +162,10 @@ export class PostgresEventStore implements IEventStore {
             public_schema_minor_version,
             object
           FROM ${SCHEMA_NAME}.${EVENTS_TABLE_NAME}
-          WHERE transaction_id > $1
+          WHERE transaction_id > $1 
+          AND (public_schema_name, public_schema_major_version) IN (SELECT unnest($2::text[]), unnest($3::int[]))
           ORDER BY transaction_id, operation_idx
-          LIMIT $2`
+          LIMIT $4`
         : `SELECT 
             operation,
             data_store_slug,
@@ -160,10 +174,13 @@ export class PostgresEventStore implements IEventStore {
             public_schema_minor_version,
             object
           FROM ${SCHEMA_NAME}.${EVENTS_TABLE_NAME}
+          WHERE (public_schema_name, public_schema_major_version) IN (SELECT unnest($1::text[]), unnest($2::int[]))
           ORDER BY transaction_id, operation_idx
-          LIMIT $1`;
+          LIMIT $3`;
 
-      const params = fromTransactionId ? [fromTransactionId, limit] : [limit];
+      const params = fromTransactionId
+        ? [fromTransactionId, publicSchemaNames, publicSchemaMajorVersions, limit]
+        : [publicSchemaNames, publicSchemaMajorVersions, limit];
       const result = await this.#client.query(query, params);
 
       return result.rows.map((row) => ({
