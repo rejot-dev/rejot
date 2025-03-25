@@ -6,7 +6,7 @@ export interface DbTestContext {
   client: PostgresClient;
 }
 
-function getTestClient(): PostgresClient {
+export function getTestClient(): PostgresClient {
   const connectionString = process.env["REJOT_SYNC_CLI_TEST_CONNECTION"];
   if (!connectionString) {
     throw new Error("REJOT_SYNC_CLI_TEST_CONNECTION is not set");

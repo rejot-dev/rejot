@@ -28,10 +28,17 @@ export class ManifestConnectionListCommand extends Command {
 
     this.log("Connections:");
     for (const conn of manifest.connections) {
-      this.log(`  - ${conn.slug} (${conn.config.connectionType})`);
-      this.log(`    Host: ${conn.config.host}:${conn.config.port}`);
-      this.log(`    Database: ${conn.config.database}`);
-      this.log(`    User: ${conn.config.user}`);
+      switch (conn.config.connectionType) {
+        case "postgres":
+          this.log(`  - ${conn.slug} (${conn.config.connectionType})`);
+          this.log(`    Host: ${conn.config.host}:${conn.config.port}`);
+          this.log(`    Database: ${conn.config.database}`);
+          this.log(`    User: ${conn.config.user}`);
+          break;
+        case "in-memory":
+          this.log(`  - ${conn.slug} (${conn.config.connectionType})`);
+          break;
+      }
     }
   }
 }

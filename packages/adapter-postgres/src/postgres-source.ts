@@ -93,6 +93,10 @@ export class PostgresSource implements IDataSource {
     }
   }
 
+  async close(): Promise<void> {
+    return this.#rawClient.end();
+  }
+
   async subscribe(onData: (transaction: Transaction) => Promise<boolean>): Promise<void> {
     this.#replicationListener = new PostgresReplicationListener(
       {

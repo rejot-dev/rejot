@@ -8,6 +8,7 @@ import {
 } from "../manifest/manifest.ts";
 import type { TransformedOperation } from "../event-store/event-store.ts";
 
+import type { IEventStore } from "../event-store/event-store.ts";
 export interface CreateSourceOptions {
   publicationName?: string;
   slotName?: string;
@@ -19,6 +20,7 @@ export interface IConnectionAdapter<
 > {
   connectionType: TConnection["connectionType"];
   createSource(connection: TConnection, options?: CreateSourceOptions): TSource;
+  createEventStore(connection: TConnection): IEventStore;
 }
 
 export type AnyIConnectionAdapter = IConnectionAdapter<

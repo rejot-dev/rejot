@@ -73,9 +73,14 @@ export interface IDataSource {
   prepare(): Promise<void>;
 
   /**
-   * Stop listening for changes and close connections
+   * Stop listening for changes.
    */
   stop(): Promise<void>;
+
+  /**
+   * Close the data source
+   */
+  close(): Promise<void>;
 
   /**
    * Start listening for changes

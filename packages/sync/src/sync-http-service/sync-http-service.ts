@@ -18,7 +18,18 @@ import {
   type SyncControllerReadResponse,
 } from "./sync-http-service-routes";
 
-export class SyncHTTPController {
+export interface ISyncHTTPController {
+  start(
+    readRequestCallback: (
+      publicSchemas: PublicSchemaReference[],
+      fromTransactionId: string | null,
+      limit: number,
+    ) => Promise<TransformedOperation[]>,
+  ): Promise<void>;
+  stop(): Promise<void>;
+}
+
+export class SyncHTTPController implements ISyncHTTPController {
   readonly #port: number;
   readonly #routes: Map<
     string,
@@ -27,6 +38,7 @@ export class SyncHTTPController {
       config: RouteConfig;
     }
   > = new Map();
+
   #server: Server;
 
   #readRequestCallback?: (
@@ -154,9 +166,7 @@ export class SyncHTTPController {
     );
   }
 
-  async stop() {
-    await new Promise<void>((resolve, reject) =>
-      this.#server.close((err) => (err ? reject(err) : resolve())),
-    );
+  stop() {
+    return new Promise<void>((resolve) => this.#server.close(() => resolve()));
   }
 }

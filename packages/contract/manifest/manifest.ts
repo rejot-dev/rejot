@@ -6,8 +6,13 @@ import {
 } from "@rejot/adapter-postgres/schemas";
 import { JsonSchemaSchema } from "../json-schema";
 
+export const InMemoryConnectionConfigSchema = z.object({
+  connectionType: z.literal("in-memory"),
+});
+
 export const ConnectionConfigSchema = z.discriminatedUnion("connectionType", [
   PostgresConnectionSchema,
+  InMemoryConnectionConfigSchema,
 ]);
 
 export const ConnectionSchema = z.object({
