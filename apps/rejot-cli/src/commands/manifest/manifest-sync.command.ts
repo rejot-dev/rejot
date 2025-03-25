@@ -8,9 +8,13 @@ import {
   PostgresPublicSchemaTransformationAdapter,
   PostgresConsumerSchemaTransformationAdapter,
 } from "@rejot/adapter-postgres";
-import { PostgresEventStore } from "@rejot/adapter-postgres/postgres-event-store";
 import { SyncManifestController } from "@rejot/sync/sync-manifest-controller";
-import { SyncHTTPController } from "../../../../../packages/sync/src/sync-http-service/sync-http-service";
+import { SyncHTTPController } from "@rejot/sync/sync-http-service";
+import type {
+  AnyIConnectionAdapter,
+  AnyIConsumerSchemaTransformationAdapter,
+  AnyIPublicSchemaTransformationAdapter,
+} from "@rejot/contract/adapter";
 
 const log = logger.createLogger("cli");
 
@@ -79,6 +83,14 @@ export class ManifestSyncCommand extends Command {
         postgresAdapter,
       );
 
+      const connectionAdapters: AnyIConnectionAdapter[] = [postgresAdapter];
+      const publicSchemaTransformationAdapters: AnyIPublicSchemaTransformationAdapter[] = [
+        transformationAdapter,
+      ];
+      const consumerSchemaTransformationAdapters: AnyIConsumerSchemaTransformationAdapter[] = [
+        consumerTransformationAdapter,
+      ];
+
       // Create event store from the first manifest's event store config
       // TODO: Support multiple event stores or validate they are the same
       const manifest = manifests[0];
@@ -96,38 +108,45 @@ export class ManifestSyncCommand extends Command {
           `Event store connection '${eventStoreConfig.connectionSlug}' not found in manifest`,
         );
       }
-
-      const eventStore = PostgresEventStore.fromConnection(eventStoreConnection.config);
       const httpController = new SyncHTTPController(manifest.apiPort ?? 3000); // TODO: Magic number
+
+      const eventStore = connectionAdapters
+        .find((adapter) => adapter.connectionType === eventStoreConnection.config.connectionType)
+        ?.createEventStore(eventStoreConnection.config);
+
+      if (!eventStore) {
+        throw new Error(
+          `Event store connection '${eventStoreConfig.connectionSlug}' with connection type '${eventStoreConnection.config.connectionType}' not supported`,
+        );
+      }
 
       // Create sync controller
       const syncController = new SyncManifestController(
         manifest.slug,
         manifests,
-        [postgresAdapter],
-        [transformationAdapter],
-        [consumerTransformationAdapter],
+        connectionAdapters,
+        publicSchemaTransformationAdapters,
+        consumerSchemaTransformationAdapters,
         eventStore,
         httpController,
       );
 
+      let shouldStop = false;
       // Set up signal handlers for graceful shutdown
-      const abortController = new AbortController();
       process.on("SIGINT", async () => {
         log.info("\nReceived SIGINT, shutting down...");
-        abortController.abort();
+        await syncController.stop();
 
-        await new Promise((resolve) => {
-          setTimeout(resolve, 3000);
-        });
-
-        process.exit(0);
+        if (!shouldStop) {
+          shouldStop = true;
+        } else {
+          process.exit(0);
+        }
       });
 
-      process.on("SIGTERM", () => {
-        log.info("\nReceived SIGTERM, shutting down...");
-        abortController.abort();
-
+      process.on("SIGTERM", async () => {
+        log.info("\nReceived SIGTERM, killing...");
+        await syncController.stop();
         process.exit(0);
       });
 
@@ -137,7 +156,7 @@ export class ManifestSyncCommand extends Command {
         log.info("Starting sync process...");
         syncController.startPollingForConsumerSchemas();
 
-        for await (const transformedOps of syncController.start(abortController.signal)) {
+        for await (const transformedOps of syncController.start()) {
           log.debug(`Processed ${transformedOps.length} operations`);
         }
 

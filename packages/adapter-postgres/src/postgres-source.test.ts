@@ -1,7 +1,8 @@
-import { test, expect, beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
+import { test, expect, beforeEach, afterEach, describe } from "bun:test";
 import { PostgresSource } from "./postgres-source.ts";
-import { pgDescribe } from "./util/postgres-test-utils.ts";
 import { watermarkFromTransaction } from "@rejot/sync/sync-controller";
+import { getTestClient } from "./util/postgres-test-utils.ts";
+import type { PostgresClient } from "./util/postgres-client.ts";
 
 const TEST_TABLE_NAME = "test_pg_source";
 const TEST_PUBLICATION_NAME = "test_publication";
@@ -10,9 +11,13 @@ function randomSlotName() {
   return `test_slot_${Math.random().toString(36).substring(2, 15)}`;
 }
 
-pgDescribe("PostgreSQL Source tests", (ctx) => {
+function createClientAndSource(): {
+  client: PostgresClient;
+  source: PostgresSource;
+} {
+  const client = getTestClient();
   const source = new PostgresSource({
-    client: ctx.client,
+    client,
     publicSchemaSql: `
       SELECT
         "id",
@@ -28,38 +33,43 @@ pgDescribe("PostgreSQL Source tests", (ctx) => {
       slotName: randomSlotName(),
     },
   });
+  return { client, source };
+}
 
-  beforeAll(async () => {
-    await ctx.client.connect();
-  });
-
-  afterAll(async () => {
-    await ctx.client.end();
-  });
+describe("PostgreSQL Source tests", () => {
+  let { client, source } = {} as {
+    client: PostgresClient;
+    source: PostgresSource;
+  };
 
   beforeEach(async () => {
+    ({ client, source } = createClientAndSource());
+    await client.connect();
+
     await tearDown();
-    await ctx.client.query(`
+
+    await client.query(`
       CREATE TABLE ${TEST_TABLE_NAME} (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL
       )
     `);
-    await ctx.client.query(
+    await client.query(
       `INSERT INTO ${TEST_TABLE_NAME} (id, name) VALUES ('1', 'Pre-existing row')`,
     );
-    await ctx.client.query(`
+    await client.query(`
       CREATE PUBLICATION ${TEST_PUBLICATION_NAME} FOR TABLE ${TEST_TABLE_NAME}
     `);
+
     await source.prepare();
   });
 
   async function tearDown() {
-    await ctx.client.query(`
+    await client.query(`
       DROP TABLE IF EXISTS ${TEST_TABLE_NAME}
     `);
     // TODO: this breaks test concurrency
-    await ctx.client.query(`
+    await client.query(`
       SELECT 
         pg_drop_replication_slot(slot_name)
       FROM 
@@ -67,7 +77,7 @@ pgDescribe("PostgreSQL Source tests", (ctx) => {
       WHERE 
         slot_name LIKE 'test_slot_%'
     `);
-    await ctx.client.query(`
+    await client.query(`
       DROP PUBLICATION IF EXISTS ${TEST_PUBLICATION_NAME}
     `);
   }
@@ -75,6 +85,7 @@ pgDescribe("PostgreSQL Source tests", (ctx) => {
   afterEach(async () => {
     await source.stop();
     await tearDown();
+    await source.close();
   });
 
   test("Generate data from PostgreSQL replication slot", async () => {
@@ -96,7 +107,7 @@ pgDescribe("PostgreSQL Source tests", (ctx) => {
       return true;
     });
 
-    await ctx.client.query(`INSERT INTO ${TEST_TABLE_NAME} (id, name) VALUES ('2', 'John Doe')`);
+    await client.query(`INSERT INTO ${TEST_TABLE_NAME} (id, name) VALUES ('2', 'John Doe')`);
 
     await dataPromise;
   });

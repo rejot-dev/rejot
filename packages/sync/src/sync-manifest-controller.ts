@@ -16,7 +16,7 @@ import type { IPublicSchemaTransformationRepository } from "@rejot/contract/publ
 import { ManifestTransformationRepository } from "./manifest/manifest-transformation.repository";
 import type { IEventStore, TransformedOperation } from "@rejot/contract/event-store";
 
-import { SyncHTTPController } from "./sync-http-service/sync-http-service";
+import { type ISyncHTTPController } from "./sync-http-service/sync-http-service";
 import { fetchRead } from "./sync-http-service/sync-http-service-fetch";
 
 const log = logger.createLogger("sync-manifest-controller");
@@ -28,6 +28,8 @@ const POLLING_INTERVAL_MS = 5000;
 export type SyncManifestControllerState = "initial" | "prepared" | "running" | "stopped";
 
 export class SyncManifestController {
+  readonly #abortController: AbortController;
+
   readonly #manifests: Manifest[];
   readonly #connectionAdapters: AnyIConnectionAdapter[];
   readonly #sources: Map<string, IDataSource> = new Map();
@@ -36,7 +38,7 @@ export class SyncManifestController {
   readonly #publicSchemaTransformationAdapters: AnyIPublicSchemaTransformationAdapter[];
   readonly #consumerSchemaTransformationAdapters: AnyIConsumerSchemaTransformationAdapter[];
   readonly #eventStore: IEventStore;
-  readonly #syncHTTPService: SyncHTTPController;
+  readonly #syncHTTPService: ISyncHTTPController;
 
   #remotePollingTimer: Timer | null = null;
 
@@ -50,7 +52,7 @@ export class SyncManifestController {
     publicSchemaTransformationAdapters: AnyIPublicSchemaTransformationAdapter[],
     consumerSchemaTransformationAdapters: AnyIConsumerSchemaTransformationAdapter[],
     eventStore: IEventStore,
-    syncHTTPController: SyncHTTPController,
+    syncHTTPController: ISyncHTTPController,
   ) {
     const verificationResult = verifyManifests(manifests);
     if (!verificationResult.isValid) {
@@ -65,13 +67,15 @@ export class SyncManifestController {
 
     log.info(`SyncManifestController initialized with ${manifests.length} manifests`);
 
+    this.#slug = slug;
     this.#manifests = manifests;
     this.#connectionAdapters = connectionAdapters;
     this.#publicSchemaTransformationAdapters = publicSchemaTransformationAdapters;
     this.#consumerSchemaTransformationAdapters = consumerSchemaTransformationAdapters;
     this.#eventStore = eventStore;
     this.#syncHTTPService = syncHTTPController;
-    this.#slug = slug;
+
+    this.#abortController = new AbortController();
     this.#transformationRepository = new ManifestTransformationRepository(manifests);
   }
 
@@ -83,8 +87,6 @@ export class SyncManifestController {
     if (this.#state !== "initial") {
       throw new Error("SyncManifestController is already prepared");
     }
-
-    log.info("SyncManifestController prepare");
 
     const dataStores = this.#manifests.flatMap((manifest) => manifest.dataStores);
 
@@ -178,78 +180,82 @@ export class SyncManifestController {
     }, POLLING_INTERVAL_MS);
   }
 
-  async *start(abortSignal: AbortSignal): AsyncIterable<TransformedOperation[]> {
+  async *start(): AsyncIterable<TransformedOperation[]> {
+    if (this.#state === "stopped") {
+      return;
+    }
+
     if (this.#state !== "prepared") {
       throw new Error("SyncManifestController is not prepared, call prepare() first.");
     }
 
     this.#state = "running";
 
-    const childAbortController = new AbortController();
+    const sourceIterators = Array.from(this.#sources.entries()).map(([slug, source]) => ({
+      slug,
+      iterator: source.startIteration(this.#abortController.signal),
+    }));
 
-    abortSignal.addEventListener("abort", () => {
-      childAbortController.abort();
-    });
+    while (this.#state === "running") {
+      try {
+        // Wait for any source to produce a transaction
+        const results = await Promise.race(
+          sourceIterators.map(async ({ slug, iterator }) => {
+            const result = await iterator.next();
+            if (result.done) {
+              return { slug, result: null };
+            }
+            return { slug, result: result.value };
+          }),
+        );
 
-    try {
-      const sourceIterators = Array.from(this.#sources.entries()).map(([slug, source]) => ({
-        slug,
-        iterator: source.startIteration(childAbortController.signal),
-      }));
-
-      while (!abortSignal.aborted) {
-        try {
-          // Wait for any source to produce a transaction
-          const results = await Promise.race(
-            sourceIterators.map(async ({ slug, iterator }) => {
-              const result = await iterator.next();
-              if (result.done) {
-                return { slug, result: null };
-              }
-              return { slug, result: result.value };
-            }),
-          );
-
-          const { slug, result: transaction } = results;
-          if (!transaction) {
-            log.warn(`Source '${slug}' stopped iterating.`);
-            childAbortController.abort();
-            break;
-          }
-
-          const transformedOps = await this.#processTransaction(slug, transaction);
-
-          if (transformedOps) {
-            transaction.ack(true);
-            yield transformedOps;
-          } else {
-            log.warn(`Failed to write transaction ${transaction.id} to event store.`);
-            transaction.ack(false);
-            childAbortController.abort();
-            break;
-          }
-        } catch (error) {
-          console.error("Error processing transaction:", error);
-          throw error;
+        const { slug, result: transaction } = results;
+        if (!transaction) {
+          log.warn(`Source '${slug}' stopped iterating.`);
+          await this.stop();
+          break;
         }
-      }
-    } finally {
-      // Clean up when aborted or done
-      if (this.#remotePollingTimer) {
-        clearInterval(this.#remotePollingTimer);
-      }
 
-      await Promise.all([
-        ...Array.from(this.#sources.values()).map((source) => source.stop()),
-        this.#eventStore.stop(),
-        this.#syncHTTPService.stop(),
-      ]);
-      this.#state = "stopped";
+        const transformedOps = await this.#processTransaction(slug, transaction);
+
+        if (transformedOps) {
+          transaction.ack(true);
+          yield transformedOps;
+        } else {
+          log.warn(`Failed to write transaction ${transaction.id} to event store.`);
+          transaction.ack(false);
+          await this.stop();
+          break;
+        }
+      } catch (error) {
+        console.error("Error processing transaction:", error);
+        throw error;
+      }
     }
   }
 
   get manifests() {
     return this.#manifests;
+  }
+
+  async stop() {
+    this.#abortController.abort();
+
+    // Clean up when aborted or done
+    if (this.#remotePollingTimer) {
+      clearInterval(this.#remotePollingTimer);
+    }
+
+    await Promise.all([
+      ...Array.from(this.#sources.values()).map(async (source) => {
+        await source.stop();
+        await source.close();
+      }),
+      this.#eventStore.stop(),
+      this.#syncHTTPService.stop(),
+    ]);
+
+    this.#state = "stopped";
   }
 
   /**

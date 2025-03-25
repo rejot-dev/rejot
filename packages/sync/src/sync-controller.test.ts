@@ -57,6 +57,8 @@ class TestSource implements IDataSource {
 
   async prepare() {}
   async stop() {}
+  async close() {}
+
   startIteration(_abortSignal: AbortSignal): AsyncIterator<Transaction> {
     throw new Error("Not implemented");
   }
@@ -106,6 +108,7 @@ class TestSink implements IDataSink {
   receivedOperations: PublicSchemaOperation[] = [];
   async prepare() {}
   async stop() {}
+  async close() {}
   async writeData(operation: PublicSchemaOperation) {
     this.receivedOperations.push(operation);
   }

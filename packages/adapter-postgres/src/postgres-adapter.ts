@@ -20,6 +20,8 @@ import type { ConsumerSchemaTransformation } from "@rejot/contract/consumer-sche
 import logger from "@rejot/contract/logger";
 import { isPostgresError, PG_PROTOCOL_VIOLATION } from "./util/postgres-error-codes.ts";
 import type { TransformedOperation } from "@rejot/contract/event-store";
+import { PostgresEventStore } from "./postgres-event-store.ts";
+import { PostgresClient } from "./util/postgres-client.ts";
 
 const log = logger.createLogger("postgres-adapter");
 
@@ -51,6 +53,10 @@ export class PostgresConnectionAdapter
     });
   }
 
+  createEventStore(connection: z.infer<typeof PostgresConnectionSchema>): PostgresEventStore {
+    return new PostgresEventStore(new PostgresClient(new Client(connection)));
+  }
+
   get client(): Client {
     if (!this.#client) {
       throw new Error("Client not created");
@@ -66,6 +72,8 @@ export class PostgresPublicSchemaTransformationAdapter
 {
   #connectionAdapter: PostgresConnectionAdapter;
 
+  // TODO(Wilco): This shouldn't take a connection adapter, because the connection needs to be
+  //              based on the data store that we are obtaining records from.
   constructor(connectionAdapter: PostgresConnectionAdapter) {
     this.#connectionAdapter = connectionAdapter;
   }

@@ -143,32 +143,34 @@ export class PostgresReplicationListener {
       publicationNames: [publicationName],
     });
 
-    this.#logicalReplicationService
-      .subscribe(plugin, slotName)
-      .then(() => {
-        log.info("Finished subscribing to logical replication service.");
-      })
-      .catch((error) => {
-        log.error("Error in subscribing to logical replication service.", { error });
-      });
+    // We don't await this, because it never returns.
+    this.#logicalReplicationService.subscribe(plugin, slotName);
 
-    abortSignal.addEventListener("abort", () => {
-      log.info("Abort signal received, stopping listener.");
-      this.stop();
+    abortSignal.addEventListener("abort", async () => {
+      log.info("Abort signal received, stopping listener");
+      next.reject(new Error("pg-aborted"));
+      await this.stop();
     });
 
     this.#isRunning = true;
 
-    while (!abortSignal.aborted) {
-      const x = await next.promise;
+    try {
+      while (!abortSignal.aborted) {
+        const { commitEndLsn, operations } = await next.promise;
 
-      yield {
-        id: x.commitEndLsn,
-        operations: x.operations,
-        ack: ack.resolve,
-      };
+        yield {
+          id: commitEndLsn,
+          operations,
+          ack: ack.resolve,
+        };
 
-      next = Promise.withResolvers<TransactionBuffer>();
+        next = Promise.withResolvers<TransactionBuffer>();
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message === "pg-aborted") {
+        return;
+      }
+      throw error;
     }
   }
 
@@ -306,6 +308,6 @@ export class PostgresReplicationListener {
   }
 
   #onError(error: Error) {
-    console.error("error", error);
+    console.error("#onError", error);
   }
 }
