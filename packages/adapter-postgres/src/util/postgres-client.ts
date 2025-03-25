@@ -1,4 +1,4 @@
-import { Client } from "pg";
+import { Client, DatabaseError } from "pg";
 import type { QueryResult, QueryResultRow } from "pg";
 
 export class PostgresClient {
@@ -27,7 +27,48 @@ export class PostgresClient {
     queryText: string,
     values?: unknown[],
   ): Promise<QueryResult<T>> {
-    return this.#client.query<T>(queryText, values);
+    const obj: { stack?: string } = {};
+    Error.captureStackTrace(obj);
+
+    const dbError = new DatabaseError("", 0, "error");
+
+    try {
+      return await this.#client.query<T>(queryText, values);
+    } catch (e) {
+      if (e instanceof DatabaseError) {
+        dbError.message = e.message;
+        // @ts-expect-error length is read-only
+        dbError.length = e.length;
+        dbError.code = e.code;
+        dbError.severity = e.severity;
+        dbError.detail = e.detail;
+        dbError.hint = e.hint;
+        dbError.position = e.position;
+        dbError.internalPosition = e.internalPosition;
+        dbError.internalQuery = e.internalQuery;
+        dbError.where = e.where;
+        dbError.schema = e.schema;
+        dbError.table = e.table;
+        dbError.dataType = e.dataType;
+        dbError.constraint = e.constraint;
+        dbError.file = e.file;
+        dbError.routine = e.routine;
+
+        // We purposely don't copy dbError.stack, column, and line because that somehow
+        // screws with the stack trace.
+
+        throw dbError;
+      }
+
+      if (e instanceof Error && obj.stack) {
+        e.stack = obj.stack;
+        // For some reason the old stack is printed instead of the new stack. By adding a new field
+        // to the object, we can at least see the stack trace.
+        (e as Error & { newStack: string }).newStack = obj.stack;
+      }
+
+      throw e;
+    }
   }
 
   async beginTransaction(): Promise<void> {
