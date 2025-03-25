@@ -3,9 +3,9 @@ import { SyncHTTPController } from "./sync-http-service";
 import { fetchRead } from "./sync-http-service-fetch";
 
 const TEST_PORT = 3333;
-const TEST_HOST = `http://localhost:${TEST_PORT}`;
+const TEST_HOST = `localhost:${TEST_PORT}`;
 describe("SyncHTTPController /read", () => {
-  const controller = new SyncHTTPController(TEST_PORT);
+  const controller = new SyncHTTPController("localhost", TEST_PORT);
 
   beforeAll(async () => {
     await controller.start(async () => []);
@@ -35,7 +35,7 @@ describe("SyncHTTPController /read", () => {
   });
 
   test("200", async () => {
-    const response = await fetchRead(TEST_HOST, {
+    const response = await fetchRead(TEST_HOST, false, {
       publicSchemas: [
         {
           name: "test-schema",

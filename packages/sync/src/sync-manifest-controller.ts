@@ -18,6 +18,7 @@ import type { IEventStore, TransformedOperation } from "@rejot/contract/event-st
 
 import { type ISyncHTTPController } from "./sync-http-service/sync-http-service";
 import { fetchRead } from "./sync-http-service/sync-http-service-fetch";
+import type { ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
 
 const log = logger.createLogger("sync-manifest-controller");
 
@@ -39,20 +40,19 @@ export class SyncManifestController {
   readonly #consumerSchemaTransformationAdapters: AnyIConsumerSchemaTransformationAdapter[];
   readonly #eventStore: IEventStore;
   readonly #syncHTTPService: ISyncHTTPController;
-
+  readonly #syncServiceResolver: ISyncServiceResolver;
   #remotePollingTimer: Timer | null = null;
 
   #state: SyncManifestControllerState = "initial";
-  #slug: string;
 
   constructor(
-    slug: string,
     manifests: Manifest[],
     connectionAdapters: AnyIConnectionAdapter[],
     publicSchemaTransformationAdapters: AnyIPublicSchemaTransformationAdapter[],
     consumerSchemaTransformationAdapters: AnyIConsumerSchemaTransformationAdapter[],
     eventStore: IEventStore,
     syncHTTPController: ISyncHTTPController,
+    syncServiceResolver: ISyncServiceResolver,
   ) {
     const verificationResult = verifyManifests(manifests);
     if (!verificationResult.isValid) {
@@ -67,7 +67,6 @@ export class SyncManifestController {
 
     log.info(`SyncManifestController initialized with ${manifests.length} manifests`);
 
-    this.#slug = slug;
     this.#manifests = manifests;
     this.#connectionAdapters = connectionAdapters;
     this.#publicSchemaTransformationAdapters = publicSchemaTransformationAdapters;
@@ -77,6 +76,7 @@ export class SyncManifestController {
 
     this.#abortController = new AbortController();
     this.#transformationRepository = new ManifestTransformationRepository(manifests);
+    this.#syncServiceResolver = syncServiceResolver;
   }
 
   get state(): SyncManifestControllerState {
@@ -129,38 +129,39 @@ export class SyncManifestController {
   }
 
   startPollingForConsumerSchemas() {
-    const myManifest = this.#manifests.find((manifest) => manifest.slug === this.#slug);
-    if (!myManifest) {
-      throw new Error(`Manifest '${this.#slug}' not found`);
-    }
-
-    // TODO: this should come from the destination data store
-    // const consumerCursors = new Map(
-    //   myManifest.consumerSchemas.map((remote) => [remote.publicSchema.name, 0]),
-    // );
-    log.debug(
-      `Polling ${myManifest.consumerSchemas.map((c) => `${c.sourceManifestSlug}:${c.publicSchema.name}`).join(", ")} every ${POLLING_INTERVAL_MS}ms`,
+    const mySlugs = this.#manifests.map((manifest) => manifest.slug);
+    const externalSlugToConsumerSchema = this.#manifests.flatMap((manifest) =>
+      manifest.consumerSchemas
+        .filter((consumer) => !mySlugs.includes(consumer.sourceManifestSlug))
+        .map((consumer) => ({
+          slug: consumer.sourceManifestSlug,
+          consumerSchema: consumer,
+        })),
     );
 
-    const consumerSchemasBySourceManifestSlug = myManifest.consumerSchemas.reduce(
-      (acc, consumer) => {
-        if (!acc[consumer.sourceManifestSlug]) {
-          acc[consumer.sourceManifestSlug] = [];
+    if (externalSlugToConsumerSchema.length === 0) {
+      log.info("No remote public schemas to poll for");
+      return;
+    }
+
+    const consumersByRemoteSlug = externalSlugToConsumerSchema.reduce(
+      (acc, { slug, consumerSchema }) => {
+        if (!acc[slug]) {
+          acc[slug] = [];
         }
-        acc[consumer.sourceManifestSlug].push(consumer);
+        acc[slug].push(consumerSchema);
         return acc;
       },
       {} as Record<string, z.infer<typeof ConsumerSchemaSchema>[]>,
     );
 
+    log.debug(`Polling for remote public schemas every ${POLLING_INTERVAL_MS}ms`);
     this.#remotePollingTimer = setInterval(async () => {
-      for (const [slug, consumers] of Object.entries(consumerSchemasBySourceManifestSlug)) {
-        console.log("slug", slug, "consumers", consumers);
-        // TODO: method for getting the actual URI
-        const host = `http://localhost:3000`;
+      for (const [slug, consumerSchemas] of Object.entries(consumersByRemoteSlug)) {
+        const host = this.#syncServiceResolver.resolve(slug);
 
-        const response = await fetchRead(host, {
-          publicSchemas: consumers.map((consumer) => ({
+        const response = await fetchRead(host, false, {
+          publicSchemas: consumerSchemas.map((consumer) => ({
             name: consumer.publicSchema.name,
             version: {
               major: consumer.publicSchema.majorVersion,
@@ -169,9 +170,7 @@ export class SyncManifestController {
           })),
         });
 
-        log.trace(
-          `received ${response.operations.length} operations from remote ${slug}:${consumers.map((c) => c.publicSchema.name).join(", ")}`,
-        );
+        log.trace(`received ${response.operations.length} operations from remote ${slug}`);
 
         for (const operation of response.operations) {
           await this.consumeOperation(operation);

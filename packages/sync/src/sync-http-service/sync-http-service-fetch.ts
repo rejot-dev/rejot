@@ -8,9 +8,10 @@ import { syncServiceReadRoute } from "./sync-http-service-routes";
 
 function getFetchForRoute<TRequest, TResponse>(
   route: RouteConfig,
-): (host: string, request: TRequest) => Promise<TResponse> {
-  return async (host: string, request: TRequest) => {
-    const response = await fetch(`${host}${route.path}`, {
+): (host: string, ssl: boolean, request: TRequest) => Promise<TResponse> {
+  return async (host: string, ssl: boolean, request: TRequest) => {
+    const protocol = ssl ? "https" : "http";
+    const response = await fetch(`${protocol}://${host}${route.path}`, {
       method: route.method,
       body: JSON.stringify(request),
     });
