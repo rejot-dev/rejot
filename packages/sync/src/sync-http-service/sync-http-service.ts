@@ -29,6 +29,7 @@ export interface ISyncHTTPController {
 }
 
 export class SyncHTTPController implements ISyncHTTPController {
+  readonly #hostname: string;
   readonly #port: number;
   readonly #routes: Map<
     string,
@@ -45,7 +46,8 @@ export class SyncHTTPController implements ISyncHTTPController {
     limit: number,
   ) => Promise<TransformedOperation[]>;
 
-  constructor(port: number) {
+  constructor(hostname: string, port: number) {
+    this.#hostname = hostname;
     this.#port = port;
     // Register routes
     this.#registerRoute(syncServiceReadRoute, this.#handleReadRequest.bind(this));
@@ -156,9 +158,9 @@ export class SyncHTTPController implements ISyncHTTPController {
     ) => Promise<TransformedOperation[]>,
   ) {
     this.#readRequestCallback = readRequestCallback;
-    log.info(`Http controller starting on localhost:${this.#port}`);
+    log.info(`Http controller starting on ${this.#hostname}:${this.#port}`);
     await new Promise<void>((resolve) =>
-      this.#server.listen(this.#port, "localhost", undefined, () => resolve()),
+      this.#server.listen(this.#port, this.#hostname, () => resolve()),
     );
   }
 

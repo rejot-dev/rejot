@@ -5,6 +5,7 @@ import { InMemoryEventStore } from "./_test/in-memory-event-store";
 import type { Transaction } from "@rejot/contract/sync";
 import type { ISyncHTTPController } from "./sync-http-service/sync-http-service";
 import type { PublicSchemaReference, TransformedOperation } from "@rejot/contract/event-store";
+import { type ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
 
 class TestSyncHTTPController implements ISyncHTTPController {
   async start(
@@ -18,6 +19,12 @@ class TestSyncHTTPController implements ISyncHTTPController {
 
   async stop(): Promise<void> {
     return Promise.resolve();
+  }
+}
+
+class TestResolver implements ISyncServiceResolver {
+  resolve(manifestSlug: string): string {
+    return manifestSlug;
   }
 }
 
@@ -48,15 +55,16 @@ describe("SyncManifestController", () => {
   test("should process transactions from sources and transform them", async () => {
     const connectionAdapters = [new InMemoryConnectionAdapter()];
     const inMemoryEventStore = new InMemoryEventStore();
+    const testResolver = new TestResolver();
 
     const controller = new SyncManifestController(
-      "test-manifest",
       [createTestManifest()],
       connectionAdapters,
       [],
       [],
       inMemoryEventStore,
       new TestSyncHTTPController(),
+      testResolver,
     );
 
     await controller.prepare();
@@ -107,15 +115,16 @@ describe("SyncManifestController", () => {
   test("should handle abort signal", async () => {
     const connectionAdapters = [new InMemoryConnectionAdapter()];
     const inMemoryEventStore = new InMemoryEventStore();
+    const testResolver = new TestResolver();
 
     const controller = new SyncManifestController(
-      "test-manifest",
       [createTestManifest()],
       connectionAdapters,
       [],
       [],
       inMemoryEventStore,
       new TestSyncHTTPController(),
+      testResolver,
     );
 
     await controller.prepare();
@@ -134,19 +143,19 @@ describe("SyncManifestController", () => {
 
   test("should handle failed event store writes", async () => {
     const connectionAdapters = [new InMemoryConnectionAdapter()];
-
+    const testResolver = new TestResolver();
     // Create an event store that always fails to write
     const failingEventStore = new InMemoryEventStore();
     failingEventStore.write = async () => false;
 
     const controller = new SyncManifestController(
-      "test-manifest",
       [createTestManifest()],
       connectionAdapters,
       [],
       [],
       failingEventStore,
       new TestSyncHTTPController(),
+      testResolver,
     );
 
     await controller.prepare();

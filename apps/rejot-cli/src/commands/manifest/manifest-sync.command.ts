@@ -15,6 +15,7 @@ import type {
   AnyIConsumerSchemaTransformationAdapter,
   AnyIPublicSchemaTransformationAdapter,
 } from "@rejot/contract/adapter";
+import { LocalhostResolver } from "@rejot/sync/sync-http-resolver";
 
 const log = logger.createLogger("cli");
 
@@ -36,6 +37,14 @@ export class ManifestSyncCommand extends Command {
       options: ["error", "warn", "info", "debug", "trace"],
       default: "info",
     }),
+    "api-port": Flags.integer({
+      description: "Set the port for the sync HTTP service",
+      default: 3000,
+    }),
+    hostname: Flags.string({
+      description: "Set the hostname for the sync HTTP service",
+      default: "localhost",
+    }),
   };
 
   static override strict = false;
@@ -49,7 +58,7 @@ export class ManifestSyncCommand extends Command {
 
   public async run(): Promise<void> {
     const { flags, argv } = await this.parse(ManifestSyncCommand);
-    const { "log-level": logLevel } = flags;
+    const { "log-level": logLevel, hostname, "api-port": apiPort } = flags;
 
     const manifestPaths = z.array(z.string()).parse(argv);
 
@@ -108,7 +117,9 @@ export class ManifestSyncCommand extends Command {
           `Event store connection '${eventStoreConfig.connectionSlug}' not found in manifest`,
         );
       }
-      const httpController = new SyncHTTPController(manifest.apiPort ?? 3000); // TODO: Magic number
+
+      const httpController = new SyncHTTPController(hostname, apiPort);
+      const syncServiceResolver = new LocalhostResolver(apiPort);
 
       const eventStore = connectionAdapters
         .find((adapter) => adapter.connectionType === eventStoreConnection.config.connectionType)
@@ -122,13 +133,13 @@ export class ManifestSyncCommand extends Command {
 
       // Create sync controller
       const syncController = new SyncManifestController(
-        manifest.slug,
         manifests,
         connectionAdapters,
         publicSchemaTransformationAdapters,
         consumerSchemaTransformationAdapters,
         eventStore,
         httpController,
+        syncServiceResolver,
       );
 
       let shouldStop = false;
