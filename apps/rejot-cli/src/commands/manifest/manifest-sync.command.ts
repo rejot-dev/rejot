@@ -6,9 +6,11 @@ import logger, { setLogLevel, type LogLevel } from "@rejot/contract/logger";
 import {
   PostgresConnectionAdapter,
   PostgresPublicSchemaTransformationAdapter,
+  PostgresConsumerSchemaTransformationAdapter,
 } from "@rejot/adapter-postgres";
 import { PostgresEventStore } from "@rejot/adapter-postgres/postgres-event-store";
 import { SyncManifestController } from "@rejot/sync/sync-manifest-controller";
+import { SyncHTTPController } from "../../../../../packages/sync/src/sync-http-service/sync-http-service";
 
 const log = logger.createLogger("cli");
 
@@ -73,6 +75,9 @@ export class ManifestSyncCommand extends Command {
       // Create adapters
       const postgresAdapter = new PostgresConnectionAdapter();
       const transformationAdapter = new PostgresPublicSchemaTransformationAdapter(postgresAdapter);
+      const consumerTransformationAdapter = new PostgresConsumerSchemaTransformationAdapter(
+        postgresAdapter,
+      );
 
       // Create event store from the first manifest's event store config
       // TODO: Support multiple event stores or validate they are the same
@@ -93,13 +98,17 @@ export class ManifestSyncCommand extends Command {
       }
 
       const eventStore = PostgresEventStore.fromConnection(eventStoreConnection.config);
+      const httpController = new SyncHTTPController(manifest.apiPort ?? 3000); // TODO: Magic number
 
       // Create sync controller
       const syncController = new SyncManifestController(
+        manifest.slug,
         manifests,
         [postgresAdapter],
         [transformationAdapter],
+        [consumerTransformationAdapter],
         eventStore,
+        httpController,
       );
 
       // Set up signal handlers for graceful shutdown
@@ -126,6 +135,7 @@ export class ManifestSyncCommand extends Command {
       try {
         await syncController.prepare();
         log.info("Starting sync process...");
+        syncController.startPollingForConsumerSchemas();
 
         for await (const transformedOps of syncController.start(abortController.signal)) {
           log.debug(`Processed ${transformedOps.length} operations`);

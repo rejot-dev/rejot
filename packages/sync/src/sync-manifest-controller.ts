@@ -1,8 +1,14 @@
 import { z } from "zod";
-import { SyncManifestSchema, verifyManifests, type ManifestError } from "@rejot/contract/manifest";
+import {
+  ConsumerSchemaSchema,
+  SyncManifestSchema,
+  verifyManifests,
+  type ManifestError,
+} from "@rejot/contract/manifest";
 import logger from "@rejot/contract/logger";
 import type {
   AnyIConnectionAdapter,
+  AnyIConsumerSchemaTransformationAdapter,
   AnyIPublicSchemaTransformationAdapter,
 } from "@rejot/contract/adapter";
 import type { IDataSource, Transaction } from "@rejot/contract/sync";
@@ -10,9 +16,14 @@ import type { IPublicSchemaTransformationRepository } from "@rejot/contract/publ
 import { ManifestTransformationRepository } from "./manifest/manifest-transformation.repository";
 import type { IEventStore, TransformedOperation } from "@rejot/contract/event-store";
 
+import { SyncHTTPController } from "./sync-http-service/sync-http-service";
+import { fetchRead } from "./sync-http-service/sync-http-service-fetch";
+
 const log = logger.createLogger("sync-manifest-controller");
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
+
+const POLLING_INTERVAL_MS = 5000;
 
 export type SyncManifestControllerState = "initial" | "prepared" | "running" | "stopped";
 
@@ -23,15 +34,23 @@ export class SyncManifestController {
 
   readonly #transformationRepository: IPublicSchemaTransformationRepository;
   readonly #publicSchemaTransformationAdapters: AnyIPublicSchemaTransformationAdapter[];
+  readonly #consumerSchemaTransformationAdapters: AnyIConsumerSchemaTransformationAdapter[];
   readonly #eventStore: IEventStore;
+  readonly #syncHTTPService: SyncHTTPController;
+
+  #remotePollingTimer: Timer | null = null;
 
   #state: SyncManifestControllerState = "initial";
+  #slug: string;
 
   constructor(
+    slug: string,
     manifests: Manifest[],
     connectionAdapters: AnyIConnectionAdapter[],
     publicSchemaTransformationAdapters: AnyIPublicSchemaTransformationAdapter[],
+    consumerSchemaTransformationAdapters: AnyIConsumerSchemaTransformationAdapter[],
     eventStore: IEventStore,
+    syncHTTPController: SyncHTTPController,
   ) {
     const verificationResult = verifyManifests(manifests);
     if (!verificationResult.isValid) {
@@ -49,8 +68,10 @@ export class SyncManifestController {
     this.#manifests = manifests;
     this.#connectionAdapters = connectionAdapters;
     this.#publicSchemaTransformationAdapters = publicSchemaTransformationAdapters;
+    this.#consumerSchemaTransformationAdapters = consumerSchemaTransformationAdapters;
     this.#eventStore = eventStore;
-
+    this.#syncHTTPService = syncHTTPController;
+    this.#slug = slug;
     this.#transformationRepository = new ManifestTransformationRepository(manifests);
   }
 
@@ -97,8 +118,64 @@ export class SyncManifestController {
     await this.#eventStore.prepare();
     await Promise.all(this.#sources.values().map((source) => source.prepare()));
 
+    await this.#syncHTTPService.start(async (publicSchemas, fromTransactionId, limit) => {
+      return this.#eventStore.read(publicSchemas, fromTransactionId, limit);
+    });
+
     this.#state = "prepared";
     log.debug("SyncManifestController prepared");
+  }
+
+  startPollingForConsumerSchemas() {
+    const myManifest = this.#manifests.find((manifest) => manifest.slug === this.#slug);
+    if (!myManifest) {
+      throw new Error(`Manifest '${this.#slug}' not found`);
+    }
+
+    // TODO: this should come from the destination data store
+    // const consumerCursors = new Map(
+    //   myManifest.consumerSchemas.map((remote) => [remote.publicSchema.name, 0]),
+    // );
+    log.debug(
+      `Polling ${myManifest.consumerSchemas.map((c) => `${c.sourceManifestSlug}:${c.publicSchema.name}`).join(", ")} every ${POLLING_INTERVAL_MS}ms`,
+    );
+
+    const consumerSchemasBySourceManifestSlug = myManifest.consumerSchemas.reduce(
+      (acc, consumer) => {
+        if (!acc[consumer.sourceManifestSlug]) {
+          acc[consumer.sourceManifestSlug] = [];
+        }
+        acc[consumer.sourceManifestSlug].push(consumer);
+        return acc;
+      },
+      {} as Record<string, z.infer<typeof ConsumerSchemaSchema>[]>,
+    );
+
+    this.#remotePollingTimer = setInterval(async () => {
+      for (const [slug, consumers] of Object.entries(consumerSchemasBySourceManifestSlug)) {
+        console.log("slug", slug, "consumers", consumers);
+        // TODO: method for getting the actual URI
+        const host = `http://localhost:3000`;
+
+        const response = await fetchRead(host, {
+          publicSchemas: consumers.map((consumer) => ({
+            name: consumer.publicSchema.name,
+            version: {
+              major: consumer.publicSchema.majorVersion,
+            },
+          })),
+        });
+
+        log.trace(
+          `received ${response.operations.length} operations from remote ${slug}:${consumers.map((c) => c.publicSchema.name).join(", ")}`,
+        );
+
+        for (const operation of response.operations) {
+          await this.consumeOperation(operation);
+          // TODO: Keep track of consumption in the destination data store
+        }
+      }
+    }, POLLING_INTERVAL_MS);
   }
 
   async *start(abortSignal: AbortSignal): AsyncIterable<TransformedOperation[]> {
@@ -158,9 +235,14 @@ export class SyncManifestController {
       }
     } finally {
       // Clean up when aborted or done
+      if (this.#remotePollingTimer) {
+        clearInterval(this.#remotePollingTimer);
+      }
+
       await Promise.all([
         ...Array.from(this.#sources.values()).map((source) => source.stop()),
         this.#eventStore.stop(),
+        this.#syncHTTPService.stop(),
       ]);
       this.#state = "stopped";
     }
@@ -248,5 +330,31 @@ export class SyncManifestController {
 
     const didConsume = await this.#eventStore.write(transaction.id, transformedOperations);
     return didConsume ? transformedOperations : null;
+  }
+
+  async consumeOperation(operation: TransformedOperation) {
+    const consumerSchemas = this.#manifests.flatMap((manifest) =>
+      manifest.consumerSchemas.filter(
+        (consumerSchema) => consumerSchema.publicSchema.name === operation.sourcePublicSchema.name,
+      ),
+    );
+
+    for (const consumerSchema of consumerSchemas) {
+      const transformationAdapter = this.#consumerSchemaTransformationAdapters.find(
+        (adapter) =>
+          adapter.transformationType === consumerSchema.transformations[0].transformationType, // TODO: multiple?
+      );
+
+      if (!transformationAdapter) {
+        throw new Error(
+          `No transformation adapter found for transformation type: ${consumerSchema.transformations[0].transformationType}`,
+        );
+      }
+
+      await transformationAdapter.applyConsumerSchemaTransformation(
+        operation,
+        consumerSchema.transformations[0],
+      );
+    }
   }
 }

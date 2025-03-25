@@ -5,10 +5,12 @@ import type {
   IConnectionAdapter,
   IPublicSchemaTransformationAdapter,
   CreateSourceOptions,
+  IConsumerSchemaTransformationAdapter,
 } from "@rejot/contract/adapter";
 import type {
   PostgresConnectionSchema,
   PostgresPublicSchemaTransformationSchema,
+  PostgresConsumerSchemaTransformationSchema,
 } from "./postgres-schemas.ts";
 import { PostgresSource } from "./postgres-source.ts";
 import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./postgres-consts.ts";
@@ -17,6 +19,7 @@ import type { PublicSchemaTransformation } from "@rejot/contract/public-schema";
 import type { ConsumerSchemaTransformation } from "@rejot/contract/consumer-schema";
 import logger from "@rejot/contract/logger";
 import { isPostgresError, PG_PROTOCOL_VIOLATION } from "./util/postgres-error-codes.ts";
+import type { TransformedOperation } from "@rejot/contract/event-store";
 
 const log = logger.createLogger("postgres-adapter");
 
@@ -132,4 +135,24 @@ export function createConsumerPostgresTransformation(sql: string): ConsumerSchem
     transformationType: "postgresql",
     sql,
   };
+}
+
+export class PostgresConsumerSchemaTransformationAdapter
+  implements
+    IConsumerSchemaTransformationAdapter<z.infer<typeof PostgresConsumerSchemaTransformationSchema>>
+{
+  constructor(_connectionAdapter: PostgresConnectionAdapter) {}
+
+  get transformationType(): "postgresql" {
+    return "postgresql";
+  }
+
+  async applyConsumerSchemaTransformation(
+    operation: TransformedOperation,
+    _transformation: z.infer<typeof PostgresConsumerSchemaTransformationSchema>,
+  ): Promise<TransformedOperation> {
+    log.debug("Applying consumer schema transformation to operation:", operation);
+    log.error("Postgres Consumer Adapter Not implemented!");
+    return operation;
+  }
 }

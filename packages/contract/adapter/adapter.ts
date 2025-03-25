@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 import type { IDataSource, PublicSchemaOperation, TableOperation } from "../sync/sync.ts";
-import { ConnectionConfigSchema, PublicSchemaTransformationSchema } from "../manifest/manifest.ts";
+import {
+  ConnectionConfigSchema,
+  ConsumerSchemaTransformationSchema,
+  PublicSchemaTransformationSchema,
+} from "../manifest/manifest.ts";
+import type { TransformedOperation } from "../event-store/event-store.ts";
 
 export interface CreateSourceOptions {
   publicationName?: string;
@@ -35,4 +40,19 @@ export interface IPublicSchemaTransformationAdapter<
 
 export type AnyIPublicSchemaTransformationAdapter = IPublicSchemaTransformationAdapter<
   z.infer<typeof PublicSchemaTransformationSchema>
+>;
+
+export interface IConsumerSchemaTransformationAdapter<
+  TTransformation extends z.infer<typeof ConsumerSchemaTransformationSchema>,
+> {
+  transformationType: TTransformation["transformationType"];
+
+  applyConsumerSchemaTransformation(
+    operation: TransformedOperation,
+    transformation: TTransformation,
+  ): Promise<TransformedOperation>;
+}
+
+export type AnyIConsumerSchemaTransformationAdapter = IConsumerSchemaTransformationAdapter<
+  z.infer<typeof ConsumerSchemaTransformationSchema>
 >;
