@@ -1,0 +1,79 @@
+volumes:
+  accounts-data:
+  orders-data:
+  eventstore-data:
+
+services:
+  db-accounts: &postgres
+    image: postgres:17-bookworm
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - accounts-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgres
+
+  db-orders:
+    <<: *postgres
+    volumes:
+      - orders-data:/var/lib/postgresql/data
+
+  eventstore:
+    <<: *postgres
+    volumes:
+      - eventstore-data:/var/lib/postgresql/data
+
+  accounts:
+    image: oven/bun:1.2.6
+    volumes:
+      - ./:/example
+    depends_on:
+      db-accounts:
+        condition: service_healthy
+        restart: true
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@db-accounts:5432/postgres"
+    working_dir: /example/apps/accounts
+    command: ["bun", "run", "dev"]
+    ports:
+      - 3000:3000
+
+  orders:
+    image: oven/bun:1.2.6
+    volumes:
+      - ./:/example
+    depends_on:
+      db-orders:
+        condition: service_healthy
+        restart: true
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@db-orders:5432/postgres"
+    working_dir: /example/apps/orders
+    command: ["bun", "run", "dev"]
+    ports:
+      - 3001:3001
+
+  sync-a:
+    # image: ghcr.io/rejot-dev/rejot-cli:main
+    build:
+      args:
+        REJOT_APP: rejot-cli
+      context: ../../
+      dockerfile: Dockerfile
+    depends_on:
+      db-accounts:
+        condition: service_healthy
+        restart: true
+      db-orders:
+        condition: service_healthy
+        restart: true
+      eventstore:
+        condition: service_healthy
+        restart: true
+    volumes:
+      - ./:/example
+    command: ["manifest", "sync", "--log-level", "trace", "/example/sync-a.json"]

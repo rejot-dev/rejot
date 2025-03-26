@@ -1,0 +1,35 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Exception Handling Guidelines
+
+## Don't Catch Just to Log
+
+Anti-pattern: Catching an exception only to log and rethrow it
+```typescript
+async function doSomething() {
+  try {
+    await someOperation();
+  } catch (error) {
+    console.error('Error:', error);  // Unnecessary logging
+    throw error;  // Just rethrow
+  }
+}
+```
+
+Better: Let the exception propagate if you're not handling it
+```typescript
+async function doSomething() {
+  await someOperation();
+}
+```
+
+## When to Use Try-Catch
+
+Only catch exceptions when you are:
+1. Transforming the error into a more appropriate type
+2. Adding critical context that would be lost otherwise
+3. Performing cleanup or recovery operations
+4. Actually handling the error (e.g., fallback behavior)
