@@ -8,7 +8,24 @@ describe("SyncHTTPController /read", () => {
   const controller = new SyncHTTPController("localhost", TEST_PORT);
 
   beforeAll(async () => {
-    await controller.start(async () => []);
+    await controller.start(async () => [
+      {
+        operation: "insert",
+        sourceDataStoreSlug: "test",
+        sourcePublicSchema: {
+          name: "test",
+          version: {
+            major: 1,
+            minor: 0,
+          },
+        },
+        object: {
+          id: "1",
+          type: "test",
+          data: { foo: "bar" },
+        },
+      },
+    ]);
   });
 
   afterAll(async () => {
@@ -49,5 +66,7 @@ describe("SyncHTTPController /read", () => {
 
     expect(response).toBeDefined();
     expect(response.operations).toBeArray();
+    expect(response.operations.length).toBe(1);
+    expect(response.operations[0].operation).toBe("insert");
   });
 });
