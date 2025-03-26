@@ -12,8 +12,9 @@ export const PG_INVALID_TEXT_REPRESENTATION = "22P02";
 export const PG_DUPLICATE_OBJECT = "42710";
 
 // Class 55 - Object Not In Prerequisite State
-export const PG_OBJECT_NOT_IN_PREREQUISITE_STATE = "55000";
 export const PG_INVALID_FUNCTION_OR_OPERATOR = "42883";
+export const PG_OBJECT_NOT_IN_PREREQUISITE_STATE = "55000";
+export const PG_OBJECT_IN_USE = "55006";
 
 export function isPostgresError(error: unknown, errorCode: string): error is DatabaseError {
   return error instanceof DatabaseError && error.code === errorCode;
