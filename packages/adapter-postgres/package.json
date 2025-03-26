@@ -8,7 +8,7 @@
     "./consts": "./src/postgres-consts.ts",
     "./source": "./src/postgres-source.ts",
     "./sink": "./src/postgres-sink.ts",
-    "./postgres-event-store": "./src/postgres-event-store.ts"
+    "./event-store": "./src/event-store/postgres-event-store.ts"
   },
   "private": true,
   "scripts": {

@@ -21,8 +21,7 @@ import {
 export interface ISyncHTTPController {
   start(
     readRequestCallback: (
-      publicSchemas: PublicSchemaReference[],
-      fromTransactionId: string | null,
+      cursors: { schema: PublicSchemaReference; cursor: string | null }[],
       limit: number,
     ) => Promise<TransformedOperation[]>,
   ): Promise<void>;
@@ -42,8 +41,7 @@ export class SyncHTTPController implements ISyncHTTPController {
   #server: Server;
 
   #readRequestCallback?: (
-    publicSchemas: PublicSchemaReference[],
-    fromTransactionId: string | null,
+    cursors: { schema: PublicSchemaReference; cursor: string | null }[],
     limit: number,
   ) => Promise<TransformedOperation[]>;
 
@@ -136,26 +134,24 @@ export class SyncHTTPController implements ISyncHTTPController {
       throw new HTTPInternalServerError("Read request callback not set");
     }
 
-    const publicSchemas: PublicSchemaReference[] = request.publicSchemas.map((schema) => ({
-      name: schema.name,
-      version: {
-        major: schema.version.major,
+    const cursors = request.publicSchemas.map((schema) => ({
+      schema: {
+        name: schema.name,
+        version: {
+          major: schema.version.major,
+        },
       },
+      cursor: schema.cursor,
     }));
 
-    const operations = await this.#readRequestCallback(
-      publicSchemas,
-      request.fromTransactionId ?? null,
-      request.limit ?? 100,
-    );
+    const operations = await this.#readRequestCallback(cursors, request.limit ?? 100);
 
     return { operations };
   }
 
   async start(
     readRequestCallback: (
-      publicSchemas: PublicSchemaReference[],
-      fromTransactionId: string | null,
+      cursors: { schema: PublicSchemaReference; cursor: string | null }[],
       limit: number,
     ) => Promise<TransformedOperation[]>,
   ) {

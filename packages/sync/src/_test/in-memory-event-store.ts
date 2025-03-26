@@ -2,6 +2,7 @@ import type {
   IEventStore,
   PublicSchemaReference,
   TransformedOperation,
+  SchemaCursor,
 } from "@rejot/contract/event-store";
 
 export class InMemoryEventStore implements IEventStore {
@@ -33,38 +34,43 @@ export class InMemoryEventStore implements IEventStore {
     return true;
   }
 
-  async tail(): Promise<string | null> {
+  async tail(schemas: PublicSchemaReference[]): Promise<SchemaCursor[]> {
     if (this.#transactionIds.length === 0) {
-      return null;
+      return schemas.map((schema) => ({ schema, cursor: null }));
     }
-    return this.#transactionIds[this.#transactionIds.length - 1];
+
+    const lastTransactionId = this.#transactionIds[this.#transactionIds.length - 1];
+    return schemas.map((schema) => ({ schema, cursor: lastTransactionId }));
   }
 
-  async read(
-    schemas: PublicSchemaReference[],
-    fromTransactionId: string | null,
-    limit: number,
-  ): Promise<TransformedOperation[]> {
+  async read(cursors: SchemaCursor[], limit: number): Promise<TransformedOperation[]> {
     let result: TransformedOperation[] = [];
 
     if (this.#transactionIds.length === 0) {
       return result;
     }
 
+    // Find the earliest cursor position to start from
     let startIndex = 0;
-    if (fromTransactionId !== null) {
-      startIndex = this.#transactionIds.indexOf(fromTransactionId);
-      if (startIndex === -1) {
-        throw new Error(`Transaction ID ${fromTransactionId} not found`);
+    for (const { cursor } of cursors) {
+      if (cursor !== null) {
+        const cursorIndex = this.#transactionIds.indexOf(cursor);
+        if (cursorIndex === -1) {
+          throw new Error(`Transaction ID ${cursor} not found`);
+        }
+        // Start from the transaction after the cursor
+        startIndex = Math.max(startIndex, cursorIndex + 1);
       }
     }
 
+    // Get all operations after the cursor that match any of the schemas
     for (let i = startIndex; i < this.#transactionIds.length && result.length < limit; i++) {
       const transactionId = this.#transactionIds[i];
       const ops = this.#operations
         .get(transactionId)
-        // TODO: Check version
-        ?.filter((op) => schemas.some((schema) => schema.name === op.sourcePublicSchema.name));
+        ?.filter((op) =>
+          cursors.some((cursor) => cursor.schema.name === op.sourcePublicSchema.name),
+        );
 
       if (ops) {
         result = result.concat(ops);

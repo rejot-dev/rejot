@@ -42,6 +42,7 @@ describe("SyncHTTPController /read", () => {
           version: {
             major: 1,
           },
+          cursor: null,
         },
       ],
     });

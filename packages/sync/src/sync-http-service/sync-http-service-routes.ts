@@ -14,10 +14,9 @@ export const SyncControllerReadRequestSchema = z.object({
       version: z.object({
         major: z.number(),
       }),
+      cursor: z.string().nullable(),
     }),
   ),
-
-  fromTransactionId: z.string().optional(),
   limit: z.number().optional(),
 });
 
