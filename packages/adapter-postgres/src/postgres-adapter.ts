@@ -20,7 +20,7 @@ import type { ConsumerSchemaTransformation } from "@rejot/contract/consumer-sche
 import logger from "@rejot/contract/logger";
 import { isPostgresError, PG_PROTOCOL_VIOLATION } from "./util/postgres-error-codes.ts";
 import type { TransformedOperation } from "@rejot/contract/event-store";
-import { PostgresEventStore } from "./postgres-event-store.ts";
+import { PostgresEventStore } from "./event-store/postgres-event-store.ts";
 import { PostgresClient } from "./util/postgres-client.ts";
 
 const log = logger.createLogger("postgres-adapter");

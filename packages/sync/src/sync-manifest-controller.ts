@@ -117,11 +117,11 @@ export class SyncManifestController {
       this.#sources.set(connection.slug, source);
     }
 
-    await this.#eventStore.prepare();
+    await this.#eventStore.prepare(this.#manifests);
     await Promise.all(this.#sources.values().map((source) => source.prepare()));
 
-    await this.#syncHTTPService.start(async (publicSchemas, fromTransactionId, limit) => {
-      return this.#eventStore.read(publicSchemas, fromTransactionId, limit);
+    await this.#syncHTTPService.start(async (cursors, limit) => {
+      return this.#eventStore.read(cursors, limit);
     });
 
     this.#state = "prepared";
@@ -165,6 +165,7 @@ export class SyncManifestController {
             version: {
               major: consumer.publicSchema.majorVersion,
             },
+            cursor: null, // Start from beginning
           })),
         });
 

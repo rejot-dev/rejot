@@ -1,3 +1,6 @@
+import type { z } from "zod";
+import type { SyncManifestSchema } from "../manifest/manifest";
+
 interface TransformedOperationBase {
   operation: "insert" | "update" | "delete";
 
@@ -37,31 +40,32 @@ export type TransformedOperation =
   | TransformedOperationUpdate
   | TransformedOperationDelete;
 
+export interface SchemaCursor {
+  schema: PublicSchemaReference;
+  cursor: string | null;
+}
+
 export interface IEventStore {
   /**
    * Prepare the data store for reading/writing, e.g. opening a connection.
    */
-  prepare(): Promise<void>;
+  prepare(manifests: z.infer<typeof SyncManifestSchema>[]): Promise<void>;
 
   stop(): Promise<void>;
 
   write(transactionId: string, ops: TransformedOperation[]): Promise<boolean>;
 
   /**
-   * Get the last written transaction id
+   * Get the last written transaction id for each schema
    */
-  tail(publicSchemas: string[]): Promise<string | null>;
+  tail(schemas: PublicSchemaReference[]): Promise<SchemaCursor[]>;
 
   /**
-   * Read the event store from the given transaction id.
+   * Read the event store from the given cursors.
    *
-   * @param fromTransactionId - The transaction id to start reading from.
-   * @param limit - The maximum number of operations to read.
-   * @returns The operations read from the event store.
+   * @param cursors - The cursors for each schema to read from
+   * @param limit - The maximum number of operations to read per schema
+   * @returns The operations read from the event store
    */
-  read(
-    schemas: PublicSchemaReference[],
-    fromTransactionId: string | null,
-    limit: number,
-  ): Promise<TransformedOperation[]>;
+  read(cursors: SchemaCursor[], limit: number): Promise<TransformedOperation[]>;
 }

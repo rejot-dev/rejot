@@ -75,6 +75,9 @@ export class ManifestInfoCommand extends Command {
               this.log(`    Host: ${conn.config.host}:${conn.config.port}`);
               this.log(`    Database: ${conn.config.database}`);
               this.log(`    User: ${conn.config.user}`);
+              this.log(
+                `    string: postgres://${conn.config.user}@${conn.config.host}:${conn.config.port}/${conn.config.database}`,
+              );
               break;
             case "in-memory":
               this.log(`    In-memory connection`);
