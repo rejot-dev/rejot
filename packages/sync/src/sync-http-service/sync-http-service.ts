@@ -1,7 +1,6 @@
 import type { TransformedOperation, PublicSchemaReference } from "@rejot/contract/event-store";
 import logger from "@rejot/contract/logger";
-
-import { createServer, IncomingMessage, Server, ServerResponse } from "node:http";
+import { serve, type Server } from "bun";
 
 const log = logger.createLogger("sync-http-controller");
 
@@ -13,115 +12,46 @@ import {
 } from "./sync-http-service-errors";
 import {
   syncServiceReadRoute,
-  type RouteConfig,
   type SyncControllerReadRequest,
   type SyncControllerReadResponse,
 } from "./sync-http-service-routes";
 
+type ReadRequestCallback = (
+  cursors: { schema: PublicSchemaReference; cursor: string | null }[],
+  limit: number,
+) => Promise<TransformedOperation[]>;
+
 export interface ISyncHTTPController {
-  start(
-    readRequestCallback: (
-      cursors: { schema: PublicSchemaReference; cursor: string | null }[],
-      limit: number,
-    ) => Promise<TransformedOperation[]>,
-  ): Promise<void>;
+  start(readRequestCallback: ReadRequestCallback): Promise<void>;
   stop(): Promise<void>;
 }
 
 export class SyncHTTPController implements ISyncHTTPController {
   readonly #hostname: string;
   readonly #port: number;
-  readonly #routes: Map<
-    string,
-    {
-      handler: (request: IncomingMessage, response: ServerResponse) => Promise<void>;
-      config: RouteConfig;
-    }
-  > = new Map();
 
-  #server: Server;
+  #server: Server | null = null;
 
-  #readRequestCallback?: (
-    cursors: { schema: PublicSchemaReference; cursor: string | null }[],
-    limit: number,
-  ) => Promise<TransformedOperation[]>;
+  #readRequestCallback?: ReadRequestCallback;
 
   constructor(hostname: string, port: number) {
     this.#hostname = hostname;
     this.#port = port;
-    // Register routes
-    this.#registerRoute(syncServiceReadRoute, this.#handleReadRequest.bind(this));
-
-    this.#server = createServer(this.#requestRouter.bind(this));
   }
 
-  #registerRoute<TRequest, TResponse>(
-    config: RouteConfig,
-    handler: (parsedRequest: TRequest) => Promise<TResponse>,
-  ) {
-    this.#routes.set(`${config.method}:${config.path}`, {
-      config,
-      handler: async (req: IncomingMessage, res: ServerResponse) => {
-        // Parse request based on route config
-        const parsedRequest = await this.#parseJSONRequest(req, config.request);
-
-        // Call the handler with parsed request
-        const result = await handler(parsedRequest);
-
-        // Send response
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify(result));
-      },
-    });
-  }
-
-  #routeKey(request: IncomingMessage) {
-    return `${request.method}:${request.url}`;
-  }
-
-  async #requestRouter(request: IncomingMessage, response: ServerResponse) {
+  /**
+   * Safely parses a JSON request body against the supplied Zod schema.
+   * Throws an HTTPBadRequestError if parsing fails.
+   */
+  async #parseJSONRequest<T>(request: Request, Schema: ZodType<T>): Promise<T> {
+    let body: unknown;
     try {
-      const route = this.#routes.get(this.#routeKey(request));
-      if (route) {
-        await route.handler(request, response);
-      } else {
-        response.statusCode = 404;
-        response.end("Not found");
-      }
-    } catch (error) {
-      if (error instanceof HTTPBaseError) {
-        response.statusCode = error.status;
-        response.end(error.message);
-      } else {
-        response.statusCode = 500;
-        response.end("Internal server error");
-      }
-    }
-
-    log.info(`${request.method} ${request.url} ${response.statusCode}`);
-    return response;
-  }
-
-  async #parseJSONRequest<T>(request: IncomingMessage, Schema: ZodType<T>): Promise<T> {
-    const body = await new Promise<Buffer>((resolve, reject) => {
-      const data: Buffer[] = [];
-
-      request.on("data", (chunk) => {
-        data.push(chunk);
-      });
-      request.on("end", () => resolve(Buffer.concat(data)));
-      request.on("error", (err) => reject(err));
-    });
-
-    let jsonBody: unknown = null;
-    try {
-      jsonBody = JSON.parse(body.toString());
-    } catch (_error) {
+      body = await request.json();
+    } catch {
       throw new HTTPBadRequestError("Invalid JSON");
     }
 
-    const parsed = Schema.safeParse(jsonBody);
+    const parsed = Schema.safeParse(body);
     if (!parsed.success) {
       throw new HTTPBadRequestError(parsed.error.message);
     }
@@ -129,6 +59,10 @@ export class SyncHTTPController implements ISyncHTTPController {
     return parsed.data;
   }
 
+  /**
+   * Handles the read request by calling the readRequestCallback function.
+   * Throws an HTTPInternalServerError if the callback is not set.
+   */
   async #handleReadRequest(
     request: SyncControllerReadRequest,
   ): Promise<SyncControllerReadResponse> {
@@ -151,20 +85,40 @@ export class SyncHTTPController implements ISyncHTTPController {
     return { operations };
   }
 
-  async start(
-    readRequestCallback: (
-      cursors: { schema: PublicSchemaReference; cursor: string | null }[],
-      limit: number,
-    ) => Promise<TransformedOperation[]>,
-  ) {
+  /**
+   * Starts the HTTP server and sets up the route handling for read requests.
+   */
+  async start(readRequestCallback: ReadRequestCallback): Promise<void> {
     this.#readRequestCallback = readRequestCallback;
+
     log.info(`Http controller starting on ${this.#hostname}:${this.#port}`);
-    await new Promise<void>((resolve) =>
-      this.#server.listen(this.#port, this.#hostname, () => resolve()),
-    );
+    this.#server = serve({
+      port: this.#port,
+      hostname: this.#hostname,
+      routes: {
+        [syncServiceReadRoute.path]: async (req: Request) => {
+          try {
+            const requestData = await this.#parseJSONRequest<SyncControllerReadRequest>(
+              req,
+              syncServiceReadRoute.request,
+            );
+            const result = await this.#handleReadRequest(requestData);
+            return Response.json(result);
+          } catch (error) {
+            if (error instanceof HTTPBaseError) {
+              return new Response(error.message, { status: error.status });
+            }
+            return new Response("Internal server error", { status: 500 });
+          }
+        },
+      },
+    });
   }
 
-  stop() {
-    return new Promise<void>((resolve) => this.#server.close(() => resolve()));
+  async stop(): Promise<void> {
+    if (this.#server) {
+      await this.#server.stop();
+      this.#server = null;
+    }
   }
 }
