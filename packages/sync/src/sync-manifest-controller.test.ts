@@ -74,6 +74,7 @@ describe("SyncManifestController", () => {
 
     // Get the source from the adapter
     const source = connectionAdapters[0].createSource(
+      "test-connection",
       {
         connectionType: "in-memory",
       },
@@ -165,6 +166,7 @@ describe("SyncManifestController", () => {
 
     // Get the source from the adapter
     const source = connectionAdapters[0].createSource(
+      "test-connection",
       {
         connectionType: "in-memory",
       },

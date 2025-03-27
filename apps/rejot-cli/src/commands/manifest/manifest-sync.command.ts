@@ -123,7 +123,7 @@ export class ManifestSyncCommand extends Command {
 
       const eventStore = connectionAdapters
         .find((adapter) => adapter.connectionType === eventStoreConnection.config.connectionType)
-        ?.createEventStore(eventStoreConnection.config);
+        ?.createEventStore(eventStoreConnection.slug, eventStoreConnection.config);
 
       if (!eventStore) {
         throw new Error(

@@ -22,28 +22,38 @@ import { isPostgresError, PG_PROTOCOL_VIOLATION } from "./util/postgres-error-co
 import type { TransformedOperation } from "@rejot/contract/event-store";
 import { PostgresEventStore } from "./event-store/postgres-event-store.ts";
 import { PostgresClient } from "./util/postgres-client.ts";
+import { PostgresSink } from "./postgres-sink.ts";
 
 const log = logger.createLogger("postgres-adapter");
 
+interface PostgresConnection {
+  slug: string;
+  config: z.infer<typeof PostgresConnectionSchema>;
+  client: PostgresClient;
+}
+
 export class PostgresConnectionAdapter
-  implements IConnectionAdapter<z.infer<typeof PostgresConnectionSchema>, PostgresSource>
+  implements
+    IConnectionAdapter<
+      z.infer<typeof PostgresConnectionSchema>,
+      PostgresSource,
+      PostgresSink,
+      PostgresEventStore
+    >
 {
-  #client: Client | null = null;
+  #connections: Map<string, PostgresConnection> = new Map();
 
   get connectionType(): "postgres" {
     return "postgres";
   }
 
   createSource(
+    connectionSlug: string,
     connection: z.infer<typeof PostgresConnectionSchema>,
     options?: CreateSourceOptions,
   ): PostgresSource {
-    if (!this.#client) {
-      this.#client = new Client(connection);
-    }
-
     return new PostgresSource({
-      client: this.#client,
+      client: this.#getOrCreateConnection(connectionSlug, connection).client,
       publicSchemaSql: "",
       options: {
         createPublication: true,
@@ -53,16 +63,44 @@ export class PostgresConnectionAdapter
     });
   }
 
-  createEventStore(connection: z.infer<typeof PostgresConnectionSchema>): PostgresEventStore {
-    return new PostgresEventStore(new PostgresClient(new Client(connection)));
+  createSink(
+    connectionSlug: string,
+    connection: z.infer<typeof PostgresConnectionSchema>,
+  ): PostgresSink {
+    return new PostgresSink({
+      client: this.#getOrCreateConnection(connectionSlug, connection).client,
+      consumerSchemaSQL: "",
+    });
   }
 
-  get client(): Client {
-    if (!this.#client) {
-      throw new Error("Client not created");
+  createEventStore(
+    connectionSlug: string,
+    connection: z.infer<typeof PostgresConnectionSchema>,
+  ): PostgresEventStore {
+    return new PostgresEventStore(this.#getOrCreateConnection(connectionSlug, connection).client);
+  }
+
+  getConnection(connectionSlug: string): PostgresConnection | undefined {
+    return this.#connections.get(connectionSlug);
+  }
+
+  #getOrCreateConnection(
+    connectionSlug: string,
+    connection: z.infer<typeof PostgresConnectionSchema>,
+  ): PostgresConnection {
+    let existingConnection = this.#connections.get(connectionSlug);
+
+    if (!existingConnection) {
+      existingConnection = {
+        slug: connectionSlug,
+        config: connection,
+        client: new PostgresClient(new Client(connection)),
+      };
+
+      this.#connections.set(connectionSlug, existingConnection);
     }
 
-    return this.#client;
+    return existingConnection;
   }
 }
 
@@ -83,9 +121,15 @@ export class PostgresPublicSchemaTransformationAdapter
   }
 
   async applyPublicSchemaTransformation(
+    sourceDataStoreSlug: string,
     operation: TableOperation,
     transformation: z.infer<typeof PostgresPublicSchemaTransformationSchema>,
   ): Promise<PublicSchemaOperation> {
+    const connection = this.#connectionAdapter.getConnection(sourceDataStoreSlug);
+    if (!connection) {
+      throw new Error(`Connection with slug ${sourceDataStoreSlug} not found`);
+    }
+
     log.debug(`Applying public schema transformation: ${JSON.stringify(transformation)}`);
 
     if (operation.type === "delete") {
@@ -95,13 +139,10 @@ export class PostgresPublicSchemaTransformationAdapter
       };
     }
 
-    // TODO(Wilco): This should use connection pool.
-    const client = this.#connectionAdapter.client;
-
     const keyValues = operation.keyColumns.map((column) => operation.new[column]);
 
     try {
-      const result = await client.query(transformation.sql, keyValues);
+      const result = await connection.client.query(transformation.sql, keyValues);
 
       if (result.rows.length !== 1) {
         throw new Error(
@@ -127,24 +168,6 @@ export class PostgresPublicSchemaTransformationAdapter
   }
 }
 
-export function createPostgresTransformation(
-  table: string,
-  sql: string,
-): PublicSchemaTransformation {
-  return {
-    transformationType: "postgresql",
-    table,
-    sql,
-  };
-}
-
-export function createConsumerPostgresTransformation(sql: string): ConsumerSchemaTransformation {
-  return {
-    transformationType: "postgresql",
-    sql,
-  };
-}
-
 export class PostgresConsumerSchemaTransformationAdapter
   implements
     IConsumerSchemaTransformationAdapter<z.infer<typeof PostgresConsumerSchemaTransformationSchema>>
@@ -163,4 +186,24 @@ export class PostgresConsumerSchemaTransformationAdapter
     log.error("Postgres Consumer Adapter Not implemented!");
     return operation;
   }
+}
+
+export function createPostgresPublicSchemaTransformation(
+  table: string,
+  sql: string,
+): PublicSchemaTransformation {
+  return {
+    transformationType: "postgresql",
+    table,
+    sql,
+  };
+}
+
+export function createPostgresConsumerSchemaTransformation(
+  sql: string,
+): ConsumerSchemaTransformation {
+  return {
+    transformationType: "postgresql",
+    sql,
+  };
 }

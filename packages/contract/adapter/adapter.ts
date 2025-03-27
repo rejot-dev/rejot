@@ -1,32 +1,45 @@
 import { z } from "zod";
 
-import type { IDataSource, PublicSchemaOperation, TableOperation } from "../sync/sync.ts";
+import type {
+  IDataSink,
+  IDataSource,
+  PublicSchemaOperation,
+  TableOperation,
+} from "../sync/sync.ts";
 import {
   ConnectionConfigSchema,
   ConsumerSchemaTransformationSchema,
   PublicSchemaTransformationSchema,
 } from "../manifest/manifest.ts";
-import type { TransformedOperation } from "../event-store/event-store.ts";
+import type { TransformedOperation, IEventStore } from "../event-store/event-store.ts";
 
-import type { IEventStore } from "../event-store/event-store.ts";
 export interface CreateSourceOptions {
   publicationName?: string;
   slotName?: string;
 }
 
 export interface IConnectionAdapter<
-  TConnection extends z.infer<typeof ConnectionConfigSchema>,
+  TConnectionConfig extends z.infer<typeof ConnectionConfigSchema>,
   TSource extends IDataSource,
+  TSink extends IDataSink,
+  TEventStore extends IEventStore,
 > {
-  connectionType: TConnection["connectionType"];
-  createSource(connection: TConnection, options?: CreateSourceOptions): TSource;
-  createEventStore(connection: TConnection): IEventStore;
+  connectionType: TConnectionConfig["connectionType"];
+
+  createSource(
+    connectionSlug: string,
+    connectionConfig: TConnectionConfig,
+    options?: CreateSourceOptions,
+  ): TSource;
+  createSink(connectionSlug: string, connectionConfig: TConnectionConfig): TSink;
+  createEventStore(connectionSlug: string, connectionConfig: TConnectionConfig): TEventStore;
 }
 
 export type AnyIConnectionAdapter = IConnectionAdapter<
   z.infer<typeof ConnectionConfigSchema>,
-  // z.infer<typeof PublicSchemaTransformationSchema>,
-  IDataSource
+  IDataSource,
+  IDataSink,
+  IEventStore
 >;
 
 export interface IPublicSchemaTransformationAdapter<
@@ -35,6 +48,7 @@ export interface IPublicSchemaTransformationAdapter<
   transformationType: TTransformation["transformationType"];
 
   applyPublicSchemaTransformation(
+    sourceDataStoreSlug: string,
     operation: TableOperation,
     transformation: TTransformation,
   ): Promise<PublicSchemaOperation>;
