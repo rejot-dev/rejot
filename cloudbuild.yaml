@@ -16,7 +16,7 @@ steps:
     args: ["push", "$LOCATION-docker.pkg.dev/$PROJECT_ID/rejot/controller:${_APP_VERSION}"]
 
   # Build controller-spa
-  - name: "oven/bun:1.2.1"
+  - name: "oven/bun:1.2.6"
     dir: "apps/controller-spa"
     entrypoint: bun
     args: ["install"]

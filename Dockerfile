@@ -1,4 +1,4 @@
-FROM oven/bun:1.2.1 AS base
+FROM oven/bun:1.2.6 AS base
 ARG REJOT_APP=controller
 ENV REJOT_APP=${REJOT_APP}
 
