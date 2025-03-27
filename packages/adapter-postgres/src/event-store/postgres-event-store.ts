@@ -100,7 +100,8 @@ export class PostgresEventStore implements IEventStore {
             public_schema_major_version,
             public_schema_minor_version,
             object
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          ON CONFLICT DO NOTHING`,
           [
             transactionId,
             i,

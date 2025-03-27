@@ -139,6 +139,12 @@ export class PostgresPublicSchemaTransformationAdapter
       };
     }
 
+    if (operation.table !== transformation.table) {
+      throw new Error(
+        `Table mismatch between operation and transformation: ${operation.table} !== ${transformation.table}`,
+      );
+    }
+
     const keyValues = operation.keyColumns.map((column) => operation.new[column]);
 
     try {
