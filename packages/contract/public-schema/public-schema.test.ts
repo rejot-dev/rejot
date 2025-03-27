@@ -2,7 +2,7 @@ import { test, expect } from "bun:test";
 import { z } from "zod";
 
 import { createPublicSchema, deserializePublicSchema } from "./public-schema.ts";
-import { createPostgresTransformation } from "@rejot/adapter-postgres";
+import { createPostgresPublicSchemaTransformation } from "@rejot/adapter-postgres";
 
 test("createPublicSchema", () => {
   const publication = createPublicSchema("test", {
@@ -11,7 +11,7 @@ test("createPublicSchema", () => {
       id: z.string(),
       name: z.string(),
     }),
-    transformation: createPostgresTransformation(
+    transformation: createPostgresPublicSchemaTransformation(
       "test",
       "SELECT id, name FROM test WHERE id = $1;",
     ),
@@ -25,7 +25,7 @@ test("createPublicSchema", () => {
 
   expect(source).toEqual({ dataStoreSlug: "test", tables: ["test"] });
   expect(transformation).toEqual(
-    createPostgresTransformation("test", "SELECT id, name FROM test WHERE id = $1;"),
+    createPostgresPublicSchemaTransformation("test", "SELECT id, name FROM test WHERE id = $1;"),
   );
   expect(version).toEqual({
     major: 1,
@@ -40,7 +40,7 @@ test("public schema - serialize & deserialize", () => {
       id: z.number(),
       name: z.string(),
     }),
-    transformation: createPostgresTransformation(
+    transformation: createPostgresPublicSchemaTransformation(
       "test",
       "SELECT id, name FROM test WHERE id = $1;",
     ),

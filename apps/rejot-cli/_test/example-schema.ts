@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { createPostgresTransformation } from "@rejot/adapter-postgres";
+import { createPostgresPublicSchemaTransformation } from "@rejot/adapter-postgres";
 import { createPublicSchema } from "@rejot/contract/public-schema";
 
 const testPublicSchema = createPublicSchema("public-account", {
@@ -10,7 +10,7 @@ const testPublicSchema = createPublicSchema("public-account", {
     email: z.string(),
     name: z.string(),
   }),
-  transformation: createPostgresTransformation(
+  transformation: createPostgresPublicSchemaTransformation(
     "account",
     "SELECT id, email, username as name FROM account WHERE id = $1",
   ),

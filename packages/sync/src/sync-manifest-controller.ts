@@ -41,6 +41,7 @@ export class SyncManifestController {
   readonly #eventStore: IEventStore;
   readonly #syncHTTPService: ISyncHTTPController;
   readonly #syncServiceResolver: ISyncServiceResolver;
+
   #remotePollingTimer: Timer | null = null;
 
   #state: SyncManifestControllerState = "initial";
@@ -109,7 +110,7 @@ export class SyncManifestController {
         );
       }
 
-      const source = adapter.createSource(connection.config, {
+      const source = adapter.createSource(connection.slug, connection.config, {
         publicationName,
         slotName,
       });
@@ -144,16 +145,15 @@ export class SyncManifestController {
       return;
     }
 
-    const consumersByRemoteSlug = externalSlugToConsumerSchema.reduce(
-      (acc, { slug, consumerSchema }) => {
-        if (!acc[slug]) {
-          acc[slug] = [];
-        }
-        acc[slug].push(consumerSchema);
-        return acc;
-      },
-      {} as Record<string, z.infer<typeof ConsumerSchemaSchema>[]>,
-    );
+    const consumersByRemoteSlug = externalSlugToConsumerSchema.reduce<
+      Record<string, z.infer<typeof ConsumerSchemaSchema>[]>
+    >((acc, { slug, consumerSchema }) => {
+      if (!acc[slug]) {
+        acc[slug] = [];
+      }
+      acc[slug].push(consumerSchema);
+      return acc;
+    }, {});
 
     log.debug(`Polling for remote public schemas every ${POLLING_INTERVAL_MS}ms`);
     this.#remotePollingTimer = setInterval(async () => {
@@ -172,6 +172,8 @@ export class SyncManifestController {
 
         log.trace(`received ${response.operations.length} operations from remote ${slug}`);
 
+        // TODO: Multiple operations in a single transaction could trigger the same consumer
+        //       multiple times. We need to de-dupe.
         for (const operation of response.operations) {
           await this.consumeOperation(operation);
           // TODO: Keep track of consumption in the destination data store
@@ -301,6 +303,7 @@ export class SyncManifestController {
         }
 
         const transformedData = await transformationAdapter.applyPublicSchemaTransformation(
+          dataStoreSlug,
           operation,
           publicSchema.transformation,
         );
