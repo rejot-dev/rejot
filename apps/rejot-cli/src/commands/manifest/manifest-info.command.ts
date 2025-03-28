@@ -94,7 +94,7 @@ export class ManifestInfoCommand extends Command {
       } else {
         for (const ds of manifest.dataStores) {
           this.log(`  - Connection: ${ds.connectionSlug}`);
-          this.log(`    Publication: ${ds.publicationName}`);
+          this.log(`    Publication / slot: ${ds.publicationName ?? ""} / ${ds.slotName ?? ""}`);
         }
       }
       this.log("");

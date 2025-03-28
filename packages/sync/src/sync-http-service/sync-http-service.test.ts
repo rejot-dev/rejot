@@ -10,7 +10,7 @@ describe("SyncHTTPController /read", () => {
   beforeAll(async () => {
     await controller.start(async () => [
       {
-        operation: "insert",
+        type: "insert",
         sourceDataStoreSlug: "test",
         sourcePublicSchema: {
           name: "test",
@@ -67,6 +67,6 @@ describe("SyncHTTPController /read", () => {
     expect(response).toBeDefined();
     expect(response.operations).toBeArray();
     expect(response.operations.length).toBe(1);
-    expect(response.operations[0].operation).toBe("insert");
+    expect(response.operations[0].type).toBe("insert");
   });
 });

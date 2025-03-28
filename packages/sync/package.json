@@ -4,6 +4,8 @@
   "exports": {
     "./consts": "./src/sync-consts.ts",
     "./sync-controller": "./src/sync-controller.ts",
+    "./sync-controller-new": "./src/sync-controller/sync-controller.ts",
+    "./sync-manifest": "./src/manifest/sync-manifest.ts",
     "./sync-manifest-controller": "./src/sync-manifest-controller.ts",
     "./sync-http-resolver": "./src/sync-http-service/sync-http-resolver.ts",
     "./sync-http-service": "./src/sync-http-service/sync-http-service.ts"

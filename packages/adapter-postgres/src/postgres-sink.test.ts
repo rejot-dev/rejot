@@ -29,7 +29,7 @@ pgRollbackDescribe("PostgreSQL Sink tests", (ctx) => {
     await sink.writeData({
       type: "insert",
       keyColumns: ["id"],
-      new: {
+      object: {
         id: "1",
         name: "John Doe",
       },
@@ -56,7 +56,7 @@ pgRollbackDescribe("PostgreSQL Sink tests", (ctx) => {
     await sink.writeData({
       type: "update",
       keyColumns: ["id"],
-      new: {
+      object: {
         id: "1",
         name: "Jane Doe",
       },

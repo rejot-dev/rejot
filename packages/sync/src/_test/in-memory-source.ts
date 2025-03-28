@@ -1,6 +1,6 @@
 import type {
   IDataSource,
-  PublicSchemaOperation,
+  TransformedOperation,
   TableOperation,
   Transaction,
 } from "@rejot/contract/sync";
@@ -11,9 +11,14 @@ export class InMemorySource implements IDataSource {
 
   #transactions: Transaction[] = [];
   #pendingCallbacks: ((value: IteratorResult<Transaction>) => void)[] = [];
+  #isAborted = false;
 
   #iterator: AsyncIterator<Transaction> = {
     next: async () => {
+      if (this.#isAborted) {
+        return { done: true, value: undefined };
+      }
+
       if (this.#transactions.length > 0) {
         return { done: false, value: this.#transactions.shift()! };
       }
@@ -22,11 +27,22 @@ export class InMemorySource implements IDataSource {
         this.#pendingCallbacks.push(resolve);
       });
     },
-    return: () => Promise.resolve({ done: true, value: undefined }),
+    return: async () => {
+      // Resolve all pending callbacks with done state
+      while (this.#pendingCallbacks.length > 0) {
+        const callback = this.#pendingCallbacks.shift();
+        callback?.({ done: true, value: undefined });
+      }
+      return { done: true, value: undefined };
+    },
     throw: (error) => Promise.reject(error),
   };
 
   postTransaction(transaction: Transaction) {
+    if (this.#isAborted) {
+      return;
+    }
+
     this.#transactions.push(transaction);
     // Resolve the first pending callback if any exist
     const callback = this.#pendingCallbacks.shift();
@@ -65,11 +81,16 @@ export class InMemorySource implements IDataSource {
     return Promise.resolve([]);
   }
 
-  applyTransformations(_operation: TableOperation): Promise<PublicSchemaOperation | null> {
+  applyTransformations(_operation: TableOperation): Promise<TransformedOperation | null> {
     return Promise.resolve(null);
   }
 
-  startIteration(_abortSignal: AbortSignal): AsyncIterator<Transaction> {
+  startIteration(abortSignal: AbortSignal): AsyncIterator<Transaction> {
+    abortSignal.addEventListener("abort", () => {
+      this.#isAborted = true;
+      this.#iterator.return!();
+    });
+
     return this.#iterator;
   }
 }

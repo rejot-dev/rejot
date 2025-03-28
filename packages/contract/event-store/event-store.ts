@@ -1,8 +1,8 @@
 import type { z } from "zod";
 import type { SyncManifestSchema } from "../manifest/manifest";
 
-interface TransformedOperationBase {
-  operation: "insert" | "update" | "delete";
+interface TransformedOperationWithSourceBase {
+  type: "insert" | "update" | "delete";
 
   sourceDataStoreSlug: string;
   sourcePublicSchema: {
@@ -14,18 +14,18 @@ interface TransformedOperationBase {
   };
 }
 
-export interface TransformedOperationInsert extends TransformedOperationBase {
-  operation: "insert";
+export interface TransformedOperationWithSourceInsert extends TransformedOperationWithSourceBase {
+  type: "insert";
   object: Record<string, unknown>;
 }
 
-export interface TransformedOperationUpdate extends TransformedOperationBase {
-  operation: "update";
+export interface TransformedOperationWithSourceUpdate extends TransformedOperationWithSourceBase {
+  type: "update";
   object: Record<string, unknown>;
 }
 
-export interface TransformedOperationDelete extends TransformedOperationBase {
-  operation: "delete";
+export interface TransformedOperationWithSourceDelete extends TransformedOperationWithSourceBase {
+  type: "delete";
 }
 
 export interface PublicSchemaReference {
@@ -35,10 +35,10 @@ export interface PublicSchemaReference {
   };
 }
 
-export type TransformedOperation =
-  | TransformedOperationInsert
-  | TransformedOperationUpdate
-  | TransformedOperationDelete;
+export type TransformedOperationWithSource =
+  | TransformedOperationWithSourceInsert
+  | TransformedOperationWithSourceUpdate
+  | TransformedOperationWithSourceDelete;
 
 export interface SchemaCursor {
   schema: PublicSchemaReference;
@@ -53,7 +53,7 @@ export interface IEventStore {
 
   stop(): Promise<void>;
 
-  write(transactionId: string, ops: TransformedOperation[]): Promise<boolean>;
+  write(transactionId: string, ops: TransformedOperationWithSource[]): Promise<boolean>;
 
   /**
    * Get the last written transaction id for each schema
@@ -67,5 +67,5 @@ export interface IEventStore {
    * @param limit - The maximum number of operations to read per schema
    * @returns The operations read from the event store
    */
-  read(cursors: SchemaCursor[], limit: number): Promise<TransformedOperation[]>;
+  read(cursors: SchemaCursor[], limit: number): Promise<TransformedOperationWithSource[]>;
 }
