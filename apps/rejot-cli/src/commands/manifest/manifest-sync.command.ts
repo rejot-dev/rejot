@@ -15,7 +15,7 @@ import type {
   AnyIConsumerSchemaTransformationAdapter,
   AnyIPublicSchemaTransformationAdapter,
 } from "@rejot/contract/adapter";
-import { LocalhostResolver } from "@rejot/sync/sync-http-resolver";
+import { type ISyncServiceResolver, createResolver } from "@rejot/sync/sync-http-resolver";
 
 const log = logger.createLogger("cli");
 
@@ -45,6 +45,11 @@ export class ManifestSyncCommand extends Command {
       description: "Set the hostname for the sync HTTP service",
       default: "localhost",
     }),
+    resolver: Flags.string({
+      description: "Set the resolver for the sync HTTP service",
+      options: ["localhost", "env"],
+      default: "localhost",
+    }),
   };
 
   static override strict = false;
@@ -58,7 +63,7 @@ export class ManifestSyncCommand extends Command {
 
   public async run(): Promise<void> {
     const { flags, argv } = await this.parse(ManifestSyncCommand);
-    const { "log-level": logLevel, hostname, "api-port": apiPort } = flags;
+    const { "log-level": logLevel, hostname, "api-port": apiPort, resolver } = flags;
 
     const manifestPaths = z.array(z.string()).parse(argv);
 
@@ -119,7 +124,15 @@ export class ManifestSyncCommand extends Command {
       }
 
       const httpController = new SyncHTTPController(hostname, apiPort);
-      const syncServiceResolver = new LocalhostResolver(apiPort);
+
+      let syncServiceResolver: ISyncServiceResolver;
+      if (resolver === "localhost") {
+        syncServiceResolver = createResolver({ type: "localhost", apiPort });
+      } else if (resolver === "env") {
+        syncServiceResolver = createResolver({ type: "env" });
+      } else {
+        throw new Error(`Invalid resolver: ${resolver}`);
+      }
 
       const eventStore = connectionAdapters
         .find((adapter) => adapter.connectionType === eventStoreConnection.config.connectionType)
