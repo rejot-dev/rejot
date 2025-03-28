@@ -58,7 +58,7 @@ export class SyncManifestController {
     syncHTTPController: ISyncHTTPController,
     syncServiceResolver: ISyncServiceResolver,
   ) {
-    const verificationResult = verifyManifests(manifests);
+    const verificationResult = verifyManifests(manifests, false);
     if (!verificationResult.isValid) {
       const errorMessages = verificationResult.errors
         .map(
