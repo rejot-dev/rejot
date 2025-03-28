@@ -2,7 +2,7 @@ import type {
   IDataSource,
   IDataSink,
   Transaction,
-  PublicSchemaOperation,
+  TransformedOperation,
 } from "@rejot/contract/sync";
 import logger from "@rejot/contract/logger";
 import { ResultSetStore, type BackfillSource } from "./result-set-store";
@@ -45,11 +45,11 @@ export function watermarkFromTransaction(transaction: Transaction): BackfillWate
 function recordToPublicSchemaOperation(
   keyColumns: string[],
   record: Record<string, unknown>,
-): PublicSchemaOperation {
+): TransformedOperation {
   return {
     type: "insert",
     keyColumns: keyColumns,
-    new: record,
+    object: record,
   };
 }
 
@@ -95,7 +95,7 @@ export class SyncController {
 
   async stop(): Promise<void> {
     try {
-      await Promise.all([this.#source.stop(), this.#sink.stop()]);
+      await Promise.all([this.#source.stop(), this.#sink.close()]);
     } catch (error) {
       log.error("Error stopping source or sink:", error);
     }

@@ -1,42 +1,36 @@
 import { z } from "zod";
-import {
-  ConsumerSchemaSchema,
-  SyncManifestSchema,
-  verifyManifests,
-  type ManifestError,
-} from "@rejot/contract/manifest";
-import { SchemaValidator } from "@rejot/contract/schema-validator";
+import { SyncManifestSchema } from "@rejot/contract/manifest";
 import logger from "@rejot/contract/logger";
 import type {
   AnyIConnectionAdapter,
   AnyIConsumerSchemaTransformationAdapter,
   AnyIPublicSchemaTransformationAdapter,
 } from "@rejot/contract/adapter";
-import type { IDataSource, Transaction } from "@rejot/contract/sync";
-import type { IPublicSchemaTransformationRepository } from "@rejot/contract/public-schema";
-import { ManifestTransformationRepository } from "./manifest/manifest-transformation.repository";
-import type { IEventStore, TransformedOperation } from "@rejot/contract/event-store";
+import type { IDataSink, IDataSource, Transaction } from "@rejot/contract/sync";
+import type { IEventStore, TransformedOperationWithSource } from "@rejot/contract/event-store";
+import { SyncManifest } from "./manifest/sync-manifest";
 
 import { type ISyncHTTPController } from "./sync-http-service/sync-http-service";
 import { fetchRead } from "./sync-http-service/sync-http-service-fetch";
 import type { ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
+import { SchemaValidator } from "@rejot/contract/schema-validator";
 
 const log = logger.createLogger("sync-manifest-controller");
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
-const POLLING_INTERVAL_MS = 5000;
+const POLLING_INTERVAL_MS = 500;
 
 export type SyncManifestControllerState = "initial" | "prepared" | "running" | "stopped";
 
 export class SyncManifestController {
   readonly #abortController: AbortController;
-
-  readonly #manifests: Manifest[];
+  readonly #syncManifest: SyncManifest;
   readonly #connectionAdapters: AnyIConnectionAdapter[];
-  readonly #sources: Map<string, IDataSource> = new Map();
 
-  readonly #transformationRepository: IPublicSchemaTransformationRepository;
+  readonly #sources: Map<string, IDataSource> = new Map();
+  readonly #sinks: Map<string, IDataSink> = new Map();
+
   readonly #publicSchemaTransformationAdapters: AnyIPublicSchemaTransformationAdapter[];
   readonly #consumerSchemaTransformationAdapters: AnyIConsumerSchemaTransformationAdapter[];
   readonly #eventStore: IEventStore;
@@ -58,20 +52,7 @@ export class SyncManifestController {
     syncHTTPController: ISyncHTTPController,
     syncServiceResolver: ISyncServiceResolver,
   ) {
-    const verificationResult = verifyManifests(manifests, false);
-    if (!verificationResult.isValid) {
-      const errorMessages = verificationResult.errors
-        .map(
-          (error: ManifestError) =>
-            `${error.type}: ${error.message} (in ${error.location.manifestSlug}${error.location.context ? `, ${error.location.context}` : ""})`,
-        )
-        .join("\n");
-      throw new Error(`Invalid manifest configuration:\n${errorMessages}`);
-    }
-
-    log.info(`SyncManifestController initialized with ${manifests.length} manifests`);
-
-    this.#manifests = manifests;
+    this.#syncManifest = new SyncManifest(manifests);
     this.#connectionAdapters = connectionAdapters;
     this.#publicSchemaTransformationAdapters = publicSchemaTransformationAdapters;
     this.#consumerSchemaTransformationAdapters = consumerSchemaTransformationAdapters;
@@ -79,8 +60,9 @@ export class SyncManifestController {
     this.#syncHTTPService = syncHTTPController;
 
     this.#abortController = new AbortController();
-    this.#transformationRepository = new ManifestTransformationRepository(manifests);
     this.#syncServiceResolver = syncServiceResolver;
+
+    log.info(`SyncManifestController initialized with ${manifests.length} manifests`);
   }
 
   get state(): SyncManifestControllerState {
@@ -92,17 +74,10 @@ export class SyncManifestController {
       throw new Error("SyncManifestController is already prepared");
     }
 
-    const dataStores = this.#manifests.flatMap((manifest) => manifest.dataStores);
+    const sourceDataStores = this.#syncManifest.getSourceDataStores();
+    const destinationDataStores = this.#syncManifest.getDestinationDataStores();
 
-    for (const { connectionSlug, publicationName, slotName } of dataStores) {
-      const connection = this.#manifests
-        .flatMap((manifest) => manifest.connections)
-        .find((connection) => connection.slug === connectionSlug);
-
-      if (!connection) {
-        throw new Error(`Connection '${connectionSlug}' not found in manifests`);
-      }
-
+    for (const { connectionSlug, publicationName, slotName, connection } of sourceDataStores) {
       const adapter = this.#connectionAdapters.find(
         (adapter) => adapter.connectionType === connection.config.connectionType,
       );
@@ -113,23 +88,33 @@ export class SyncManifestController {
         );
       }
 
-      const source = adapter.createSource(connection.slug, connection.config, {
+      const source = adapter.createSource(connectionSlug, connection.config, {
         publicationName,
         slotName,
       });
 
-      this.#sources.set(connection.slug, source);
+      this.#sources.set(connectionSlug, source);
+    }
+
+    for (const { connectionSlug, connection } of destinationDataStores) {
+      const adapter = this.#connectionAdapters.find(
+        (adapter) => adapter.connectionType === connection.config.connectionType,
+      );
+
+      if (!adapter) {
+        throw new Error(
+          `No adapter found for connection type: ${connection.config.connectionType}`,
+        );
+      }
+
+      const sink = adapter.createSink(connectionSlug, connection.config);
+      this.#sinks.set(connectionSlug, sink);
     }
 
     await Promise.all([
-      this.#eventStore.prepare(this.#manifests).catch((error) => {
-        throw new Error(`Failed preparing event store`, { cause: error });
-      }),
-      ...this.#sources.entries().map(([connectionSlug, source]) =>
-        source.prepare().catch((error) => {
-          throw new Error(`Failed preparing source '${connectionSlug}'`, { cause: error });
-        }),
-      ),
+      ...Array.from(this.#sinks.values()).map((sink) => sink.prepare()),
+      ...Array.from(this.#sources.values()).map((source) => source.prepare()),
+      this.#eventStore.prepare(this.#syncManifest.manifests),
     ]);
 
     await this.#syncHTTPService.start(async (cursors, limit) => {
@@ -141,34 +126,16 @@ export class SyncManifestController {
   }
 
   startPollingForConsumerSchemas() {
-    const mySlugs = this.#manifests.map((manifest) => manifest.slug);
-    const externalSlugToConsumerSchema = this.#manifests.flatMap((manifest) =>
-      manifest.consumerSchemas
-        .filter((consumer) => !mySlugs.includes(consumer.sourceManifestSlug))
-        .map((consumer) => ({
-          slug: consumer.sourceManifestSlug,
-          consumerSchema: consumer,
-        })),
-    );
+    const externalConsumerSchemas = this.#syncManifest.getExternalConsumerSchemas();
 
-    if (externalSlugToConsumerSchema.length === 0) {
+    if (Object.keys(externalConsumerSchemas).length === 0) {
       log.info("No remote public schemas to poll for");
       return;
     }
 
-    const consumersByRemoteSlug = externalSlugToConsumerSchema.reduce<
-      Record<string, z.infer<typeof ConsumerSchemaSchema>[]>
-    >((acc, { slug, consumerSchema }) => {
-      if (!acc[slug]) {
-        acc[slug] = [];
-      }
-      acc[slug].push(consumerSchema);
-      return acc;
-    }, {});
-
     log.debug(`Polling for remote public schemas every ${POLLING_INTERVAL_MS}ms`);
     this.#remotePollingTimer = setInterval(async () => {
-      for (const [slug, consumerSchemas] of Object.entries(consumersByRemoteSlug)) {
+      for (const [slug, consumerSchemas] of Object.entries(externalConsumerSchemas)) {
         const host = this.#syncServiceResolver.resolve(slug);
 
         const response = await fetchRead(host, false, {
@@ -186,14 +153,14 @@ export class SyncManifestController {
         // TODO: Multiple operations in a single transaction could trigger the same consumer
         //       multiple times. We need to de-dupe.
         for (const operation of response.operations) {
-          await this.consumeOperation(operation);
+          await this.#consumeEventStoreOperation(slug, operation);
           // TODO: Keep track of consumption in the destination data store
         }
       }
     }, POLLING_INTERVAL_MS);
   }
 
-  async *start(): AsyncIterable<TransformedOperation[]> {
+  async *start(): AsyncIterable<TransformedOperationWithSource[]> {
     if (this.#state === "stopped") {
       return;
     }
@@ -229,9 +196,10 @@ export class SyncManifestController {
           break;
         }
 
-        const transformedOps = await this.#processTransaction(slug, transaction);
+        const transformedOps = await this.#applyPublicSchemasToTransaction(slug, transaction);
+        const wroteToEventStore = await this.#eventStore.write(transaction.id, transformedOps);
 
-        if (transformedOps) {
+        if (wroteToEventStore) {
           transaction.ack(true);
           yield transformedOps;
         } else {
@@ -248,7 +216,7 @@ export class SyncManifestController {
   }
 
   get manifests() {
-    return this.#manifests;
+    return this.#syncManifest.manifests;
   }
 
   async stop() {
@@ -264,6 +232,9 @@ export class SyncManifestController {
         await source.stop();
         await source.close();
       }),
+      ...Array.from(this.#sinks.values()).map(async (sink) => {
+        await sink.close();
+      }),
       this.#eventStore.stop(),
       this.#syncHTTPService.stop(),
     ]);
@@ -276,17 +247,17 @@ export class SyncManifestController {
    *
    * @param dataStoreSlug - The slug of the data store to process the transaction for.
    * @param transaction - The transaction to process.
-   * @returns The transformed operations. Returns NULL when the transactions were NOT persisted.
+   * @returns The transformed operations.
    */
-  async #processTransaction(
+  async #applyPublicSchemasToTransaction(
     dataStoreSlug: string,
     transaction: Transaction,
-  ): Promise<TransformedOperation[] | null> {
+  ): Promise<TransformedOperationWithSource[]> {
     log.info(
       `Processing transaction ${transaction.id} with ${transaction.operations.length} operation(s) for data store '${dataStoreSlug}'.`,
     );
 
-    const transformedOperations: TransformedOperation[] = [];
+    const transformedOperations: TransformedOperationWithSource[] = [];
 
     // A transaction can have many operations (insert, update, delete) on arbitrary tables.
     for (const operation of transaction.operations) {
@@ -296,7 +267,7 @@ export class SyncManifestController {
       }
 
       // There might be zero or more relevant public schemas for a operation in a given table.
-      const publicSchemas = await this.#transformationRepository.getPublicSchemasForOperation(
+      const publicSchemas = this.#syncManifest.getPublicSchemasForOperation(
         dataStoreSlug,
         operation,
       );
@@ -321,7 +292,7 @@ export class SyncManifestController {
 
         if (transformedData.type === "delete") {
           transformedOperations.push({
-            operation: transformedData.type,
+            type: transformedData.type,
             sourceDataStoreSlug: dataStoreSlug,
             sourcePublicSchema: {
               name: publicSchema.name,
@@ -333,7 +304,7 @@ export class SyncManifestController {
           });
         } else {
           // Validate transformation result adheres to expected schema
-          const validation = this.#schemaValidator.validate(publicSchema, transformedData.new);
+          const validation = this.#schemaValidator.validate(publicSchema, transformedData.object);
           if (!validation.success) {
             throw new Error(
               `Invalid transformation result for public schema: ${validation.errors.join(", ")}`,
@@ -341,7 +312,7 @@ export class SyncManifestController {
           }
 
           transformedOperations.push({
-            operation: transformedData.type,
+            type: transformedData.type,
             sourceDataStoreSlug: dataStoreSlug,
             sourcePublicSchema: {
               name: publicSchema.name,
@@ -350,22 +321,20 @@ export class SyncManifestController {
                 minor: publicSchema.version.minor,
               },
             },
-            object: transformedData.new,
+            object: transformedData.object,
           });
         }
       }
     }
 
-    const didConsume = await this.#eventStore.write(transaction.id, transformedOperations);
-    return didConsume ? transformedOperations : null;
+    return transformedOperations;
   }
 
-  async consumeOperation(operation: TransformedOperation) {
-    const consumerSchemas = this.#manifests.flatMap((manifest) =>
-      manifest.consumerSchemas.filter(
-        (consumerSchema) => consumerSchema.publicSchema.name === operation.sourcePublicSchema.name,
-      ),
-    );
+  async #consumeEventStoreOperation(
+    destinationDataStoreSlug: string,
+    operation: TransformedOperationWithSource,
+  ) {
+    const consumerSchemas = this.#syncManifest.getConsumerSchemasForPublicSchema(operation);
 
     for (const consumerSchema of consumerSchemas) {
       const transformationAdapter = this.#consumerSchemaTransformationAdapters.find(
@@ -380,6 +349,7 @@ export class SyncManifestController {
       }
 
       await transformationAdapter.applyConsumerSchemaTransformation(
+        destinationDataStoreSlug,
         operation,
         consumerSchema.transformations[0],
       );

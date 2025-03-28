@@ -89,4 +89,24 @@ describe("InMemorySource", () => {
     expect(result2.done).toBe(false);
     expect(result2.value).toBe(transaction2);
   });
+
+  test("should handle abort signal correctly", async () => {
+    const source = new InMemorySource();
+    const abortController = new AbortController();
+    const iterator = source.startIteration(abortController.signal);
+
+    // Start an iteration that will wait for a transaction
+    const iterationPromise = iterator.next();
+
+    // Small delay to ensure we're in waiting state
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    // Trigger abort
+    abortController.abort();
+
+    // The iteration should complete with done: true
+    const result = await iterationPromise;
+    expect(result.done).toBe(true);
+    expect(result.value).toBeUndefined();
+  });
 });

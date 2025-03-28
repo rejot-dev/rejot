@@ -15,7 +15,8 @@
     "./postgres": "./postgres/postgres.ts",
     "./public-schema": "./public-schema/public-schema.ts",
     "./sync": "./sync/sync.ts",
-    "./schema-validator": "./schema-validator.ts"
+    "./schema-validator": "./schema-validator.ts",
+    "./message-bus": "./message-bus/message-bus.ts"
   },
   "private": true,
   "type": "module",

@@ -1,4 +1,7 @@
-import type { TransformedOperation, PublicSchemaReference } from "@rejot/contract/event-store";
+import type {
+  TransformedOperationWithSource,
+  PublicSchemaReference,
+} from "@rejot/contract/event-store";
 import logger from "@rejot/contract/logger";
 import { serve, type Server } from "bun";
 
@@ -19,7 +22,7 @@ import {
 type ReadRequestCallback = (
   cursors: { schema: PublicSchemaReference; cursor: string | null }[],
   limit: number,
-) => Promise<TransformedOperation[]>;
+) => Promise<TransformedOperationWithSource[]>;
 
 export interface ISyncHTTPController {
   start(readRequestCallback: ReadRequestCallback): Promise<void>;

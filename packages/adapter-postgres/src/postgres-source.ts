@@ -4,7 +4,7 @@ import logger from "@rejot/contract/logger";
 import type {
   IDataSource,
   Transaction,
-  PublicSchemaOperation,
+  TransformedOperation,
   TableOperation,
 } from "@rejot/contract/sync";
 import { DEFAULT_SLOT_NAME } from "./postgres-consts";
@@ -94,6 +94,7 @@ export class PostgresSource implements IDataSource {
   }
 
   async close(): Promise<void> {
+    await this.stop();
     return this.#rawClient.end();
   }
 
@@ -269,7 +270,7 @@ export class PostgresSource implements IDataSource {
    * @param operation The operation to transform
    * @returns The transformed data or null if transformation failed
    */
-  async applyTransformations(operation: TableOperation): Promise<PublicSchemaOperation | null> {
+  async applyTransformations(operation: TableOperation): Promise<TransformedOperation | null> {
     if (!this.#publicSchemaSql) {
       log.warn("No public schema SQL provided for transformation");
       return null;
@@ -295,7 +296,7 @@ export class PostgresSource implements IDataSource {
       return {
         type: operation.type,
         keyColumns: operation.keyColumns,
-        new: result.rows[0],
+        object: result.rows[0],
       };
     } catch (error) {
       log.error("Error applying public schema transformation:", error);

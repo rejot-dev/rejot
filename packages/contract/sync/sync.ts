@@ -29,29 +29,29 @@ export interface TableOperationDelete extends TableOperationBase {
 export type TableOperation = TableOperationInsert | TableOperationUpdate | TableOperationDelete;
 
 /** Public schema operations, i.e. data mutations after the public schema transformations have been applied */
-export interface PublicSchemaOperationBase {
+export interface TransformedOperationBase {
   type: OperationType;
   keyColumns: string[];
 }
 
-export interface PublicSchemaOperationInsert extends PublicSchemaOperationBase {
+export interface TransformedOperationInsert extends TransformedOperationBase {
   type: "insert";
-  new: Record<string, unknown>;
+  object: Record<string, unknown>;
 }
 
-export interface PublicSchemaOperationUpdate extends PublicSchemaOperationBase {
+export interface TransformedOperationUpdate extends TransformedOperationBase {
   type: "update";
-  new: Record<string, unknown>;
+  object: Record<string, unknown>;
 }
 
-export interface PublicSchemaOperationDelete extends PublicSchemaOperationBase {
+export interface TransformedOperationDelete extends TransformedOperationBase {
   type: "delete";
 }
 
-export type PublicSchemaOperation =
-  | PublicSchemaOperationInsert
-  | PublicSchemaOperationUpdate
-  | PublicSchemaOperationDelete;
+export type TransformedOperation =
+  | TransformedOperationInsert
+  | TransformedOperationUpdate
+  | TransformedOperationDelete;
 
 export type Transaction = {
   /** Unique identifier of the transaction, should indicate position in the log and be monotonically increasing.
@@ -106,7 +106,7 @@ export interface IDataSource {
    * @param operation The operation to transform
    * @returns The transformed data
    */
-  applyTransformations(operation: TableOperation): Promise<PublicSchemaOperation | null>;
+  applyTransformations(operation: TableOperation): Promise<TransformedOperation | null>;
 
   /**
    * Start iterating over transactions
@@ -128,11 +128,11 @@ export interface IDataSink {
   /**
    * Stop writing data and close connections
    */
-  stop(): Promise<void>;
+  close(): Promise<void>;
 
   /**
    * Write data to the sink
    * @param operation The operation that generated the data
    */
-  writeData(operation: PublicSchemaOperation): Promise<void>;
+  writeData(operation: TransformedOperation): Promise<void>;
 }
