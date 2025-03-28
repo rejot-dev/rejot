@@ -2,6 +2,7 @@ volumes:
   accounts-data:
   orders-data:
   eventstore-data:
+  eventstore-b-data:
 
 services:
   db-accounts: &postgres
@@ -26,6 +27,11 @@ services:
     <<: *postgres
     volumes:
       - eventstore-data:/var/lib/postgresql/data
+
+  eventstore-b:
+    <<: *postgres
+    volumes:
+      - eventstore-b-data:/var/lib/postgresql/data
 
   accounts:
     image: oven/bun:1.2.6
@@ -57,9 +63,8 @@ services:
     ports:
       - 3001:3001
 
-  sync-a:
-    # image: ghcr.io/rejot-dev/rejot-cli:main
-    build:
+  sync-a-service: &sync-server
+    build: # image: ghcr.io/rejot-dev/rejot-cli:main
       args:
         REJOT_APP: rejot-cli
       context: ../../
@@ -68,12 +73,34 @@ services:
       db-accounts:
         condition: service_healthy
         restart: true
-      db-orders:
-        condition: service_healthy
-        restart: true
       eventstore:
         condition: service_healthy
         restart: true
     volumes:
       - ./:/example
-    command: ["manifest", "sync", "--log-level", "trace", "/example/sync-a.json"]
+    command:
+      [
+        "manifest",
+        "sync",
+        "--log-level",
+        "trace",
+        "/example/sync-a.json",
+        "--hostname",
+        "0.0.0.0",
+        "--api-port",
+        "80",
+      ]
+
+  sync-b-service:
+    <<: *sync-server
+    depends_on:
+      db-orders:
+        condition: service_healthy
+        restart: true
+      eventstore-b: # TODO: make optional
+        condition: service_healthy
+        restart: true
+    environment:
+      REJOT_SYNC_SERVICE_sync-a: sync-a-service
+    command:
+      ["manifest", "sync", "--log-level", "trace", "/example/sync-b.json", "--resolver", "env"]

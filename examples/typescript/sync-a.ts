@@ -1,15 +1,9 @@
 import { z } from "zod";
 
-import {
-  createPostgresPublicSchemaTransformation,
-  createPostgresConsumerSchemaTransformation,
-} from "@rejot/adapter-postgres";
+import { createPostgresPublicSchemaTransformation } from "@rejot/adapter-postgres";
 import { createPublicSchema } from "@rejot/contract/public-schema";
-import { createConsumerSchema } from "@rejot/contract/consumer-schema";
 
-const ACCOUNTS_PUBLIC_SCHEMA_NAME = "accounts";
-
-const accountsPublicSchema = createPublicSchema(ACCOUNTS_PUBLIC_SCHEMA_NAME, {
+const accountsPublicSchema = createPublicSchema("accounts", {
   source: { dataStoreSlug: "db-accounts", tables: ["accounts"] }, // "addresses"
   outputSchema: z.object({
     id: z.number(),
@@ -30,21 +24,6 @@ const accountsPublicSchema = createPublicSchema(ACCOUNTS_PUBLIC_SCHEMA_NAME, {
   },
 });
 
-const accountsConsumerSchema = createConsumerSchema({
-  sourceManifestSlug: "sync-a",
-  publicSchema: {
-    name: ACCOUNTS_PUBLIC_SCHEMA_NAME,
-    majorVersion: 1,
-  },
-  destinationDataStoreSlug: "db-orders",
-  transformations: [
-    createPostgresConsumerSchemaTransformation(
-      "INSERT INTO destination_accounts (id, email) VALUES ($1, $2)",
-    ),
-  ],
-});
-
 export default {
   accountsPublicSchema,
-  accountsConsumerSchema,
 };
