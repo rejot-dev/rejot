@@ -121,8 +121,16 @@ export class SyncManifestController {
       this.#sources.set(connection.slug, source);
     }
 
-    await this.#eventStore.prepare(this.#manifests);
-    await Promise.all(this.#sources.values().map((source) => source.prepare()));
+    await Promise.all([
+      this.#eventStore.prepare(this.#manifests).catch((error) => {
+        throw new Error(`Failed preparing event store`, { cause: error });
+      }),
+      ...this.#sources.entries().map(([connectionSlug, source]) =>
+        source.prepare().catch((error) => {
+          throw new Error(`Failed preparing source '${connectionSlug}'`, { cause: error });
+        }),
+      ),
+    ]);
 
     await this.#syncHTTPService.start(async (cursors, limit) => {
       return this.#eventStore.read(cursors, limit);
