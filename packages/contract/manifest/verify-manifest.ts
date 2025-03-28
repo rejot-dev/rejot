@@ -144,6 +144,7 @@ export function verifyPublicSchemaReferences(
  */
 export function verifyManifests(
   manifests: z.infer<typeof SyncManifestSchema>[],
+  checkPublicSchemaReferences = true,
 ): VerificationResult {
   const errors: ManifestError[] = [];
 
@@ -153,8 +154,11 @@ export function verifyManifests(
     errors.push(...verifyConnectionReferences(manifest));
   });
 
-  // Verify cross-manifest references
-  errors.push(...verifyPublicSchemaReferences(manifests));
+  // Verify cross-manifest references, only works if all manifests are provided.
+  // The sync manifest controller might have a subset and therefore cannot verify public schema references here
+  if (checkPublicSchemaReferences) {
+    errors.push(...verifyPublicSchemaReferences(manifests));
+  }
 
   return {
     isValid: errors.length === 0,
