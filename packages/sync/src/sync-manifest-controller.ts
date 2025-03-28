@@ -5,6 +5,7 @@ import {
   verifyManifests,
   type ManifestError,
 } from "@rejot/contract/manifest";
+import { SchemaValidator } from "@rejot/contract/schema-validator";
 import logger from "@rejot/contract/logger";
 import type {
   AnyIConnectionAdapter,
@@ -45,6 +46,8 @@ export class SyncManifestController {
   #remotePollingTimer: Timer | null = null;
 
   #state: SyncManifestControllerState = "initial";
+
+  #schemaValidator: SchemaValidator = new SchemaValidator();
 
   constructor(
     manifests: Manifest[],
@@ -321,6 +324,14 @@ export class SyncManifestController {
             },
           });
         } else {
+          // Validate transformation result adheres to expected schema
+          const validation = this.#schemaValidator.validate(publicSchema, transformedData.new);
+          if (!validation.success) {
+            throw new Error(
+              `Invalid transformation result for public schema: ${validation.errors.join(", ")}`,
+            );
+          }
+
           transformedOperations.push({
             operation: transformedData.type,
             sourceDataStoreSlug: dataStoreSlug,
