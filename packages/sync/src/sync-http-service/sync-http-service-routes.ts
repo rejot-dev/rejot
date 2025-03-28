@@ -22,9 +22,9 @@ export const SyncControllerReadRequestSchema = z.object({
 
 export const SyncControllerReadResponseSchema = z.object({
   operations: z.array(
-    z.discriminatedUnion("operation", [
+    z.discriminatedUnion("type", [
       z.object({
-        operation: z.literal("delete"),
+        type: z.literal("delete"),
         sourceDataStoreSlug: z.string(),
         sourcePublicSchema: z.object({
           name: z.string(),
@@ -35,7 +35,7 @@ export const SyncControllerReadResponseSchema = z.object({
         }),
       }),
       z.object({
-        operation: z.enum(["insert", "update"]),
+        type: z.enum(["insert", "update"]),
         sourceDataStoreSlug: z.string(),
         sourcePublicSchema: z.object({
           name: z.string(),

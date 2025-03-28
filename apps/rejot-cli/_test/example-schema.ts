@@ -1,7 +1,11 @@
 import { z } from "zod";
 
-import { createPostgresPublicSchemaTransformation } from "@rejot/adapter-postgres";
+import {
+  createPostgresConsumerSchemaTransformation,
+  createPostgresPublicSchemaTransformation,
+} from "@rejot/adapter-postgres";
 import { createPublicSchema } from "@rejot/contract/public-schema";
+import { createConsumerSchema } from "@rejot/contract/consumer-schema";
 
 const testPublicSchema = createPublicSchema("public-account", {
   source: { dataStoreSlug: "data-store-1", tables: ["account"] },
@@ -20,6 +24,29 @@ const testPublicSchema = createPublicSchema("public-account", {
   },
 });
 
+const testConsumerSchema = createConsumerSchema({
+  sourceManifestSlug: "default",
+  publicSchema: {
+    name: "public-account",
+    majorVersion: 1,
+  },
+  destinationDataStoreSlug: "data-destination-1",
+  transformations: [
+    createPostgresConsumerSchemaTransformation(
+      `
+        INSERT INTO users_destination 
+          (id, full_name)
+        VALUES 
+          ($1, $2 || ' ' || $3)
+        ON CONFLICT (id) DO UPDATE
+          SET full_name = $2 || ' ' || $3
+        ;
+      `,
+    ),
+  ],
+});
+
 export default {
   testPublicSchema,
+  testConsumerSchema,
 };

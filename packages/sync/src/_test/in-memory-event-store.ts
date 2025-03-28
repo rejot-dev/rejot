@@ -1,12 +1,12 @@
 import type {
   IEventStore,
   PublicSchemaReference,
-  TransformedOperation,
+  TransformedOperationWithSource,
   SchemaCursor,
 } from "@rejot/contract/event-store";
 
 export class InMemoryEventStore implements IEventStore {
-  #operations: Map<string, TransformedOperation[]>;
+  #operations: Map<string, TransformedOperationWithSource[]>;
   #transactionIds: string[];
 
   constructor() {
@@ -24,7 +24,7 @@ export class InMemoryEventStore implements IEventStore {
     this.#transactionIds = [];
   }
 
-  async write(transactionId: string, ops: TransformedOperation[]): Promise<boolean> {
+  async write(transactionId: string, ops: TransformedOperationWithSource[]): Promise<boolean> {
     if (this.#operations.has(transactionId)) {
       return false; // Transaction already exists
     }
@@ -43,8 +43,8 @@ export class InMemoryEventStore implements IEventStore {
     return schemas.map((schema) => ({ schema, cursor: lastTransactionId }));
   }
 
-  async read(cursors: SchemaCursor[], limit: number): Promise<TransformedOperation[]> {
-    let result: TransformedOperation[] = [];
+  async read(cursors: SchemaCursor[], limit: number): Promise<TransformedOperationWithSource[]> {
+    let result: TransformedOperationWithSource[] = [];
 
     if (this.#transactionIds.length === 0) {
       return result;

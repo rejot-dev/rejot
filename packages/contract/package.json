@@ -14,7 +14,8 @@
     "./manifest.fs": "./manifest/manifest.fs.ts",
     "./postgres": "./postgres/postgres.ts",
     "./public-schema": "./public-schema/public-schema.ts",
-    "./sync": "./sync/sync.ts"
+    "./sync": "./sync/sync.ts",
+    "./message-bus": "./message-bus/message-bus.ts"
   },
   "private": true,
   "type": "module",

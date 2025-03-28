@@ -4,7 +4,10 @@ import { InMemoryConnectionAdapter } from "./_test/in-memory-adapter";
 import { InMemoryEventStore } from "./_test/in-memory-event-store";
 import type { Transaction } from "@rejot/contract/sync";
 import type { ISyncHTTPController } from "./sync-http-service/sync-http-service";
-import type { PublicSchemaReference, TransformedOperation } from "@rejot/contract/event-store";
+import type {
+  PublicSchemaReference,
+  TransformedOperationWithSource,
+} from "@rejot/contract/event-store";
 import { type ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
 
 class TestSyncHTTPController implements ISyncHTTPController {
@@ -12,7 +15,7 @@ class TestSyncHTTPController implements ISyncHTTPController {
     _readRequestCallback: (
       _cursors: { schema: PublicSchemaReference; cursor: string | null }[],
       _limit: number,
-    ) => Promise<TransformedOperation[]>,
+    ) => Promise<TransformedOperationWithSource[]>,
   ): Promise<void> {
     return Promise.resolve();
   }

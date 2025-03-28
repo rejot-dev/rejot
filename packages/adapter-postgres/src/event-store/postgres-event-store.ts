@@ -3,7 +3,7 @@ import { z } from "zod";
 import type {
   IEventStore,
   PublicSchemaReference,
-  TransformedOperation,
+  TransformedOperationWithSource,
   SchemaCursor,
 } from "@rejot/contract/event-store";
 import logger from "@rejot/contract/logger";
@@ -14,20 +14,20 @@ import {
   SCHEMA_NAME,
   EVENTS_TABLE_NAME,
   DATA_STORE_TABLE_NAME,
-  MigrationManager,
-} from "./event-store-schema";
+  EventStoreSchemaManager,
+} from "./pg-event-store-schema-manager";
 
 const log = logger.createLogger("postgres-event-store");
 
 export class PostgresEventStore implements IEventStore {
   #client: PostgresClient;
   #dataStoreIds: Map<string, number>;
-  #migrationManager: MigrationManager;
+  #schemaManager: EventStoreSchemaManager;
 
   constructor(client: PostgresClient) {
     this.#client = client;
     this.#dataStoreIds = new Map();
-    this.#migrationManager = new MigrationManager(client);
+    this.#schemaManager = new EventStoreSchemaManager(client);
   }
 
   static fromConnection(connection: z.infer<typeof PostgresConnectionSchema>) {
@@ -45,7 +45,7 @@ export class PostgresEventStore implements IEventStore {
       }
     }
 
-    await this.#migrationManager.ensureSchema();
+    await this.#schemaManager.ensureSchema();
 
     // Insert data stores from manifests and store their IDs in memory
     for (const manifest of manifests) {
@@ -73,7 +73,7 @@ export class PostgresEventStore implements IEventStore {
     }
   }
 
-  async write(transactionId: string, ops: TransformedOperation[]): Promise<boolean> {
+  async write(transactionId: string, ops: TransformedOperationWithSource[]): Promise<boolean> {
     if (ops.length === 0) {
       log.warn("No operations to write to event store", { transactionId });
       return true;
@@ -105,12 +105,12 @@ export class PostgresEventStore implements IEventStore {
           [
             transactionId,
             i,
-            op.operation,
+            op.type,
             dataStoreId,
             op.sourcePublicSchema.name,
             op.sourcePublicSchema.version.major,
             op.sourcePublicSchema.version.minor,
-            op.operation === "delete" ? null : op.object,
+            op.type === "delete" ? null : op.object,
           ],
         );
       }
@@ -159,7 +159,7 @@ export class PostgresEventStore implements IEventStore {
     }
   }
 
-  async read(cursors: SchemaCursor[], limit: number): Promise<TransformedOperation[]> {
+  async read(cursors: SchemaCursor[], limit: number): Promise<TransformedOperationWithSource[]> {
     if (limit <= 0) {
       throw new Error("Limit must be greater than 0");
     }
@@ -169,7 +169,7 @@ export class PostgresEventStore implements IEventStore {
     }
 
     try {
-      const results: TransformedOperation[] = [];
+      const results: TransformedOperationWithSource[] = [];
       const dataStoreIds = Array.from(this.#dataStoreIds.values());
 
       // TODO(Wilco): Doing this in a loop is very shitty.
@@ -227,7 +227,7 @@ export class PostgresEventStore implements IEventStore {
 
         results.push(
           ...result.rows.map((row) => ({
-            operation: row["operation"],
+            type: row["operation"],
             sourceDataStoreSlug: dataStoreSlugMap.get(row["data_store_id"]) ?? "",
             sourcePublicSchema: {
               name: row["public_schema_name"],

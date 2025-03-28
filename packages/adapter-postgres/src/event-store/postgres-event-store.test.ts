@@ -1,8 +1,8 @@
 import { test, expect, beforeAll } from "bun:test";
 import type {
-  TransformedOperation,
-  TransformedOperationInsert,
-  TransformedOperationUpdate,
+  TransformedOperationWithSource,
+  TransformedOperationWithSourceInsert,
+  TransformedOperationWithSourceUpdate,
   PublicSchemaReference,
 } from "@rejot/contract/event-store";
 import { pgRollbackDescribe } from "../util/postgres-test-utils";
@@ -66,9 +66,9 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     const store = new PostgresEventStore(ctx.client);
     await store.prepare([TEST_MANIFEST]);
 
-    const testOps1: TransformedOperation[] = [
+    const testOps1: TransformedOperationWithSource[] = [
       {
-        operation: "insert",
+        type: "insert",
         sourceDataStoreSlug: "test-store-1",
         sourcePublicSchema: {
           name: "test-schema",
@@ -78,9 +78,9 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
       },
     ];
 
-    const testOps2: TransformedOperation[] = [
+    const testOps2: TransformedOperationWithSource[] = [
       {
-        operation: "insert",
+        type: "insert",
         sourceDataStoreSlug: "test-store-2",
         sourcePublicSchema: {
           name: "test-schema",
@@ -117,34 +117,34 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
 
     // Write operations to both data stores
     const ops1 = {
-      operation: "insert" as const,
+      type: "insert" as const,
       sourceDataStoreSlug: "test-store-1",
       sourcePublicSchema: {
         name: "test-schema",
         version: { major: 1, minor: 0 },
       },
       object: { id: "1", name: "First Store 1" },
-    };
+    } satisfies TransformedOperationWithSource;
 
     const ops2 = {
-      operation: "insert" as const,
+      type: "insert" as const,
       sourceDataStoreSlug: "test-store-2",
       sourcePublicSchema: {
         name: "test-schema",
         version: { major: 1, minor: 0 },
       },
       object: { id: "2", name: "First Store 2" },
-    };
+    } satisfies TransformedOperationWithSource;
 
     const ops3 = {
-      operation: "update" as const,
+      type: "update" as const,
       sourceDataStoreSlug: "test-store-1",
       sourcePublicSchema: {
         name: "test-schema",
         version: { major: 1, minor: 0 },
       },
       object: { id: "1", name: "Updated Store 1" },
-    };
+    } satisfies TransformedOperationWithSource;
 
     await store.write("tx1", [ops1]);
     await store.write("tx2", [ops2]);
@@ -160,27 +160,33 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     const batch1 = await store.read([{ schema: TEST_SCHEMA, cursor: null }], 1);
     expect(batch1.length).toBe(1);
     expect(batch1[0].sourceDataStoreSlug).toBe("test-store-1");
-    expect((batch1[0] as TransformedOperationInsert).object["name"]).toBe("First Store 1");
+    expect((batch1[0] as TransformedOperationWithSourceInsert).object["name"]).toBe(
+      "First Store 1",
+    );
 
     // Read second batch (after tx1)
     const batch2 = await store.read([{ schema: TEST_SCHEMA, cursor: "tx1" }], 1);
     expect(batch2.length).toBe(1);
     expect(batch2[0].sourceDataStoreSlug).toBe("test-store-2");
-    expect((batch2[0] as TransformedOperationInsert).object["name"]).toBe("First Store 2");
+    expect((batch2[0] as TransformedOperationWithSourceInsert).object["name"]).toBe(
+      "First Store 2",
+    );
 
     // Read final batch (after tx2)
     const batch3 = await store.read([{ schema: TEST_SCHEMA, cursor: "tx2" }], 1);
     expect(batch3.length).toBe(1);
     expect(batch3[0].sourceDataStoreSlug).toBe("test-store-1");
-    expect((batch3[0] as TransformedOperationUpdate).object["name"]).toBe("Updated Store 1");
+    expect((batch3[0] as TransformedOperationWithSourceUpdate).object["name"]).toBe(
+      "Updated Store 1",
+    );
   });
 
   test("should handle empty cursor and null cursor the same", async () => {
     const store = new PostgresEventStore(ctx.client);
     await store.prepare([TEST_MANIFEST]);
 
-    const testOp: TransformedOperation = {
-      operation: "insert",
+    const testOp: TransformedOperationWithSource = {
+      type: "insert",
       sourceDataStoreSlug: "test-store-1",
       sourcePublicSchema: {
         name: "test-schema",

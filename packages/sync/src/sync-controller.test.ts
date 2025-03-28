@@ -3,7 +3,7 @@ import type {
   IDataSource,
   Transaction,
   TableOperation,
-  PublicSchemaOperation,
+  TransformedOperation,
 } from "@rejot/contract/sync";
 import { SyncController } from "./sync-controller.ts";
 import { describe, test, expect } from "bun:test";
@@ -79,7 +79,7 @@ class TestSource implements IDataSource {
     this.onDataCallback = onData;
   }
 
-  async applyTransformations(operation: TableOperation): Promise<PublicSchemaOperation | null> {
+  async applyTransformations(operation: TableOperation): Promise<TransformedOperation | null> {
     if (operation.type === "delete") {
       return {
         type: operation.type,
@@ -89,7 +89,7 @@ class TestSource implements IDataSource {
     return {
       type: operation.type,
       keyColumns: operation.keyColumns,
-      new: operation.new,
+      object: operation.new,
     };
   }
 
@@ -105,11 +105,10 @@ class TestSource implements IDataSource {
 }
 
 class TestSink implements IDataSink {
-  receivedOperations: PublicSchemaOperation[] = [];
+  receivedOperations: TransformedOperation[] = [];
   async prepare() {}
-  async stop() {}
   async close() {}
-  async writeData(operation: PublicSchemaOperation) {
+  async writeData(operation: TransformedOperation) {
     this.receivedOperations.push(operation);
   }
 }
@@ -135,7 +134,7 @@ describe("Simple Sync Controller Operations", () => {
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 2, name: "test" },
+        object: { id: 2, name: "test" },
       },
     ]);
 
@@ -162,7 +161,7 @@ describe("Simple Sync Controller Operations", () => {
       {
         type: "update",
         keyColumns: ["id"],
-        new: { id: 1, name: "updated test" },
+        object: { id: 1, name: "updated test" },
       },
     ]);
 
@@ -237,12 +236,12 @@ describe("Backfills for Sync Controller", () => {
       {
         type: "update",
         keyColumns: ["id"],
-        new: { id: 2, name: "updated value" },
+        object: { id: 2, name: "updated value" },
       },
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 4, name: "d" },
+        object: { id: 4, name: "d" },
       },
     ]);
 
@@ -257,22 +256,22 @@ describe("Backfills for Sync Controller", () => {
       {
         type: "update",
         keyColumns: ["id"],
-        new: { id: 2, name: "updated value" }, // Not the backfill value
+        object: { id: 2, name: "updated value" }, // Not the backfill value
       },
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 4, name: "d" },
+        object: { id: 4, name: "d" },
       },
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 1, name: "a" },
+        object: { id: 1, name: "a" },
       },
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 3, name: "c" },
+        object: { id: 3, name: "c" },
       },
     ]);
   });
@@ -311,17 +310,17 @@ describe("Backfills for Sync Controller", () => {
       {
         type: "insert",
         keyColumns: ["pkeya", "pkeyb"],
-        new: { pkeya: 1, pkeyb: 1, name: "a" },
+        object: { pkeya: 1, pkeyb: 1, name: "a" },
       },
       {
         type: "insert",
         keyColumns: ["pkeya", "pkeyb"],
-        new: { pkeya: 2, pkeyb: 2, name: "b" },
+        object: { pkeya: 2, pkeyb: 2, name: "b" },
       },
       {
         type: "insert",
         keyColumns: ["pkeya", "pkeyb"],
-        new: { pkeya: 3, pkeyb: 3, name: "c" },
+        object: { pkeya: 3, pkeyb: 3, name: "c" },
       },
     ]);
   });
@@ -379,17 +378,17 @@ describe("Backfills for Sync Controller", () => {
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 1, name: "wal" },
+        object: { id: 1, name: "wal" },
       },
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 2, name: "wal" },
+        object: { id: 2, name: "wal" },
       },
       {
         type: "insert",
         keyColumns: ["address_id", "user_id"],
-        new: { address_id: 3, user_id: 3, name: "backfill" },
+        object: { address_id: 3, user_id: 3, name: "backfill" },
       },
     ]);
   });
@@ -443,17 +442,17 @@ describe("Backfills for Sync Controller", () => {
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 1, name: "wal" },
+        object: { id: 1, name: "wal" },
       },
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 2, name: "wal" },
+        object: { id: 2, name: "wal" },
       },
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 1, name: "backfill" },
+        object: { id: 1, name: "backfill" },
       },
     ]);
   });
@@ -516,12 +515,12 @@ describe("Backfills for Sync Controller", () => {
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 1, name: "backfill-1" },
+        object: { id: 1, name: "backfill-1" },
       },
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 1, name: "backfill-2" },
+        object: { id: 1, name: "backfill-2" },
       },
     ]);
   });
@@ -561,7 +560,7 @@ describe("Backfills for Sync Controller", () => {
       {
         type: "insert",
         keyColumns: ["id"],
-        new: { id: 1, name: "wal" },
+        object: { id: 1, name: "wal" },
       },
     ]);
   });

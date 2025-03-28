@@ -14,12 +14,12 @@ import type {
 } from "./postgres-schemas.ts";
 import { PostgresSource } from "./postgres-source.ts";
 import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./postgres-consts.ts";
-import type { PublicSchemaOperation, TableOperation } from "@rejot/contract/sync";
+import type { TransformedOperation, TableOperation } from "@rejot/contract/sync";
 import type { PublicSchemaTransformation } from "@rejot/contract/public-schema";
 import type { ConsumerSchemaTransformation } from "@rejot/contract/consumer-schema";
 import logger from "@rejot/contract/logger";
 import { isPostgresError, PG_PROTOCOL_VIOLATION } from "./util/postgres-error-codes.ts";
-import type { TransformedOperation } from "@rejot/contract/event-store";
+import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
 import { PostgresEventStore } from "./event-store/postgres-event-store.ts";
 import { PostgresClient } from "./util/postgres-client.ts";
 import { PostgresSink } from "./postgres-sink.ts";
@@ -110,8 +110,6 @@ export class PostgresPublicSchemaTransformationAdapter
 {
   #connectionAdapter: PostgresConnectionAdapter;
 
-  // TODO(Wilco): This shouldn't take a connection adapter, because the connection needs to be
-  //              based on the data store that we are obtaining records from.
   constructor(connectionAdapter: PostgresConnectionAdapter) {
     this.#connectionAdapter = connectionAdapter;
   }
@@ -124,7 +122,7 @@ export class PostgresPublicSchemaTransformationAdapter
     sourceDataStoreSlug: string,
     operation: TableOperation,
     transformation: z.infer<typeof PostgresPublicSchemaTransformationSchema>,
-  ): Promise<PublicSchemaOperation> {
+  ): Promise<TransformedOperation> {
     const connection = this.#connectionAdapter.getConnection(sourceDataStoreSlug);
     if (!connection) {
       throw new Error(`Connection with slug ${sourceDataStoreSlug} not found`);
@@ -159,7 +157,7 @@ export class PostgresPublicSchemaTransformationAdapter
       return {
         type: operation.type,
         keyColumns: operation.keyColumns,
-        new: result.rows[0],
+        object: result.rows[0],
       };
     } catch (error) {
       if (isPostgresError(error, PG_PROTOCOL_VIOLATION)) {
@@ -178,18 +176,44 @@ export class PostgresConsumerSchemaTransformationAdapter
   implements
     IConsumerSchemaTransformationAdapter<z.infer<typeof PostgresConsumerSchemaTransformationSchema>>
 {
-  constructor(_connectionAdapter: PostgresConnectionAdapter) {}
+  #connectionAdapter: PostgresConnectionAdapter;
+
+  constructor(connectionAdapter: PostgresConnectionAdapter) {
+    this.#connectionAdapter = connectionAdapter;
+  }
 
   get transformationType(): "postgresql" {
     return "postgresql";
   }
 
   async applyConsumerSchemaTransformation(
-    operation: TransformedOperation,
-    _transformation: z.infer<typeof PostgresConsumerSchemaTransformationSchema>,
-  ): Promise<TransformedOperation> {
-    log.debug("Applying consumer schema transformation to operation:", operation);
-    log.error("Postgres Consumer Adapter Not implemented!");
+    destinationDataStoreSlug: string,
+    operation: TransformedOperationWithSource,
+    transformation: z.infer<typeof PostgresConsumerSchemaTransformationSchema>,
+  ): Promise<TransformedOperationWithSource> {
+    const connection = this.#connectionAdapter.getConnection(destinationDataStoreSlug);
+    if (!connection) {
+      throw new Error(`Connection with slug ${destinationDataStoreSlug} not found`);
+    }
+
+    log.debug(
+      `Applying consumer schema to '${destinationDataStoreSlug}', operation: '${operation.type}', transformation: '${transformation.sql}'`,
+    );
+
+    if (operation.type === "delete") {
+      log.warn("Delete operations are not supported for consumer schema transformations");
+      return operation;
+    }
+
+    // TODO(Wilco): Postgres errors when the query doesn't use all parameters ($1, $2, etc).
+    //              Look into https://www.npmjs.com/package/yesql
+
+    const values = Object.values(operation.object);
+
+    log.debug(`Values: ${JSON.stringify(values)}`);
+    await connection.client.query(transformation.sql, values);
+    log.debug("Applied!");
+
     return operation;
   }
 }
