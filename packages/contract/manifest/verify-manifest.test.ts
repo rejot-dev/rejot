@@ -1,7 +1,7 @@
 import { test, expect } from "bun:test";
 import { verifyManifests } from "./verify-manifest";
 import { z } from "zod";
-import { SyncManifestSchema } from "./manifest";
+import { PublicSchemaSchema, SyncManifestSchema } from "./manifest";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
@@ -157,4 +157,38 @@ test("verifyManifests - non-existent source manifest", () => {
   expect(result.errors).toHaveLength(1);
   expect(result.errors[0].type).toBe("PUBLIC_SCHEMA_NOT_FOUND");
   expect(result.errors[0].message).toContain("non-existent");
+});
+
+test("verifyManifests - duplicate public schema definition", () => {
+  const publicSchema: z.infer<typeof PublicSchemaSchema> = {
+    name: "users",
+    source: {
+      dataStoreSlug: "ds1",
+      tables: ["users"],
+    },
+    outputSchema: { type: "object", properties: {} },
+    transformation: {
+      transformationType: "postgresql",
+      table: "users",
+      sql: "SELECT * FROM users",
+    },
+    version: { major: 1, minor: 0 },
+  };
+
+  const manifest1: Manifest = {
+    ...createBasicManifest("manifest1"),
+    publicSchemas: [publicSchema],
+  };
+
+  const manifest2: Manifest = {
+    ...createBasicManifest("manifest2"),
+    publicSchemas: [publicSchema],
+  };
+
+  const result = verifyManifests([manifest1, manifest2]);
+  expect(result.isValid).toBe(false);
+  expect(result.errors).toHaveLength(1);
+  expect(result.errors[0].type).toBe("DUPLICATE_PUBLIC_SCHEMA");
+  expect(result.errors[0].message).toContain("manifest1");
+  expect(result.errors[0].location.manifestSlug).toBe("manifest2");
 });

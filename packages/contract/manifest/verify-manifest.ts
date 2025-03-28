@@ -2,7 +2,11 @@ import { z } from "zod";
 import { SyncManifestSchema } from "./manifest";
 
 export type ManifestError = {
-  type: "CONNECTION_NOT_FOUND" | "PUBLIC_SCHEMA_NOT_FOUND" | "VERSION_MISMATCH";
+  type:
+    | "CONNECTION_NOT_FOUND"
+    | "PUBLIC_SCHEMA_NOT_FOUND"
+    | "VERSION_MISMATCH"
+    | "DUPLICATE_PUBLIC_SCHEMA";
   message: string;
   location: {
     manifestSlug: string;
@@ -140,6 +144,38 @@ export function verifyPublicSchemaReferences(
 }
 
 /**
+ * Verifies that all public schemas referenced by consumer schemas exist and version compatibility
+ */
+export function verifyPublicSchemaUniqueness(
+  manifests: z.infer<typeof SyncManifestSchema>[],
+): ManifestError[] {
+  const errors: ManifestError[] = [];
+
+  // Build a map of public schemas & version to manifest slug
+  const publicSchemaMapManifest = new Map<string, string>();
+
+  manifests.forEach((manifest) => {
+    manifest.publicSchemas.forEach((schema, index) => {
+      const key = `${schema.name}:${schema.version.major}.${schema.version.minor}`;
+      const previousManifest = publicSchemaMapManifest.get(key);
+      if (previousManifest) {
+        errors.push({
+          type: "DUPLICATE_PUBLIC_SCHEMA",
+          message: `Public schema '${schema.name}' version ${schema.version.major}.${schema.version.minor} already defined in manifest '${previousManifest}'`,
+          location: {
+            manifestSlug: manifest.slug,
+            context: `publicSchemas[${index}] (name: ${schema.name}, version: ${schema.version.major}.${schema.version.minor})`,
+          },
+        });
+      }
+      publicSchemaMapManifest.set(key, manifest.slug);
+    });
+  });
+
+  return errors;
+}
+
+/**
  * Main verification function that performs all checks on multiple manifests
  */
 export function verifyManifests(
@@ -159,6 +195,8 @@ export function verifyManifests(
   if (checkPublicSchemaReferences) {
     errors.push(...verifyPublicSchemaReferences(manifests));
   }
+
+  errors.push(...verifyPublicSchemaUniqueness(manifests));
 
   return {
     isValid: errors.length === 0,
