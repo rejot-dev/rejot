@@ -73,3 +73,4 @@ Reset your local databases to a clean slate:
 - Connection refused errors on SyncManifestController doesn't say which connection refused (eventstore/sources/etc)
 - Connections might die intermittently
 - Connection details can only be passed in manifest for now
+- Event stores are not optional for only receiving sync servers

@@ -23,32 +23,41 @@
         "password": "postgres",
         "database": "postgres"
       }
-    },
-    {
-      "slug": "db-orders",
-      "config": {
-        "connectionType": "postgres",
-        "host": "db-orders",
-        "port": 5432,
-        "user": "postgres",
-        "password": "postgres",
-        "database": "postgres"
-      }
     }
   ],
-  "dataStores": [{ "connectionSlug": "db-accounts" }, { "connectionSlug": "db-orders" }],
-  "eventStores": [{ "connectionSlug": "eventstore" }],
+  "dataStores": [
+    {
+      "connectionSlug": "db-accounts"
+    }
+  ],
+  "eventStores": [
+    {
+      "connectionSlug": "eventstore"
+    }
+  ],
   "publicSchemas": [
     {
       "name": "accounts",
-      "source": { "dataStoreSlug": "db-accounts", "tables": ["accounts"] },
+      "source": {
+        "dataStoreSlug": "db-accounts",
+        "tables": ["accounts"]
+      },
       "outputSchema": {
         "type": "object",
         "properties": {
-          "id": { "type": "number" },
-          "email": { "type": "string" },
-          "name": { "type": "string" },
-          "created_at": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "number"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
         },
         "required": ["id", "email", "name", "created_at"],
         "additionalProperties": false,
@@ -59,20 +68,11 @@
         "table": "accounts",
         "sql": "SELECT id, email, name, created_at FROM accounts WHERE id = $1"
       },
-      "version": { "major": 1, "minor": 0 }
+      "version": {
+        "major": 1,
+        "minor": 0
+      }
     }
   ],
-  "consumerSchemas": [
-    {
-      "sourceManifestSlug": "sync-a",
-      "publicSchema": { "name": "accounts", "majorVersion": 1 },
-      "destinationDataStoreSlug": "db-orders",
-      "transformations": [
-        {
-          "transformationType": "postgresql",
-          "sql": "INSERT INTO destination_accounts (id, email) VALUES ($1, $2)"
-        }
-      ]
-    }
-  ]
+  "consumerSchemas": []
 }

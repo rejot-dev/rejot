@@ -1,0 +1,55 @@
+{
+  "slug": "sync-b",
+  "manifestVersion": 0,
+  "connections": [
+    {
+      "slug": "db-orders",
+      "config": {
+        "connectionType": "postgres",
+        "host": "db-orders",
+        "port": 5432,
+        "user": "postgres",
+        "password": "postgres",
+        "database": "postgres"
+      }
+    },
+    {
+      "slug": "eventstore-b",
+      "config": {
+        "connectionType": "postgres",
+        "host": "eventstore-b",
+        "port": 5432,
+        "user": "postgres",
+        "password": "postgres",
+        "database": "postgres"
+      }
+    }
+  ],
+  "dataStores": [
+    {
+      "connectionSlug": "db-orders"
+    }
+  ],
+  "eventStores": [
+    {
+      "connectionSlug": "eventstore-b"
+    }
+  ],
+  "publicSchemas": [],
+  "consumerSchemas": [
+    {
+      "sourceManifestSlug": "sync-a",
+      "publicSchema": {
+        "name": "accounts",
+        "majorVersion": 1
+      },
+      "destinationDataStoreSlug": "db-orders",
+      "transformations": [
+        {
+          "transformationType": "postgresql",
+          "sql": "INSERT INTO destination_accounts (id, email) VALUES ($1, $2)"
+        }
+      ]
+    }
+  ]
+}
