@@ -8,6 +8,7 @@
     "./adapter": "./adapter/adapter.ts",
     "./collect": "./collect/collect.ts",
     "./consumer-schema": "./consumer-schema/consumer-schema.ts",
+    "./cursor": "./cursor/cursors.ts",
     "./event-store": "./event-store/event-store.ts",
     "./event-store-message-bus": "./event-store/event-store-message-bus.ts",
     "./logger": "./logger/logger.ts",

@@ -2,7 +2,6 @@ import type { PostgresClient } from "../util/postgres-client";
 
 export type PublicSchemaReference = {
   manifestSlug: string;
-  dataStore: string;
   name: string;
   majorVersion: number;
 };

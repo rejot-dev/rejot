@@ -9,8 +9,8 @@ import { SourceReader } from "./source-reader";
 import logger from "@rejot/contract/logger";
 import { PublicSchemaTransformer } from "./public-schema-transformer";
 import { SinkWriter } from "./sink-writer";
-import { cursorToString } from "@rejot/contract/sync";
-
+import { cursorToString } from "@rejot/contract/cursor";
+import type { ISyncHTTPController } from "../sync-http-service/sync-http-service";
 const log = logger.createLogger("sync-controller");
 
 export class SyncController {
@@ -20,6 +20,8 @@ export class SyncController {
   readonly #sourceReader: SourceReader;
   readonly #sinkWriter: SinkWriter;
   readonly #publicSchemaTransformer: PublicSchemaTransformer;
+
+  #httpController?: ISyncHTTPController;
 
   constructor(
     syncManifest: SyncManifest,
@@ -44,7 +46,7 @@ export class SyncController {
   }
 
   async start() {
-    await Promise.all([this.startIterateSourceReader(), this.startIterateMessageBus()]);
+    await Promise.all([this.startIterateSourceReader(), this.startIterateSubscribeMessageBus()]);
   }
 
   async startIterateSourceReader() {
@@ -76,7 +78,7 @@ export class SyncController {
     log.debug("startIterateSourceReader completed");
   }
 
-  async startIterateMessageBus() {
+  async startIterateSubscribeMessageBus() {
     const cursors = await this.#sinkWriter.getCursors();
 
     log.debug("Cursors", cursors.map(cursorToString));
@@ -88,6 +90,14 @@ export class SyncController {
     }
 
     log.debug("startIterateMessageBus completed");
+  }
+
+  async startServingHTTPEndpoints(controller: ISyncHTTPController) {
+    if (this.#httpController) {
+      throw new Error("HTTP controller already started");
+    }
+
+    this.#httpController = controller;
   }
 
   async prepare() {

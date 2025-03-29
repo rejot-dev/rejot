@@ -4,7 +4,8 @@ import type {
   AnyIConnectionAdapter,
   AnyIConsumerSchemaTransformationAdapter,
 } from "@rejot/contract/adapter";
-import type { IDataSink, Cursor } from "@rejot/contract/sync";
+import type { IDataSink } from "@rejot/contract/sync";
+import type { Cursor } from "@rejot/contract/cursor";
 import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
 import type { ConsumerSchemaTransformationSchema } from "@rejot/contract/manifest";

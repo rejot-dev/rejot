@@ -1,6 +1,7 @@
 import type { IEventStore, TransformedOperationWithSource } from "@rejot/contract/event-store";
-import type { Cursor, PublicSchemaReference } from "@rejot/contract/sync";
+import type { PublicSchemaReference, Cursor } from "@rejot/contract/cursor";
 import type { OperationMessage } from "@rejot/contract/message-bus";
+
 export class InMemoryEventStore implements IEventStore {
   #operations: Map<string, TransformedOperationWithSource[]>;
   #transactionIds: string[];
