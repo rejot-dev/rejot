@@ -1,8 +1,8 @@
 import type { Client } from "pg";
 import { PostgresClient } from "./util/postgres-client";
 import logger from "@rejot/contract/logger";
-import type { IDataSink, PublicSchemaOperation } from "@rejot/contract/sync";
-
+import type { IDataSink, TransformedOperation } from "@rejot/contract/sync";
+import { PostgresConsumerDataStoreSchemaManager } from "./data-store/pg-consumer-data-store-schema-manager";
 const log = logger.createLogger("pg-sink");
 
 type PostgresSinkConfig = {
@@ -19,6 +19,10 @@ export class PostgresSink implements IDataSink {
     this.#consumerSchemaSQL = consumerSchemaSQL;
   }
 
+  get connectionType(): "postgres" {
+    return "postgres";
+  }
+
   async prepare(): Promise<void> {
     try {
       await this.#client.connect();
@@ -30,9 +34,11 @@ export class PostgresSink implements IDataSink {
         throw error;
       }
     }
+
+    await new PostgresConsumerDataStoreSchemaManager(this.#client).ensureSchema();
   }
 
-  async stop(): Promise<void> {
+  async close(): Promise<void> {
     try {
       await this.#client.end();
       log.info("Disconnected from PostgreSQL sink database");
@@ -41,10 +47,10 @@ export class PostgresSink implements IDataSink {
     }
   }
 
-  async writeData(operation: PublicSchemaOperation): Promise<void> {
+  async writeData(operation: TransformedOperation): Promise<void> {
     if (operation.type === "insert" || operation.type === "update") {
       // Execute the consumer schema transformation with the data
-      await this.#client.query(this.#consumerSchemaSQL, Object.values(operation.new));
+      await this.#client.query(this.#consumerSchemaSQL, Object.values(operation.object));
     } else {
       throw new Error("Not implemented!");
     }

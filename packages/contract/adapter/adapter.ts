@@ -1,17 +1,13 @@
 import { z } from "zod";
 
-import type {
-  IDataSink,
-  IDataSource,
-  PublicSchemaOperation,
-  TableOperation,
-} from "../sync/sync.ts";
+import type { IDataSink, IDataSource, TransformedOperation, TableOperation } from "../sync/sync.ts";
+import { type Cursor } from "../cursor/cursors";
 import {
   ConnectionConfigSchema,
   ConsumerSchemaTransformationSchema,
   PublicSchemaTransformationSchema,
 } from "../manifest/manifest.ts";
-import type { TransformedOperation, IEventStore } from "../event-store/event-store.ts";
+import type { IEventStore, TransformedOperationWithSource } from "../event-store/event-store.ts";
 
 export interface CreateSourceOptions {
   publicationName?: string;
@@ -51,7 +47,7 @@ export interface IPublicSchemaTransformationAdapter<
     sourceDataStoreSlug: string,
     operation: TableOperation,
     transformation: TTransformation,
-  ): Promise<PublicSchemaOperation>;
+  ): Promise<TransformedOperation>;
 }
 
 export type AnyIPublicSchemaTransformationAdapter = IPublicSchemaTransformationAdapter<
@@ -62,11 +58,16 @@ export interface IConsumerSchemaTransformationAdapter<
   TTransformation extends z.infer<typeof ConsumerSchemaTransformationSchema>,
 > {
   transformationType: TTransformation["transformationType"];
+  connectionType: string;
+
+  getCursors(destinationDataStoreSlug: string): Promise<Cursor[]>;
 
   applyConsumerSchemaTransformation(
-    operation: TransformedOperation,
+    destinationDataStoreSlug: string,
+    transactionId: string,
+    operation: TransformedOperationWithSource,
     transformation: TTransformation,
-  ): Promise<TransformedOperation>;
+  ): Promise<TransformedOperationWithSource>;
 }
 
 export type AnyIConsumerSchemaTransformationAdapter = IConsumerSchemaTransformationAdapter<

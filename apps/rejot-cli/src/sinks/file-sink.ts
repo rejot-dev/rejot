@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import logger from "@rejot/contract/logger";
-import type { IDataSink, PublicSchemaOperation } from "@rejot/contract/sync";
+import type { IDataSink, TransformedOperation } from "@rejot/contract/sync";
 
 const log = logger.createLogger("file-sink");
 
@@ -21,6 +21,10 @@ export class FileSink implements IDataSink {
     this.#filePath = filePath;
   }
 
+  get connectionType(): "file" {
+    return "file";
+  }
+
   async prepare(): Promise<void> {
     try {
       // Open file for append only writing
@@ -32,7 +36,7 @@ export class FileSink implements IDataSink {
     }
   }
 
-  async stop(): Promise<void> {
+  async close(): Promise<void> {
     if (this.#fileHandle) {
       try {
         await this.#fileHandle.close();
@@ -44,14 +48,15 @@ export class FileSink implements IDataSink {
     }
   }
 
-  async writeData(operation: PublicSchemaOperation): Promise<void> {
+  async writeData(operation: TransformedOperation): Promise<void> {
     if (!this.#fileHandle) {
       throw new Error(`File ${this.#filePath} not open for writing`);
     }
 
     const jsonData: FileOutputSchema = {
       operation: operation.type,
-      data: operation.type === "insert" || operation.type === "update" ? operation.new : undefined,
+      data:
+        operation.type === "insert" || operation.type === "update" ? operation.object : undefined,
     };
     const output = JSON.stringify(jsonData) + "\n";
     await this.#fileHandle.write(output);

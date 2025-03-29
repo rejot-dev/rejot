@@ -83,7 +83,10 @@ export class PostgresReplicationListener {
 
   #isRunning = false;
 
+  #config: ConnectionConfig;
+
   constructor(config: ConnectionConfig, onCommit?: OnCommitCallback) {
+    this.#config = config;
     this.#logicalReplicationService = new LogicalReplicationService(config, {
       acknowledge: {
         auto: false,
@@ -308,6 +311,14 @@ export class PostgresReplicationListener {
   }
 
   #onError(error: Error) {
+    if (error.message === "Connection terminated unexpectedly") {
+      console.log(
+        `Connection terminated unexpectedly, stopping listener. Database: ${this.#config.database}`,
+      );
+    }
+
+    // TODO(Wilco): Handle errors gracefully.
+
     console.error("#onError", error);
   }
 }

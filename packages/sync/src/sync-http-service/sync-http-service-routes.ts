@@ -7,48 +7,60 @@ export type RouteConfig = {
   response: ZodType;
 };
 
-export const SyncControllerReadRequestSchema = z.object({
-  publicSchemas: z.array(
-    z.object({
-      name: z.string(),
-      version: z.object({
-        major: z.number(),
-      }),
-      cursor: z.string().nullable(),
+export const PublicSchemaReferenceSchema = z.object({
+  manifest: z.object({
+    slug: z.string(),
+  }),
+  schema: z.object({
+    name: z.string(),
+    version: z.object({
+      major: z.number(),
     }),
-  ),
+  }),
+});
+
+export const CursorSchema = z.object({
+  schema: PublicSchemaReferenceSchema,
+  transactionId: z.string().nullable(),
+});
+
+export const SyncControllerReadRequestSchema = z.object({
+  cursors: z.array(CursorSchema),
   limit: z.number().optional(),
 });
 
-export const SyncControllerReadResponseSchema = z.object({
-  operations: z.array(
-    z.discriminatedUnion("operation", [
-      z.object({
-        operation: z.literal("delete"),
-        sourceDataStoreSlug: z.string(),
-        sourcePublicSchema: z.object({
-          name: z.string(),
-          version: z.object({
-            major: z.number(),
-            minor: z.number(),
+export const SyncControllerReadResponseSchema = z
+  .object({
+    transactionId: z.string(),
+    operations: z.array(
+      z.discriminatedUnion("type", [
+        z.object({
+          type: z.literal("delete"),
+          sourceManifestSlug: z.string(),
+          sourcePublicSchema: z.object({
+            name: z.string(),
+            version: z.object({
+              major: z.number(),
+              minor: z.number(),
+            }),
           }),
         }),
-      }),
-      z.object({
-        operation: z.enum(["insert", "update"]),
-        sourceDataStoreSlug: z.string(),
-        sourcePublicSchema: z.object({
-          name: z.string(),
-          version: z.object({
-            major: z.number(),
-            minor: z.number(),
+        z.object({
+          type: z.enum(["insert", "update"]),
+          sourceManifestSlug: z.string(),
+          sourcePublicSchema: z.object({
+            name: z.string(),
+            version: z.object({
+              major: z.number(),
+              minor: z.number(),
+            }),
           }),
+          object: z.record(z.any()),
         }),
-        object: z.record(z.any()),
-      }),
-    ]),
-  ),
-});
+      ]),
+    ),
+  })
+  .array();
 
 export type SyncControllerReadRequest = z.infer<typeof SyncControllerReadRequestSchema>;
 export type SyncControllerReadResponse = z.infer<typeof SyncControllerReadResponseSchema>;

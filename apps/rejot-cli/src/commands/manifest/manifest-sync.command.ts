@@ -8,14 +8,14 @@ import {
   PostgresPublicSchemaTransformationAdapter,
   PostgresConsumerSchemaTransformationAdapter,
 } from "@rejot/adapter-postgres";
-import { SyncManifestController } from "@rejot/sync/sync-manifest-controller";
-import { SyncHTTPController } from "@rejot/sync/sync-http-service";
+import { SyncController } from "@rejot/sync/sync-controller-new";
 import type {
   AnyIConnectionAdapter,
   AnyIConsumerSchemaTransformationAdapter,
   AnyIPublicSchemaTransformationAdapter,
 } from "@rejot/contract/adapter";
-import { LocalhostResolver } from "@rejot/sync/sync-http-resolver";
+import { EventStoreMessageBus } from "@rejot/contract/event-store-message-bus";
+import { SyncManifest } from "@rejot/contract/sync-manifest";
 
 const log = logger.createLogger("cli");
 
@@ -58,7 +58,7 @@ export class ManifestSyncCommand extends Command {
 
   public async run(): Promise<void> {
     const { flags, argv } = await this.parse(ManifestSyncCommand);
-    const { "log-level": logLevel, hostname, "api-port": apiPort } = flags;
+    const { "log-level": logLevel, hostname: _hostname, "api-port": _apiPort } = flags;
 
     const manifestPaths = z.array(z.string()).parse(argv);
 
@@ -85,8 +85,10 @@ export class ManifestSyncCommand extends Command {
 
       log.info(`Successfully loaded ${manifests.length} manifest(s)`);
 
+      const syncManifest = new SyncManifest(manifests);
+
       // Create adapters
-      const postgresAdapter = new PostgresConnectionAdapter();
+      const postgresAdapter = new PostgresConnectionAdapter(syncManifest);
       const transformationAdapter = new PostgresPublicSchemaTransformationAdapter(postgresAdapter);
       const consumerTransformationAdapter = new PostgresConsumerSchemaTransformationAdapter(
         postgresAdapter,
@@ -118,8 +120,8 @@ export class ManifestSyncCommand extends Command {
         );
       }
 
-      const httpController = new SyncHTTPController(hostname, apiPort);
-      const syncServiceResolver = new LocalhostResolver(apiPort);
+      // const httpController = new SyncHTTPController(hostname, apiPort);
+      // const syncServiceResolver = new LocalhostResolver(apiPort);
 
       const eventStore = connectionAdapters
         .find((adapter) => adapter.connectionType === eventStoreConnection.config.connectionType)
@@ -131,15 +133,32 @@ export class ManifestSyncCommand extends Command {
         );
       }
 
-      // Create sync controller
-      const syncController = new SyncManifestController(
-        manifests,
+      // There are four things we need to be doing:
+      // 1. Listen for changes on source data stores and write them to an event store.
+      // 2. Listen for changes on the event store and apply them to the consumer schemas.
+      // 3. Expose an (HTTP) API to allow other sync services to obtain our public schemas
+      // 4. Listen for changes on external sync services and apply them to the consumer schemas.
+
+      // const syncController = new SyncManifestController(
+      //   manifests,
+      //   connectionAdapters,
+      //   publicSchemaTransformationAdapters,
+      //   consumerSchemaTransformationAdapters,
+      //   eventStore,
+      //   httpController,
+      //   syncServiceResolver,
+      // );
+
+      // const messageBus = new InMemoryMessageBus();
+      const messageBus = new EventStoreMessageBus(eventStore);
+
+      const syncController = new SyncController(
+        syncManifest,
         connectionAdapters,
         publicSchemaTransformationAdapters,
         consumerSchemaTransformationAdapters,
-        eventStore,
-        httpController,
-        syncServiceResolver,
+        messageBus,
+        messageBus,
       );
 
       let shouldStop = false;
@@ -147,6 +166,7 @@ export class ManifestSyncCommand extends Command {
       process.on("SIGINT", async () => {
         log.info("\nReceived SIGINT, shutting down...");
         await syncController.stop();
+        await syncController.close();
 
         if (!shouldStop) {
           shouldStop = true;
@@ -165,11 +185,12 @@ export class ManifestSyncCommand extends Command {
       try {
         await syncController.prepare();
         log.info("Starting sync process...");
-        syncController.startPollingForConsumerSchemas();
+        await syncController.start();
+        // syncController.startPollingForConsumerSchemas();
 
-        for await (const transformedOps of syncController.start()) {
-          log.debug(`Processed ${transformedOps.length} operations`);
-        }
+        // for await (const transformedOps of syncController.start()) {
+        //   log.debug(`Processed ${transformedOps.length} operations`);
+        // }
 
         log.info("Sync process completed");
       } catch (error) {
