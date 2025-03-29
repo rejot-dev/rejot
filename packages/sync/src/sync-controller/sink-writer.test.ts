@@ -190,7 +190,6 @@ describe("SinkWriter", () => {
       {
         type: "insert",
         sourceManifestSlug: "test-manifest",
-        sourceDataStoreSlug: "test-connection",
         sourcePublicSchema: {
           name: "test-schema",
           version: {
@@ -228,7 +227,6 @@ describe("SinkWriter", () => {
       {
         type: "insert",
         sourceManifestSlug: "test-manifest",
-        sourceDataStoreSlug: "test-connection",
         sourcePublicSchema: {
           name: "test-schema",
           version: {

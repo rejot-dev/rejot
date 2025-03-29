@@ -113,10 +113,7 @@ export class SyncManifestController {
       this.#eventStore.prepare(),
     ]);
 
-    await this.#syncHTTPService.start(async (cursors, limit) => {
-      const messages = await this.#eventStore.read(cursors, limit);
-      return messages.flatMap((message) => message.operations);
-    });
+    await this.#syncHTTPService.start();
 
     this.#state = "prepared";
     log.debug("SyncManifestController prepared");
@@ -152,7 +149,9 @@ export class SyncManifestController {
           })),
         });
 
-        log.trace(`received ${response.operations.length} operations from remote ${slug}`);
+        log.trace(
+          `received ${response.flatMap((r) => r.operations).length} operations from remote ${slug}`,
+        );
 
         // TODO: Multiple operations in a single transaction could trigger the same consumer
         //       multiple times. We need to de-dupe.
@@ -298,7 +297,6 @@ export class SyncManifestController {
           transformedOperations.push({
             type: transformedData.type,
             sourceManifestSlug: publicSchema.source.manifestSlug,
-            sourceDataStoreSlug: dataStoreSlug,
             sourcePublicSchema: {
               name: publicSchema.name,
               version: {
@@ -319,7 +317,6 @@ export class SyncManifestController {
           transformedOperations.push({
             type: transformedData.type,
             sourceManifestSlug: publicSchema.source.manifestSlug,
-            sourceDataStoreSlug: dataStoreSlug,
             sourcePublicSchema: {
               name: publicSchema.name,
               version: {

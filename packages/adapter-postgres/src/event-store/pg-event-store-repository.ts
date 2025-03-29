@@ -1,10 +1,9 @@
 import type { PostgresClient } from "../util/postgres-client";
 import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
-import type { PublicSchemaReference } from "@rejot/contract/sync";
+import type { PublicSchemaReference } from "@rejot/contract/cursor";
 
 type EventRow = {
   operation: "insert" | "update" | "delete";
-  dataStoreId: number;
   transactionId: string;
   publicSchemaName: string;
   publicSchemaMajorVersion: number;
@@ -36,28 +35,25 @@ export class PostgresEventStoreRepository {
     operations: Array<{
       index: number;
       operation: TransformedOperationWithSource;
-      dataStoreId: number;
     }>,
   ): Promise<void> {
-    for (const { index, operation: op, dataStoreId } of operations) {
+    for (const { index, operation: op } of operations) {
       await this.#client.query(
         `INSERT INTO rejot_events.events (
           transaction_id,
           operation_idx,
           operation, 
-          data_store_id,
           public_schema_name,
           public_schema_major_version,
           public_schema_minor_version,
           manifest_slug,
           object
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         ON CONFLICT DO NOTHING`,
         [
           transactionId,
           index,
           op.type,
-          dataStoreId,
           op.sourcePublicSchema.name,
           op.sourcePublicSchema.version.major,
           op.sourcePublicSchema.version.minor,
@@ -85,17 +81,15 @@ export class PostgresEventStoreRepository {
   async readEvents(
     { schema }: PublicSchemaReference,
     transactionId: string | null,
-    dataStoreIds: number[],
     limit: number,
   ): Promise<EventRow[]> {
     let query: string;
-    let params: (string | number | (string | number)[])[];
+    let params: (string | number)[];
 
     if (transactionId) {
       query = `
         SELECT 
           operation,
-          data_store_id,
           transaction_id,
           public_schema_name,
           public_schema_major_version,
@@ -106,17 +100,15 @@ export class PostgresEventStoreRepository {
         WHERE transaction_id > $1
         AND public_schema_name = $2
         AND public_schema_major_version = $3
-        AND data_store_id = ANY($4)
-        ORDER BY transaction_id, data_store_id, operation_idx
-        LIMIT $5
+        ORDER BY transaction_id, operation_idx
+        LIMIT $4
       `;
 
-      params = [transactionId, schema.name, schema.version.major, dataStoreIds, limit];
+      params = [transactionId, schema.name, schema.version.major, limit];
     } else {
       query = `
         SELECT 
           operation,
-          data_store_id,
           transaction_id,
           public_schema_name,
           public_schema_major_version,
@@ -126,18 +118,16 @@ export class PostgresEventStoreRepository {
         FROM rejot_events.events
         WHERE public_schema_name = $1
         AND public_schema_major_version = $2
-        AND data_store_id = ANY($3)
-        ORDER BY transaction_id, data_store_id, operation_idx
-        LIMIT $4
+        ORDER BY transaction_id, operation_idx
+        LIMIT $3
       `;
 
-      params = [schema.name, schema.version.major, dataStoreIds, limit];
+      params = [schema.name, schema.version.major, limit];
     }
 
     const result = await this.#client.query(query, params);
     return result.rows.map((row) => ({
       operation: row["operation"],
-      dataStoreId: row["data_store_id"],
       transactionId: row["transaction_id"],
       publicSchemaName: row["public_schema_name"],
       publicSchemaMajorVersion: row["public_schema_major_version"],

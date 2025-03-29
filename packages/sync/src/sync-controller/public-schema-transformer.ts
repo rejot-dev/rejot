@@ -61,7 +61,6 @@ export class PublicSchemaTransformer {
           transformedOperations.push({
             type: transformedData.type,
             sourceManifestSlug: publicSchema.source.manifestSlug,
-            sourceDataStoreSlug: dataStoreSlug,
             sourcePublicSchema: {
               name: publicSchema.name,
               version: {
@@ -74,7 +73,6 @@ export class PublicSchemaTransformer {
           transformedOperations.push({
             type: transformedData.type,
             sourceManifestSlug: publicSchema.source.manifestSlug,
-            sourceDataStoreSlug: dataStoreSlug,
             sourcePublicSchema: {
               name: publicSchema.name,
               version: {

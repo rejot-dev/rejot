@@ -1,18 +1,21 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { SyncHTTPController } from "./sync-http-service";
 import { fetchRead } from "./sync-http-service-fetch";
+import { InMemoryEventStore } from "../_test/in-memory-event-store";
 
 const TEST_PORT = 3333;
 const TEST_HOST = `localhost:${TEST_PORT}`;
+
 describe("SyncHTTPController /read", () => {
-  const controller = new SyncHTTPController("localhost", TEST_PORT);
+  const eventStore = new InMemoryEventStore();
+  const controller = new SyncHTTPController({ hostname: "localhost", port: TEST_PORT }, eventStore);
 
   beforeAll(async () => {
-    await controller.start(async () => [
+    // Write test data to the event store
+    await eventStore.write("test-transaction", [
       {
         type: "insert",
         sourceManifestSlug: "test",
-        sourceDataStoreSlug: "test",
         sourcePublicSchema: {
           name: "test",
           version: {
@@ -27,25 +30,27 @@ describe("SyncHTTPController /read", () => {
         },
       },
     ]);
+    await controller.start();
   });
 
   afterAll(async () => {
     await controller.stop();
+    await eventStore.close();
   });
 
   test("404", async () => {
-    const response = await fetch(`${TEST_HOST}/this-does-not-exist`);
+    const response = await fetch(`http://${TEST_HOST}/this-does-not-exist`);
     expect(response.status).toBe(404);
   });
 
   test("400", async () => {
-    const response = await fetch(`${TEST_HOST}/read`, {
+    const response = await fetch(`http://${TEST_HOST}/read`, {
       method: "POST",
       body: JSON.stringify({ foo: "bar" }),
     });
     expect(response.status).toBe(400);
 
-    const response2 = await fetch(`${TEST_HOST}/read`, {
+    const response2 = await fetch(`http://${TEST_HOST}/read`, {
       method: "POST",
       body: "malformed json",
     });
@@ -61,7 +66,7 @@ describe("SyncHTTPController /read", () => {
               slug: "test",
             },
             schema: {
-              name: "test-schema",
+              name: "test",
               version: {
                 major: 1,
               },
@@ -72,9 +77,8 @@ describe("SyncHTTPController /read", () => {
       ],
     });
 
-    expect(response).toBeDefined();
-    expect(response.operations).toBeArray();
-    expect(response.operations.length).toBe(1);
-    expect(response.operations[0].type).toBe("insert");
+    expect(response.length).toBe(1);
+    expect(response[0].operations.length).toBe(1);
+    expect(response[0].operations[0].type).toBe("insert");
   });
 });

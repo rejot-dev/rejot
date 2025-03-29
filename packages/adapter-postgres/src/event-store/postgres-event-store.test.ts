@@ -7,7 +7,7 @@ import type {
 import { pgRollbackDescribe } from "../util/postgres-test-utils";
 import { PostgresEventStore } from "./postgres-event-store";
 import { SyncManifest } from "@rejot/contract/sync-manifest";
-import type { PublicSchemaReference } from "@rejot/contract/sync";
+import type { PublicSchemaReference } from "@rejot/contract/cursor";
 
 const TEST_SCHEMA_NAME = "rejot_events";
 const TEST_TABLE_NAME = "events";
@@ -65,13 +65,6 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
       [TEST_SCHEMA_NAME, TEST_TABLE_NAME],
     );
     expect(eventsTableResult.rows.length).toBe(1);
-
-    // Verify data_store table exists
-    const dataStoreTableResult = await ctx.client.query(
-      "SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_name = $2",
-      [TEST_SCHEMA_NAME, "data_store"],
-    );
-    expect(dataStoreTableResult.rows.length).toBe(1);
   });
 
   test("should write and read operations across multiple data stores", async () => {
@@ -82,7 +75,6 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
       {
         type: "insert",
         sourceManifestSlug: "test-manifest",
-        sourceDataStoreSlug: "test-store-1",
         sourcePublicSchema: {
           name: "test-schema",
           version: { major: 1, minor: 0 },
@@ -95,7 +87,6 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
       {
         type: "insert",
         sourceManifestSlug: "test-manifest",
-        sourceDataStoreSlug: "test-store-2",
         sourcePublicSchema: {
           name: "test-schema",
           version: { major: 1, minor: 0 },
@@ -122,9 +113,9 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     const allMessages = await store.read([{ schema: TEST_SCHEMA, transactionId: null }], 10);
     expect(allMessages.length).toBe(2);
     expect(allMessages[0].operations.length).toBe(1);
-    expect(allMessages[0].operations[0].sourceDataStoreSlug).toBe("test-store-1");
+    expect(allMessages[0].operations[0].sourceManifestSlug).toBe("test-manifest");
     expect(allMessages[1].operations.length).toBe(1);
-    expect(allMessages[1].operations[0].sourceDataStoreSlug).toBe("test-store-2");
+    expect(allMessages[1].operations[0].sourceManifestSlug).toBe("test-manifest");
   });
 
   test("should handle cursor-based pagination correctly", async () => {
@@ -134,7 +125,6 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     // Write operations to both data stores
     const ops1 = {
       type: "insert" as const,
-      sourceDataStoreSlug: "test-store-1",
       sourcePublicSchema: {
         name: "test-schema",
         version: { major: 1, minor: 0 },
@@ -145,7 +135,6 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
 
     const ops2 = {
       type: "insert" as const,
-      sourceDataStoreSlug: "test-store-2",
       sourcePublicSchema: {
         name: "test-schema",
         version: { major: 1, minor: 0 },
@@ -156,7 +145,6 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
 
     const ops3 = {
       type: "update" as const,
-      sourceDataStoreSlug: "test-store-1",
       sourcePublicSchema: {
         name: "test-schema",
         version: { major: 1, minor: 0 },
@@ -178,7 +166,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     // Read first batch with limit 1 (from start)
     const batch1 = await store.read([{ schema: TEST_SCHEMA, transactionId: null }], 1);
     expect(batch1.length).toBe(1);
-    expect(batch1[0].operations[0].sourceDataStoreSlug).toBe("test-store-1");
+    expect(batch1[0].operations[0].sourceManifestSlug).toBe("test-manifest");
     expect((batch1[0].operations[0] as TransformedOperationWithSourceInsert).object["name"]).toBe(
       "First Store 1",
     );
@@ -186,7 +174,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     // Read second batch (after tx1)
     const batch2 = await store.read([{ schema: TEST_SCHEMA, transactionId: "tx1" }], 1);
     expect(batch2.length).toBe(1);
-    expect(batch2[0].operations[0].sourceDataStoreSlug).toBe("test-store-2");
+    expect(batch2[0].operations[0].sourceManifestSlug).toBe("test-manifest");
     expect((batch2[0].operations[0] as TransformedOperationWithSourceInsert).object["name"]).toBe(
       "First Store 2",
     );
@@ -194,7 +182,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     // Read final batch (after tx2)
     const batch3 = await store.read([{ schema: TEST_SCHEMA, transactionId: "tx2" }], 1);
     expect(batch3.length).toBe(1);
-    expect(batch3[0].operations[0].sourceDataStoreSlug).toBe("test-store-1");
+    expect(batch3[0].operations[0].sourceManifestSlug).toBe("test-manifest");
     expect((batch3[0].operations[0] as TransformedOperationWithSourceUpdate).object["name"]).toBe(
       "Updated Store 1",
     );
@@ -206,7 +194,6 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
 
     const testOp: TransformedOperationWithSource = {
       type: "insert",
-      sourceDataStoreSlug: "test-store-1",
       sourcePublicSchema: {
         name: "test-schema",
         version: { major: 1, minor: 0 },

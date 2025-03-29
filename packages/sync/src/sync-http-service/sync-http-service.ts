@@ -1,43 +1,34 @@
-import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
-import type { Cursor } from "@rejot/contract/sync";
+import type { IEventStore } from "@rejot/contract/event-store";
 import logger from "@rejot/contract/logger";
 import { serve, type Server } from "bun";
 
 const log = logger.createLogger("sync-http-controller");
 
-import { ZodType } from "zod";
-import {
-  HTTPBadRequestError,
-  HTTPBaseError,
-  HTTPInternalServerError,
-} from "./sync-http-service-errors";
-import {
-  syncServiceReadRoute,
-  type SyncControllerReadRequest,
-  type SyncControllerReadResponse,
-} from "./sync-http-service-routes";
+import { type z, ZodError, ZodType } from "zod";
+import { HTTPBadRequestError, HTTPBaseError } from "./sync-http-service-errors";
+import { syncServiceReadRoute, type RouteConfig } from "./sync-http-service-routes";
 
-type ReadRequestCallback = (
-  cursors: Cursor[],
-  limit: number,
-) => Promise<TransformedOperationWithSource[]>;
+interface ServerConfig {
+  hostname: string;
+  port: number;
+}
 
 export interface ISyncHTTPController {
-  start(readRequestCallback: ReadRequestCallback): Promise<void>;
+  start(): Promise<void>;
   stop(): Promise<void>;
 }
 
 export class SyncHTTPController implements ISyncHTTPController {
   readonly #hostname: string;
   readonly #port: number;
+  readonly #eventStore: IEventStore;
 
   #server: Server | null = null;
 
-  #readRequestCallback?: ReadRequestCallback;
-
-  constructor(hostname: string, port: number) {
+  constructor({ hostname, port }: ServerConfig, eventStore: IEventStore) {
     this.#hostname = hostname;
     this.#port = port;
+    this.#eventStore = eventStore;
   }
 
   /**
@@ -60,48 +51,54 @@ export class SyncHTTPController implements ISyncHTTPController {
     return parsed.data;
   }
 
-  /**
-   * Handles the read request by calling the readRequestCallback function.
-   * Throws an HTTPInternalServerError if the callback is not set.
-   */
-  async #handleReadRequest(
-    request: SyncControllerReadRequest,
-  ): Promise<SyncControllerReadResponse> {
-    if (!this.#readRequestCallback) {
-      throw new HTTPInternalServerError("Read request callback not set");
+  async #wrapRequest<T extends RouteConfig>(
+    req: Request,
+    routeConfig: T,
+    callback: (request: z.infer<T["request"]>) => Promise<z.infer<T["response"]>>,
+  ): Promise<Response> {
+    try {
+      const requestData = await this.#parseJSONRequest(req, routeConfig.request);
+      const responseObject = await callback(requestData);
+      const parsedResponse = routeConfig.response.parse(responseObject);
+      return Response.json(parsedResponse);
+    } catch (error) {
+      if (error instanceof HTTPBaseError) {
+        return new Response(error.message, { status: error.status });
+      }
+
+      if (error instanceof ZodError) {
+        log.error("Zod error", { error });
+        return new Response("Something went wrong creating the response.", { status: 500 });
+      }
+
+      return new Response("Internal server error", { status: 500 });
     }
+  }
 
-    const operations = await this.#readRequestCallback(request.cursors, request.limit ?? 100);
-
-    return { operations };
+  #createRequest<T extends RouteConfig>(
+    routeConfig: T,
+    callback: (request: z.infer<T["request"]>) => Promise<z.infer<T["response"]>>,
+  ): Record<string, (req: Request) => Promise<Response>> {
+    return {
+      [routeConfig.path]: async (req: Request) => {
+        return this.#wrapRequest(req, routeConfig, callback);
+      },
+    };
   }
 
   /**
    * Starts the HTTP server and sets up the route handling for read requests.
    */
-  async start(readRequestCallback: ReadRequestCallback): Promise<void> {
-    this.#readRequestCallback = readRequestCallback;
-
+  async start(): Promise<void> {
     log.info(`Http controller starting on ${this.#hostname}:${this.#port}`);
+
     this.#server = serve({
       port: this.#port,
       hostname: this.#hostname,
       routes: {
-        [syncServiceReadRoute.path]: async (req: Request) => {
-          try {
-            const requestData = await this.#parseJSONRequest<SyncControllerReadRequest>(
-              req,
-              syncServiceReadRoute.request,
-            );
-            const result = await this.#handleReadRequest(requestData);
-            return Response.json(result);
-          } catch (error) {
-            if (error instanceof HTTPBaseError) {
-              return new Response(error.message, { status: error.status });
-            }
-            return new Response("Internal server error", { status: 500 });
-          }
-        },
+        ...this.#createRequest(syncServiceReadRoute, async (request) =>
+          this.#eventStore.read(request.cursors, request.limit ?? 100),
+        ),
       },
     });
   }

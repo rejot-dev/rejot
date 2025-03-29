@@ -12,44 +12,9 @@ async function setupEventStore(client: Client | PostgresClient): Promise<void> {
 }
 
 pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
-  test("should insert and retrieve data store", async () => {
-    await setupEventStore(ctx.client);
-    const repository = new PostgresEventStoreRepository(ctx.client);
-
-    const slug = "test-data-store";
-    const id = await repository.insertDataStore(slug);
-    expect(id).toBeGreaterThan(0);
-
-    // Verify the data store was inserted
-    const res = await ctx.client.query(`SELECT * FROM rejot_events.data_store WHERE id = $1`, [id]);
-    expect(res.rows.length).toBe(1);
-    expect(res.rows[0]["slug"]).toBe(slug);
-  });
-
-  test("should not duplicate data store on conflict", async () => {
-    await setupEventStore(ctx.client);
-
-    const repository = new PostgresEventStoreRepository(ctx.client);
-
-    const slug = "test-data-store";
-    const id1 = await repository.insertDataStore(slug);
-    const id2 = await repository.insertDataStore(slug);
-
-    expect(id1).toBe(id2);
-
-    // Verify only one record exists
-    const res = await ctx.client.query(
-      `SELECT COUNT(*)::integer as count FROM rejot_events.data_store`,
-    );
-    expect(res.rows[0]["count"]).toBe(1);
-  });
-
   test("should write and read events", async () => {
     await setupEventStore(ctx.client);
     const repository = new PostgresEventStoreRepository(ctx.client);
-
-    // Insert a data store first
-    const dataStoreId = await repository.insertDataStore("test-data-store");
 
     const transactionId = "test-transaction";
     const testSchema = {
@@ -66,10 +31,8 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     await repository.writeEvents(transactionId, [
       {
         index: 0,
-        dataStoreId,
         operation: {
           type: "insert",
-          sourceDataStoreSlug: "test-data-store",
           sourcePublicSchema: {
             name: testSchema.schema.name,
             version: {
@@ -83,10 +46,8 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
       },
       {
         index: 1,
-        dataStoreId,
         operation: {
           type: "update",
-          sourceDataStoreSlug: "test-data-store",
           sourcePublicSchema: {
             name: testSchema.schema.name,
             version: {
@@ -100,10 +61,8 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
       },
       {
         index: 2,
-        dataStoreId,
         operation: {
           type: "delete",
-          sourceDataStoreSlug: "test-data-store",
           sourcePublicSchema: {
             name: testSchema.schema.name,
             version: {
@@ -117,7 +76,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     ]);
 
     // Read events
-    const events = await repository.readEvents(testSchema, null, [dataStoreId], 10);
+    const events = await repository.readEvents(testSchema, null, 10);
 
     expect(events.length).toBe(3);
     expect(events[0].operation).toBe("insert");
@@ -135,7 +94,6 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     await setupEventStore(ctx.client);
     const repository = new PostgresEventStoreRepository(ctx.client);
 
-    const dataStoreId = await repository.insertDataStore("test-data-store");
     const testSchema = {
       manifest: {
         slug: "test-manifest",
@@ -152,10 +110,8 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
       await repository.writeEvents(transactionId, [
         {
           index: 0,
-          dataStoreId,
           operation: {
             type: "insert",
-            sourceDataStoreSlug: "test-data-store",
             sourcePublicSchema: {
               name: testSchema.schema.name,
               version: {
@@ -178,7 +134,6 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     await setupEventStore(ctx.client);
     const repository = new PostgresEventStoreRepository(ctx.client);
 
-    const dataStoreId = await repository.insertDataStore("test-data-store");
     const testSchema = {
       manifest: {
         slug: "test-manifest",
@@ -195,10 +150,8 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
       await repository.writeEvents(transactionId, [
         {
           index: 0,
-          dataStoreId,
           operation: {
             type: "insert",
-            sourceDataStoreSlug: "test-data-store",
             sourcePublicSchema: {
               name: testSchema.schema.name,
               version: {
@@ -214,7 +167,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     }
 
     // Read events after tx1
-    const events = await repository.readEvents(testSchema, "tx1", [dataStoreId], 10);
+    const events = await repository.readEvents(testSchema, "tx1", 10);
     expect(events.length).toBe(2);
     expect(events[0].transactionId).toBe("tx2");
     expect(events[0].manifestSlug).toBe("test-manifest");
@@ -226,7 +179,6 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     await setupEventStore(ctx.client);
     const repository = new PostgresEventStoreRepository(ctx.client);
 
-    const dataStoreId = await repository.insertDataStore("test-data-store");
     const testSchema = {
       manifest: {
         slug: "test-manifest",
@@ -242,10 +194,8 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
       await repository.writeEvents(`tx${i}`, [
         {
           index: 0,
-          dataStoreId,
           operation: {
             type: "insert",
-            sourceDataStoreSlug: "test-data-store",
             sourcePublicSchema: {
               name: testSchema.schema.name,
               version: {
@@ -261,7 +211,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     }
 
     // Read with limit 3
-    const events = await repository.readEvents(testSchema, null, [dataStoreId], 3);
+    const events = await repository.readEvents(testSchema, null, 3);
     expect(events.length).toBe(3);
     events.forEach((event) => {
       expect(event.manifestSlug).toBe("test-manifest");

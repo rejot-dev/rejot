@@ -29,35 +29,38 @@ export const SyncControllerReadRequestSchema = z.object({
   limit: z.number().optional(),
 });
 
-export const SyncControllerReadResponseSchema = z.object({
-  operations: z.array(
-    z.discriminatedUnion("type", [
-      z.object({
-        type: z.literal("delete"),
-        sourceManifestSlug: z.string(),
-        sourcePublicSchema: z.object({
-          name: z.string(),
-          version: z.object({
-            major: z.number(),
-            minor: z.number(),
+export const SyncControllerReadResponseSchema = z
+  .object({
+    transactionId: z.string(),
+    operations: z.array(
+      z.discriminatedUnion("type", [
+        z.object({
+          type: z.literal("delete"),
+          sourceManifestSlug: z.string(),
+          sourcePublicSchema: z.object({
+            name: z.string(),
+            version: z.object({
+              major: z.number(),
+              minor: z.number(),
+            }),
           }),
         }),
-      }),
-      z.object({
-        type: z.enum(["insert", "update"]),
-        sourceManifestSlug: z.string(),
-        sourcePublicSchema: z.object({
-          name: z.string(),
-          version: z.object({
-            major: z.number(),
-            minor: z.number(),
+        z.object({
+          type: z.enum(["insert", "update"]),
+          sourceManifestSlug: z.string(),
+          sourcePublicSchema: z.object({
+            name: z.string(),
+            version: z.object({
+              major: z.number(),
+              minor: z.number(),
+            }),
           }),
+          object: z.record(z.any()),
         }),
-        object: z.record(z.any()),
-      }),
-    ]),
-  ),
-});
+      ]),
+    ),
+  })
+  .array();
 
 export type SyncControllerReadRequest = z.infer<typeof SyncControllerReadRequestSchema>;
 export type SyncControllerReadResponse = z.infer<typeof SyncControllerReadResponseSchema>;
