@@ -105,6 +105,7 @@ class TestSource implements IDataSource {
 }
 
 class TestSink implements IDataSink {
+  connectionType = "test" as const;
   receivedOperations: TransformedOperation[] = [];
   async prepare() {}
   async close() {}

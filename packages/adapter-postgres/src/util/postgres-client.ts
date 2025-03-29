@@ -7,6 +7,8 @@ export class PostgresClient {
   #transactionDepth: number = 0;
   #savepointCounter: number = 0;
 
+  #isConnecting: boolean = false;
+
   constructor(client: Client) {
     this.#client = client;
   }
@@ -16,7 +18,13 @@ export class PostgresClient {
   }
 
   async connect(): Promise<void> {
+    if (this.#isConnecting) {
+      return Promise.resolve();
+    }
+
+    this.#isConnecting = true;
     await this.#client.connect();
+    this.#isConnecting = false;
   }
 
   async end(): Promise<void> {

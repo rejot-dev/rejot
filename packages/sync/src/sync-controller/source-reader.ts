@@ -1,6 +1,6 @@
 import type { AnyIConnectionAdapter } from "@rejot/contract/adapter";
 import type { IDataSource, Transaction } from "@rejot/contract/sync";
-import type { SyncManifest } from "../manifest/sync-manifest";
+import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import logger from "@rejot/contract/logger";
 
 const log = logger.createLogger("source-reader");

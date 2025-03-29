@@ -3,12 +3,11 @@ import { SyncManifestSchema } from "@rejot/contract/manifest";
 import logger from "@rejot/contract/logger";
 import type {
   AnyIConnectionAdapter,
-  AnyIConsumerSchemaTransformationAdapter,
   AnyIPublicSchemaTransformationAdapter,
 } from "@rejot/contract/adapter";
 import type { IDataSink, IDataSource, Transaction } from "@rejot/contract/sync";
 import type { IEventStore, TransformedOperationWithSource } from "@rejot/contract/event-store";
-import { SyncManifest } from "./manifest/sync-manifest";
+import { SyncManifest } from "../../contract/manifest/sync-manifest";
 
 import { type ISyncHTTPController } from "./sync-http-service/sync-http-service";
 import { fetchRead } from "./sync-http-service/sync-http-service-fetch";
@@ -32,7 +31,6 @@ export class SyncManifestController {
   readonly #sinks: Map<string, IDataSink> = new Map();
 
   readonly #publicSchemaTransformationAdapters: AnyIPublicSchemaTransformationAdapter[];
-  readonly #consumerSchemaTransformationAdapters: AnyIConsumerSchemaTransformationAdapter[];
   readonly #eventStore: IEventStore;
   readonly #syncHTTPService: ISyncHTTPController;
   readonly #syncServiceResolver: ISyncServiceResolver;
@@ -47,7 +45,6 @@ export class SyncManifestController {
     manifests: Manifest[],
     connectionAdapters: AnyIConnectionAdapter[],
     publicSchemaTransformationAdapters: AnyIPublicSchemaTransformationAdapter[],
-    consumerSchemaTransformationAdapters: AnyIConsumerSchemaTransformationAdapter[],
     eventStore: IEventStore,
     syncHTTPController: ISyncHTTPController,
     syncServiceResolver: ISyncServiceResolver,
@@ -55,7 +52,6 @@ export class SyncManifestController {
     this.#syncManifest = new SyncManifest(manifests);
     this.#connectionAdapters = connectionAdapters;
     this.#publicSchemaTransformationAdapters = publicSchemaTransformationAdapters;
-    this.#consumerSchemaTransformationAdapters = consumerSchemaTransformationAdapters;
     this.#eventStore = eventStore;
     this.#syncHTTPService = syncHTTPController;
 
@@ -114,11 +110,12 @@ export class SyncManifestController {
     await Promise.all([
       ...Array.from(this.#sinks.values()).map((sink) => sink.prepare()),
       ...Array.from(this.#sources.values()).map((source) => source.prepare()),
-      this.#eventStore.prepare(this.#syncManifest.manifests),
+      this.#eventStore.prepare(),
     ]);
 
     await this.#syncHTTPService.start(async (cursors, limit) => {
-      return this.#eventStore.read(cursors, limit);
+      const messages = await this.#eventStore.read(cursors, limit);
+      return messages.flatMap((message) => message.operations);
     });
 
     this.#state = "prepared";
@@ -139,12 +136,19 @@ export class SyncManifestController {
         const host = this.#syncServiceResolver.resolve(slug);
 
         const response = await fetchRead(host, false, {
-          publicSchemas: consumerSchemas.map((consumer) => ({
-            name: consumer.publicSchema.name,
-            version: {
-              major: consumer.publicSchema.majorVersion,
+          cursors: consumerSchemas.map((consumer) => ({
+            schema: {
+              manifest: {
+                slug,
+              },
+              schema: {
+                name: consumer.publicSchema.name,
+                version: {
+                  major: consumer.publicSchema.majorVersion,
+                },
+              },
             },
-            cursor: null, // Start from beginning
+            transactionId: null, // TODO
           })),
         });
 
@@ -152,10 +156,10 @@ export class SyncManifestController {
 
         // TODO: Multiple operations in a single transaction could trigger the same consumer
         //       multiple times. We need to de-dupe.
-        for (const operation of response.operations) {
-          await this.#consumeEventStoreOperation(slug, operation);
-          // TODO: Keep track of consumption in the destination data store
-        }
+        // for (const operation of response.operations) {
+        // await this.#consumeEventStoreOperation(slug, operation);
+        // TODO: Keep track of consumption in the destination data store
+        // }
       }
     }, POLLING_INTERVAL_MS);
   }
@@ -293,6 +297,7 @@ export class SyncManifestController {
         if (transformedData.type === "delete") {
           transformedOperations.push({
             type: transformedData.type,
+            sourceManifestSlug: publicSchema.source.manifestSlug,
             sourceDataStoreSlug: dataStoreSlug,
             sourcePublicSchema: {
               name: publicSchema.name,
@@ -313,6 +318,7 @@ export class SyncManifestController {
 
           transformedOperations.push({
             type: transformedData.type,
+            sourceManifestSlug: publicSchema.source.manifestSlug,
             sourceDataStoreSlug: dataStoreSlug,
             sourcePublicSchema: {
               name: publicSchema.name,
@@ -328,31 +334,5 @@ export class SyncManifestController {
     }
 
     return transformedOperations;
-  }
-
-  async #consumeEventStoreOperation(
-    destinationDataStoreSlug: string,
-    operation: TransformedOperationWithSource,
-  ) {
-    const consumerSchemas = this.#syncManifest.getConsumerSchemasForPublicSchema(operation);
-
-    for (const consumerSchema of consumerSchemas) {
-      const transformationAdapter = this.#consumerSchemaTransformationAdapters.find(
-        (adapter) =>
-          adapter.transformationType === consumerSchema.transformations[0].transformationType, // TODO: multiple?
-      );
-
-      if (!transformationAdapter) {
-        throw new Error(
-          `No transformation adapter found for transformation type: ${consumerSchema.transformations[0].transformationType}`,
-        );
-      }
-
-      await transformationAdapter.applyConsumerSchemaTransformation(
-        destinationDataStoreSlug,
-        operation,
-        consumerSchema.transformations[0],
-      );
-    }
   }
 }

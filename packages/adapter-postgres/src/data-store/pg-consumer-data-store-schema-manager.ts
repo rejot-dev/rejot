@@ -10,7 +10,7 @@ export const CONSUMER_DATA_STORE_MIGRATIONS: Migration[] = [
     version: 1,
     description: "Initial schema creation with public schema state table",
     up: `
-      CREATE TABLE ${SCHEMA_NAME}.${PUBLIC_SCHEMA_STATE_TABLE} (
+      CREATE TABLE rejot_data_store.public_schema_state (
         id SERIAL PRIMARY KEY,
         manifest_slug VARCHAR(255) NOT NULL,
         public_schema_name VARCHAR(255) NOT NULL,
@@ -24,7 +24,7 @@ export const CONSUMER_DATA_STORE_MIGRATIONS: Migration[] = [
   },
 ];
 
-export class PgConsumerDataStoreSchemaManager {
+export class PostgresConsumerDataStoreSchemaManager {
   #migrationManager: PgMigrationManager;
 
   constructor(client: PostgresClient) {

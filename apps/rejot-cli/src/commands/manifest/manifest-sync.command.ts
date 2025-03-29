@@ -14,13 +14,9 @@ import type {
   AnyIConsumerSchemaTransformationAdapter,
   AnyIPublicSchemaTransformationAdapter,
 } from "@rejot/contract/adapter";
-<<<<<<< HEAD
-import { type ISyncServiceResolver, createResolver } from "@rejot/sync/sync-http-resolver";
-=======
-import { SyncManifest } from "@rejot/sync/sync-manifest";
-import { InMemoryMessageBus } from "@rejot/contract/message-bus";
->>>>>>> c217545 (Sync: rework)
 
+import { SyncManifest } from "@rejot/contract/sync-manifest";
+import { EventStoreMessageBus } from "@rejot/contract/event-store-message-bus";
 const log = logger.createLogger("cli");
 
 export class ManifestSyncCommand extends Command {
@@ -67,11 +63,7 @@ export class ManifestSyncCommand extends Command {
 
   public async run(): Promise<void> {
     const { flags, argv } = await this.parse(ManifestSyncCommand);
-<<<<<<< HEAD
-    const { "log-level": logLevel, hostname, "api-port": apiPort, resolver } = flags;
-=======
     const { "log-level": logLevel, hostname: _hostname, "api-port": _apiPort } = flags;
->>>>>>> c217545 (Sync: rework)
 
     const manifestPaths = z.array(z.string()).parse(argv);
 
@@ -98,8 +90,10 @@ export class ManifestSyncCommand extends Command {
 
       log.info(`Successfully loaded ${manifests.length} manifest(s)`);
 
+      const syncManifest = new SyncManifest(manifests);
+
       // Create adapters
-      const postgresAdapter = new PostgresConnectionAdapter();
+      const postgresAdapter = new PostgresConnectionAdapter(syncManifest);
       const transformationAdapter = new PostgresPublicSchemaTransformationAdapter(postgresAdapter);
       const consumerTransformationAdapter = new PostgresConsumerSchemaTransformationAdapter(
         postgresAdapter,
@@ -131,22 +125,6 @@ export class ManifestSyncCommand extends Command {
         );
       }
 
-<<<<<<< HEAD
-      const httpController = new SyncHTTPController(hostname, apiPort);
-
-      let syncServiceResolver: ISyncServiceResolver;
-      if (resolver === "localhost") {
-        syncServiceResolver = createResolver({ type: "localhost", apiPort });
-      } else if (resolver === "env") {
-        syncServiceResolver = createResolver({ type: "env" });
-      } else {
-        throw new Error(`Invalid resolver: ${resolver}`);
-      }
-=======
-      // const httpController = new SyncHTTPController(hostname, apiPort);
-      // const syncServiceResolver = new LocalhostResolver(apiPort);
->>>>>>> c217545 (Sync: rework)
-
       const eventStore = connectionAdapters
         .find((adapter) => adapter.connectionType === eventStoreConnection.config.connectionType)
         ?.createEventStore(eventStoreConnection.slug, eventStoreConnection.config);
@@ -173,10 +151,11 @@ export class ManifestSyncCommand extends Command {
       //   syncServiceResolver,
       // );
 
-      const messageBus = new InMemoryMessageBus();
+      // const messageBus = new InMemoryMessageBus();
+      const messageBus = new EventStoreMessageBus(eventStore);
 
       const syncController = new SyncController(
-        new SyncManifest(manifests),
+        syncManifest,
         connectionAdapters,
         publicSchemaTransformationAdapters,
         consumerSchemaTransformationAdapters,

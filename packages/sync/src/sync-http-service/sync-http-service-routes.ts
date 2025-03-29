@@ -7,16 +7,25 @@ export type RouteConfig = {
   response: ZodType;
 };
 
-export const SyncControllerReadRequestSchema = z.object({
-  publicSchemas: z.array(
-    z.object({
-      name: z.string(),
-      version: z.object({
-        major: z.number(),
-      }),
-      cursor: z.string().nullable(),
+export const PublicSchemaReferenceSchema = z.object({
+  manifest: z.object({
+    slug: z.string(),
+  }),
+  schema: z.object({
+    name: z.string(),
+    version: z.object({
+      major: z.number(),
     }),
-  ),
+  }),
+});
+
+export const CursorSchema = z.object({
+  schema: PublicSchemaReferenceSchema,
+  transactionId: z.string().nullable(),
+});
+
+export const SyncControllerReadRequestSchema = z.object({
+  cursors: z.array(CursorSchema),
   limit: z.number().optional(),
 });
 
@@ -25,7 +34,7 @@ export const SyncControllerReadResponseSchema = z.object({
     z.discriminatedUnion("type", [
       z.object({
         type: z.literal("delete"),
-        sourceDataStoreSlug: z.string(),
+        sourceManifestSlug: z.string(),
         sourcePublicSchema: z.object({
           name: z.string(),
           version: z.object({
@@ -36,7 +45,7 @@ export const SyncControllerReadResponseSchema = z.object({
       }),
       z.object({
         type: z.enum(["insert", "update"]),
-        sourceDataStoreSlug: z.string(),
+        sourceManifestSlug: z.string(),
         sourcePublicSchema: z.object({
           name: z.string(),
           version: z.object({

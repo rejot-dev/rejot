@@ -1,13 +1,28 @@
 import type { TransformedOperationWithSource } from "../event-store/event-store";
+import type { Cursor } from "../sync/sync";
 
 export interface OperationMessage {
+  transactionId: string;
   operations: TransformedOperationWithSource[];
 }
 
-export interface IMessageBus {
+export interface IMessageBus extends IPublishMessageBus, ISubscribeMessageBus {}
+
+export interface IPublishMessageBus {
   publish(message: OperationMessage): Promise<void>;
-  subscribe(): AsyncIterableIterator<OperationMessage>;
+
+  prepare(): Promise<void>;
   stop(): Promise<void>;
+  close(): Promise<void>;
+}
+
+export interface ISubscribeMessageBus {
+  setInitialCursors(cursors: Cursor[]): void;
+  subscribe(): AsyncIterableIterator<OperationMessage>;
+
+  prepare(): Promise<void>;
+  stop(): Promise<void>;
+  close(): Promise<void>;
 }
 
 export class InMemoryMessageBus implements IMessageBus {
@@ -25,6 +40,10 @@ export class InMemoryMessageBus implements IMessageBus {
       this.messageResolver = null;
       this.messageReject = null;
     }
+  }
+
+  setInitialCursors(_cursors: Cursor[]): void {
+    //
   }
 
   async *subscribe(): AsyncIterableIterator<OperationMessage> {
@@ -59,5 +78,13 @@ export class InMemoryMessageBus implements IMessageBus {
       // When stopping, we reject the promise to end the iteration
       this.messageReject(new Error("Message bus stopped"));
     }
+  }
+
+  async prepare(): Promise<void> {
+    // No preparation needed for in-memory message bus
+  }
+
+  async close(): Promise<void> {
+    // No closing needed for in-memory message bus
   }
 }

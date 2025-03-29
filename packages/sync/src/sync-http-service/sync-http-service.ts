@@ -1,7 +1,5 @@
-import type {
-  TransformedOperationWithSource,
-  PublicSchemaReference,
-} from "@rejot/contract/event-store";
+import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
+import type { Cursor } from "@rejot/contract/sync";
 import logger from "@rejot/contract/logger";
 import { serve, type Server } from "bun";
 
@@ -20,7 +18,7 @@ import {
 } from "./sync-http-service-routes";
 
 type ReadRequestCallback = (
-  cursors: { schema: PublicSchemaReference; cursor: string | null }[],
+  cursors: Cursor[],
   limit: number,
 ) => Promise<TransformedOperationWithSource[]>;
 
@@ -73,17 +71,7 @@ export class SyncHTTPController implements ISyncHTTPController {
       throw new HTTPInternalServerError("Read request callback not set");
     }
 
-    const cursors = request.publicSchemas.map((schema) => ({
-      schema: {
-        name: schema.name,
-        version: {
-          major: schema.version.major,
-        },
-      },
-      cursor: schema.cursor,
-    }));
-
-    const operations = await this.#readRequestCallback(cursors, request.limit ?? 100);
+    const operations = await this.#readRequestCallback(request.cursors, request.limit ?? 100);
 
     return { operations };
   }

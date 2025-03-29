@@ -4,7 +4,8 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "pre-commit": "bunx lefthook run pre-commit"
+    "pre-commit": "bunx lefthook run pre-commit",
+    "check-ts-changes": "bun run scripts/check-ts-changes.ts"
   },
   "engines": {
     "node": ">=22"
