@@ -2,7 +2,8 @@ import { test, expect } from "bun:test";
 import { InMemoryMessageBus } from "./message-bus";
 import type { OperationMessage } from "./message-bus";
 
-const createTestMessage = (_id: number): OperationMessage => ({
+const createTestMessage = (id: number): OperationMessage => ({
+  transactionId: `test-${id}`,
   operations: [],
 });
 

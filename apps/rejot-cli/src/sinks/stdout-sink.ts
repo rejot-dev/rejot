@@ -6,7 +6,9 @@ type StdoutOutputSchema = {
 };
 
 export class StdoutSink implements IDataSink {
-  constructor() {}
+  get connectionType(): "stdout" {
+    return "stdout";
+  }
 
   async prepare(): Promise<void> {}
 

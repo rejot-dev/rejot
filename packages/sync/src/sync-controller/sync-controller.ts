@@ -1,14 +1,15 @@
 import type { IMessageBus } from "@rejot/contract/message-bus";
-import type { SyncManifest } from "../manifest/sync-manifest";
-import type {
-  AnyIConnectionAdapter,
-  AnyIPublicSchemaTransformationAdapter,
-  AnyIConsumerSchemaTransformationAdapter,
+import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
+import {
+  type AnyIConnectionAdapter,
+  type AnyIPublicSchemaTransformationAdapter,
+  type AnyIConsumerSchemaTransformationAdapter,
 } from "@rejot/contract/adapter";
 import { SourceReader } from "./source-reader";
 import logger from "@rejot/contract/logger";
 import { PublicSchemaTransformer } from "./public-schema-transformer";
 import { SinkWriter } from "./sink-writer";
+import { cursorToString } from "@rejot/contract/sync";
 
 const log = logger.createLogger("sync-controller");
 
@@ -62,6 +63,7 @@ export class SyncController {
         );
 
         await this.#publishMessageBus.publish({
+          transactionId: transaction.id,
           operations,
         });
         transaction.ack(true);
@@ -75,21 +77,37 @@ export class SyncController {
   }
 
   async startIterateMessageBus() {
-    for await (const message of this.#subscribeMessageBus.subscribe()) {
-      const { operations } = message;
+    const cursors = await this.#sinkWriter.getCursors();
 
-      await this.#sinkWriter.write(operations);
+    log.debug("Cursors", cursors.map(cursorToString));
+
+    this.#subscribeMessageBus.setInitialCursors(cursors);
+
+    for await (const message of this.#subscribeMessageBus.subscribe()) {
+      await this.#sinkWriter.write(message);
     }
 
     log.debug("startIterateMessageBus completed");
   }
 
   async prepare() {
-    await Promise.all([this.#sourceReader.prepare(), this.#sinkWriter.prepare()]);
+    await Promise.all([
+      this.#sourceReader.prepare(),
+      this.#sinkWriter.prepare(),
+      this.#publishMessageBus.prepare(),
+      this.#subscribeMessageBus.prepare(),
+    ]);
+
+    log.debug("SyncController prepared");
   }
 
   async stop() {
-    await Promise.all([this.stopIteratorSourceReader(), this.stopIteratorMessageBus()]);
+    await Promise.all([
+      this.stopIteratorSourceReader(),
+      this.stopIteratorMessageBus(),
+      this.#publishMessageBus.stop(),
+      this.#subscribeMessageBus.stop(),
+    ]);
   }
 
   async stopIteratorSourceReader() {
@@ -101,6 +119,11 @@ export class SyncController {
   }
 
   async close() {
-    await Promise.all([this.#sourceReader.close(), this.#sinkWriter.close()]);
+    await Promise.all([
+      this.#sourceReader.close(),
+      this.#sinkWriter.close(),
+      this.#publishMessageBus.close(),
+      this.#subscribeMessageBus.close(),
+    ]);
   }
 }

@@ -4,8 +4,8 @@ import type {
   AnyIConnectionAdapter,
   AnyIConsumerSchemaTransformationAdapter,
 } from "@rejot/contract/adapter";
-import type { IDataSink } from "@rejot/contract/sync";
-import type { SyncManifest } from "../manifest/sync-manifest";
+import type { IDataSink, Cursor } from "@rejot/contract/sync";
+import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
 import type { ConsumerSchemaTransformationSchema } from "@rejot/contract/manifest";
 import { logger } from "@rejot/contract/logger";
@@ -35,7 +35,26 @@ export class SinkWriter {
     return this.#sinks.size > 0;
   }
 
-  async write(operations: TransformedOperationWithSource[]) {
+  async getCursors(): Promise<Cursor[]> {
+    const cursorsArrays = await Promise.all(
+      Array.from(this.#sinks.entries()).map(([slug, sink]) => {
+        const adapter = this.#consumerSchemaTransformationAdapters.find(
+          (adapter) => adapter.connectionType === sink.connectionType,
+        );
+
+        return adapter?.getCursors(slug) ?? [];
+      }),
+    );
+    return cursorsArrays.flat();
+  }
+
+  async write({
+    operations,
+    transactionId,
+  }: {
+    operations: TransformedOperationWithSource[];
+    transactionId: string;
+  }) {
     await Promise.all(
       operations.map(async (operation) => {
         const consumerSchemas = this.#syncManifest.getConsumerSchemasForPublicSchema(operation);
@@ -46,6 +65,7 @@ export class SinkWriter {
               transformation.transformationType,
             ).applyConsumerSchemaTransformation(
               consumerSchema.destinationDataStoreSlug,
+              transactionId,
               operation,
               transformation,
             ),

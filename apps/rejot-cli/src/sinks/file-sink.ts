@@ -21,6 +21,10 @@ export class FileSink implements IDataSink {
     this.#filePath = filePath;
   }
 
+  get connectionType(): "file" {
+    return "file";
+  }
+
   async prepare(): Promise<void> {
     try {
       // Open file for append only writing
