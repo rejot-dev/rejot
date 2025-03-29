@@ -1,17 +1,12 @@
 import type { PostgresClient } from "../util/postgres-client";
 import { PgMigrationManager, type Migration } from "../migration/pg-migration-manager";
 
-export const SCHEMA_NAME = "rejot_events";
-export const TABLE_EVENTS = "events";
-export const TABLE_DATA_STORE = "data_store";
-export const TABLE_SCHEMA_MIGRATIONS = "schema_migrations";
-
 export const EVENT_STORE_MIGRATIONS: Migration[] = [
   {
     version: 1,
     description: "Initial schema creation with data_store_slug",
     up: `
-      CREATE TABLE ${SCHEMA_NAME}.${TABLE_EVENTS} (
+      CREATE TABLE rejot_events.events (
         transaction_id VARCHAR(30),
         operation_idx INTEGER,
         operation TEXT NOT NULL CHECK (operation IN ('insert', 'update', 'delete')),
@@ -31,14 +26,14 @@ export const EVENT_STORE_MIGRATIONS: Migration[] = [
     version: 2,
     description: "Add data_store table",
     up: `
-      CREATE TABLE ${SCHEMA_NAME}.${TABLE_DATA_STORE} (
+      CREATE TABLE rejot_events.data_store (
         id SERIAL PRIMARY KEY,
         slug VARCHAR(255) UNIQUE NOT NULL
       );
 
       -- Insert unique data store slugs from events table
-      INSERT INTO ${SCHEMA_NAME}.${TABLE_DATA_STORE} (slug)
-      SELECT DISTINCT data_store_slug FROM ${SCHEMA_NAME}.${TABLE_EVENTS};
+      INSERT INTO rejot_events.data_store (slug)
+      SELECT DISTINCT data_store_slug FROM rejot_events.events;
     `,
   },
   {
@@ -46,24 +41,24 @@ export const EVENT_STORE_MIGRATIONS: Migration[] = [
     description: "Migrate to data_store_id",
     up: `
       -- Add the new column
-      ALTER TABLE ${SCHEMA_NAME}.${TABLE_EVENTS}
+      ALTER TABLE rejot_events.events
       ADD COLUMN data_store_id INTEGER;
 
       -- Update the new column with corresponding IDs
-      UPDATE ${SCHEMA_NAME}.${TABLE_EVENTS} e
+      UPDATE rejot_events.events e
       SET data_store_id = ds.id
-      FROM ${SCHEMA_NAME}.${TABLE_DATA_STORE} ds
+      FROM rejot_events.data_store ds
       WHERE e.data_store_slug = ds.slug;
 
       -- Make the column not null and add foreign key
-      ALTER TABLE ${SCHEMA_NAME}.${TABLE_EVENTS}
+      ALTER TABLE rejot_events.events
       ALTER COLUMN data_store_id SET NOT NULL,
       ADD CONSTRAINT fk_data_store
       FOREIGN KEY (data_store_id)
-      REFERENCES ${SCHEMA_NAME}.${TABLE_DATA_STORE}(id);
+      REFERENCES rejot_events.data_store(id);
 
       -- Drop the old column
-      ALTER TABLE ${SCHEMA_NAME}.${TABLE_EVENTS}
+      ALTER TABLE rejot_events.events
       DROP COLUMN data_store_slug;
     `,
   },
@@ -72,11 +67,11 @@ export const EVENT_STORE_MIGRATIONS: Migration[] = [
     description: "Update primary key to include data_store_id",
     up: `
       -- Drop the existing primary key
-      ALTER TABLE ${SCHEMA_NAME}.${TABLE_EVENTS}
-      DROP CONSTRAINT ${TABLE_EVENTS}_pkey;
+      ALTER TABLE rejot_events.events
+      DROP CONSTRAINT events_pkey;
 
       -- Add new primary key including data_store_id
-      ALTER TABLE ${SCHEMA_NAME}.${TABLE_EVENTS}
+      ALTER TABLE rejot_events.events
       ADD PRIMARY KEY (data_store_id, transaction_id, operation_idx);
     `,
   },
@@ -84,8 +79,32 @@ export const EVENT_STORE_MIGRATIONS: Migration[] = [
     version: 5,
     description: "Add manifest_slug column",
     up: `
-      ALTER TABLE ${SCHEMA_NAME}.${TABLE_EVENTS}
+      ALTER TABLE rejot_events.events
       ADD COLUMN manifest_slug VARCHAR(255) NOT NULL;
+    `,
+  },
+  {
+    version: 6,
+    description: "Remove data_store table and references",
+    up: `
+      -- Drop the existing primary key
+      ALTER TABLE rejot_events.events
+      DROP CONSTRAINT events_pkey;
+
+      -- Add new primary key without data_store_id
+      ALTER TABLE rejot_events.events
+      ADD PRIMARY KEY (transaction_id, operation_idx);
+
+      -- Drop the foreign key constraint
+      ALTER TABLE rejot_events.events
+      DROP CONSTRAINT fk_data_store;
+
+      -- Drop the data_store_id column
+      ALTER TABLE rejot_events.events
+      DROP COLUMN data_store_id;
+
+      -- Drop the data_store table
+      DROP TABLE rejot_events.data_store;
     `,
   },
 ];
@@ -96,8 +115,8 @@ export class EventStoreSchemaManager {
   constructor(client: PostgresClient) {
     this.#migrationManager = new PgMigrationManager(
       client,
-      SCHEMA_NAME,
-      TABLE_SCHEMA_MIGRATIONS,
+      "rejot_events",
+      "schema_migrations",
       EVENT_STORE_MIGRATIONS,
     );
   }

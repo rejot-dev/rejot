@@ -14,9 +14,10 @@ import type {
 } from "./postgres-schemas.ts";
 import { PostgresSource } from "./postgres-source.ts";
 import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./postgres-consts.ts";
-import type { TransformedOperation, TableOperation, Cursor } from "@rejot/contract/sync";
+import type { TransformedOperation, TableOperation } from "@rejot/contract/sync";
 import type { PublicSchemaTransformation } from "@rejot/contract/public-schema";
 import type { ConsumerSchemaTransformation } from "@rejot/contract/consumer-schema";
+import type { Cursor } from "@rejot/contract/cursor";
 import logger from "@rejot/contract/logger";
 import { isPostgresError, PG_PROTOCOL_VIOLATION } from "./util/postgres-error-codes.ts";
 import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
@@ -264,7 +265,6 @@ export class PostgresConsumerSchemaTransformationAdapter
           manifestSlug: operation.sourceManifestSlug,
           name: operation.sourcePublicSchema.name,
           majorVersion: operation.sourcePublicSchema.version.major,
-          dataStore: operation.sourceDataStoreSlug,
         },
         transactionId,
       );

@@ -115,7 +115,6 @@ describe("PublicSchemaTransformer", () => {
     expect(result[0]).toEqual({
       type: "insert",
       sourceManifestSlug: "test-manifest",
-      sourceDataStoreSlug: "test-connection",
       sourcePublicSchema: {
         name: "test-schema",
         version: {
@@ -152,7 +151,6 @@ describe("PublicSchemaTransformer", () => {
     expect(result[0]).toEqual({
       type: "delete",
       sourceManifestSlug: "test-manifest",
-      sourceDataStoreSlug: "test-connection",
       sourcePublicSchema: {
         name: "test-schema",
         version: {

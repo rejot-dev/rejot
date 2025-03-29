@@ -7,22 +7,18 @@ import { PostgresClient } from "../util/postgres-client";
 import { EventStoreSchemaManager } from "./pg-event-store-schema-manager";
 import type { SyncManifest } from "@rejot/contract/sync-manifest";
 import { PostgresEventStoreRepository } from "./pg-event-store-repository";
-import type { Cursor, PublicSchemaReference } from "@rejot/contract/sync";
+import type { Cursor, PublicSchemaReference } from "@rejot/contract/cursor";
 import type { OperationMessage } from "@rejot/contract/message-bus";
 
 const log = logger.createLogger("postgres-event-store");
 
 export class PostgresEventStore implements IEventStore {
   #client: PostgresClient;
-  #manifest: SyncManifest;
-  #dataStoreIds: Map<string, number>;
   #schemaManager: EventStoreSchemaManager;
   #repository: PostgresEventStoreRepository;
 
-  constructor(client: PostgresClient, manifest: SyncManifest) {
+  constructor(client: PostgresClient, _manifest: SyncManifest) {
     this.#client = client;
-    this.#manifest = manifest;
-    this.#dataStoreIds = new Map();
     this.#schemaManager = new EventStoreSchemaManager(client);
     this.#repository = new PostgresEventStoreRepository(client);
   }
@@ -46,15 +42,6 @@ export class PostgresEventStore implements IEventStore {
     }
 
     await this.#schemaManager.ensureSchema();
-
-    // Insert data stores from manifests and store their IDs in memory
-    for (const manifest of this.#manifest.manifests) {
-      for (const dataStore of manifest.dataStores) {
-        const id = await this.#repository.insertDataStore(dataStore.connectionSlug);
-        this.#dataStoreIds.set(dataStore.connectionSlug, id);
-      }
-    }
-
     log.debug("Postgres EventStore prepare completed");
   }
 
@@ -73,13 +60,10 @@ export class PostgresEventStore implements IEventStore {
     try {
       await this.#client.beginTransaction();
 
-      const operations = ops.map((op, index) => {
-        const dataStoreId = this.#dataStoreIds.get(op.sourceDataStoreSlug);
-        if (!dataStoreId) {
-          throw new Error(`Unknown data store slug: ${op.sourceDataStoreSlug}`);
-        }
-        return { index, operation: op, dataStoreId };
-      });
+      const operations = ops.map((op, index) => ({
+        index,
+        operation: op,
+      }));
 
       await this.#repository.writeEvents(transactionId, operations);
 
@@ -117,25 +101,12 @@ export class PostgresEventStore implements IEventStore {
     }
 
     const results: OperationMessage[] = [];
-    const dataStoreIds = Array.from(this.#dataStoreIds.values());
-
-    // Get the data store slugs for reverse mapping
-    const dataStoreSlugMap = new Map(
-      Array.from(this.#dataStoreIds.entries()).map(([slug, id]) => [id, slug]),
-    );
-
     let opMessage: OperationMessage | null = null;
 
     for (const { schema, transactionId } of cursors) {
-      const rows = await this.#repository.readEvents(schema, transactionId, dataStoreIds, limit);
+      const rows = await this.#repository.readEvents(schema, transactionId, limit);
 
       for (const row of rows) {
-        const sourceDataStoreSlug = dataStoreSlugMap.get(row.dataStoreId);
-        if (!sourceDataStoreSlug) {
-          log.error("Unknown data store ID", { dataStoreId: row.dataStoreId });
-          continue;
-        }
-
         if (!opMessage) {
           opMessage = {
             transactionId: row.transactionId,
@@ -146,7 +117,7 @@ export class PostgresEventStore implements IEventStore {
 
         const baseOperation = {
           sourceManifestSlug: row.manifestSlug,
-          sourceDataStoreSlug,
+          sourceDataStoreSlug: row.manifestSlug, // Using manifest slug as data store slug
           sourcePublicSchema: {
             name: row.publicSchemaName,
             version: {

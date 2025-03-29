@@ -1,12 +1,7 @@
 import { z } from "zod";
 
-import type {
-  IDataSink,
-  IDataSource,
-  TransformedOperation,
-  TableOperation,
-  Cursor,
-} from "../sync/sync.ts";
+import type { IDataSink, IDataSource, TransformedOperation, TableOperation } from "../sync/sync.ts";
+import { type Cursor } from "../cursor/cursors";
 import {
   ConnectionConfigSchema,
   ConsumerSchemaTransformationSchema,

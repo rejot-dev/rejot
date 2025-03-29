@@ -142,6 +142,12 @@ export class SyncManifest {
     };
   }
 
+  /**
+   * Get the consumer schemas for the external sync services.
+   *
+   * @returns A map of external sync service slugs to their consumer schemas. The consumer schemas
+   *          contain a reference to the public schema we want to obtain.
+   */
   getExternalConsumerSchemas(): Record<string, z.infer<typeof ConsumerSchemaSchema>[]> {
     const mySlugs = this.#manifests.map((manifest) => manifest.slug);
     const externalSlugToConsumerSchema = this.#manifests.flatMap((manifest) =>

@@ -1,5 +1,5 @@
 import type { TransformedOperationWithSource } from "../event-store/event-store";
-import type { Cursor } from "../sync/sync";
+import type { Cursor } from "../cursor/cursors";
 
 export interface OperationMessage {
   transactionId: string;

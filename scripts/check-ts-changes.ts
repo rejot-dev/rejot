@@ -5,6 +5,15 @@ import { glob } from "glob";
 import { readFileSync } from "fs";
 import { join, relative } from "path";
 
+type CheckType = "typescript" | "test";
+type TestFailure = {
+  file: string;
+  line: string;
+  column: string;
+  testName?: string;
+  error?: string;
+};
+
 async function getWorkspacePackages(): Promise<string[]> {
   const packageJson = JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf-8"));
   const workspacePatterns = packageJson.workspaces || [];
@@ -32,61 +41,154 @@ async function getChangedPackages(packages: string[]): Promise<string[]> {
   });
 }
 
-async function checkTypeScript(packagePath: string): Promise<boolean> {
+function parseTypeScriptOutput(output: string, packagePath: string): TestFailure[] {
+  const failures: TestFailure[] = [];
+  const lines = output.split("\n");
+
+  for (const line of lines) {
+    if (line.includes(".ts(") && line.includes("error TS")) {
+      const match = line.match(/^(.+\.ts)\((\d+),(\d+)\)(.+)$/);
+      if (match) {
+        const [_, filePath, line, column, errorMessage] = match;
+        const normalizedPath = relative(
+          process.cwd(),
+          filePath.startsWith("/") ? filePath : join(packagePath, filePath),
+        );
+        failures.push({
+          file: normalizedPath,
+          line,
+          column,
+          error: errorMessage.trim(),
+        });
+      }
+    }
+  }
+
+  return failures;
+}
+
+function parseTestOutput(output: string, packagePath: string): TestFailure[] {
+  const failures: TestFailure[] = [];
+  const lines = output.split("\n");
+  let currentTest = "";
+  let currentError = "";
+
+  for (const line of lines) {
+    // Track current test
+    if (line.startsWith("test") && line.includes("▶")) {
+      currentTest = line.split("▶")[1].trim();
+    }
+    // Capture test name from failure line
+    else if (line.includes("(fail)")) {
+      const testMatch = line.match(/\(fail\)\s+([^[]+)/);
+      if (testMatch) {
+        currentTest = testMatch[1].trim();
+      }
+    }
+    // Capture error message
+    else if (line.includes("error:")) {
+      currentError = line.trim();
+    }
+    // Look for stack trace with file location
+    else if (line.includes(".test.ts:")) {
+      const locationMatch = line.match(/\s*(?:at\s+)?([^(]+\.test\.ts):(\d+):(\d+)/);
+      if (locationMatch) {
+        const [_, filePath, lineNum, colNum] = locationMatch;
+        const normalizedPath = relative(
+          process.cwd(),
+          filePath.startsWith("/") ? filePath : join(packagePath, filePath),
+        );
+
+        failures.push({
+          file: normalizedPath,
+          line: lineNum,
+          column: colNum,
+          testName: currentTest,
+          error: currentError,
+        });
+
+        // Reset for next failure
+        currentError = "";
+      }
+    }
+  }
+
+  return failures;
+}
+
+function printFailures(failures: TestFailure[]) {
+  for (const failure of failures) {
+    process.stdout.write(`\n❌ ${failure.file}:${failure.line}:${failure.column}\n`);
+    if (failure.testName) {
+      process.stdout.write(`   Test: ${failure.testName}\n`);
+    }
+    if (failure.error) {
+      process.stdout.write(`   ${failure.error}\n`);
+    }
+  }
+}
+
+async function waitForRunCompletion(proc: {
+  stdout: ReadableStream;
+  stderr: ReadableStream;
+  kill: () => void;
+}): Promise<string> {
+  let buffer = "";
+
+  const processStream = async (stream: ReadableStream) => {
+    for await (const chunk of stream) {
+      const text = new TextDecoder().decode(chunk);
+      buffer += text;
+
+      // Check for completion markers
+      if (text.includes("Ran") && text.includes("tests across") && text.includes("files")) {
+        proc.kill(); // Stop watching
+      } else if (text.includes("Found") && text.includes("error")) {
+        proc.kill(); // Stop watching
+      }
+    }
+  };
+
+  // Process both stdout and stderr
+  await Promise.all([processStream(proc.stdout), processStream(proc.stderr)]);
+
+  return buffer;
+}
+
+async function checkPackage(packagePath: string, checkType: CheckType): Promise<boolean> {
   try {
-    const tsc = Bun.spawn(["bunx", "tsc", "--noEmit", "--watch", "--pretty", "false"], {
+    const command =
+      checkType === "typescript"
+        ? ["bunx", "tsc", "--noEmit", "--watch", "--pretty", "false"]
+        : ["bun", "test", "--watch"];
+
+    const proc = Bun.spawn(command, {
       cwd: packagePath,
       stdout: "pipe",
       stderr: "pipe",
     });
 
-    let buffer = "";
-    let isFirstOutput = true;
-
     // Show header for the package being checked
     const relativePackagePath = relative(process.cwd(), packagePath);
-    console.log(`\n=== Checking types in ${relativePackagePath} ===\n`);
+    const checkTypeDisplay = checkType === "typescript" ? "types" : "tests";
+    console.log(`\n=== Checking ${checkTypeDisplay} in ${relativePackagePath} ===\n`);
 
-    for await (const chunk of tsc.stdout) {
-      const text = new TextDecoder().decode(chunk);
-      buffer += text;
+    // Wait for a complete run
+    const output = await waitForRunCompletion(proc);
 
-      // Clear console when new compiler output starts (indicated by "File change detected")
-      if (text.includes("File change detected.") || isFirstOutput) {
-        console.clear();
-        // Re-print the header after clearing
-        console.log(`\n=== Checking types in ${relativePackagePath} ===\n`);
-        isFirstOutput = false;
-      }
+    // Parse the output based on check type
+    const failures =
+      checkType === "typescript"
+        ? parseTypeScriptOutput(output, packagePath)
+        : parseTestOutput(output, packagePath);
 
-      // Transform and output each line
-      const lines = text.split("\n");
-      for (const line of lines) {
-        if (line.includes(".ts(") && line.includes("error TS")) {
-          // Extract file path and position
-          const match = line.match(/^(.+\.ts)\((\d+),(\d+)\)(.+)$/);
-          if (match) {
-            const [_, filePath, line, column, _errorMessage] = match;
-            // Normalize the path relative to cwd
-            const absolutePath = join(packagePath, filePath);
-            const normalizedPath = relative(process.cwd(), absolutePath);
-            process.stdout.write(`${normalizedPath}:${line}:${column}\n`);
-          }
-        }
-      }
-
-      if (buffer.includes("Found 0 errors")) {
-        tsc.kill();
-        return true;
-      }
-
-      // If we found errors and have processed them all, show the message
-      if (buffer.includes("Found") && buffer.includes("error")) {
-        console.log("\nFound errors in the following files, Cursor agent, please fix them!");
-      }
+    // Print any failures found
+    if (failures.length > 0) {
+      printFailures(failures);
+      return false;
     }
 
-    return false;
+    return true;
   } catch (_error) {
     return false;
   }
@@ -94,6 +196,9 @@ async function checkTypeScript(packagePath: string): Promise<boolean> {
 
 async function main() {
   try {
+    // Get check type from command line argument
+    const checkType: CheckType = process.argv[2] === "test" ? "test" : "typescript";
+
     const packages = await getWorkspacePackages();
     const changedPackages = await getChangedPackages(packages);
     if (changedPackages.length === 0) {
@@ -102,7 +207,7 @@ async function main() {
 
     let hasErrors = false;
     for (const pkg of changedPackages) {
-      const success = await checkTypeScript(pkg);
+      const success = await checkPackage(pkg, checkType);
       if (!success) {
         hasErrors = true;
       }
