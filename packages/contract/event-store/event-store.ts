@@ -1,9 +1,10 @@
-import type { z } from "zod";
-import type { SyncManifestSchema } from "../manifest/manifest";
+import type { OperationMessage } from "../message-bus/message-bus";
+import type { Cursor, PublicSchemaReference } from "../sync/sync";
 
 interface TransformedOperationWithSourceBase {
   type: "insert" | "update" | "delete";
 
+  sourceManifestSlug: string;
   sourceDataStoreSlug: string;
   sourcePublicSchema: {
     name: string;
@@ -28,37 +29,27 @@ export interface TransformedOperationWithSourceDelete extends TransformedOperati
   type: "delete";
 }
 
-export interface PublicSchemaReference {
-  name: string;
-  version: {
-    major: number;
-  };
-}
-
 export type TransformedOperationWithSource =
   | TransformedOperationWithSourceInsert
   | TransformedOperationWithSourceUpdate
   | TransformedOperationWithSourceDelete;
 
-export interface SchemaCursor {
-  schema: PublicSchemaReference;
-  cursor: string | null;
-}
-
 export interface IEventStore {
   /**
    * Prepare the data store for reading/writing, e.g. opening a connection.
    */
-  prepare(manifests: z.infer<typeof SyncManifestSchema>[]): Promise<void>;
+  prepare(): Promise<void>;
 
   stop(): Promise<void>;
+
+  close(): Promise<void>;
 
   write(transactionId: string, ops: TransformedOperationWithSource[]): Promise<boolean>;
 
   /**
    * Get the last written transaction id for each schema
    */
-  tail(schemas: PublicSchemaReference[]): Promise<SchemaCursor[]>;
+  tail(schemas: PublicSchemaReference[]): Promise<Cursor[]>;
 
   /**
    * Read the event store from the given cursors.
@@ -67,5 +58,5 @@ export interface IEventStore {
    * @param limit - The maximum number of operations to read per schema
    * @returns The operations read from the event store
    */
-  read(cursors: SchemaCursor[], limit: number): Promise<TransformedOperationWithSource[]>;
+  read(cursors: Cursor[], limit?: number): Promise<OperationMessage[]>;
 }

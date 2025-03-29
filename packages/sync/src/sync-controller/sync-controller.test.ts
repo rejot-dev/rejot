@@ -3,7 +3,7 @@ import { SyncController } from "./sync-controller";
 import { InMemoryConnectionAdapter } from "../_test/in-memory-adapter";
 import type { Transaction } from "@rejot/contract/sync";
 import { InMemoryMessageBus } from "@rejot/contract/message-bus";
-import { SyncManifest } from "../manifest/sync-manifest";
+import { SyncManifest } from "../../../contract/manifest/sync-manifest";
 
 describe("SyncController", () => {
   const createTestManifest = () =>

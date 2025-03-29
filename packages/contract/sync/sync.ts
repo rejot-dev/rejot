@@ -120,6 +120,8 @@ export interface IDataSource {
  * Interface for a data sink that can be used to write data
  */
 export interface IDataSink {
+  connectionType: string;
+
   /**
    * Prepare the data sink for writing data
    */
@@ -135,4 +137,55 @@ export interface IDataSink {
    * @param operation The operation that generated the data
    */
   writeData(operation: TransformedOperation): Promise<void>;
+}
+
+export interface PublicSchemaReference {
+  manifest: {
+    slug: string;
+  };
+  schema: {
+    name: string;
+    version: { major: number };
+  };
+}
+
+export interface Cursor {
+  schema: PublicSchemaReference;
+  transactionId: string | null;
+}
+
+export function publicSchemaReferenceToString(reference: PublicSchemaReference): string {
+  return `${reference.manifest.slug}->${reference.schema.name}@${reference.schema.version.major}`;
+}
+
+export function cursorToString(cursor: Cursor): string {
+  return `${publicSchemaReferenceToString(cursor.schema)} = ${cursor.transactionId}`;
+}
+
+/**
+ * Advances the cursor matching the given schema to the specified transaction ID.
+ * Other cursors remain unchanged.
+ *
+ * @param cursors - Array of cursors to potentially advance
+ * @param schema - The public schema reference to match against
+ * @param transactionId - The transaction ID to advance to
+ * @returns New array of cursors with the matching cursor updated
+ */
+export function advanceCursors(
+  cursors: Cursor[],
+  schema: PublicSchemaReference,
+  transactionId: string,
+): Cursor[] {
+  return cursors.map((cursor) => {
+    if (
+      cursor.schema.schema.name === schema.schema.name &&
+      cursor.schema.schema.version.major === schema.schema.version.major
+    ) {
+      return {
+        ...cursor,
+        transactionId,
+      };
+    }
+    return cursor;
+  });
 }

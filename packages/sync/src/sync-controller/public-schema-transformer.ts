@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import type { AnyIPublicSchemaTransformationAdapter } from "@rejot/contract/adapter";
-import type { SyncManifest } from "../manifest/sync-manifest";
+import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import type { PublicSchemaTransformationSchema } from "@rejot/contract/manifest";
 import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
 import type { Transaction } from "@rejot/contract/sync";
@@ -60,6 +60,7 @@ export class PublicSchemaTransformer {
         if (transformedData.type === "delete") {
           transformedOperations.push({
             type: transformedData.type,
+            sourceManifestSlug: publicSchema.source.manifestSlug,
             sourceDataStoreSlug: dataStoreSlug,
             sourcePublicSchema: {
               name: publicSchema.name,
@@ -72,6 +73,7 @@ export class PublicSchemaTransformer {
         } else {
           transformedOperations.push({
             type: transformedData.type,
+            sourceManifestSlug: publicSchema.source.manifestSlug,
             sourceDataStoreSlug: dataStoreSlug,
             sourcePublicSchema: {
               name: publicSchema.name,

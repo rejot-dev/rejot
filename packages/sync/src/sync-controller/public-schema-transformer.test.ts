@@ -2,7 +2,7 @@ import { test, expect, describe } from "bun:test";
 import { PublicSchemaTransformer } from "./public-schema-transformer";
 import type { IPublicSchemaTransformationAdapter } from "@rejot/contract/adapter";
 import type { Transaction, TableOperation, TransformedOperation } from "@rejot/contract/sync";
-import { SyncManifest } from "../manifest/sync-manifest";
+import { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import type { PostgresPublicSchemaTransformationSchema } from "@rejot/adapter-postgres/schemas";
 import { z } from "zod";
 
@@ -114,6 +114,7 @@ describe("PublicSchemaTransformer", () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       type: "insert",
+      sourceManifestSlug: "test-manifest",
       sourceDataStoreSlug: "test-connection",
       sourcePublicSchema: {
         name: "test-schema",
@@ -150,6 +151,7 @@ describe("PublicSchemaTransformer", () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       type: "delete",
+      sourceManifestSlug: "test-manifest",
       sourceDataStoreSlug: "test-connection",
       sourcePublicSchema: {
         name: "test-schema",

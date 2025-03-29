@@ -14,7 +14,7 @@ import type {
 } from "./postgres-schemas.ts";
 import { PostgresSource } from "./postgres-source.ts";
 import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./postgres-consts.ts";
-import type { TransformedOperation, TableOperation } from "@rejot/contract/sync";
+import type { TransformedOperation, TableOperation, Cursor } from "@rejot/contract/sync";
 import type { PublicSchemaTransformation } from "@rejot/contract/public-schema";
 import type { ConsumerSchemaTransformation } from "@rejot/contract/consumer-schema";
 import logger from "@rejot/contract/logger";
@@ -23,6 +23,11 @@ import type { TransformedOperationWithSource } from "@rejot/contract/event-store
 import { PostgresEventStore } from "./event-store/postgres-event-store.ts";
 import { PostgresClient } from "./util/postgres-client.ts";
 import { PostgresSink } from "./postgres-sink.ts";
+import type { SyncManifest } from "@rejot/contract/sync-manifest";
+import {
+  updatePublicSchemaState,
+  getPublicSchemaStates,
+} from "./data-store/pg-data-store-repository.ts";
 
 const log = logger.createLogger("postgres-adapter");
 
@@ -41,7 +46,13 @@ export class PostgresConnectionAdapter
       PostgresEventStore
     >
 {
+  #manifest: SyncManifest;
+
   #connections: Map<string, PostgresConnection> = new Map();
+
+  constructor(manifest: SyncManifest) {
+    this.#manifest = manifest;
+  }
 
   get connectionType(): "postgres" {
     return "postgres";
@@ -77,7 +88,10 @@ export class PostgresConnectionAdapter
     connectionSlug: string,
     connection: z.infer<typeof PostgresConnectionSchema>,
   ): PostgresEventStore {
-    return new PostgresEventStore(this.#getOrCreateConnection(connectionSlug, connection).client);
+    return new PostgresEventStore(
+      this.#getOrCreateConnection(connectionSlug, connection).client,
+      this.#manifest,
+    );
   }
 
   getConnection(connectionSlug: string): PostgresConnection | undefined {
@@ -182,12 +196,40 @@ export class PostgresConsumerSchemaTransformationAdapter
     this.#connectionAdapter = connectionAdapter;
   }
 
+  // TODO This should be generic over connection config (?)
+  get connectionType(): "postgres" {
+    return "postgres";
+  }
+
   get transformationType(): "postgresql" {
     return "postgresql";
   }
 
+  async getCursors(destinationDataStoreSlug: string): Promise<Cursor[]> {
+    const connection = this.#connectionAdapter.getConnection(destinationDataStoreSlug);
+    if (!connection) {
+      throw new Error(`Connection with slug ${destinationDataStoreSlug} not found`);
+    }
+
+    const states = await getPublicSchemaStates(connection.client);
+
+    return states.map((state) => ({
+      schema: {
+        manifest: {
+          slug: state.reference.manifestSlug,
+        },
+        schema: {
+          name: state.reference.name,
+          version: { major: state.reference.majorVersion },
+        },
+      },
+      transactionId: state.lastSeenTransactionId,
+    }));
+  }
+
   async applyConsumerSchemaTransformation(
     destinationDataStoreSlug: string,
+    transactionId: string,
     operation: TransformedOperationWithSource,
     transformation: z.infer<typeof PostgresConsumerSchemaTransformationSchema>,
   ): Promise<TransformedOperationWithSource> {
@@ -205,14 +247,39 @@ export class PostgresConsumerSchemaTransformationAdapter
       return operation;
     }
 
-    // TODO(Wilco): Postgres errors when the query doesn't use all parameters ($1, $2, etc).
-    //              Look into https://www.npmjs.com/package/yesql
+    try {
+      await connection.client.beginTransaction();
+      // TODO(Wilco): Postgres errors when the query doesn't use all parameters ($1, $2, etc).
+      //              Look into https://www.npmjs.com/package/yesql
 
-    const values = Object.values(operation.object);
+      const values = Object.values(operation.object);
 
-    log.debug(`Values: ${JSON.stringify(values)}`);
-    await connection.client.query(transformation.sql, values);
-    log.debug("Applied!");
+      log.debug(`Values: ${JSON.stringify(values)}`);
+      await connection.client.query(transformation.sql, values);
+      log.debug("Applied!");
+
+      const didUpdate = await updatePublicSchemaState(
+        connection.client,
+        {
+          manifestSlug: operation.sourceManifestSlug,
+          name: operation.sourcePublicSchema.name,
+          majorVersion: operation.sourcePublicSchema.version.major,
+          dataStore: operation.sourceDataStoreSlug,
+        },
+        transactionId,
+      );
+
+      if (didUpdate) {
+        await connection.client.commitTransaction();
+        log.debug("Updated public schema state");
+      } else {
+        await connection.client.rollbackTransaction();
+        log.warn("Transaction ID is older than the last seen transaction ID");
+      }
+    } catch (error) {
+      await connection.client.rollbackTransaction();
+      throw error;
+    }
 
     return operation;
   }

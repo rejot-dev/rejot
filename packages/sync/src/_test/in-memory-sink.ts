@@ -3,6 +3,10 @@ import type { IDataSink, TransformedOperation } from "@rejot/contract/sync";
 export class InMemorySink implements IDataSink {
   #memory: Map<string, Record<string, unknown>> = new Map();
 
+  get connectionType(): "in-memory" {
+    return "in-memory";
+  }
+
   async prepare(): Promise<void> {}
 
   async close(): Promise<void> {}

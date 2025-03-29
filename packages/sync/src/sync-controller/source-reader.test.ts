@@ -1,7 +1,7 @@
 import { test, expect, describe } from "bun:test";
 import { SourceReader } from "./source-reader";
 import { InMemoryConnectionAdapter } from "../_test/in-memory-adapter";
-import { SyncManifest } from "../manifest/sync-manifest";
+import { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import type { Transaction } from "@rejot/contract/sync";
 
 describe("SourceReader", () => {

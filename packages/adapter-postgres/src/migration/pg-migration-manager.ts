@@ -68,7 +68,6 @@ export class PgMigrationManager {
         [migration.version, migration.description],
       );
       await this.#client.commitTransaction();
-      log.debug(`Successfully applied migration ${migration.version}`);
     } catch (error) {
       await this.#client.rollbackTransaction();
       throw error;

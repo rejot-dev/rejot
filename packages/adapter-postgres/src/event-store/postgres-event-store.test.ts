@@ -1,12 +1,13 @@
-import { test, expect, beforeAll } from "bun:test";
+import { test, expect, beforeEach } from "bun:test";
 import type {
   TransformedOperationWithSource,
   TransformedOperationWithSourceInsert,
   TransformedOperationWithSourceUpdate,
-  PublicSchemaReference,
 } from "@rejot/contract/event-store";
 import { pgRollbackDescribe } from "../util/postgres-test-utils";
 import { PostgresEventStore } from "./postgres-event-store";
+import { SyncManifest } from "@rejot/contract/sync-manifest";
+import type { PublicSchemaReference } from "@rejot/contract/sync";
 
 const TEST_SCHEMA_NAME = "rejot_events";
 const TEST_TABLE_NAME = "events";
@@ -16,7 +17,13 @@ const TEST_MANIFEST = {
   manifestVersion: 1,
   connections: [
     {
-      slug: "test-connection",
+      slug: "test-store-1",
+      config: {
+        connectionType: "in-memory" as const,
+      },
+    },
+    {
+      slug: "test-store-2",
       config: {
         connectionType: "in-memory" as const,
       },
@@ -29,14 +36,19 @@ const TEST_MANIFEST = {
 };
 
 const TEST_SCHEMA: PublicSchemaReference = {
-  name: "test-schema",
-  version: { major: 1 },
+  manifest: {
+    slug: "test-manifest",
+  },
+  schema: {
+    name: "test-schema",
+    version: { major: 1 },
+  },
 };
 
 pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
-  beforeAll(async () => {
-    const store = new PostgresEventStore(ctx.client);
-    await store.prepare([TEST_MANIFEST]);
+  beforeEach(async () => {
+    const store = new PostgresEventStore(ctx.client, new SyncManifest([TEST_MANIFEST]));
+    await store.prepare();
   });
 
   test("should prepare and create schema and tables", async () => {
@@ -63,12 +75,13 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
   });
 
   test("should write and read operations across multiple data stores", async () => {
-    const store = new PostgresEventStore(ctx.client);
-    await store.prepare([TEST_MANIFEST]);
+    const store = new PostgresEventStore(ctx.client, new SyncManifest([TEST_MANIFEST]));
+    await store.prepare();
 
     const testOps1: TransformedOperationWithSource[] = [
       {
         type: "insert",
+        sourceManifestSlug: "test-manifest",
         sourceDataStoreSlug: "test-store-1",
         sourcePublicSchema: {
           name: "test-schema",
@@ -81,6 +94,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     const testOps2: TransformedOperationWithSource[] = [
       {
         type: "insert",
+        sourceManifestSlug: "test-manifest",
         sourceDataStoreSlug: "test-store-2",
         sourcePublicSchema: {
           name: "test-schema",
@@ -98,22 +112,24 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     const cursors = await store.tail([TEST_SCHEMA]);
     expect(cursors.length).toBe(1);
     expect(cursors[0].schema).toEqual(TEST_SCHEMA);
-    expect(cursors[0].cursor).toBe("tx2");
+    expect(cursors[0].transactionId).toBe("tx2");
 
     // Read all operations
-    const readOps = await store.read(cursors, 10);
-    expect(readOps.length).toBe(0);
+    const readMessages = await store.read(cursors, 10);
+    expect(readMessages.length).toBe(0);
 
     // Read from start
-    const allOps = await store.read([{ schema: TEST_SCHEMA, cursor: null }], 10);
-    expect(allOps.length).toBe(2);
-    expect(allOps[0].sourceDataStoreSlug).toBe("test-store-1");
-    expect(allOps[1].sourceDataStoreSlug).toBe("test-store-2");
+    const allMessages = await store.read([{ schema: TEST_SCHEMA, transactionId: null }], 10);
+    expect(allMessages.length).toBe(2);
+    expect(allMessages[0].operations.length).toBe(1);
+    expect(allMessages[0].operations[0].sourceDataStoreSlug).toBe("test-store-1");
+    expect(allMessages[1].operations.length).toBe(1);
+    expect(allMessages[1].operations[0].sourceDataStoreSlug).toBe("test-store-2");
   });
 
   test("should handle cursor-based pagination correctly", async () => {
-    const store = new PostgresEventStore(ctx.client);
-    await store.prepare([TEST_MANIFEST]);
+    const store = new PostgresEventStore(ctx.client, new SyncManifest([TEST_MANIFEST]));
+    await store.prepare();
 
     // Write operations to both data stores
     const ops1 = {
@@ -123,6 +139,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
         name: "test-schema",
         version: { major: 1, minor: 0 },
       },
+      sourceManifestSlug: "test-manifest",
       object: { id: "1", name: "First Store 1" },
     } satisfies TransformedOperationWithSource;
 
@@ -133,6 +150,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
         name: "test-schema",
         version: { major: 1, minor: 0 },
       },
+      sourceManifestSlug: "test-manifest",
       object: { id: "2", name: "First Store 2" },
     } satisfies TransformedOperationWithSource;
 
@@ -143,6 +161,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
         name: "test-schema",
         version: { major: 1, minor: 0 },
       },
+      sourceManifestSlug: "test-manifest",
       object: { id: "1", name: "Updated Store 1" },
     } satisfies TransformedOperationWithSource;
 
@@ -154,36 +173,36 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     const cursors = await store.tail([TEST_SCHEMA]);
     expect(cursors.length).toBe(1);
     expect(cursors[0].schema).toEqual(TEST_SCHEMA);
-    expect(cursors[0].cursor).toBe("tx3");
+    expect(cursors[0].transactionId).toBe("tx3");
 
     // Read first batch with limit 1 (from start)
-    const batch1 = await store.read([{ schema: TEST_SCHEMA, cursor: null }], 1);
+    const batch1 = await store.read([{ schema: TEST_SCHEMA, transactionId: null }], 1);
     expect(batch1.length).toBe(1);
-    expect(batch1[0].sourceDataStoreSlug).toBe("test-store-1");
-    expect((batch1[0] as TransformedOperationWithSourceInsert).object["name"]).toBe(
+    expect(batch1[0].operations[0].sourceDataStoreSlug).toBe("test-store-1");
+    expect((batch1[0].operations[0] as TransformedOperationWithSourceInsert).object["name"]).toBe(
       "First Store 1",
     );
 
     // Read second batch (after tx1)
-    const batch2 = await store.read([{ schema: TEST_SCHEMA, cursor: "tx1" }], 1);
+    const batch2 = await store.read([{ schema: TEST_SCHEMA, transactionId: "tx1" }], 1);
     expect(batch2.length).toBe(1);
-    expect(batch2[0].sourceDataStoreSlug).toBe("test-store-2");
-    expect((batch2[0] as TransformedOperationWithSourceInsert).object["name"]).toBe(
+    expect(batch2[0].operations[0].sourceDataStoreSlug).toBe("test-store-2");
+    expect((batch2[0].operations[0] as TransformedOperationWithSourceInsert).object["name"]).toBe(
       "First Store 2",
     );
 
     // Read final batch (after tx2)
-    const batch3 = await store.read([{ schema: TEST_SCHEMA, cursor: "tx2" }], 1);
+    const batch3 = await store.read([{ schema: TEST_SCHEMA, transactionId: "tx2" }], 1);
     expect(batch3.length).toBe(1);
-    expect(batch3[0].sourceDataStoreSlug).toBe("test-store-1");
-    expect((batch3[0] as TransformedOperationWithSourceUpdate).object["name"]).toBe(
+    expect(batch3[0].operations[0].sourceDataStoreSlug).toBe("test-store-1");
+    expect((batch3[0].operations[0] as TransformedOperationWithSourceUpdate).object["name"]).toBe(
       "Updated Store 1",
     );
   });
 
   test("should handle empty cursor and null cursor the same", async () => {
-    const store = new PostgresEventStore(ctx.client);
-    await store.prepare([TEST_MANIFEST]);
+    const store = new PostgresEventStore(ctx.client, new SyncManifest([TEST_MANIFEST]));
+    await store.prepare();
 
     const testOp: TransformedOperationWithSource = {
       type: "insert",
@@ -192,30 +211,31 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
         name: "test-schema",
         version: { major: 1, minor: 0 },
       },
+      sourceManifestSlug: "test-manifest",
       object: { id: "1", name: "Test" },
     };
 
     await store.write("tx1", [testOp]);
 
     // Read with null cursor
-    const nullCursorResult = await store.read([{ schema: TEST_SCHEMA, cursor: null }], 10);
+    const nullCursorResult = await store.read([{ schema: TEST_SCHEMA, transactionId: null }], 10);
     expect(nullCursorResult.length).toBe(1);
 
     // Read with empty string cursor (should be treated same as null)
-    const emptyCursorResult = await store.read([{ schema: TEST_SCHEMA, cursor: "" }], 10);
+    const emptyCursorResult = await store.read([{ schema: TEST_SCHEMA, transactionId: "" }], 10);
     expect(emptyCursorResult).toEqual(nullCursorResult);
   });
 
   test("should enforce read limits", async () => {
-    const store = new PostgresEventStore(ctx.client);
-    await store.prepare([TEST_MANIFEST]);
+    const store = new PostgresEventStore(ctx.client, new SyncManifest([TEST_MANIFEST]));
+    await store.prepare();
 
     // Should throw for invalid limits
-    await expect(store.read([{ schema: TEST_SCHEMA, cursor: null }], 0)).rejects.toThrow(
+    await expect(store.read([{ schema: TEST_SCHEMA, transactionId: null }], 0)).rejects.toThrow(
       "Limit must be greater than 0",
     );
 
-    await expect(store.read([{ schema: TEST_SCHEMA, cursor: null }], 1001)).rejects.toThrow(
+    await expect(store.read([{ schema: TEST_SCHEMA, transactionId: null }], 1001)).rejects.toThrow(
       "Limit must be less than or equal to 1000",
     );
   });

@@ -2,18 +2,15 @@ import { test, expect, describe } from "bun:test";
 import { SyncManifestController } from "./sync-manifest-controller";
 import { InMemoryConnectionAdapter } from "./_test/in-memory-adapter";
 import { InMemoryEventStore } from "./_test/in-memory-event-store";
-import type { Transaction } from "@rejot/contract/sync";
+import type { Cursor, Transaction } from "@rejot/contract/sync";
 import type { ISyncHTTPController } from "./sync-http-service/sync-http-service";
-import type {
-  PublicSchemaReference,
-  TransformedOperationWithSource,
-} from "@rejot/contract/event-store";
-import { type ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
+import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
+import type { ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
 
 class TestSyncHTTPController implements ISyncHTTPController {
   async start(
     _readRequestCallback: (
-      _cursors: { schema: PublicSchemaReference; cursor: string | null }[],
+      _cursors: Cursor[],
       _limit: number,
     ) => Promise<TransformedOperationWithSource[]>,
   ): Promise<void> {
@@ -63,7 +60,6 @@ describe("SyncManifestController", () => {
     const controller = new SyncManifestController(
       [createTestManifest()],
       connectionAdapters,
-      [],
       [],
       inMemoryEventStore,
       new TestSyncHTTPController(),
@@ -125,7 +121,6 @@ describe("SyncManifestController", () => {
       [createTestManifest()],
       connectionAdapters,
       [],
-      [],
       inMemoryEventStore,
       new TestSyncHTTPController(),
       testResolver,
@@ -155,7 +150,6 @@ describe("SyncManifestController", () => {
     const controller = new SyncManifestController(
       [createTestManifest()],
       connectionAdapters,
-      [],
       [],
       failingEventStore,
       new TestSyncHTTPController(),

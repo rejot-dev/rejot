@@ -38,6 +38,16 @@ export type Operation = {
   table: string;
 };
 
+export type Purpose =
+  /** Listens for changes in source data stores, and publishes them to an event store. */
+  | "SOURCE_LISTENER"
+  /** Listens for changes in an event store, and applies them to consumer schemas. */
+  | "EVENT_STORE_LISTENER"
+  /** Listens for changes in external sync services, and applies them to consumer schemas. */
+  | "EXTERNAL_SYNC_LISTENER"
+  /** Publishes an HTTP endpoint to allow others to sync from us. */
+  | "EVENT_STORE_PUBLISHER";
+
 export class SyncManifest {
   readonly #manifests: Manifest[];
 
@@ -167,16 +177,27 @@ export class SyncManifest {
   getPublicSchemasForOperation(
     dataStoreSlug: string,
     operation: Operation,
-  ): z.infer<typeof PublicSchemaSchema>[] {
+  ): (z.infer<typeof PublicSchemaSchema> & { source: { manifestSlug: string } })[] {
     return this.#manifests.flatMap((manifest) =>
-      manifest.publicSchemas.filter((schema) => {
-        const dataStore = manifest.dataStores.find((ds) => ds.connectionSlug === dataStoreSlug);
-        return (
-          dataStore &&
-          schema.source.dataStoreSlug === dataStoreSlug &&
-          schema.source.tables.includes(operation.table)
-        );
-      }),
+      manifest.publicSchemas
+        .filter((schema) => {
+          const dataStore = manifest.dataStores.find((ds) => ds.connectionSlug === dataStoreSlug);
+          return (
+            dataStore &&
+            schema.source.dataStoreSlug === dataStoreSlug &&
+            schema.source.tables.includes(operation.table)
+          );
+        })
+        .map(({ name, source, transformation, version, outputSchema }) => ({
+          name,
+          source: {
+            ...source,
+            manifestSlug: manifest.slug,
+          },
+          transformation,
+          version,
+          outputSchema,
+        })),
     );
   }
 }

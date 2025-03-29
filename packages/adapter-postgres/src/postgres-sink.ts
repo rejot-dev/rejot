@@ -2,7 +2,7 @@ import type { Client } from "pg";
 import { PostgresClient } from "./util/postgres-client";
 import logger from "@rejot/contract/logger";
 import type { IDataSink, TransformedOperation } from "@rejot/contract/sync";
-
+import { PostgresConsumerDataStoreSchemaManager } from "./data-store/pg-consumer-data-store-schema-manager";
 const log = logger.createLogger("pg-sink");
 
 type PostgresSinkConfig = {
@@ -19,6 +19,10 @@ export class PostgresSink implements IDataSink {
     this.#consumerSchemaSQL = consumerSchemaSQL;
   }
 
+  get connectionType(): "postgres" {
+    return "postgres";
+  }
+
   async prepare(): Promise<void> {
     try {
       await this.#client.connect();
@@ -30,6 +34,8 @@ export class PostgresSink implements IDataSink {
         throw error;
       }
     }
+
+    await new PostgresConsumerDataStoreSchemaManager(this.#client).ensureSchema();
   }
 
   async close(): Promise<void> {

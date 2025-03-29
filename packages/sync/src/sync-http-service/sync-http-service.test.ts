@@ -11,6 +11,7 @@ describe("SyncHTTPController /read", () => {
     await controller.start(async () => [
       {
         type: "insert",
+        sourceManifestSlug: "test",
         sourceDataStoreSlug: "test",
         sourcePublicSchema: {
           name: "test",
@@ -53,13 +54,20 @@ describe("SyncHTTPController /read", () => {
 
   test("200", async () => {
     const response = await fetchRead(TEST_HOST, false, {
-      publicSchemas: [
+      cursors: [
         {
-          name: "test-schema",
-          version: {
-            major: 1,
+          schema: {
+            manifest: {
+              slug: "test",
+            },
+            schema: {
+              name: "test-schema",
+              version: {
+                major: 1,
+              },
+            },
           },
-          cursor: null,
+          transactionId: null,
         },
       ],
     });

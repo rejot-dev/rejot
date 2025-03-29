@@ -14,8 +14,8 @@ import type {
   AnyIConsumerSchemaTransformationAdapter,
   AnyIPublicSchemaTransformationAdapter,
 } from "@rejot/contract/adapter";
-import { SyncManifest } from "@rejot/sync/sync-manifest";
-import { InMemoryMessageBus } from "@rejot/contract/message-bus";
+import { EventStoreMessageBus } from "@rejot/contract/event-store-message-bus";
+import { SyncManifest } from "@rejot/contract/sync-manifest";
 
 const log = logger.createLogger("cli");
 
@@ -85,8 +85,10 @@ export class ManifestSyncCommand extends Command {
 
       log.info(`Successfully loaded ${manifests.length} manifest(s)`);
 
+      const syncManifest = new SyncManifest(manifests);
+
       // Create adapters
-      const postgresAdapter = new PostgresConnectionAdapter();
+      const postgresAdapter = new PostgresConnectionAdapter(syncManifest);
       const transformationAdapter = new PostgresPublicSchemaTransformationAdapter(postgresAdapter);
       const consumerTransformationAdapter = new PostgresConsumerSchemaTransformationAdapter(
         postgresAdapter,
@@ -147,10 +149,11 @@ export class ManifestSyncCommand extends Command {
       //   syncServiceResolver,
       // );
 
-      const messageBus = new InMemoryMessageBus();
+      // const messageBus = new InMemoryMessageBus();
+      const messageBus = new EventStoreMessageBus(eventStore);
 
       const syncController = new SyncController(
-        new SyncManifest(manifests),
+        syncManifest,
         connectionAdapters,
         publicSchemaTransformationAdapters,
         consumerSchemaTransformationAdapters,
