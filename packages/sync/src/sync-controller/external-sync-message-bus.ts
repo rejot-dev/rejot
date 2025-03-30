@@ -63,8 +63,11 @@ export class ExternalSyncMessageBus implements ISubscribeMessageBus {
         const host = this.#syncServiceResolver.resolve(externalManifestSlug);
 
         const transactions = await fetchRead(host, false, {
-          // TODO: Filter cursors that have no relevance to this external sync service.
-          cursors: this.#cursors.toArray(),
+          jsonBody: undefined,
+          queryParams: {
+            // TODO: Filter cursors that have no relevance to this external sync service.
+            cursors: this.#cursors.toArray(),
+          },
         });
 
         yield* transactions;

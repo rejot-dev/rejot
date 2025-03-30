@@ -48,11 +48,15 @@ export type Purpose =
   /** Publishes an HTTP endpoint to allow others to sync from us. */
   | "EVENT_STORE_PUBLISHER";
 
+interface SyncManifestOptions {
+  checkPublicSchemaReferences?: boolean;
+}
+
 export class SyncManifest {
   readonly #manifests: Manifest[];
 
-  constructor(manifests: Manifest[]) {
-    const verificationResult = verifyManifests(manifests);
+  constructor(manifests: Manifest[], options: SyncManifestOptions = {}) {
+    const verificationResult = verifyManifests(manifests, options.checkPublicSchemaReferences);
     if (!verificationResult.isValid) {
       const errorMessages = verificationResult.errors
         .map(
@@ -204,6 +208,15 @@ export class SyncManifest {
           version,
           outputSchema,
         })),
+    );
+  }
+
+  getPublicSchemas(): (z.infer<typeof PublicSchemaSchema> & { manifestSlug: string })[] {
+    return this.#manifests.flatMap((manifest) =>
+      manifest.publicSchemas.map((schema) => ({
+        ...schema,
+        manifestSlug: manifest.slug,
+      })),
     );
   }
 }

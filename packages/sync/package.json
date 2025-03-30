@@ -8,7 +8,8 @@
     "./sync-manifest": "./src/manifest/sync-manifest.ts",
     "./sync-manifest-controller": "./src/sync-manifest-controller.ts",
     "./sync-http-resolver": "./src/sync-http-service/sync-http-resolver.ts",
-    "./sync-http-service": "./src/sync-http-service/sync-http-service.ts"
+    "./sync-http-service": "./src/sync-http-service/sync-http-service.ts",
+    "./external-sync-message-bus": "./src/sync-controller/external-sync-message-bus.ts"
   },
   "private": true,
   "scripts": {

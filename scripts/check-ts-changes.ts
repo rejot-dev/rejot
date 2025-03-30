@@ -5,7 +5,7 @@ import { glob } from "glob";
 import { readFileSync } from "fs";
 import { join, relative } from "path";
 
-type CheckType = "typescript" | "test";
+type CheckType = "types" | "test";
 type TestFailure = {
   file: string;
   line: string;
@@ -158,7 +158,7 @@ async function waitForRunCompletion(proc: {
 async function checkPackage(packagePath: string, checkType: CheckType): Promise<boolean> {
   try {
     const command =
-      checkType === "typescript"
+      checkType === "types"
         ? ["bunx", "tsc", "--noEmit", "--watch", "--pretty", "false"]
         : ["bun", "test", "--watch"];
 
@@ -170,7 +170,7 @@ async function checkPackage(packagePath: string, checkType: CheckType): Promise<
 
     // Show header for the package being checked
     const relativePackagePath = relative(process.cwd(), packagePath);
-    const checkTypeDisplay = checkType === "typescript" ? "types" : "tests";
+    const checkTypeDisplay = checkType === "types" ? "types" : "tests";
     console.log(`\n=== Checking ${checkTypeDisplay} in ${relativePackagePath} ===\n`);
 
     // Wait for a complete run
@@ -178,7 +178,7 @@ async function checkPackage(packagePath: string, checkType: CheckType): Promise<
 
     // Parse the output based on check type
     const failures =
-      checkType === "typescript"
+      checkType === "types"
         ? parseTypeScriptOutput(output, packagePath)
         : parseTestOutput(output, packagePath);
 
@@ -196,17 +196,20 @@ async function checkPackage(packagePath: string, checkType: CheckType): Promise<
 
 async function main() {
   try {
-    // Get check type from command line argument
-    const checkType: CheckType = process.argv[2] === "test" ? "test" : "typescript";
+    // Get check type and all flag from command line arguments
+    const args = process.argv.slice(2);
+    const checkType: CheckType = args.includes("test") ? "test" : "types";
+    const checkAll = args.includes("--all");
 
     const packages = await getWorkspacePackages();
-    const changedPackages = await getChangedPackages(packages);
-    if (changedPackages.length === 0) {
+    const packagesToCheck = checkAll ? packages : await getChangedPackages(packages);
+
+    if (packagesToCheck.length === 0) {
       process.exit(0);
     }
 
     let hasErrors = false;
-    for (const pkg of changedPackages) {
+    for (const pkg of packagesToCheck) {
       const success = await checkPackage(pkg, checkType);
       if (!success) {
         hasErrors = true;

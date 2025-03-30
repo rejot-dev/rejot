@@ -81,10 +81,10 @@ export class PostgresClient {
 
   async beginTransaction(): Promise<void> {
     if (this.#transactionDepth === 0) {
-      await this.#client.query("BEGIN");
+      await this.query("BEGIN");
     } else {
       const savepointName = `sp_${this.#savepointCounter++}`;
-      await this.#client.query(`SAVEPOINT ${savepointName}`);
+      await this.query(`SAVEPOINT ${savepointName}`);
     }
     this.#transactionDepth++;
   }
@@ -96,24 +96,26 @@ export class PostgresClient {
 
     this.#transactionDepth--;
     if (this.#transactionDepth === 0) {
-      await this.#client.query("COMMIT");
+      await this.query("COMMIT");
     } else {
       // For nested transactions, we don't need to do anything on commit
       // The changes will be committed when the outer transaction commits
     }
   }
 
-  async rollbackTransaction(): Promise<void> {
+  async rollbackTransaction(reason?: unknown): Promise<void> {
     if (this.#transactionDepth === 0) {
       throw new Error("No transaction to rollback");
     }
 
     this.#transactionDepth--;
     if (this.#transactionDepth === 0) {
-      await this.#client.query("ROLLBACK");
-    } else {
+      await this.query("ROLLBACK");
+    } else if (this.#savepointCounter > 0) {
       const savepointName = `sp_${this.#savepointCounter - 1}`;
-      await this.#client.query(`ROLLBACK TO SAVEPOINT ${savepointName}`);
+      await this.query(`ROLLBACK TO SAVEPOINT ${savepointName}`);
+    } else {
+      throw new Error("No savepoint to rollback to", { cause: reason });
     }
   }
 

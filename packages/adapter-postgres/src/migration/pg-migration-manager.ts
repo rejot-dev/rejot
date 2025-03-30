@@ -57,7 +57,9 @@ export class PgMigrationManager {
   }
 
   async #runMigration(migration: Migration): Promise<void> {
-    log.debug(`Running migration ${migration.version}: ${migration.description}`);
+    log.debug(
+      `Running migration ${migration.version}: '${migration.description}', in database: ${this.#client.pgClient.database}`,
+    );
 
     await this.#client.beginTransaction();
     try {
@@ -69,7 +71,7 @@ export class PgMigrationManager {
       );
       await this.#client.commitTransaction();
     } catch (error) {
-      await this.#client.rollbackTransaction();
+      await this.#client.rollbackTransaction(error);
       throw error;
     }
   }

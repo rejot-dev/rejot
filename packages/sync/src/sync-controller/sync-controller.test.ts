@@ -34,15 +34,16 @@ describe("SyncController", () => {
 
   test("should process transactions from sources through message bus to sinks", async () => {
     const connectionAdapters = [new InMemoryConnectionAdapter()];
-    const messageBus = new InMemoryMessageBus();
+    const publishMessageBus = new InMemoryMessageBus();
+    const subscribeMessageBuses = [new InMemoryMessageBus()];
 
     const controller = new SyncController(
       createTestManifest(),
       connectionAdapters,
       [],
       [],
-      messageBus,
-      messageBus,
+      publishMessageBus,
+      subscribeMessageBuses,
     );
 
     await controller.prepare();
@@ -96,15 +97,16 @@ describe("SyncController", () => {
 
   test("should handle stop and close gracefully", async () => {
     const connectionAdapters = [new InMemoryConnectionAdapter()];
-    const messageBus = new InMemoryMessageBus();
+    const publishMessageBus = new InMemoryMessageBus();
+    const subscribeMessageBuses = [new InMemoryMessageBus()];
 
     const controller = new SyncController(
       createTestManifest(),
       connectionAdapters,
       [],
       [],
-      messageBus,
-      messageBus,
+      publishMessageBus,
+      subscribeMessageBuses,
     );
 
     await controller.prepare();
