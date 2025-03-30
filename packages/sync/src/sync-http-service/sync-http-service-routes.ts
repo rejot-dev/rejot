@@ -1,11 +1,5 @@
-import { z, ZodType } from "zod";
-
-export type RouteConfig = {
-  method: "POST" | "GET" | "PUT" | "DELETE";
-  path: string;
-  request: ZodType;
-  response: ZodType;
-};
+import { z } from "zod";
+import type { RouteConfig } from "../http-controller/http-controller";
 
 export const PublicSchemaReferenceSchema = z.object({
   manifest: z.object({
@@ -24,9 +18,9 @@ export const CursorSchema = z.object({
   transactionId: z.string().nullable(),
 });
 
-export const SyncControllerReadRequestSchema = z.object({
-  cursors: z.array(CursorSchema),
-  limit: z.number().optional(),
+export const SyncControllerQueryParametersSchema = z.object({
+  cursors: z.array(CursorSchema).optional(),
+  limit: z.coerce.number().min(1).max(1000).optional(),
 });
 
 export const SyncControllerReadResponseSchema = z
@@ -62,12 +56,50 @@ export const SyncControllerReadResponseSchema = z
   })
   .array();
 
-export type SyncControllerReadRequest = z.infer<typeof SyncControllerReadRequestSchema>;
-export type SyncControllerReadResponse = z.infer<typeof SyncControllerReadResponseSchema>;
+export const indexRoute = {
+  method: "GET",
+  path: "/",
+  response: z.object({
+    health: z.enum(["ok", "error"]),
+    routes: z.array(
+      z.object({
+        method: z.enum(["POST", "GET", "PUT", "DELETE"]),
+        path: z.string(),
+      }),
+    ),
+  }),
+} satisfies RouteConfig;
 
 export const syncServiceReadRoute = {
-  method: "POST",
+  method: "GET",
   path: "/read",
-  request: SyncControllerReadRequestSchema,
+  queryParams: SyncControllerQueryParametersSchema,
   response: SyncControllerReadResponseSchema,
+} satisfies RouteConfig;
+
+export const dataStoreCursorsRoute = {
+  method: "GET",
+  path: "/data-store/cursors",
+  response: z.array(CursorSchema),
+} satisfies RouteConfig;
+
+export const publicSchemasRoute = {
+  method: "GET",
+  path: "/public-schemas",
+  response: z.array(
+    z.object({
+      name: z.string(),
+      source: z.object({
+        dataStoreSlug: z.string(),
+        tables: z.array(z.string()),
+      }),
+      transformation: z.record(z.any()),
+      version: z.object({
+        major: z.number(),
+        minor: z.number(),
+      }),
+      outputSchema: z.record(z.any()),
+      manifestSlug: z.string(),
+    }),
+  ),
 } satisfies RouteConfig;

@@ -133,6 +133,9 @@ jobs:
       - name: Run sync tests
         working-directory: packages/sync
         run: bun test
+        env:
+          # Bug in Bun
+          SKIP_SYNC_HTTP_SERVICE_TESTS: true
 
   test-postgres:
     needs: install

@@ -9,6 +9,7 @@ import {
   PostgresConsumerSchemaTransformationAdapter,
 } from "@rejot/adapter-postgres";
 import { SyncController } from "@rejot/sync/sync-controller-new";
+import { ExternalSyncMessageBus } from "@rejot/sync/external-sync-message-bus";
 import type {
   AnyIConnectionAdapter,
   AnyIConsumerSchemaTransformationAdapter,
@@ -17,6 +18,9 @@ import type {
 
 import { SyncManifest } from "@rejot/contract/sync-manifest";
 import { EventStoreMessageBus } from "@rejot/contract/event-store-message-bus";
+import { SyncHTTPController } from "@rejot/sync/sync-http-service";
+import type { ISubscribeMessageBus } from "@rejot/contract/message-bus";
+import { createResolver, type ISyncServiceResolver } from "@rejot/sync/sync-http-resolver";
 const log = logger.createLogger("cli");
 
 export class ManifestSyncCommand extends Command {
@@ -47,7 +51,7 @@ export class ManifestSyncCommand extends Command {
     }),
     resolver: Flags.string({
       description: "Set the resolver for the sync HTTP service",
-      options: ["localhost", "env"],
+      options: ["localhost", "env"] as const,
       default: "localhost",
     }),
   };
@@ -63,7 +67,7 @@ export class ManifestSyncCommand extends Command {
 
   public async run(): Promise<void> {
     const { flags, argv } = await this.parse(ManifestSyncCommand);
-    const { "log-level": logLevel, hostname: _hostname, "api-port": _apiPort } = flags;
+    const { "log-level": logLevel, hostname: hostname, "api-port": apiPort, resolver } = flags;
 
     const manifestPaths = z.array(z.string()).parse(argv);
 
@@ -152,16 +156,49 @@ export class ManifestSyncCommand extends Command {
       // );
 
       // const messageBus = new InMemoryMessageBus();
-      const messageBus = new EventStoreMessageBus(eventStore);
+      const eventStoreMessageBus = new EventStoreMessageBus(eventStore);
+
+      const subscribeMessageBuses: ISubscribeMessageBus[] = [eventStoreMessageBus];
+
+      if (Object.keys(syncManifest.getExternalConsumerSchemas()).length > 0) {
+        let syncServiceResolver: ISyncServiceResolver;
+        if (resolver === "localhost") {
+          syncServiceResolver = createResolver({ type: "localhost", apiPort });
+        } else if (resolver === "env") {
+          syncServiceResolver = createResolver({ type: "env" });
+        } else {
+          throw new Error(`Invalid resolver: ${resolver}`);
+        }
+
+        const externalSyncMessageBus = new ExternalSyncMessageBus(
+          syncManifest,
+          syncServiceResolver,
+        );
+
+        subscribeMessageBuses.push(externalSyncMessageBus);
+
+        log.info(`Listening for changes on external sync services`);
+      } else {
+        log.info("No external sync services to listen to.");
+      }
 
       const syncController = new SyncController(
         syncManifest,
         connectionAdapters,
         publicSchemaTransformationAdapters,
         consumerSchemaTransformationAdapters,
-        messageBus,
-        messageBus,
+        eventStoreMessageBus,
+        subscribeMessageBuses,
       );
+
+      if (hostname && apiPort) {
+        const httpController = new SyncHTTPController(
+          { hostname, port: apiPort },
+          syncController,
+          eventStore,
+        );
+        syncController.startServingHTTPEndpoints(httpController);
+      }
 
       let shouldStop = false;
       // Set up signal handlers for graceful shutdown
@@ -188,12 +225,6 @@ export class ManifestSyncCommand extends Command {
         await syncController.prepare();
         log.info("Starting sync process...");
         await syncController.start();
-        // syncController.startPollingForConsumerSchemas();
-
-        // for await (const transformedOps of syncController.start()) {
-        //   log.debug(`Processed ${transformedOps.length} operations`);
-        // }
-
         log.info("Sync process completed");
       } catch (error) {
         log.error("Failed to start sync", error);

@@ -133,20 +133,23 @@ export class SyncManifestController {
         const host = this.#syncServiceResolver.resolve(slug);
 
         const response = await fetchRead(host, false, {
-          cursors: consumerSchemas.map((consumer) => ({
-            schema: {
-              manifest: {
-                slug,
-              },
+          jsonBody: undefined,
+          queryParams: {
+            cursors: consumerSchemas.map((consumer) => ({
               schema: {
-                name: consumer.publicSchema.name,
-                version: {
-                  major: consumer.publicSchema.majorVersion,
+                manifest: {
+                  slug,
+                },
+                schema: {
+                  name: consumer.publicSchema.name,
+                  version: {
+                    major: consumer.publicSchema.majorVersion,
+                  },
                 },
               },
-            },
-            transactionId: null, // TODO
-          })),
+              transactionId: null, // TODO
+            })),
+          },
         });
 
         log.trace(

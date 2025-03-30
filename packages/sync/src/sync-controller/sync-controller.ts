@@ -1,4 +1,4 @@
-import type { IMessageBus } from "@rejot/contract/message-bus";
+import type { IPublishMessageBus, ISubscribeMessageBus } from "@rejot/contract/message-bus";
 import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import {
   type AnyIConnectionAdapter,
@@ -9,13 +9,27 @@ import { SourceReader } from "./source-reader";
 import logger from "@rejot/contract/logger";
 import { PublicSchemaTransformer } from "./public-schema-transformer";
 import { SinkWriter } from "./sink-writer";
-import { cursorToString } from "@rejot/contract/cursor";
+import { type Cursor, cursorToString } from "@rejot/contract/cursor";
 import type { ISyncHTTPController } from "../sync-http-service/sync-http-service";
+import { z } from "zod";
+import type { PublicSchemaSchema } from "@rejot/contract/manifest";
+
 const log = logger.createLogger("sync-controller");
 
-export class SyncController {
-  readonly #publishMessageBus: IMessageBus;
-  readonly #subscribeMessageBus: IMessageBus;
+export interface ISyncController {
+  getCursors(): Promise<Cursor[]>;
+  start(): Promise<void>;
+  prepare(): Promise<void>;
+  stop(): Promise<void>;
+  close(): Promise<void>;
+  startServingHTTPEndpoints(controller: ISyncHTTPController): Promise<void>;
+  getPublicSchemas(): Promise<(z.infer<typeof PublicSchemaSchema> & { manifestSlug: string })[]>;
+}
+
+export class SyncController implements ISyncController {
+  readonly #publishMessageBus: IPublishMessageBus;
+  readonly #subscribeMessageBuses: ISubscribeMessageBus[];
+  readonly #syncManifest: SyncManifest;
 
   readonly #sourceReader: SourceReader;
   readonly #sinkWriter: SinkWriter;
@@ -28,9 +42,10 @@ export class SyncController {
     connectionAdapters: AnyIConnectionAdapter[],
     publicSchemaTransformationAdapters: AnyIPublicSchemaTransformationAdapter[],
     consumerSchemaTransformationAdapters: AnyIConsumerSchemaTransformationAdapter[],
-    publishMessageBus: IMessageBus,
-    subscribeMessageBus: IMessageBus,
+    publishMessageBus: IPublishMessageBus,
+    subscribeMessageBuses: ISubscribeMessageBus[],
   ) {
+    this.#syncManifest = syncManifest;
     this.#sourceReader = new SourceReader(syncManifest, connectionAdapters);
     this.#sinkWriter = new SinkWriter(
       syncManifest,
@@ -42,11 +57,23 @@ export class SyncController {
       publicSchemaTransformationAdapters,
     );
     this.#publishMessageBus = publishMessageBus;
-    this.#subscribeMessageBus = subscribeMessageBus;
+    this.#subscribeMessageBuses = subscribeMessageBuses;
+  }
+
+  async getCursors(): Promise<Cursor[]> {
+    return this.#sinkWriter.getCursors();
+  }
+
+  async getPublicSchemas() {
+    return this.#syncManifest.getPublicSchemas();
   }
 
   async start() {
-    await Promise.all([this.startIterateSourceReader(), this.startIterateSubscribeMessageBus()]);
+    await Promise.all([
+      this.startIterateSourceReader(),
+      ...this.#subscribeMessageBuses.map((bus) => this.startIterateSubscribeMessageBus(bus)),
+      this.#httpController?.start(),
+    ]);
   }
 
   async startIterateSourceReader() {
@@ -78,14 +105,14 @@ export class SyncController {
     log.debug("startIterateSourceReader completed");
   }
 
-  async startIterateSubscribeMessageBus() {
+  async startIterateSubscribeMessageBus(messageBus: ISubscribeMessageBus) {
     const cursors = await this.#sinkWriter.getCursors();
 
     log.debug("Cursors", cursors.map(cursorToString));
 
-    this.#subscribeMessageBus.setInitialCursors(cursors);
+    messageBus.setInitialCursors(cursors);
 
-    for await (const message of this.#subscribeMessageBus.subscribe()) {
+    for await (const message of messageBus.subscribe()) {
       await this.#sinkWriter.write(message);
     }
 
@@ -101,39 +128,44 @@ export class SyncController {
   }
 
   async prepare() {
-    await Promise.all([
-      this.#sourceReader.prepare(),
-      this.#sinkWriter.prepare(),
-      this.#publishMessageBus.prepare(),
-      this.#subscribeMessageBus.prepare(),
-    ]);
+    await Promise.all(
+      Array.from(
+        // Create set because we don't want to call prepare on the same items twice.
+        new Set([
+          this.#sourceReader,
+          this.#sinkWriter,
+          this.#publishMessageBus,
+          ...this.#subscribeMessageBuses,
+        ]),
+      ).map((item) => item.prepare()),
+    );
 
     log.debug("SyncController prepared");
   }
 
   async stop() {
-    await Promise.all([
-      this.stopIteratorSourceReader(),
-      this.stopIteratorMessageBus(),
-      this.#publishMessageBus.stop(),
-      this.#subscribeMessageBus.stop(),
-    ]);
-  }
-
-  async stopIteratorSourceReader() {
-    return this.#sourceReader.stop();
-  }
-
-  async stopIteratorMessageBus() {
-    return this.#subscribeMessageBus.stop();
+    await Promise.all(
+      Array.from(
+        new Set([
+          this.#sourceReader,
+          this.#publishMessageBus,
+          ...this.#subscribeMessageBuses,
+          this.#httpController,
+        ]),
+      ).map((item) => item?.stop()),
+    );
   }
 
   async close() {
-    await Promise.all([
-      this.#sourceReader.close(),
-      this.#sinkWriter.close(),
-      this.#publishMessageBus.close(),
-      this.#subscribeMessageBus.close(),
-    ]);
+    await Promise.all(
+      Array.from(
+        new Set([
+          this.#sourceReader,
+          this.#sinkWriter,
+          this.#publishMessageBus,
+          ...this.#subscribeMessageBuses,
+        ]),
+      ).map((item) => item.close()),
+    );
   }
 }
