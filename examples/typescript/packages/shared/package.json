@@ -8,12 +8,15 @@
     "./accounts-api": "./src/accounts-api.ts",
     "./addresses-api": "./src/addresses-api.ts",
     "./db": "./src/db.ts",
-    "./errors": "./src/errors.ts"
+    "./errors": "./src/errors.ts",
+    "./simple-ui": "./src/simple-ui.tsx"
   },
   "private": true,
   "type": "module",
   "dependencies": {
-    "zod": "^3.24.2",
-    "pg": "^8.12.0"
+    "pg": "^8.12.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^3.24.2"
   }
 }

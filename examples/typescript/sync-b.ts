@@ -5,7 +5,7 @@ const accountsConsumerSchema = createConsumerSchema({
   sourceManifestSlug: "sync-a",
   publicSchema: {
     name: "accounts",
-    majorVersion: 1,
+    majorVersion: 2,
   },
   destinationDataStoreSlug: "db-orders",
   transformations: [

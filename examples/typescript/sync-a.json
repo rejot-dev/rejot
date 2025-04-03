@@ -46,7 +46,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "number"
+            "type": "string"
           },
           "email": {
             "type": "string"
@@ -70,6 +70,40 @@
       },
       "version": {
         "major": 1,
+        "minor": 0
+      }
+    },
+    {
+      "name": "accounts",
+      "source": {
+        "dataStoreSlug": "db-accounts",
+        "tables": ["accounts"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["id", "name", "created_at"],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "transformation": {
+        "transformationType": "postgresql",
+        "table": "accounts",
+        "sql": "SELECT id, name, created_at FROM accounts WHERE id = $1"
+      },
+      "version": {
+        "major": 2,
         "minor": 0
       }
     }

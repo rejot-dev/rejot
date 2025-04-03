@@ -1,6 +1,7 @@
 import { CreateAccountRequestSchema } from "@example/shared/accounts-api";
 import { CreateAddressRequestSchema } from "@example/shared/addresses-api";
 import { errorToResponse } from "@example/shared/errors";
+import { simpleUI } from "@example/shared/simple-ui";
 import type { IRepo } from "./repo";
 
 export class AccountsService {
@@ -15,6 +16,11 @@ export class AccountsService {
     this.server = Bun.serve({
       port: this.port,
       routes: {
+        "/": async () => {
+          const accounts = await this.repo.getAccounts();
+          const accountsMap = Object.fromEntries(accounts.map((a) => [a.id, JSON.stringify(a)]));
+          return simpleUI("Account Service", accountsMap);
+        },
         "/status": Response.json({ status: "OK" }),
         "/accounts/:id": {
           GET: async (req) => {
@@ -28,6 +34,10 @@ export class AccountsService {
             const newAccount = CreateAccountRequestSchema.parse(body);
             const newAccountId = await this.repo.createAccount(newAccount);
             return Response.json(newAccountId);
+          },
+          GET: async () => {
+            const accounts = await this.repo.getAccounts();
+            return Response.json(accounts);
           },
         },
         "/addresses/:id": {

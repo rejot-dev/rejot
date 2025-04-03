@@ -61,6 +61,10 @@ class TestRepo implements IRepo {
     return address;
   }
 
+  async getAccounts(): Promise<GetAccountResponse[]> {
+    return Object.values(this.accounts);
+  }
+
   reset(): void {
     this.nextAccountId = 1;
     this.nextAddressId = 1;

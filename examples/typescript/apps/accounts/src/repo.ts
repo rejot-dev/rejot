@@ -16,6 +16,7 @@ export interface IRepo {
   getAccount(id: string): Promise<GetAccountResponse>;
   createAddress(address: CreateAddressRequest): Promise<CreateAddressResponse>;
   getAddress(id: string): Promise<GetAddressResponse>;
+  getAccounts(): Promise<GetAccountResponse[]>;
 }
 
 export class PostgresRepo implements IRepo {
@@ -60,5 +61,10 @@ export class PostgresRepo implements IRepo {
       throw new ResourceNotFoundError(`Address(${id})`);
     }
     return result.rows[0];
+  }
+
+  async getAccounts(): Promise<GetAccountResponse[]> {
+    const result = await this.client.query("SELECT * FROM accounts");
+    return result.rows;
   }
 }

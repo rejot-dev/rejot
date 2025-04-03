@@ -3,10 +3,10 @@ import { z } from "zod";
 import { createPostgresPublicSchemaTransformation } from "@rejot/adapter-postgres";
 import { createPublicSchema } from "@rejot/contract/public-schema";
 
-const accountsPublicSchema = createPublicSchema("accounts", {
+const accountsPublicSchemaV1 = createPublicSchema("accounts", {
   source: { dataStoreSlug: "db-accounts", tables: ["accounts"] }, // "addresses"
   outputSchema: z.object({
-    id: z.number(),
+    id: z.string(), // account.id is BIGSERIAL in postgres, which can only be represented in JSON as string
     email: z.string(),
     name: z.string(),
     // country: z.string().optional(),
@@ -24,6 +24,24 @@ const accountsPublicSchema = createPublicSchema("accounts", {
   },
 });
 
+const accountsPublicSchemaV2 = createPublicSchema("accounts", {
+  source: { dataStoreSlug: "db-accounts", tables: ["accounts"] },
+  outputSchema: z.object({
+    id: z.string(),
+    name: z.string(),
+    created_at: z.date(),
+  }),
+  transformation: createPostgresPublicSchemaTransformation(
+    "accounts",
+    "SELECT id, name, created_at FROM accounts WHERE id = $1",
+  ),
+  version: {
+    major: 2,
+    minor: 0,
+  },
+});
+
 export default {
-  accountsPublicSchema,
+  accountsPublicSchemaV1,
+  accountsPublicSchemaV2,
 };

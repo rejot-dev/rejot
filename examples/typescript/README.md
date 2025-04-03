@@ -67,10 +67,6 @@ Reset your local databases to a clean slate:
 ## Issues
 
 - Updating rejot-schema.ts definition and forgetting to run collect.
-- Schema issues with public schemas
-  - All fields are nullable regardless of defined schema
-  - Seems that the query result is written blindly to event store, no check that all fields are present
-- Connection refused errors on SyncManifestController doesn't say which connection refused (eventstore/sources/etc)
 - Connections might die intermittently
 - Connection details can only be passed in manifest for now
 - Event stores are not optional for only receiving sync servers
