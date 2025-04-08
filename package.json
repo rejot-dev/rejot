@@ -7,6 +7,11 @@
     "pre-commit": "bunx lefthook run pre-commit",
     "check-ts-changes": "bun run scripts/check-ts-changes.ts"
   },
+  "homepage": "https://rejot.dev/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rejot-dev/rejot.git"
+  },
   "engines": {
     "node": ">=22"
   },

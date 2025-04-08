@@ -1,6 +1,11 @@
 {
   "name": "@rejot/contract",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rejot-dev/rejot.git",
+    "directory": "packages/contract"
+  },
   "scripts": {
     "check": "tsc --noEmit"
   },
@@ -21,7 +26,7 @@
     "./schema-validator": "./schema-validator.ts",
     "./message-bus": "./message-bus/message-bus.ts"
   },
-  "private": true,
+  "private": false,
   "type": "module",
   "dependencies": {
     "ajv": "^8.17.1",

@@ -1,6 +1,13 @@
 {
   "name": "@rejot/cli",
   "type": "module",
+  "version": "0.0.1",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rejot-dev/rejot.git",
+    "directory": "apps/rejot-cli"
+  },
   "scripts": {
     "check": "tsc --noEmit",
     "test": "bun test"
