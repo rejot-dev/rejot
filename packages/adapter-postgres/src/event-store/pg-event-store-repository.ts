@@ -13,14 +13,8 @@ type EventRow = {
 };
 
 export class PostgresEventStoreRepository {
-  #client: PostgresClient;
-
-  constructor(client: PostgresClient) {
-    this.#client = client;
-  }
-
-  async insertDataStore(slug: string): Promise<number> {
-    const result = await this.#client.query(
+  async insertDataStore(client: PostgresClient, slug: string): Promise<number> {
+    const result = await client.query(
       `INSERT INTO rejot_events.data_store (slug)
        VALUES ($1)
        ON CONFLICT (slug) DO UPDATE SET slug = EXCLUDED.slug
@@ -31,6 +25,7 @@ export class PostgresEventStoreRepository {
   }
 
   async writeEvents(
+    client: PostgresClient,
     transactionId: string,
     operations: Array<{
       index: number;
@@ -38,7 +33,7 @@ export class PostgresEventStoreRepository {
     }>,
   ): Promise<void> {
     for (const { index, operation: op } of operations) {
-      await this.#client.query(
+      await client.query(
         `INSERT INTO rejot_events.events (
           transaction_id,
           operation_idx,
@@ -64,8 +59,11 @@ export class PostgresEventStoreRepository {
     }
   }
 
-  async getLastTransactionId({ schema }: PublicSchemaReference): Promise<string | null> {
-    const result = await this.#client.query<{ transaction_id: string }>(
+  async getLastTransactionId(
+    client: PostgresClient,
+    { schema }: PublicSchemaReference,
+  ): Promise<string | null> {
+    const result = await client.query<{ transaction_id: string }>(
       `SELECT transaction_id
        FROM rejot_events.events
        WHERE public_schema_name = $1
@@ -79,6 +77,7 @@ export class PostgresEventStoreRepository {
   }
 
   async readEvents(
+    client: PostgresClient,
     { schema }: PublicSchemaReference,
     transactionId: string | null,
     limit: number,
@@ -125,7 +124,7 @@ export class PostgresEventStoreRepository {
       params = [schema.name, schema.version.major, limit];
     }
 
-    const result = await this.#client.query(query, params);
+    const result = await client.query(query, params);
     return result.rows.map((row) => ({
       operation: row["operation"],
       transactionId: row["transaction_id"],

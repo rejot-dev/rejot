@@ -1,48 +1,53 @@
 import { describe, beforeEach, afterEach, afterAll, beforeAll } from "bun:test";
-import { PostgresClient } from "./postgres-client";
-import { parse as parseConnectionString } from "pg-connection-string";
+import {
+  parsePostgresConnectionString,
+  PostgresClient,
+  type PostgresConfig,
+} from "./postgres-client";
 
 export interface DbTestContext {
   client: PostgresClient;
 }
 
-export function getTestClient(): PostgresClient {
+export function getTestConnectionConfig(): PostgresConfig {
   const connectionString = process.env["REJOT_SYNC_CLI_TEST_CONNECTION"];
   if (!connectionString) {
     throw new Error("REJOT_SYNC_CLI_TEST_CONNECTION is not set");
   }
-  const config = parseConnectionString(connectionString);
-  return new PostgresClient({
-    host: config.host || "localhost",
-    port: config.port ? parseInt(config.port) : 5432,
-    user: config.user || "postgres",
-    password: config.password || "",
-    database: config.database || "postgres",
-  });
+  return parsePostgresConnectionString(connectionString);
+}
+
+export function getTestClient(): PostgresClient {
+  return PostgresClient.fromConfig(getTestConnectionConfig());
 }
 
 // Auto rollback any writes that happend during tests
 export function pgRollbackDescribe(name: string, fn: (ctx: DbTestContext) => void): void {
+  let rollback: (() => Promise<void>) | null = null;
+  let ancestorClient: PostgresClient | null = null;
+
   const context: DbTestContext = {
-    client: getTestClient(),
+    client: null!,
   };
 
   describe(name, () => {
     beforeAll(async () => {
-      await context.client.connect();
+      ancestorClient = getTestClient();
     });
 
     beforeEach(async () => {
+      const tx = await ancestorClient!.dangerousLeakyTx();
+      context.client = tx.pc;
       await context.client.query("SELECT 1 as connection_test");
-      await context.client.beginTransaction();
+      rollback = tx.rollback;
     });
 
     afterEach(async () => {
-      await context.client.rollbackTransaction();
+      await rollback!();
     });
 
     afterAll(async () => {
-      await context.client.end();
+      await ancestorClient!.end();
     });
 
     fn(context);

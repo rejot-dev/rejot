@@ -58,22 +58,17 @@ export class PgMigrationManager {
 
   async #runMigration(migration: Migration): Promise<void> {
     log.debug(
-      `Running migration ${migration.version}: '${migration.description}', in database: ${this.#client.pgClient.database}`,
+      `Running migration ${migration.version}: '${migration.description}', in database: ${this.#client.config.database}`,
     );
 
-    await this.#client.beginTransaction();
-    try {
-      await this.#client.query(migration.up);
-      await this.#client.query(
+    await this.#client.tx(async (client) => {
+      await client.query(migration.up);
+      await client.query(
         `INSERT INTO ${this.#schemaName}.${this.#migrationsTableName} (version, description)
          VALUES ($1, $2)`,
         [migration.version, migration.description],
       );
-      await this.#client.commitTransaction();
-    } catch (error) {
-      await this.#client.rollbackTransaction(error);
-      throw error;
-    }
+    });
   }
 
   async #runPendingMigrations(): Promise<void> {

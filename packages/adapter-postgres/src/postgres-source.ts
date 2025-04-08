@@ -1,4 +1,3 @@
-import type { Client } from "pg";
 import { PostgresClient } from "./util/postgres-client";
 import logger from "@rejot/contract/logger";
 import type {
@@ -33,7 +32,6 @@ export class PostgresSource implements IDataSource {
   #slotName: string;
   #createPublication: boolean;
   #publicSchemaSql: string;
-  #rawClient: Client;
 
   constructor({
     client,
@@ -44,8 +42,7 @@ export class PostgresSource implements IDataSource {
       slotName = DEFAULT_SLOT_NAME,
     },
   }: PostgresSourceConfig) {
-    this.#client = client instanceof PostgresClient ? client : new PostgresClient(client);
-    this.#rawClient = this.#client.pgClient;
+    this.#client = client;
     this.#publicationName = publicationName;
     this.#createPublication = createPublication;
     this.#publicSchemaSql = publicSchemaSql;
@@ -95,19 +92,12 @@ export class PostgresSource implements IDataSource {
 
   async close(): Promise<void> {
     await this.stop();
-    return this.#rawClient.end();
+    await this.#client.end();
   }
 
   async subscribe(onData: (transaction: Transaction) => Promise<boolean>): Promise<void> {
     this.#replicationListener = new PostgresReplicationListener(
-      {
-        host: this.#rawClient.host,
-        port: this.#rawClient.port,
-        user: this.#rawClient.user,
-        password: this.#rawClient.password,
-        database: this.#rawClient.database,
-        ssl: this.#rawClient.ssl,
-      },
+      this.#client.config,
       async (buffer) => {
         const didConsume = await onData({
           id: buffer.commitEndLsn.toString(),
@@ -128,14 +118,7 @@ export class PostgresSource implements IDataSource {
       throw new Error("PostgresSource is already subscribed to a publication");
     }
 
-    this.#replicationListener = new PostgresReplicationListener({
-      host: this.#rawClient.host,
-      port: this.#rawClient.port,
-      user: this.#rawClient.user,
-      password: this.#rawClient.password,
-      database: this.#rawClient.database,
-      ssl: this.#rawClient.ssl,
-    });
+    this.#replicationListener = new PostgresReplicationListener(this.#client.config);
 
     return this.#replicationListener.startIteration(
       this.#publicationName,
@@ -171,10 +154,10 @@ export class PostgresSource implements IDataSource {
     if (slotResult.rows.length === 1) {
       const { plugin, database } = slotResult.rows[0];
 
-      if (this.#rawClient.database !== database) {
+      if (this.#client.config.database !== database) {
         throw new Error(
           `Replication slot '${this.#slotName}' exists but is for a different database: '${database}'. ` +
-            `Expected database: '${this.#rawClient.database}'. Please pick a different slot.`,
+            `Expected database: '${this.#client.config.database}'. Please pick a different slot.`,
         );
       }
 

@@ -69,7 +69,7 @@ describe("PostgreSQL Replication Listener", () => {
   });
 
   test("should listen to changes on the table", async () => {
-    const { host, port, database, user, password } = client.pgClient;
+    const { host, port, database, user, password } = client.config;
 
     const listener = new PostgresReplicationListener({
       host,
