@@ -1,19 +1,19 @@
-import { test, expect } from "bun:test";
-import type { Client } from "pg";
+import { test, expect, beforeEach } from "bun:test";
 import { pgRollbackDescribe } from "../util/postgres-test-utils";
 import { PostgresClient } from "../util/postgres-client";
 import { PostgresEventStoreRepository } from "./pg-event-store-repository";
 import { EventStoreSchemaManager } from "./pg-event-store-schema-manager";
 
-async function setupEventStore(client: Client | PostgresClient): Promise<void> {
-  const queryClient = client instanceof PostgresClient ? client : new PostgresClient(client);
-  const schemaManager = new EventStoreSchemaManager(queryClient);
-  await schemaManager.ensureSchema();
+async function setupEventStore(client: PostgresClient): Promise<void> {
+  await new EventStoreSchemaManager(client).ensureSchema();
 }
 
 pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
-  test("should write and read events", async () => {
+  beforeEach(async () => {
     await setupEventStore(ctx.client);
+  });
+
+  test("should write and read events", async () => {
     const repository = new PostgresEventStoreRepository(ctx.client);
 
     const transactionId = "test-transaction";
@@ -91,7 +91,6 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
   });
 
   test("should get last transaction ID", async () => {
-    await setupEventStore(ctx.client);
     const repository = new PostgresEventStoreRepository(ctx.client);
 
     const testSchema = {
@@ -131,7 +130,6 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
   });
 
   test("should read events after cursor", async () => {
-    await setupEventStore(ctx.client);
     const repository = new PostgresEventStoreRepository(ctx.client);
 
     const testSchema = {
@@ -176,7 +174,6 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
   });
 
   test("should respect limit when reading events", async () => {
-    await setupEventStore(ctx.client);
     const repository = new PostgresEventStoreRepository(ctx.client);
 
     const testSchema = {

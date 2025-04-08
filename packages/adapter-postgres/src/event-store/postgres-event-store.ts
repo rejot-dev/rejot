@@ -1,8 +1,5 @@
-import { Client } from "pg";
-import { z } from "zod";
 import type { IEventStore, TransformedOperationWithSource } from "@rejot/contract/event-store";
 import logger from "@rejot/contract/logger";
-import type { PostgresConnectionSchema } from "../postgres-schemas";
 import { PostgresClient } from "../util/postgres-client";
 import { EventStoreSchemaManager } from "./pg-event-store-schema-manager";
 import type { SyncManifest } from "@rejot/contract/sync-manifest";
@@ -21,13 +18,6 @@ export class PostgresEventStore implements IEventStore {
     this.#client = client;
     this.#schemaManager = new EventStoreSchemaManager(client);
     this.#repository = new PostgresEventStoreRepository(client);
-  }
-
-  static fromConnection(
-    connection: z.infer<typeof PostgresConnectionSchema>,
-    manifest: SyncManifest,
-  ) {
-    return new PostgresEventStore(new PostgresClient(new Client(connection)), manifest);
   }
 
   async prepare(): Promise<void> {

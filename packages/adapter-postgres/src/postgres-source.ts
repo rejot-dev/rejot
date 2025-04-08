@@ -21,7 +21,7 @@ type PostgresOptions = {
 };
 
 type PostgresSourceConfig = {
-  client: Client | PostgresClient;
+  client: PostgresClient;
   publicSchemaSql: string;
   options: PostgresOptions;
 };
@@ -45,7 +45,7 @@ export class PostgresSource implements IDataSource {
     },
   }: PostgresSourceConfig) {
     this.#client = client instanceof PostgresClient ? client : new PostgresClient(client);
-    this.#rawClient = client instanceof PostgresClient ? client.pgClient : client;
+    this.#rawClient = this.#client.pgClient;
     this.#publicationName = publicationName;
     this.#createPublication = createPublication;
     this.#publicSchemaSql = publicSchemaSql;

@@ -1,4 +1,3 @@
-import { Client } from "pg";
 import { z } from "zod";
 
 import type {
@@ -109,7 +108,7 @@ export class PostgresConnectionAdapter
       existingConnection = {
         slug: connectionSlug,
         config: connection,
-        client: new PostgresClient(new Client(connection)),
+        client: new PostgresClient(connection),
       };
 
       this.#connections.set(connectionSlug, existingConnection);

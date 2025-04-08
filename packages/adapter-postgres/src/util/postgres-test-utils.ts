@@ -1,6 +1,6 @@
 import { describe, beforeEach, afterEach, afterAll, beforeAll } from "bun:test";
-import { Client } from "pg";
-import { PostgresClient } from "./postgres-client.ts";
+import { PostgresClient } from "./postgres-client";
+import { parse as parseConnectionString } from "pg-connection-string";
 
 export interface DbTestContext {
   client: PostgresClient;
@@ -11,7 +11,14 @@ export function getTestClient(): PostgresClient {
   if (!connectionString) {
     throw new Error("REJOT_SYNC_CLI_TEST_CONNECTION is not set");
   }
-  return new PostgresClient(new Client(connectionString));
+  const config = parseConnectionString(connectionString);
+  return new PostgresClient({
+    host: config.host || "localhost",
+    port: config.port ? parseInt(config.port) : 5432,
+    user: config.user || "postgres",
+    password: config.password || "",
+    database: config.database || "postgres",
+  });
 }
 
 // Auto rollback any writes that happend during tests
