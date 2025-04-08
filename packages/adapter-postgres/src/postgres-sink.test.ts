@@ -1,5 +1,4 @@
 import { test, expect } from "bun:test";
-import type { Client } from "pg";
 import { pgRollbackDescribe } from "./util/postgres-test-utils";
 import { PostgresSink } from "./postgres-sink.ts";
 import { PostgresClient } from "./util/postgres-client";
@@ -7,9 +6,8 @@ import { PostgresClient } from "./util/postgres-client";
 const TEST_TABLE_NAME = "test_pg_sink";
 const TEST_CONSUMER_SCHEMA = `INSERT INTO ${TEST_TABLE_NAME} (id, name) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET name = $2`;
 
-async function createTestTable(client: Client | PostgresClient): Promise<void> {
-  const queryClient = client instanceof PostgresClient ? client : new PostgresClient(client);
-  await queryClient.query(`
+async function createTestTable(client: PostgresClient): Promise<void> {
+  await client.query(`
     CREATE TABLE ${TEST_TABLE_NAME} (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL

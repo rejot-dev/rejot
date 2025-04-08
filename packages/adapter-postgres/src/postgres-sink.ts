@@ -1,4 +1,3 @@
-import type { Client } from "pg";
 import { PostgresClient } from "./util/postgres-client";
 import logger from "@rejot/contract/logger";
 import type { IDataSink, TransformedOperation } from "@rejot/contract/sync";
@@ -6,7 +5,7 @@ import { PostgresConsumerDataStoreSchemaManager } from "./data-store/pg-consumer
 const log = logger.createLogger("pg-sink");
 
 type PostgresSinkConfig = {
-  client: Client | PostgresClient;
+  client: PostgresClient;
   consumerSchemaSQL: string;
 };
 

@@ -1,6 +1,52 @@
 import { Client, DatabaseError } from "pg";
 import type { QueryResult, QueryResultRow } from "pg";
 
+export interface PostgresConfig {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+}
+
+/**
+ * Parses a Postgres connection string into a PostgresConfig object.
+ * Supports both 'postgres://' and 'postgresql://' protocols.
+ *
+ * @param connectionString - Connection string in format: postgres://user:password@host:port/database
+ * @returns PostgresConfig object
+ * @throws Error if the connection string is invalid
+ */
+export function parsePostgresConnectionString(connectionString: string): PostgresConfig {
+  try {
+    const url = new URL(connectionString);
+
+    if (!url.protocol.match(/^postgres(ql)?:$/)) {
+      throw new Error("Invalid protocol. Must be postgres:// or postgresql://");
+    }
+
+    const port = url.port ? parseInt(url.port, 10) : 5432;
+    const database = url.pathname.slice(1); // Remove leading slash
+
+    if (!database) {
+      throw new Error("Database name is required");
+    }
+
+    return {
+      host: url.hostname,
+      port,
+      user: decodeURIComponent(url.username),
+      password: decodeURIComponent(url.password),
+      database,
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Invalid connection string: ${error.message}`);
+    }
+    throw error;
+  }
+}
+
 export class PostgresClient {
   readonly #client: Client;
 
@@ -9,8 +55,8 @@ export class PostgresClient {
 
   #isConnecting: boolean = false;
 
-  constructor(client: Client) {
-    this.#client = client;
+  constructor(config: PostgresConfig) {
+    this.#client = new Client(config);
   }
 
   get pgClient() {

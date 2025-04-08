@@ -1,10 +1,13 @@
 import type { IDataSource, IDataSink } from "@rejot/contract/sync";
 import { StdoutSink } from "./sinks/stdout-sink.ts";
 import { FileSink } from "./sinks/file-sink.ts";
-import { Client } from "pg";
 import { SUPPORTED_SCHEMES, type ConnectionScheme } from "./rejot-cli-consts.ts";
 import { PostgresSource } from "@rejot/adapter-postgres/source";
 import { PostgresSink } from "@rejot/adapter-postgres/sink";
+import {
+  parsePostgresConnectionString,
+  PostgresClient,
+} from "../../../packages/adapter-postgres/src/util/postgres-client.ts";
 
 /**
  * Create a source and sink based on the connection strings
@@ -54,7 +57,7 @@ export function createSource(
   switch (connection.scheme) {
     case "postgresql":
       return new PostgresSource({
-        client: new Client(connectionString),
+        client: new PostgresClient(parsePostgresConnectionString(connectionString)),
         publicSchemaSql: publicSchemaSQL,
         options: {
           publicationName: options.publicationName,
@@ -83,7 +86,7 @@ export function createSink(
         throw new Error("Consumer schema SQL is required for PostgreSQL sink");
       }
       return new PostgresSink({
-        client: new Client(connectionString),
+        client: new PostgresClient(parsePostgresConnectionString(connectionString)),
         consumerSchemaSQL,
       });
     case "stdout":

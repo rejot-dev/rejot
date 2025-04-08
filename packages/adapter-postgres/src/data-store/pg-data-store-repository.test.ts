@@ -1,26 +1,24 @@
-import { test, expect } from "bun:test";
-import type { Client } from "pg";
+import { test, expect, beforeEach } from "bun:test";
 import { pgRollbackDescribe } from "../util/postgres-test-utils";
 import { PostgresClient } from "../util/postgres-client";
 import { PostgresConsumerDataStoreSchemaManager } from "./pg-consumer-data-store-schema-manager";
 import { getPublicSchemaStates, updatePublicSchemaState } from "./pg-data-store-repository";
 
-async function setupDataStore(client: Client | PostgresClient): Promise<void> {
-  const queryClient = client instanceof PostgresClient ? client : new PostgresClient(client);
-  const schemaManager = new PostgresConsumerDataStoreSchemaManager(queryClient);
-  await schemaManager.ensureSchema();
+async function setupDataStore(client: PostgresClient): Promise<void> {
+  await new PostgresConsumerDataStoreSchemaManager(client).ensureSchema();
 }
 
 pgRollbackDescribe("PostgresDataStoreRepository", (ctx) => {
-  test("should get empty public schema states initially", async () => {
+  beforeEach(async () => {
     await setupDataStore(ctx.client);
+  });
+
+  test("should get empty public schema states initially", async () => {
     const states = await getPublicSchemaStates(ctx.client);
     expect(states).toEqual([]);
   });
 
   test("should update and retrieve public schema state", async () => {
-    await setupDataStore(ctx.client);
-
     const reference = {
       manifestSlug: "test-manifest",
       dataStore: "test-store",
