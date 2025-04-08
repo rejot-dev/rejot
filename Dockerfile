@@ -2,6 +2,9 @@ FROM oven/bun:1.2.6 AS base
 ARG REJOT_APP=controller
 ENV REJOT_APP=${REJOT_APP}
 
+# Install curl for container health checks
+RUN apt update && apt install -y curl
+
 FROM base AS install
 WORKDIR /install
 

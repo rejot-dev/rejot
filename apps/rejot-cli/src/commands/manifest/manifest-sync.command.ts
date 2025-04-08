@@ -94,7 +94,7 @@ export class ManifestSyncCommand extends Command {
 
       log.info(`Successfully loaded ${manifests.length} manifest(s)`);
 
-      const syncManifest = new SyncManifest(manifests);
+      const syncManifest = new SyncManifest(manifests, { checkPublicSchemaReferences: false });
 
       // Create adapters
       const postgresAdapter = new PostgresConnectionAdapter(syncManifest);

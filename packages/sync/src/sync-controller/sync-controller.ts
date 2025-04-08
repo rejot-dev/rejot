@@ -24,7 +24,10 @@ export interface ISyncController {
   close(): Promise<void>;
   startServingHTTPEndpoints(controller: ISyncHTTPController): Promise<void>;
   getPublicSchemas(): Promise<(z.infer<typeof PublicSchemaSchema> & { manifestSlug: string })[]>;
+  state: SyncManifestControllerState;
 }
+
+export type SyncManifestControllerState = "initial" | "prepared" | "running" | "stopped";
 
 export class SyncController implements ISyncController {
   readonly #publishMessageBus: IPublishMessageBus;
@@ -36,6 +39,7 @@ export class SyncController implements ISyncController {
   readonly #publicSchemaTransformer: PublicSchemaTransformer;
 
   #httpController?: ISyncHTTPController;
+  #state: SyncManifestControllerState = "initial";
 
   constructor(
     syncManifest: SyncManifest,
@@ -58,6 +62,10 @@ export class SyncController implements ISyncController {
     );
     this.#publishMessageBus = publishMessageBus;
     this.#subscribeMessageBuses = subscribeMessageBuses;
+  }
+
+  get state(): SyncManifestControllerState {
+    return this.#state;
   }
 
   async getCursors(): Promise<Cursor[]> {
@@ -139,7 +147,7 @@ export class SyncController implements ISyncController {
         ]),
       ).map((item) => item.prepare()),
     );
-
+    this.#state = "prepared";
     log.debug("SyncController prepared");
   }
 

@@ -4,6 +4,7 @@ import {
   indexRoute,
   syncServiceReadRoute,
   publicSchemasRoute,
+  statusRoute,
 } from "./sync-http-service-routes";
 import { HttpController } from "../http-controller/http-controller";
 import type { ISyncController } from "../sync-controller/sync-controller";
@@ -43,6 +44,13 @@ export class SyncHTTPController implements ISyncHTTPController {
     });
     this.#httpController.createRequest(publicSchemasRoute, async () => {
       return this.#syncController.getPublicSchemas();
+    });
+    this.#httpController.createRequest(statusRoute, async () => {
+      return {
+        state: (this.#syncController.state === "initial" ? "initializing" : "ready") as
+          | "ready"
+          | "initializing",
+      };
     });
   }
 

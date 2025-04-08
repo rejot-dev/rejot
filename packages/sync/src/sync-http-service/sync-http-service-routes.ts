@@ -103,3 +103,11 @@ export const publicSchemasRoute = {
     }),
   ),
 } satisfies RouteConfig;
+
+export const statusRoute = {
+  method: "GET",
+  path: "/status",
+  response: z.object({
+    state: z.enum(["ready", "initializing"]),
+  }),
+} satisfies RouteConfig;

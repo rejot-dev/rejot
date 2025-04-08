@@ -1,5 +1,8 @@
 import type { Cursor } from "@rejot/contract/cursor";
-import type { ISyncController } from "../sync-controller/sync-controller";
+import type {
+  ISyncController,
+  SyncManifestControllerState,
+} from "../sync-controller/sync-controller";
 import type { ISyncHTTPController } from "../sync-http-service/sync-http-service";
 import { z } from "zod";
 import type { PublicSchemaSchema } from "@rejot/contract/manifest";
@@ -12,6 +15,11 @@ export class MockSyncController implements ISyncController {
   #isStopped = false;
   #isClosed = false;
   #publicSchemas: (z.infer<typeof PublicSchemaSchema> & { manifestSlug: string })[] = [];
+  #state: SyncManifestControllerState = "initial";
+
+  get state(): SyncManifestControllerState {
+    return this.#state;
+  }
 
   constructor(initialCursors: Cursor[] = []) {
     this.#cursors = initialCursors;
