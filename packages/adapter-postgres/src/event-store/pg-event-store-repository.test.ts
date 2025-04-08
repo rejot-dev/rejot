@@ -14,7 +14,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
   });
 
   test("should write and read events", async () => {
-    const repository = new PostgresEventStoreRepository(ctx.client);
+    const repository = new PostgresEventStoreRepository();
 
     const transactionId = "test-transaction";
     const testSchema = {
@@ -28,7 +28,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     };
 
     // Write test events
-    await repository.writeEvents(transactionId, [
+    await repository.writeEvents(ctx.client, transactionId, [
       {
         index: 0,
         operation: {
@@ -76,7 +76,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     ]);
 
     // Read events
-    const events = await repository.readEvents(testSchema, null, 10);
+    const events = await repository.readEvents(ctx.client, testSchema, null, 10);
 
     expect(events.length).toBe(3);
     expect(events[0].operation).toBe("insert");
@@ -91,7 +91,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
   });
 
   test("should get last transaction ID", async () => {
-    const repository = new PostgresEventStoreRepository(ctx.client);
+    const repository = new PostgresEventStoreRepository();
 
     const testSchema = {
       manifest: {
@@ -106,7 +106,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     // Write events with different transaction IDs
     const transactions = ["tx1", "tx2", "tx3"];
     for (const transactionId of transactions) {
-      await repository.writeEvents(transactionId, [
+      await repository.writeEvents(ctx.client, transactionId, [
         {
           index: 0,
           operation: {
@@ -125,12 +125,12 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
       ]);
     }
 
-    const lastTransactionId = await repository.getLastTransactionId(testSchema);
+    const lastTransactionId = await repository.getLastTransactionId(ctx.client, testSchema);
     expect(lastTransactionId).toBe("tx3");
   });
 
   test("should read events after cursor", async () => {
-    const repository = new PostgresEventStoreRepository(ctx.client);
+    const repository = new PostgresEventStoreRepository();
 
     const testSchema = {
       manifest: {
@@ -145,7 +145,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     // Write events with different transaction IDs
     const transactions = ["tx1", "tx2", "tx3"];
     for (const transactionId of transactions) {
-      await repository.writeEvents(transactionId, [
+      await repository.writeEvents(ctx.client, transactionId, [
         {
           index: 0,
           operation: {
@@ -165,7 +165,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     }
 
     // Read events after tx1
-    const events = await repository.readEvents(testSchema, "tx1", 10);
+    const events = await repository.readEvents(ctx.client, testSchema, "tx1", 10);
     expect(events.length).toBe(2);
     expect(events[0].transactionId).toBe("tx2");
     expect(events[0].manifestSlug).toBe("test-manifest");
@@ -174,7 +174,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
   });
 
   test("should respect limit when reading events", async () => {
-    const repository = new PostgresEventStoreRepository(ctx.client);
+    const repository = new PostgresEventStoreRepository();
 
     const testSchema = {
       manifest: {
@@ -188,7 +188,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
 
     // Write 5 events
     for (let i = 0; i < 5; i++) {
-      await repository.writeEvents(`tx${i}`, [
+      await repository.writeEvents(ctx.client, `tx${i}`, [
         {
           index: 0,
           operation: {
@@ -208,7 +208,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     }
 
     // Read with limit 3
-    const events = await repository.readEvents(testSchema, null, 3);
+    const events = await repository.readEvents(ctx.client, testSchema, null, 3);
     expect(events.length).toBe(3);
     events.forEach((event) => {
       expect(event.manifestSlug).toBe("test-manifest");

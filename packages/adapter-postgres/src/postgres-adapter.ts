@@ -108,7 +108,7 @@ export class PostgresConnectionAdapter
       existingConnection = {
         slug: connectionSlug,
         config: connection,
-        client: new PostgresClient(connection),
+        client: PostgresClient.fromConfig(connection),
       };
 
       this.#connections.set(connectionSlug, existingConnection);
@@ -247,19 +247,17 @@ export class PostgresConsumerSchemaTransformationAdapter
       return operation;
     }
 
-    try {
-      await connection.client.beginTransaction();
+    await connection.client.tx(async (client) => {
       // TODO(Wilco): Postgres errors when the query doesn't use all parameters ($1, $2, etc).
       //              Look into https://www.npmjs.com/package/yesql
-
       const values = Object.values(operation.object);
 
       log.debug(`Values: ${JSON.stringify(values)}`);
-      await connection.client.query(transformation.sql, values);
+      await client.query(transformation.sql, values);
       log.debug("Applied!");
 
       const didUpdate = await updatePublicSchemaState(
-        connection.client,
+        client,
         {
           manifestSlug: operation.sourceManifestSlug,
           name: operation.sourcePublicSchema.name,
@@ -268,17 +266,12 @@ export class PostgresConsumerSchemaTransformationAdapter
         transactionId,
       );
 
-      if (didUpdate) {
-        await connection.client.commitTransaction();
-        log.debug("Updated public schema state");
-      } else {
-        await connection.client.rollbackTransaction();
-        log.warn("Transaction ID is older than the last seen transaction ID");
+      if (!didUpdate) {
+        throw new Error("Transaction ID is older than the last seen transaction ID");
       }
-    } catch (error) {
-      await connection.client.rollbackTransaction();
-      throw error;
-    }
+
+      log.debug("Updated public schema state");
+    });
 
     return operation;
   }

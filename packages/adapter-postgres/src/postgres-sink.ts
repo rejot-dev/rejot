@@ -14,7 +14,7 @@ export class PostgresSink implements IDataSink {
   #consumerSchemaSQL: string;
 
   constructor({ client, consumerSchemaSQL }: PostgresSinkConfig) {
-    this.#client = client instanceof PostgresClient ? client : new PostgresClient(client);
+    this.#client = client;
     this.#consumerSchemaSQL = consumerSchemaSQL;
   }
 

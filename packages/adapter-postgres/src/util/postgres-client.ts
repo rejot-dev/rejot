@@ -1,5 +1,5 @@
-import { Client, DatabaseError } from "pg";
-import type { QueryResult, QueryResultRow } from "pg";
+import { DatabaseError, Pool } from "pg";
+import type { ClientBase, QueryResult, QueryResultRow } from "pg";
 
 export interface PostgresConfig {
   host: string;
@@ -47,37 +47,90 @@ export function parsePostgresConnectionString(connectionString: string): Postgre
   }
 }
 
+type PoolOrClient =
+  | {
+      type: "pool";
+      pool: Pool;
+    }
+  | {
+      type: "client";
+      client: ClientBase;
+      savepointDepth: number;
+    };
+
+type ConstructorObject = (PoolOrClient & { config: PostgresConfig }) | { config: PostgresConfig };
+
 export class PostgresClient {
-  readonly #client: Client;
+  readonly #poolOrClient: PoolOrClient;
+  readonly #config: PostgresConfig;
 
-  #transactionDepth: number = 0;
-  #savepointCounter: number = 0;
+  private constructor(poolOrClient: ConstructorObject) {
+    this.#config = poolOrClient.config;
 
-  #isConnecting: boolean = false;
+    if ("type" in poolOrClient) {
+      this.#poolOrClient = poolOrClient;
+    } else {
+      this.#poolOrClient = { type: "pool", pool: new Pool(this.#config) };
+    }
+  }
 
-  constructor(config: PostgresConfig) {
-    this.#client = new Client(config);
+  static fromConfig(config: PostgresConfig): PostgresClient {
+    return new PostgresClient({ config });
+  }
+
+  static fromConnectionString(connectionString: string): PostgresClient {
+    return new PostgresClient({ config: parsePostgresConnectionString(connectionString) });
+  }
+
+  get inTransaction(): boolean {
+    return this.#poolOrClient.type === "client";
+  }
+
+  get config(): PostgresConfig {
+    return this.#config;
+  }
+
+  get poolOrClient(): PoolOrClient {
+    return this.#poolOrClient;
   }
 
   get pgClient() {
-    return this.#client;
+    return this.#poolOrClient.type === "pool" ? this.#poolOrClient.pool : this.#poolOrClient.client;
   }
 
   async connect(): Promise<void> {
-    if (this.#isConnecting) {
-      return Promise.resolve();
-    }
-
-    this.#isConnecting = true;
-    await this.#client.connect();
-    this.#isConnecting = false;
+    // No-op
   }
 
   async end(): Promise<void> {
-    await this.#client.end();
+    if (this.#poolOrClient.type === "pool") {
+      await this.#poolOrClient.pool.end();
+      return;
+    }
+
+    throw new Error("End call unexpected in PostgresClient transaction.");
   }
 
   async query<T extends QueryResultRow = QueryResultRow>(
+    queryText: string,
+    values?: unknown[],
+  ): Promise<QueryResult<T>> {
+    const poolOrClient = this.#poolOrClient;
+
+    if (poolOrClient.type === "pool") {
+      const client = await poolOrClient.pool.connect();
+      try {
+        return await this.#query(client, queryText, values);
+      } finally {
+        client.release();
+      }
+    }
+
+    return await this.#query(poolOrClient.client, queryText, values);
+  }
+
+  async #query<T extends QueryResultRow = QueryResultRow>(
+    client: ClientBase,
     queryText: string,
     values?: unknown[],
   ): Promise<QueryResult<T>> {
@@ -87,7 +140,7 @@ export class PostgresClient {
     const dbError = new DatabaseError("", 0, "error");
 
     try {
-      return await this.#client.query<T>(queryText, values);
+      return await client.query<T>(queryText, values);
     } catch (e) {
       if (e instanceof DatabaseError) {
         dbError.message = e.message;
@@ -125,51 +178,67 @@ export class PostgresClient {
     }
   }
 
-  async beginTransaction(): Promise<void> {
-    if (this.#transactionDepth === 0) {
-      await this.query("BEGIN");
-    } else {
-      const savepointName = `sp_${this.#savepointCounter++}`;
-      await this.query(`SAVEPOINT ${savepointName}`);
+  async dangerousLeakyTx(): Promise<{ pc: PostgresClient; rollback: () => Promise<void> }> {
+    if (this.poolOrClient.type !== "pool") {
+      throw new Error("Can only open leakyTx on top-level PostgresClient.");
     }
-    this.#transactionDepth++;
+
+    const client = await this.poolOrClient.pool.connect();
+    await client.query("BEGIN");
+    return {
+      pc: new PostgresClient({
+        type: "client",
+        client,
+        savepointDepth: 0,
+        config: this.#config,
+      }),
+      rollback: async () => {
+        await client.query("ROLLBACK");
+        client.release();
+      },
+    };
   }
 
-  async commitTransaction(): Promise<void> {
-    if (this.#transactionDepth === 0) {
-      throw new Error("No transaction to commit");
+  async tx<T>(cb: (client: PostgresClient) => Promise<T>): Promise<T> {
+    const poolOrClient = this.#poolOrClient;
+
+    if (poolOrClient.type === "pool") {
+      const client = await poolOrClient.pool.connect();
+      try {
+        await client.query("BEGIN");
+        return await cb(
+          new PostgresClient({
+            type: "client",
+            client,
+            savepointDepth: 0,
+            config: this.#config,
+          }),
+        );
+      } catch (e) {
+        await client.query("ROLLBACK");
+        throw e;
+      } finally {
+        client.release();
+      }
     }
 
-    this.#transactionDepth--;
-    if (this.#transactionDepth === 0) {
-      await this.query("COMMIT");
-    } else {
-      // For nested transactions, we don't need to do anything on commit
-      // The changes will be committed when the outer transaction commits
+    // Nested transaction.
+    const newSavepointDepth = poolOrClient.savepointDepth + 1;
+    const savepointName = `sp_${newSavepointDepth}`;
+
+    try {
+      await poolOrClient.client.query(`SAVEPOINT ${savepointName}`);
+      return await cb(
+        new PostgresClient({
+          type: "client",
+          client: poolOrClient.client,
+          savepointDepth: newSavepointDepth,
+          config: this.#config,
+        }),
+      );
+    } catch (e) {
+      await poolOrClient.client.query(`ROLLBACK TO SAVEPOINT ${savepointName}`);
+      throw e;
     }
-  }
-
-  async rollbackTransaction(reason?: unknown): Promise<void> {
-    if (this.#transactionDepth === 0) {
-      throw new Error("No transaction to rollback");
-    }
-
-    this.#transactionDepth--;
-    if (this.#transactionDepth === 0) {
-      await this.query("ROLLBACK");
-    } else if (this.#savepointCounter > 0) {
-      const savepointName = `sp_${this.#savepointCounter - 1}`;
-      await this.query(`ROLLBACK TO SAVEPOINT ${savepointName}`);
-    } else {
-      throw new Error("No savepoint to rollback to", { cause: reason });
-    }
-  }
-
-  isInTransaction(): boolean {
-    return this.#transactionDepth > 0;
-  }
-
-  getTransactionDepth(): number {
-    return this.#transactionDepth;
   }
 }

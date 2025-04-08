@@ -12,12 +12,10 @@ const log = logger.createLogger("postgres-event-store");
 export class PostgresEventStore implements IEventStore {
   #client: PostgresClient;
   #schemaManager: EventStoreSchemaManager;
-  #repository: PostgresEventStoreRepository;
 
   constructor(client: PostgresClient, _manifest: SyncManifest) {
     this.#client = client;
     this.#schemaManager = new EventStoreSchemaManager(client);
-    this.#repository = new PostgresEventStoreRepository(client);
   }
 
   async prepare(): Promise<void> {
@@ -48,21 +46,17 @@ export class PostgresEventStore implements IEventStore {
     }
 
     try {
-      await this.#client.beginTransaction();
-
       const operations = ops.map((op, index) => ({
         index,
         operation: op,
       }));
 
-      await this.#repository.writeEvents(transactionId, operations);
-
-      // Commit transaction
-      await this.#client.commitTransaction();
+      await this.#client.tx(async (client) => {
+        await new PostgresEventStoreRepository().writeEvents(client, transactionId, operations);
+      });
       return true;
     } catch (error) {
-      // Rollback on error
-      await this.#client.rollbackTransaction();
+      // TODO(Wilco): Probably just throw here
       log.error("Failed to write operations to event store", { error });
       return false;
     }
@@ -72,7 +66,10 @@ export class PostgresEventStore implements IEventStore {
     return Promise.all(
       references.map(async (reference) => ({
         schema: reference,
-        transactionId: await this.#repository.getLastTransactionId(reference),
+        transactionId: await new PostgresEventStoreRepository().getLastTransactionId(
+          this.#client,
+          reference,
+        ),
       })),
     );
   }
@@ -94,7 +91,12 @@ export class PostgresEventStore implements IEventStore {
     let opMessage: OperationMessage | null = null;
 
     for (const { schema, transactionId } of cursors) {
-      const rows = await this.#repository.readEvents(schema, transactionId, limit);
+      const rows = await new PostgresEventStoreRepository().readEvents(
+        this.#client,
+        schema,
+        transactionId,
+        limit,
+      );
 
       for (const row of rows) {
         if (!opMessage) {
