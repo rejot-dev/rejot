@@ -1,6 +1,11 @@
 {
   "name": "@rejot/adapter-postgres",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rejot-dev/rejot.git",
+    "directory": "packages/adapter-postgres"
+  },
   "exports": {
     ".": "./src/postgres-adapter.ts",
     "./schemas": "./src/postgres-schemas.ts",
@@ -11,7 +16,7 @@
     "./event-store": "./src/event-store/postgres-event-store.ts",
     "./postgres-client": "./src/util/postgres-client.ts"
   },
-  "private": true,
+  "private": false,
   "scripts": {
     "check": "tsc --noEmit"
   },
