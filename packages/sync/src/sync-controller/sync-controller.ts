@@ -136,15 +136,13 @@ export class SyncController implements ISyncController {
   }
 
   async prepare() {
+    // TODO: Check why source using the same pg client has concurrency issues!
+    //       This error is caused when the source reader is applying migrations and concurrently the replication slot is opened.
+    await this.#sourceReader.prepare();
     await Promise.all(
       Array.from(
         // Create set because we don't want to call prepare on the same items twice.
-        new Set([
-          this.#sourceReader,
-          this.#sinkWriter,
-          this.#publishMessageBus,
-          ...this.#subscribeMessageBuses,
-        ]),
+        new Set([this.#sinkWriter, this.#publishMessageBus, ...this.#subscribeMessageBuses]),
       ).map((item) => item.prepare()),
     );
     this.#state = "prepared";
