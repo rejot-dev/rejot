@@ -76,6 +76,8 @@ jobs:
             name: "@rejot-dev/adapter-postgres"
           - path: packages/contract
             name: "@rejot-dev/contract"
+          - path: packages/sync
+            name: "@rejot-dev/sync"
           - path: apps/rejot-cli
             name: "@rejot-dev/cli"
 

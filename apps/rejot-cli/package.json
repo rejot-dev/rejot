@@ -1,7 +1,7 @@
 {
   "name": "@rejot-dev/cli",
   "type": "module",
-  "version": "0.0.4",
+  "version": "0.0.7",
   "license": "Apache-2.0",
   "private": false,
   "repository": {
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@oclif/core": "^4.2.8",
-    "@rejot-dev/adapter-postgres": "^0.0.4",
+    "@rejot-dev/adapter-postgres": "*",
     "@rejot-dev/contract": "*",
     "@rejot-dev/sync": "*",
     "@types/debug": "^4.1.12",

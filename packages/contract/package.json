@@ -1,6 +1,8 @@
 {
   "name": "@rejot-dev/contract",
-  "version": "0.0.4",
+  "version": "0.0.7",
+  "private": false,
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rejot-dev/rejot.git",
@@ -26,7 +28,6 @@
     "./schema-validator": "./schema-validator.ts",
     "./message-bus": "./message-bus/message-bus.ts"
   },
-  "private": false,
   "type": "module",
   "dependencies": {
     "ajv": "^8.17.1",
