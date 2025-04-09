@@ -4,7 +4,7 @@ import {
   organizationGetApi,
   organizationListApi,
   organizationPostApi,
-} from "@rejot/api-interface-controller/organizations";
+} from "@rejot-dev/api-interface-controller/organizations";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 
 export class OrganizationRoutes {

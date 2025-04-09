@@ -1,5 +1,5 @@
 {
-  "name": "@rejot/controller",
+  "name": "@rejot-dev/controller",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -26,10 +26,10 @@
     "@hono/zod-openapi": "^0.18.4",
     "@hono/zod-validator": "^0.4.3",
     "@opentelemetry/api": "^1.9.0",
-    "@rejot/api-interface-controller": "*",
-    "@rejot/sync": "*",
-    "@rejot/contract": "*",
-    "@rejot/adapter-postgres": "*",
+    "@rejot-dev/api-interface-controller": "*",
+    "@rejot-dev/sync": "*",
+    "@rejot-dev/contract": "*",
+    "@rejot-dev/adapter-postgres": "*",
     "@sentry/bun": "^9.1.0",
     "@std/assert": "npm:@jsr/std__assert@^1.0.11",
     "@types/bun": "^1.2.2",

@@ -6,7 +6,7 @@ import {
   connectionTablesApi,
   connectionTableSchemaApi,
   connectionTableSchemaChangesApi,
-} from "@rejot/api-interface-controller/connection-health";
+} from "@rejot-dev/api-interface-controller/connection-health";
 import type { IConnectionService } from "./connection-service.ts";
 import type { IConnectionManager } from "./connection-manager.ts";
 import type { ISchemaService } from "./schema-service.ts";

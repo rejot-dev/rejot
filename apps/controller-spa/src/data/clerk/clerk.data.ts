@@ -5,7 +5,7 @@ import {
   clerkGetApi,
   createSelfUserClerkPostApi,
   replaceUserMetadataClerkPutApi,
-} from "@rejot/api-interface-controller/clerk";
+} from "@rejot-dev/api-interface-controller/clerk";
 import type { z } from "zod";
 
 type ClerkGetResponse = z.infer<

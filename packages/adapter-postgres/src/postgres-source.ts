@@ -1,11 +1,11 @@
 import { PostgresClient } from "./util/postgres-client";
-import logger from "@rejot/contract/logger";
+import logger from "@rejot-dev/contract/logger";
 import type {
   IDataSource,
   Transaction,
   TransformedOperation,
   TableOperation,
-} from "@rejot/contract/sync";
+} from "@rejot-dev/contract/sync";
 import { DEFAULT_SLOT_NAME } from "./postgres-consts";
 import { PostgresReplicationListener } from "./postgres-replication-listener";
 import { DEFAULT_PUBLICATION_NAME } from "./postgres-consts";

@@ -2,10 +2,10 @@ import { Command, Flags } from "@oclif/core";
 import fs from "node:fs/promises";
 
 import { SUPPORTED_SINK_SCHEMES, SUPPORTED_SOURCE_SCHEMES } from "../rejot-cli-consts.ts";
-import logger, { setLogLevel, type LogLevel } from "@rejot/contract/logger";
+import logger, { setLogLevel, type LogLevel } from "@rejot-dev/contract/logger";
 import { createSourceAndSink, parseConnectionString } from "../factory.ts";
-import { DEFAULT_PUBLICATION_NAME } from "@rejot/adapter-postgres/consts";
-import { SyncController } from "@rejot/sync/sync-controller";
+import { DEFAULT_PUBLICATION_NAME } from "@rejot-dev/adapter-postgres/consts";
+import { SyncController } from "@rejot-dev/sync/sync-controller";
 
 const log = logger.createLogger("cli");
 export default class SyncCommand extends Command {

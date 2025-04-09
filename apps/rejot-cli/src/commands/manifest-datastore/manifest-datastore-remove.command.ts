@@ -1,6 +1,6 @@
 import { Args, Command } from "@oclif/core";
 import path from "node:path";
-import { readManifest, writeManifest } from "@rejot/contract/manifest.fs";
+import { readManifest, writeManifest } from "@rejot-dev/contract/manifest.fs";
 import { manifestFlags, validateDataStoreExists } from "./manifest-datastore-config";
 
 export class ManifestDataStoreRemoveCommand extends Command {

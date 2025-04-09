@@ -1,5 +1,5 @@
 {
-  "name": "@rejot/basic",
+  "name": "@rejot-dev/basic",
   "version": "0.0.1",
   "description": "",
   "type": "module",
@@ -32,7 +32,7 @@
     "@radix-ui/react-slot": "^1.1.2",
     "@radix-ui/react-toast": "^1.2.6",
     "@radix-ui/react-tooltip": "^1.1.8",
-    "@rejot/api-interface-controller": "*",
+    "@rejot-dev/api-interface-controller": "*",
     "@tanstack/react-query": "^5.66.0",
     "@types/d3-force": "^3.0.10",
     "@types/d3-quadtree": "^3.0.6",

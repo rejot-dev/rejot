@@ -6,9 +6,9 @@ import {
   type ManifestError,
   type ConnectionConfigSchema,
   type PublicSchemaSchema,
-} from "@rejot/contract/manifest";
-import logger from "@rejot/contract/logger";
-import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
+} from "@rejot-dev/contract/manifest";
+import logger from "@rejot-dev/contract/logger";
+import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 
 const log = logger.createLogger("sync-manifest");
 

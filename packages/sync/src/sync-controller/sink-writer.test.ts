@@ -3,13 +3,13 @@ import { SinkWriter } from "./sink-writer";
 import type {
   IConnectionAdapter,
   IConsumerSchemaTransformationAdapter,
-} from "@rejot/contract/adapter";
-import type { IDataSink, TransformedOperation } from "@rejot/contract/sync";
-import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
+} from "@rejot-dev/contract/adapter";
+import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
+import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 import { SyncManifest } from "../../../contract/manifest/sync-manifest";
-import type { PostgresConsumerSchemaTransformationSchema } from "@rejot/adapter-postgres/schemas";
-import type { IEventStore } from "@rejot/contract/event-store";
-import type { IDataSource } from "@rejot/contract/sync";
+import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/adapter-postgres/schemas";
+import type { IEventStore } from "@rejot-dev/contract/event-store";
+import type { IDataSource } from "@rejot-dev/contract/sync";
 import { z } from "zod";
 
 describe("SinkWriter", () => {

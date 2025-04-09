@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { ConnectionTable } from "@rejot/api-interface-controller/connection-health";
+import type { ConnectionTable } from "@rejot-dev/api-interface-controller/connection-health";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface PublicationSelectorProps {

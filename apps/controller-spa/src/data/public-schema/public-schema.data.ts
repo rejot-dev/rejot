@@ -8,7 +8,7 @@ import {
   PublicSchemaPostRequest,
   type PublicSchema,
   type PublicSchemaListItem,
-} from "@rejot/api-interface-controller/public-schema";
+} from "@rejot-dev/api-interface-controller/public-schema";
 
 export type PublicSchemaCreateResponse = z.infer<
   (typeof publicSchemaPostApi.responses)[201]["content"]["application/json"]["schema"]

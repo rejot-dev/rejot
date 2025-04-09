@@ -4,7 +4,7 @@ import { tokens } from "typed-inject";
 import { sql } from "@/connection/postgres/sql-tag.ts";
 import { ConnectionError, ConnectionErrors } from "../connection.error.ts";
 import type { IConnectionRepository } from "../connection-repository.ts";
-import { PostgresReplicationListener } from "@rejot/adapter-postgres/replication-listener";
+import { PostgresReplicationListener } from "@rejot-dev/adapter-postgres/replication-listener";
 import type { IChangesService } from "@/changes/changes-service.ts";
 import type { IConsumerSchemaRepository } from "@/consumer-schema/consumer-schema-repository.ts";
 

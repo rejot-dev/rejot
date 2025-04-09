@@ -4,7 +4,7 @@ import { createRoute } from "@hono/zod-openapi";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 import type { DataStoreService } from "@/data-store/data-store.service.ts";
 import type { PostgresChanges } from "@/connection/postgres/postgres-changes.ts";
-import { syncServiceStartApi } from "@rejot/api-interface-controller/sync-service";
+import { syncServiceStartApi } from "@rejot-dev/api-interface-controller/sync-service";
 import type { IClerkPersonService } from "@/clerk/clerk-person-service.ts";
 import { SyncServiceError, SyncServiceErrors } from "./sync-service.error.ts";
 

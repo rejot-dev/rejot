@@ -5,7 +5,7 @@ import type {
   IPublicSchemaTransformationAdapter,
   CreateSourceOptions,
   IConsumerSchemaTransformationAdapter,
-} from "@rejot/contract/adapter";
+} from "@rejot-dev/contract/adapter";
 import type {
   PostgresConnectionSchema,
   PostgresPublicSchemaTransformationSchema,
@@ -13,17 +13,17 @@ import type {
 } from "./postgres-schemas.ts";
 import { PostgresSource } from "./postgres-source.ts";
 import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./postgres-consts.ts";
-import type { TransformedOperation, TableOperation } from "@rejot/contract/sync";
-import type { PublicSchemaTransformation } from "@rejot/contract/public-schema";
-import type { ConsumerSchemaTransformation } from "@rejot/contract/consumer-schema";
-import type { Cursor } from "@rejot/contract/cursor";
-import logger from "@rejot/contract/logger";
+import type { TransformedOperation, TableOperation } from "@rejot-dev/contract/sync";
+import type { PublicSchemaTransformation } from "@rejot-dev/contract/public-schema";
+import type { ConsumerSchemaTransformation } from "@rejot-dev/contract/consumer-schema";
+import type { Cursor } from "@rejot-dev/contract/cursor";
+import logger from "@rejot-dev/contract/logger";
 import { isPostgresError, PG_PROTOCOL_VIOLATION } from "./util/postgres-error-codes.ts";
-import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
+import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 import { PostgresEventStore } from "./event-store/postgres-event-store.ts";
 import { PostgresClient } from "./util/postgres-client.ts";
 import { PostgresSink } from "./postgres-sink.ts";
-import type { SyncManifest } from "@rejot/contract/sync-manifest";
+import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 import {
   updatePublicSchemaState,
   getPublicSchemaStates,

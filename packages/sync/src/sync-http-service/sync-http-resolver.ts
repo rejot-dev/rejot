@@ -1,4 +1,4 @@
-import logger from "@rejot/contract/logger";
+import logger from "@rejot-dev/contract/logger";
 
 const log = logger.createLogger("sync-service-resolver");
 

@@ -1,18 +1,18 @@
-import type { IPublishMessageBus, ISubscribeMessageBus } from "@rejot/contract/message-bus";
+import type { IPublishMessageBus, ISubscribeMessageBus } from "@rejot-dev/contract/message-bus";
 import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import {
   type AnyIConnectionAdapter,
   type AnyIPublicSchemaTransformationAdapter,
   type AnyIConsumerSchemaTransformationAdapter,
-} from "@rejot/contract/adapter";
+} from "@rejot-dev/contract/adapter";
 import { SourceReader } from "./source-reader";
-import logger from "@rejot/contract/logger";
+import logger from "@rejot-dev/contract/logger";
 import { PublicSchemaTransformer } from "./public-schema-transformer";
 import { SinkWriter } from "./sink-writer";
-import { type Cursor, cursorToString } from "@rejot/contract/cursor";
+import { type Cursor, cursorToString } from "@rejot-dev/contract/cursor";
 import type { ISyncHTTPController } from "../sync-http-service/sync-http-service";
 import { z } from "zod";
-import type { PublicSchemaSchema } from "@rejot/contract/manifest";
+import type { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
 
 const log = logger.createLogger("sync-controller");
 

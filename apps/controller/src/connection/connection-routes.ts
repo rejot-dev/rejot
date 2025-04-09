@@ -7,7 +7,7 @@ import {
   connectionListApi,
   connectionUpdateApi,
   connectionDeleteApi,
-} from "@rejot/api-interface-controller/connection";
+} from "@rejot-dev/api-interface-controller/connection";
 import { createRoute } from "@hono/zod-openapi";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 

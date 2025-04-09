@@ -2,7 +2,7 @@ import { test, expect } from "bun:test";
 import { z } from "zod";
 
 import { createPublicSchema, deserializePublicSchema } from "./public-schema.ts";
-import { createPostgresPublicSchemaTransformation } from "@rejot/adapter-postgres";
+import { createPostgresPublicSchemaTransformation } from "@rejot-dev/adapter-postgres";
 
 test("createPublicSchema", () => {
   const publication = createPublicSchema("test", {

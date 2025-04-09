@@ -1,4 +1,4 @@
-import type { TableOperation } from "@rejot/contract/sync";
+import type { TableOperation } from "@rejot-dev/contract/sync";
 import { z } from "zod";
 import { PublicSchemaSchema } from "../manifest/manifest.ts";
 

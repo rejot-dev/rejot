@@ -1,5 +1,5 @@
 {
-  "name": "@rejot/api-interface-controller",
+  "name": "@rejot-dev/api-interface-controller",
   "version": "0.0.0",
   "scripts": {
     "check": "tsc --noEmit"

@@ -2,7 +2,7 @@ import { tokens } from "typed-inject";
 import { schema } from "@/postgres/schema.ts";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { PostgresManager } from "@/postgres/postgres.ts";
-import type { ColumnSchema } from "@rejot/api-interface-controller/connection-health";
+import type { ColumnSchema } from "@rejot-dev/api-interface-controller/connection-health";
 
 export interface ISchemaRepository {
   getLatestSnapshot(params: {

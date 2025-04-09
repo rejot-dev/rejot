@@ -3,11 +3,11 @@ import type {
   TransformedOperationWithSource,
   TransformedOperationWithSourceInsert,
   TransformedOperationWithSourceUpdate,
-} from "@rejot/contract/event-store";
+} from "@rejot-dev/contract/event-store";
 import { pgRollbackDescribe } from "../util/postgres-test-utils";
 import { PostgresEventStore } from "./postgres-event-store";
-import { SyncManifest } from "@rejot/contract/sync-manifest";
-import type { PublicSchemaReference } from "@rejot/contract/cursor";
+import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
+import type { PublicSchemaReference } from "@rejot-dev/contract/cursor";
 
 const TEST_SCHEMA_NAME = "rejot_events";
 const TEST_TABLE_NAME = "events";

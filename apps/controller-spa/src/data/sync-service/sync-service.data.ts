@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { syncServiceStartApi } from "@rejot/api-interface-controller/sync-service";
+import { syncServiceStartApi } from "@rejot-dev/api-interface-controller/sync-service";
 import { fetchRouteThrowing } from "../fetch";
 import { z } from "zod";
 

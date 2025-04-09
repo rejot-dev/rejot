@@ -6,7 +6,7 @@ import {
   publicSchemaGetApi,
   publicSchemaListApi,
   publicSchemaPostApi,
-} from "@rejot/api-interface-controller/public-schema";
+} from "@rejot-dev/api-interface-controller/public-schema";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 
 export class PublicSchemaRoutes {

@@ -1,5 +1,5 @@
 {
-  "name": "@rejot/adapter-postgres",
+  "name": "@rejot-dev/adapter-postgres",
   "version": "0.0.4",
   "repository": {
     "type": "git",
@@ -22,7 +22,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@rejot/contract": "*",
+    "@rejot-dev/contract": "*",
     "pg": "^8.11.3",
     "pg-logical-replication": "^2.0.7"
   },

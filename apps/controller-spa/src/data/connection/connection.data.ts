@@ -6,7 +6,7 @@ import {
   ConnectionCreateRequest,
   connectionListApi,
   type ConnectionSchema,
-} from "@rejot/api-interface-controller/connection";
+} from "@rejot-dev/api-interface-controller/connection";
 
 export type Connection = z.infer<typeof ConnectionSchema>;
 

@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { type ApiResult, fetchRoute } from "../fetch.ts";
-import { postCheckConnectionApi } from "@rejot/api-interface-controller/connection";
-import type { ConnectionHealth } from "@rejot/api-interface-controller/connection-health";
+import { postCheckConnectionApi } from "@rejot-dev/api-interface-controller/connection";
+import type { ConnectionHealth } from "@rejot-dev/api-interface-controller/connection-health";
 
 type ConnectionConfig = {
   type: "postgres";

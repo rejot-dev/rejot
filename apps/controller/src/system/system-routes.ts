@@ -4,7 +4,7 @@ import {
   systemDataStorePutApi,
   systemGetApi,
   systemListApi,
-} from "@rejot/api-interface-controller/system";
+} from "@rejot-dev/api-interface-controller/system";
 import type { ISystemService } from "./system-service.ts";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 import type { IClerkApiClient } from "@/clerk/clerk.api-client.ts";

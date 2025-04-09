@@ -1,4 +1,4 @@
-import { readManifest } from "@rejot/contract/manifest.fs";
+import { readManifest } from "@rejot-dev/contract/manifest.fs";
 import { Flags } from "@oclif/core";
 
 export const manifestFlags = {

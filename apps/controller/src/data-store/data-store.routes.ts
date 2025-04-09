@@ -5,7 +5,7 @@ import { createRoute } from "@hono/zod-openapi";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 import type { IDataStoreService } from "./data-store.service.ts";
 import type { IConnectionManager } from "@/connection/connection-manager.ts";
-import { dataStoreListApi, dataStoreGetApi } from "@rejot/api-interface-controller/data-store";
+import { dataStoreListApi, dataStoreGetApi } from "@rejot-dev/api-interface-controller/data-store";
 export class DataStoreRoutes {
   static inject = tokens(
     "dataStoreService",

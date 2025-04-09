@@ -1,8 +1,8 @@
-import type { Cursor } from "@rejot/contract/cursor";
+import type { Cursor } from "@rejot-dev/contract/cursor";
 import type { ISyncController } from "../sync-controller/sync-controller";
 import type { ISyncHTTPController } from "../sync-http-service/sync-http-service";
 import { z } from "zod";
-import type { PublicSchemaSchema } from "@rejot/contract/manifest";
+import type { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
 
 export class MockSyncController implements ISyncController {
   #cursors: Cursor[] = [];

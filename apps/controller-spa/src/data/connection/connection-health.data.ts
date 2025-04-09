@@ -11,7 +11,7 @@ import {
   connectionTableSchemaApi,
   connectionTableSchemaChangesApi,
   type ConnectionTableSchemaChangesResponse,
-} from "@rejot/api-interface-controller/connection-health";
+} from "@rejot-dev/api-interface-controller/connection-health";
 
 export function getConnectionHealth(
   organizationId: string,

@@ -2,7 +2,7 @@ import { tokens } from "typed-inject";
 import type { IConnectionService } from "./connection-service.ts";
 import type { IConnectionManager } from "./connection-manager.ts";
 import type { ISchemaRepository } from "./schema-repository.ts";
-import type { ColumnSchema } from "@rejot/api-interface-controller/connection-health";
+import type { ColumnSchema } from "@rejot-dev/api-interface-controller/connection-health";
 
 export type SchemaChange = {
   changeType:

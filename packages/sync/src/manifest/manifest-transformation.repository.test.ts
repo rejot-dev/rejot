@@ -1,8 +1,8 @@
 import { test, expect } from "bun:test";
 import { z } from "zod";
-import { SyncManifestSchema } from "@rejot/contract/manifest";
+import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
 import { ManifestTransformationRepository } from "./manifest-transformation.repository";
-import type { TableOperation } from "@rejot/contract/sync";
+import type { TableOperation } from "@rejot-dev/contract/sync";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 

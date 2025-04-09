@@ -3,9 +3,9 @@ import { z } from "zod";
 import {
   createPostgresConsumerSchemaTransformation,
   createPostgresPublicSchemaTransformation,
-} from "@rejot/adapter-postgres";
-import { createPublicSchema } from "@rejot/contract/public-schema";
-import { createConsumerSchema } from "@rejot/contract/consumer-schema";
+} from "@rejot-dev/adapter-postgres";
+import { createPublicSchema } from "@rejot-dev/contract/public-schema";
+import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
 
 const testPublicSchema = createPublicSchema("public-account", {
   source: { dataStoreSlug: "data-store-1", tables: ["account"] },

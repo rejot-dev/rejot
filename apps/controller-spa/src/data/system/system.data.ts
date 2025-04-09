@@ -8,7 +8,7 @@ import {
   systemDataStorePutApi,
   systemGetApi,
   systemListApi,
-} from "@rejot/api-interface-controller/system";
+} from "@rejot-dev/api-interface-controller/system";
 import type { ConnectionType } from "../connection/connection";
 import { z } from "zod";
 import { useSelectedOrganizationCode as useSelectedOrganizationId } from "../clerk/clerk-meta.data";

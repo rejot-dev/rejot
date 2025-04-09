@@ -1,4 +1,4 @@
-import { connectionSchemaOverviewApi } from "@rejot/api-interface-controller/connection-tables";
+import { connectionSchemaOverviewApi } from "@rejot-dev/api-interface-controller/connection-tables";
 
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { tokens } from "typed-inject";

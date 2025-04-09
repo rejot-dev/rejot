@@ -6,7 +6,7 @@ import { assert } from "@std/assert/assert";
 import type { ISystemService, System } from "./system-service.ts";
 import { SystemRoutes } from "./system-routes.ts";
 import { MockAuthenticationMiddleware } from "@/_test/mock-authentication.middleware.ts";
-import type { CreateSystem } from "@rejot/api-interface-controller/system";
+import type { CreateSystem } from "@rejot-dev/api-interface-controller/system";
 import type { SystemOverview } from "./system-service.ts";
 import type { ClerkUserMetadata, IClerkApiClient } from "@/clerk/clerk.api-client.ts";
 import { ClerkErrors } from "@/clerk/clerk.error.ts";
