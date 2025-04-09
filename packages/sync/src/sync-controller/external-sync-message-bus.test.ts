@@ -2,9 +2,9 @@ import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { SyncHTTPController } from "../sync-http-service/sync-http-service";
 import { InMemoryEventStore } from "../_test/in-memory-event-store";
 import { ExternalSyncMessageBus } from "./external-sync-message-bus";
-import { SyncManifest } from "@rejot/contract/sync-manifest";
+import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 import type { ISyncServiceResolver } from "../sync-http-service/sync-http-resolver";
-import type { Cursor } from "@rejot/contract/cursor";
+import type { Cursor } from "@rejot-dev/contract/cursor";
 import { MockSyncController } from "../_test/mock-sync-controller";
 
 const TEST_PORT = 3334;

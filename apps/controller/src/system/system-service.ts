@@ -1,6 +1,6 @@
 import { generateCode } from "@/codes/codes.ts";
 import type { SystemRepository } from "./system-repository.ts";
-import type { CreateSystem } from "@rejot/api-interface-controller/system";
+import type { CreateSystem } from "@rejot-dev/api-interface-controller/system";
 import type { SchemaDefinition } from "@/public-schema/public-schema.ts";
 
 export type UpsertDataStoreServiceParams = {

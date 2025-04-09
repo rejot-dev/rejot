@@ -1,6 +1,6 @@
 import { Command } from "@oclif/core";
 import path from "node:path";
-import { readManifest } from "@rejot/contract/manifest.fs";
+import { readManifest } from "@rejot-dev/contract/manifest.fs";
 import { manifestFlags } from "./manifest-datastore-config";
 
 export class ManifestDataStoreListCommand extends Command {

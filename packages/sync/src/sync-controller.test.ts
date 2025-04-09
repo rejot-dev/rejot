@@ -4,7 +4,7 @@ import type {
   Transaction,
   TableOperation,
   TransformedOperation,
-} from "@rejot/contract/sync";
+} from "@rejot-dev/contract/sync";
 import { SyncController } from "./sync-controller.ts";
 import { describe, test, expect } from "bun:test";
 

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchRouteThrowing } from "../fetch.ts";
-import { connectionSchemaOverviewApi } from "@rejot/api-interface-controller/connection-tables";
+import { connectionSchemaOverviewApi } from "@rejot-dev/api-interface-controller/connection-tables";
 
 export function useConnectionSchemaOverview(organizationId: string, connectionSlug: string) {
   return useQuery({

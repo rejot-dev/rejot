@@ -1,6 +1,6 @@
-import type { CreateSourceOptions, IConnectionAdapter } from "@rejot/contract/adapter";
+import type { CreateSourceOptions, IConnectionAdapter } from "@rejot-dev/contract/adapter";
 import { InMemorySource } from "./in-memory-source";
-import { InMemoryConnectionConfigSchema } from "@rejot/contract/manifest";
+import { InMemoryConnectionConfigSchema } from "@rejot-dev/contract/manifest";
 import { z } from "zod";
 import { InMemoryEventStore } from "./in-memory-event-store";
 import { InMemorySink } from "./in-memory-sink";

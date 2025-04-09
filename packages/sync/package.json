@@ -1,5 +1,5 @@
 {
-  "name": "@rejot/sync",
+  "name": "@rejot-dev/sync",
   "version": "0.0.1",
   "exports": {
     "./consts": "./src/sync-consts.ts",
@@ -17,6 +17,6 @@
   },
   "type": "module",
   "dependencies": {
-    "@rejot/contract": "*"
+    "@rejot-dev/contract": "*"
   }
 }

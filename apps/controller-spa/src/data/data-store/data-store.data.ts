@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { fetchRouteThrowing } from "@/data/fetch.ts";
-import { dataStoreListApi, dataStoreGetApi } from "@rejot/api-interface-controller/data-store";
+import { dataStoreListApi, dataStoreGetApi } from "@rejot-dev/api-interface-controller/data-store";
 
 export function getSystemDataStores(systemSlug: string) {
   return fetchRouteThrowing(dataStoreListApi, {

@@ -1,4 +1,4 @@
-import type { IDataSink, TransformedOperation } from "@rejot/contract/sync";
+import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
 
 type StdoutOutputSchema = {
   operation: string;

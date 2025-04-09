@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
-import logger from "@rejot/contract/logger";
-import type { IDataSink, TransformedOperation } from "@rejot/contract/sync";
+import logger from "@rejot-dev/contract/logger";
+import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
 
 const log = logger.createLogger("file-sink");
 

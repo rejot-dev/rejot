@@ -5,7 +5,7 @@ import { SchemaService } from "./schema-service.ts";
 import type {
   ColumnSchema,
   ConnectionTableSchemaChange,
-} from "@rejot/api-interface-controller/connection-health";
+} from "@rejot-dev/api-interface-controller/connection-health";
 
 test("SchemaService.compareSchemas", async () => {
   // Create a minimal SchemaService instance for testing the private method

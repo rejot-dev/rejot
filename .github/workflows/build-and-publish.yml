@@ -73,11 +73,11 @@ jobs:
       matrix:
         package:
           - path: packages/adapter-postgres
-            name: "@rejot/adapter-postgres"
+            name: "@rejot-dev/adapter-postgres"
           - path: packages/contract
-            name: "@rejot/contract"
+            name: "@rejot-dev/contract"
           - path: apps/rejot-cli
-            name: "@rejot/cli"
+            name: "@rejot-dev/cli"
 
     steps:
       - name: Checkout repository

@@ -6,7 +6,7 @@ import {
   consumerSchemaGetApi,
   consumerSchemaListApi,
   consumerSchemaPostApi,
-} from "@rejot/api-interface-controller/consumer-schema";
+} from "@rejot-dev/api-interface-controller/consumer-schema";
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 
 export class ConsumerSchemaRoutes {

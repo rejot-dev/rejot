@@ -1,6 +1,6 @@
 import { Command, Flags } from "@oclif/core";
 import path from "node:path";
-import { readManifest, writeManifest } from "@rejot/contract/manifest.fs";
+import { readManifest, writeManifest } from "@rejot-dev/contract/manifest.fs";
 
 export class ManifestEventStoreAddCommand extends Command {
   static override id = "manifest:eventstore:add";

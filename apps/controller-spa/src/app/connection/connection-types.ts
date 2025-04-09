@@ -1,4 +1,4 @@
-import { SlugSchema } from "@rejot/api-interface-controller/generic";
+import { SlugSchema } from "@rejot-dev/api-interface-controller/generic";
 import { z } from "zod";
 
 export const ConnectionPostgresForm = z

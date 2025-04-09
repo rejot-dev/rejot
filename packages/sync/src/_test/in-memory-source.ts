@@ -3,7 +3,7 @@ import type {
   TransformedOperation,
   TableOperation,
   Transaction,
-} from "@rejot/contract/sync";
+} from "@rejot-dev/contract/sync";
 
 export class InMemorySource implements IDataSource {
   /** Simulates a connection to some database, that will be resolved when stop() is called. */

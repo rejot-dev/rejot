@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import type { ComponentPropsWithoutRef } from "react";
-import { SlugSchema } from "@rejot/api-interface-controller/generic";
+import { SlugSchema } from "@rejot-dev/api-interface-controller/generic";
 import { useEffect } from "react";
 import { useCreateSystemMutation } from "@/data/system/system.data";
 import { useSelectedOrganizationCode } from "@/data/clerk/clerk-meta.data";

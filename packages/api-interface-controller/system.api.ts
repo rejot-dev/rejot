@@ -1,5 +1,5 @@
 import { type RouteConfig, z } from "@hono/zod-openapi";
-import { SlugSchema, ZodErrorSchema } from "@rejot/api-interface-controller/generic";
+import { SlugSchema, ZodErrorSchema } from "@rejot-dev/api-interface-controller/generic";
 import { SchemaDefinitionColumnSchema } from "./public-schema.api";
 
 export const OverviewPublicSchemaSchema = z.object({

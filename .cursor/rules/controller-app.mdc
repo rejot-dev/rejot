@@ -194,8 +194,8 @@ export type CreatePublicSchema = { /*..*/ };
 - Create OpenAPI spec first in `packages/api-interface-controller`
 - Always implement both route AND api files (`<domain>.api.ts` and `<domain>.routes.ts`)
 - Add `*.api.ts` files to relevant `package.json` exports
-- Import using `@rejot/api-interface-controller/<file>`
-- NEVER import a `*.api.ts` using the local path from any other package. Always use `@rejot/api-interface-controller/*` that you added to package.json
+- Import using `@rejot-dev/api-interface-controller/<file>`
+- NEVER import a `*.api.ts` using the local path from any other package. Always use `@rejot-dev/api-interface-controller/*` that you added to package.json
 
 Example API definition:
 ```ts

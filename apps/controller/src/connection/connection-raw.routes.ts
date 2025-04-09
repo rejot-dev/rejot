@@ -3,7 +3,7 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 
 import type { IAuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 import type { ConnectionTypeMultiplexer } from "@/connection/connection-type-multiplexer.ts";
-import { postCheckConnectionApi } from "@rejot/api-interface-controller/connection";
+import { postCheckConnectionApi } from "@rejot-dev/api-interface-controller/connection";
 
 export class ConnectionRawRoutes {
   static inject = tokens("connectionTypeMultiplexer", "authenticationMiddleware");

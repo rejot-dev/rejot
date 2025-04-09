@@ -1,5 +1,5 @@
 import type { PostgresClient } from "../util/postgres-client";
-import logger from "@rejot/contract/logger";
+import logger from "@rejot-dev/contract/logger";
 
 const log = logger.createLogger("postgres-migration-manager");
 

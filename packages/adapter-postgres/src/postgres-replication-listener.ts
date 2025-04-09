@@ -7,8 +7,8 @@ import type {
 } from "pg-logical-replication/dist/output-plugins/pgoutput/pgoutput.types";
 import { RejotPgOutputPlugin } from "./pgoutput-plugin.ts";
 import { assertUnreachable } from "./util/asserts.ts";
-import type { Transaction } from "@rejot/contract/sync";
-import logger from "@rejot/contract/logger";
+import type { Transaction } from "@rejot-dev/contract/sync";
+import logger from "@rejot-dev/contract/logger";
 
 type ConnectionConfig = {
   host?: string;

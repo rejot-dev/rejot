@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
 import { createConsumerSchema, deserializeConsumerSchema } from "./consumer-schema.ts";
-import { createPostgresConsumerSchemaTransformation } from "@rejot/adapter-postgres";
+import { createPostgresConsumerSchemaTransformation } from "@rejot-dev/adapter-postgres";
 
 test("createConsumerSchema", () => {
   const consumerSchema = createConsumerSchema({

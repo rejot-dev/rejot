@@ -1,6 +1,6 @@
 import { describe, test, expect } from "bun:test";
 import { InMemorySource } from "./in-memory-source";
-import type { Transaction } from "@rejot/contract/sync";
+import type { Transaction } from "@rejot-dev/contract/sync";
 
 describe("InMemorySource", () => {
   test("should yield transactions in order they were posted", async () => {

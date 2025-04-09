@@ -2,7 +2,7 @@ import { useConnectionPublications } from "@/data/connection/connection-health.d
 import {
   type ConnectionPublication,
   type ConnectionTable,
-} from "@rejot/api-interface-controller/connection-health";
+} from "@rejot-dev/api-interface-controller/connection-health";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {

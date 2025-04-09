@@ -2,7 +2,7 @@ import {
   ClerkUserMetadata,
   replaceUserMetadataClerkPutApi,
   patchUserMetadataClerkPatchApi,
-} from "@rejot/api-interface-controller/clerk";
+} from "@rejot-dev/api-interface-controller/clerk";
 import { useUser } from "@clerk/clerk-react";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

@@ -3,13 +3,13 @@ import { z } from "zod";
 import type {
   AnyIConnectionAdapter,
   AnyIConsumerSchemaTransformationAdapter,
-} from "@rejot/contract/adapter";
-import type { IDataSink } from "@rejot/contract/sync";
-import type { Cursor } from "@rejot/contract/cursor";
+} from "@rejot-dev/contract/adapter";
+import type { IDataSink } from "@rejot-dev/contract/sync";
+import type { Cursor } from "@rejot-dev/contract/cursor";
 import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
-import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
-import type { ConsumerSchemaTransformationSchema } from "@rejot/contract/manifest";
-import { logger } from "@rejot/contract/logger";
+import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
+import type { ConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
+import { logger } from "@rejot-dev/contract/logger";
 
 const log = logger.createLogger("sync-writer");
 

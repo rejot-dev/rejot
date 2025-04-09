@@ -2,7 +2,7 @@ import { test, expect, describe } from "bun:test";
 import { SyncManifestController } from "./sync-manifest-controller";
 import { InMemoryConnectionAdapter } from "./_test/in-memory-adapter";
 import { InMemoryEventStore } from "./_test/in-memory-event-store";
-import type { Transaction } from "@rejot/contract/sync";
+import type { Transaction } from "@rejot-dev/contract/sync";
 import type { ISyncHTTPController } from "./sync-http-service/sync-http-service";
 import type { ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
 

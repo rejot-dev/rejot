@@ -5,7 +5,7 @@ import {
   createSelfUserClerkPostApi,
   replaceUserMetadataClerkPutApi,
   patchUserMetadataClerkPatchApi,
-} from "@rejot/api-interface-controller/clerk";
+} from "@rejot-dev/api-interface-controller/clerk";
 import type { AuthenticationMiddleware } from "@/authentication/authentication.middleware.ts";
 import type { IClerkPersonService } from "./clerk-person-service.ts";
 import { ClerkError, ClerkErrors } from "./clerk.error.ts";

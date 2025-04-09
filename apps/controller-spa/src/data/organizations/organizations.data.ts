@@ -3,7 +3,7 @@ import { type ApiResult, fetchRoute } from "../fetch";
 import {
   organizationListApi,
   organizationPostApi,
-} from "@rejot/api-interface-controller/organizations";
+} from "@rejot-dev/api-interface-controller/organizations";
 import type { z } from "zod";
 
 type OrganizationPostResponse = z.infer<

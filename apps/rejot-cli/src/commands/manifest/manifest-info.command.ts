@@ -1,7 +1,7 @@
 import { Command, Flags } from "@oclif/core";
 import path from "node:path";
-import { readManifest } from "@rejot/contract/manifest.fs";
-import { verifyManifests } from "@rejot/contract/manifest";
+import { readManifest } from "@rejot-dev/contract/manifest.fs";
+import { verifyManifests } from "@rejot-dev/contract/manifest";
 
 export class ManifestInfoCommand extends Command {
   static override id = "manifest";

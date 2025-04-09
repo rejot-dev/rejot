@@ -1,9 +1,9 @@
-import type { SyncManifest } from "@rejot/contract/sync-manifest";
+import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 import type { ISyncServiceResolver } from "../sync-http-service/sync-http-resolver";
-import type { ISubscribeMessageBus, OperationMessage } from "@rejot/contract/message-bus";
-import type { Cursor } from "@rejot/contract/cursor";
-import { Cursors } from "@rejot/contract/cursor";
-import logger from "@rejot/contract/logger";
+import type { ISubscribeMessageBus, OperationMessage } from "@rejot-dev/contract/message-bus";
+import type { Cursor } from "@rejot-dev/contract/cursor";
+import { Cursors } from "@rejot-dev/contract/cursor";
+import logger from "@rejot-dev/contract/logger";
 import { fetchRead } from "../sync-http-service/sync-http-service-fetch";
 
 const State = {

@@ -1,7 +1,7 @@
 import { Args, Command, Flags } from "@oclif/core";
-import { collectPublicSchemas, collectConsumerSchemas } from "@rejot/contract/collect";
-import { writeManifest } from "@rejot/contract/manifest";
-import { readManifest } from "@rejot/contract/manifest.fs";
+import { collectPublicSchemas, collectConsumerSchemas } from "@rejot-dev/contract/collect";
+import { writeManifest } from "@rejot-dev/contract/manifest";
+import { readManifest } from "@rejot-dev/contract/manifest.fs";
 
 export default class Collect extends Command {
   static override args = {

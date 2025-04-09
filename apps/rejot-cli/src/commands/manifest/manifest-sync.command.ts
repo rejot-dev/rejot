@@ -1,26 +1,26 @@
 import { Args, Command, Flags } from "@oclif/core";
 import fs from "node:fs/promises";
 import { z } from "zod";
-import { SyncManifestSchema } from "@rejot/contract/manifest";
-import logger, { setLogLevel, type LogLevel } from "@rejot/contract/logger";
+import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
+import logger, { setLogLevel, type LogLevel } from "@rejot-dev/contract/logger";
 import {
   PostgresConnectionAdapter,
   PostgresPublicSchemaTransformationAdapter,
   PostgresConsumerSchemaTransformationAdapter,
-} from "@rejot/adapter-postgres";
-import { SyncController } from "@rejot/sync/sync-controller-new";
-import { ExternalSyncMessageBus } from "@rejot/sync/external-sync-message-bus";
+} from "@rejot-dev/adapter-postgres";
+import { SyncController } from "@rejot-dev/sync/sync-controller-new";
+import { ExternalSyncMessageBus } from "@rejot-dev/sync/external-sync-message-bus";
 import type {
   AnyIConnectionAdapter,
   AnyIConsumerSchemaTransformationAdapter,
   AnyIPublicSchemaTransformationAdapter,
-} from "@rejot/contract/adapter";
+} from "@rejot-dev/contract/adapter";
 
-import { SyncManifest } from "@rejot/contract/sync-manifest";
-import { EventStoreMessageBus } from "@rejot/contract/event-store-message-bus";
-import { SyncHTTPController } from "@rejot/sync/sync-http-service";
-import type { ISubscribeMessageBus } from "@rejot/contract/message-bus";
-import { createResolver, type ISyncServiceResolver } from "@rejot/sync/sync-http-resolver";
+import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
+import { EventStoreMessageBus } from "@rejot-dev/contract/event-store-message-bus";
+import { SyncHTTPController } from "@rejot-dev/sync/sync-http-service";
+import type { ISubscribeMessageBus } from "@rejot-dev/contract/message-bus";
+import { createResolver, type ISyncServiceResolver } from "@rejot-dev/sync/sync-http-resolver";
 const log = logger.createLogger("cli");
 
 export class ManifestSyncCommand extends Command {

@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-import type { AnyIPublicSchemaTransformationAdapter } from "@rejot/contract/adapter";
+import type { AnyIPublicSchemaTransformationAdapter } from "@rejot-dev/contract/adapter";
 import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
-import type { PublicSchemaTransformationSchema } from "@rejot/contract/manifest";
-import type { TransformedOperationWithSource } from "@rejot/contract/event-store";
-import type { Transaction } from "@rejot/contract/sync";
-import logger from "@rejot/contract/logger";
+import type { PublicSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
+import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
+import type { Transaction } from "@rejot-dev/contract/sync";
+import logger from "@rejot-dev/contract/logger";
 
 const log = logger.createLogger("public-schema-transformer");
 

@@ -3,8 +3,8 @@ import type {
   IDataSink,
   Transaction,
   TransformedOperation,
-} from "@rejot/contract/sync";
-import logger from "@rejot/contract/logger";
+} from "@rejot-dev/contract/sync";
+import logger from "@rejot-dev/contract/logger";
 import { ResultSetStore, type BackfillSource } from "./result-set-store";
 import { DEFAULT_BACKFILL_TIMEOUT_MS } from "./sync-consts";
 

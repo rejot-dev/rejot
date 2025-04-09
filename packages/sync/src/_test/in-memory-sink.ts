@@ -1,4 +1,4 @@
-import type { IDataSink, TransformedOperation } from "@rejot/contract/sync";
+import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
 
 export class InMemorySink implements IDataSink {
   #memory: Map<string, Record<string, unknown>> = new Map();

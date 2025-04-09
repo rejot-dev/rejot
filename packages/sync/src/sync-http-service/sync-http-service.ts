@@ -1,4 +1,4 @@
-import type { IEventStore } from "@rejot/contract/event-store";
+import type { IEventStore } from "@rejot-dev/contract/event-store";
 import {
   dataStoreCursorsRoute,
   indexRoute,

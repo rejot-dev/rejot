@@ -1,9 +1,9 @@
 import { test, expect, describe } from "bun:test";
 import { PublicSchemaTransformer } from "./public-schema-transformer";
-import type { IPublicSchemaTransformationAdapter } from "@rejot/contract/adapter";
-import type { Transaction, TableOperation, TransformedOperation } from "@rejot/contract/sync";
+import type { IPublicSchemaTransformationAdapter } from "@rejot-dev/contract/adapter";
+import type { Transaction, TableOperation, TransformedOperation } from "@rejot-dev/contract/sync";
 import { SyncManifest } from "../../../contract/manifest/sync-manifest";
-import type { PostgresPublicSchemaTransformationSchema } from "@rejot/adapter-postgres/schemas";
+import type { PostgresPublicSchemaTransformationSchema } from "@rejot-dev/adapter-postgres/schemas";
 import { z } from "zod";
 
 describe("PublicSchemaTransformer", () => {

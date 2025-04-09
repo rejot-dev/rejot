@@ -3,7 +3,7 @@ import {
   PostgresConnectionSchema,
   PostgresPublicSchemaTransformationSchema,
   PostgresConsumerSchemaTransformationSchema,
-} from "@rejot/adapter-postgres/schemas";
+} from "@rejot-dev/adapter-postgres/schemas";
 import { JsonSchemaSchema } from "../json-schema";
 
 export const InMemoryConnectionConfigSchema = z.object({

@@ -8,7 +8,7 @@ import {
   ConsumerSchemaPostRequest,
   type ConsumerSchema,
   type ConsumerSchemaListItem,
-} from "@rejot/api-interface-controller/consumer-schema";
+} from "@rejot-dev/api-interface-controller/consumer-schema";
 
 export function getConsumerSchemas(systemSlug: string): Promise<ConsumerSchemaListItem[]> {
   return fetchRouteThrowing(consumerSchemaListApi, { params: { systemSlug } });

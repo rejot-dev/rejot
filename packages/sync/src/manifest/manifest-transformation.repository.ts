@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { SyncManifestSchema, type PublicSchemaSchema } from "@rejot/contract/manifest";
-import type { TableOperation } from "@rejot/contract/sync";
-import type { IPublicSchemaTransformationRepository } from "@rejot/contract/public-schema";
+import { SyncManifestSchema, type PublicSchemaSchema } from "@rejot-dev/contract/manifest";
+import type { TableOperation } from "@rejot-dev/contract/sync";
+import type { IPublicSchemaTransformationRepository } from "@rejot-dev/contract/public-schema";
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
 export class ManifestTransformationRepository implements IPublicSchemaTransformationRepository {
