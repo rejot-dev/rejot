@@ -167,7 +167,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.8
 
       - name: Restore dependencies
         uses: actions/cache/restore@v4
