@@ -16,6 +16,7 @@ export async function initSqlparser(): Promise<void> {
   initialized = true;
 }
 
+// The typing on this is super incomplete.
 export type Statement = Query;
 
 export function parseSql(sql: string): Statement[] {

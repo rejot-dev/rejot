@@ -2,7 +2,7 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 
 import type { z } from "zod";
 import { PublicSchemaSchema } from "../manifest/manifest.ts";
-import type { JsonSchemaSchema } from "../json-schema.ts";
+import type { JsonSchemaSchema } from "../json-schema/json-schema.ts";
 
 export type PublicSchemaTransformation = {
   transformationType: "postgresql";

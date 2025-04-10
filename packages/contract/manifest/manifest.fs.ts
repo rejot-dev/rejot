@@ -6,11 +6,11 @@ import { z } from "zod";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
-const CURRENT_MANIFEST_VERSION = 0;
+const CURRENT_MANIFEST_FILE_VERSION = 0;
 
 const emptyManifest: Manifest = {
   slug: "default",
-  manifestVersion: CURRENT_MANIFEST_VERSION,
+  manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
   connections: [],
   dataStores: [],
   eventStores: [],
@@ -32,7 +32,7 @@ export async function readManifest(path: string): Promise<Manifest> {
       throw new Error("Manifest file is not valid");
     }
 
-    if (json.manifestVersion !== CURRENT_MANIFEST_VERSION) {
+    if (json.manifestVersion !== CURRENT_MANIFEST_FILE_VERSION) {
       // TODO: Implement upgrades
       throw new Error("Manifest file is not valid");
     }
