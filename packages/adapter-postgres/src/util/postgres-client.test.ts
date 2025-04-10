@@ -88,15 +88,23 @@ describe("PostgresClient", () => {
   test("Nested transactions success", async () => {
     const client = getTestClient();
 
-    await client.tx(async (client) => {
-      await client.query(`INSERT INTO ${randomTableName} (name) VALUES ('test')`);
+    const ids = await client.tx(async (client) => {
+      const r1 = await client.query(
+        `INSERT INTO ${randomTableName} (name) VALUES ('test') RETURNING id`,
+      );
 
-      await client.tx(async (client) => {
-        await client.query(`INSERT INTO ${randomTableName} (name) VALUES ('test2')`);
+      const r2 = await client.tx(async (client) => {
+        return await client.query(
+          `INSERT INTO ${randomTableName} (name) VALUES ('test2') RETURNING id`,
+        );
       });
+
+      return [r1.rows[0]["id"], r2.rows[0]["id"]];
     });
 
-    const result = await client.query(`SELECT * FROM ${randomTableName}`);
+    const result = await client.query(
+      `SELECT * FROM ${randomTableName} WHERE id IN (${ids.join(",")}) ORDER BY id`,
+    );
     expect(result.rows[0]["name"]).toEqual("test");
     expect(result.rows[1]["name"]).toEqual("test2");
 
@@ -106,12 +114,15 @@ describe("PostgresClient", () => {
   test("Nested transactions error", async () => {
     const client = getTestClient();
 
+    const randomValue1 = `test_${Math.random().toString(36).substring(2, 15)}`;
+    const randomValue2 = `test_${Math.random().toString(36).substring(2, 15)}`;
+
     const result = await client.tx(async (client) => {
-      await client.query(`INSERT INTO ${randomTableName} (name) VALUES ('test')`);
+      await client.query(`INSERT INTO ${randomTableName} (name) VALUES ('${randomValue1}')`);
 
       try {
         await client.tx(async (client) => {
-          await client.query(`INSERT INTO ${randomTableName} (name) VALUES ('test2')`);
+          await client.query(`INSERT INTO ${randomTableName} (name) VALUES ('${randomValue2}')`);
           throw new Error("test");
         });
       } catch (e) {
@@ -123,9 +134,11 @@ describe("PostgresClient", () => {
 
     expect(result).toBeInstanceOf(Error);
 
-    const resultOutsideTx = await client.query(`SELECT * FROM ${randomTableName}`);
+    const resultOutsideTx = await client.query(
+      `SELECT * FROM ${randomTableName} WHERE name = '${randomValue1}' OR name = '${randomValue2}'`,
+    );
     expect(resultOutsideTx.rows.length).toEqual(1);
-    expect(resultOutsideTx.rows[0]["name"]).toEqual("test");
+    expect(resultOutsideTx.rows[0]["name"]).toEqual(randomValue1);
 
     await client.end();
   });

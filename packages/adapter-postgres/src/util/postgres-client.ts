@@ -214,6 +214,7 @@ export class PostgresClient {
             config: this.#config,
           }),
         );
+        await client.query("COMMIT");
         return result;
       } catch (e) {
         await client.query("ROLLBACK");
