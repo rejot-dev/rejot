@@ -24,7 +24,10 @@ export interface ISyncController {
   close(): Promise<void>;
   startServingHTTPEndpoints(controller: ISyncHTTPController): Promise<void>;
   getPublicSchemas(): Promise<(z.infer<typeof PublicSchemaSchema> & { manifestSlug: string })[]>;
+  state: SyncControllerState;
 }
+
+export type SyncControllerState = "initial" | "prepared" | "started" | "stopped" | "closed";
 
 export class SyncController implements ISyncController {
   readonly #publishMessageBus: IPublishMessageBus;
@@ -36,6 +39,7 @@ export class SyncController implements ISyncController {
   readonly #publicSchemaTransformer: PublicSchemaTransformer;
 
   #httpController?: ISyncHTTPController;
+  #state: SyncControllerState = "initial";
 
   constructor(
     syncManifest: SyncManifest,
@@ -60,6 +64,14 @@ export class SyncController implements ISyncController {
     this.#subscribeMessageBuses = subscribeMessageBuses;
   }
 
+  get state(): SyncControllerState {
+    return this.#state;
+  }
+
+  set state(newState: SyncControllerState) {
+    this.#state = newState;
+  }
+
   async getCursors(): Promise<Cursor[]> {
     return this.#sinkWriter.getCursors();
   }
@@ -69,6 +81,7 @@ export class SyncController implements ISyncController {
   }
 
   async start() {
+    this.state = "started";
     await Promise.all([
       this.startIterateSourceReader(),
       ...this.#subscribeMessageBuses.map((bus) => this.startIterateSubscribeMessageBus(bus)),
@@ -139,7 +152,7 @@ export class SyncController implements ISyncController {
         ]),
       ).map((item) => item.prepare()),
     );
-
+    this.state = "prepared";
     log.debug("SyncController prepared");
   }
 
@@ -154,6 +167,7 @@ export class SyncController implements ISyncController {
         ]),
       ).map((item) => item?.stop()),
     );
+    this.state = "stopped";
   }
 
   async close() {
@@ -167,5 +181,6 @@ export class SyncController implements ISyncController {
         ]),
       ).map((item) => item.close()),
     );
+    this.state = "closed";
   }
 }
