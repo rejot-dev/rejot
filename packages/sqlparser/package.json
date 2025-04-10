@@ -1,0 +1,16 @@
+{
+  "name": "@rejot/sqlparser",
+  "version": "0.0.1",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "private": true,
+  "scripts": {
+    "test": "bun test",
+    "check": "tsc --noEmit"
+  },
+  "type": "module",
+  "dependencies": {
+    "@rejot-dev/sqlparser-wasm": "^0.1.0"
+  }
+}
