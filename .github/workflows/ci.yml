@@ -213,3 +213,24 @@ jobs:
         env:
           REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
         run: bun test
+
+  build-rejot-cli-image:
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build rejot-cli image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          build-args: |
+            REJOT_APP=rejot-cli
+          tags: ci-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
