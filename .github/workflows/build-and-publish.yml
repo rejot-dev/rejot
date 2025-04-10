@@ -1,4 +1,4 @@
-name: Build and Publish Container Images and NPM packages
+name: Build and Publish Container Images
 
 on:
   push:
