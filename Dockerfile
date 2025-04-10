@@ -18,6 +18,7 @@ COPY packages/adapter-postgres/package.json packages/adapter-postgres/package.js
 COPY packages/api-interface-controller/package.json packages/api-interface-controller/package.json
 COPY packages/contract/package.json packages/contract/package.json
 COPY packages/sync/package.json packages/sync/package.json
+COPY packages/sqlparser/package.json packages/sqlparser/package.json
 
 RUN bun install --filter ./apps/${REJOT_APP} --production --no-progress
 
