@@ -140,6 +140,76 @@ describe("ExternalSyncMessageBus", () => {
     });
   });
 
+  test("should create null cursors for missing cursors", async () => {
+    const manifest = new SyncManifest(
+      [
+        {
+          slug: "local",
+          manifestVersion: 1,
+          connections: [],
+          dataStores: [],
+          eventStores: [],
+          publicSchemas: [],
+          consumerSchemas: [
+            {
+              sourceManifestSlug: "test",
+              publicSchema: {
+                name: "test",
+                majorVersion: 1,
+              },
+              destinationDataStoreSlug: "test-store",
+              transformations: [
+                {
+                  transformationType: "postgresql",
+                  sql: "SELECT * FROM test",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      { checkPublicSchemaReferences: false },
+    );
+
+    const resolver = new TestSyncServiceResolver();
+    const messageBus = new ExternalSyncMessageBus(manifest, resolver);
+
+    messageBus.setInitialCursors([]);
+    await messageBus.prepare();
+
+    const messages: unknown[] = [];
+    const subscription = messageBus.subscribe();
+
+    // Read first message
+    const firstMessage = await subscription.next();
+    messages.push(firstMessage.value);
+
+    await messageBus.stop();
+    await messageBus.close();
+
+    expect(messages.length).toBe(1);
+    expect(messages[0]).toMatchObject({
+      operations: [
+        {
+          type: "insert",
+          sourceManifestSlug: "test",
+          sourcePublicSchema: {
+            name: "test",
+            version: {
+              major: 1,
+              minor: 0,
+            },
+          },
+          object: {
+            id: "1",
+            type: "test",
+            data: { foo: "bar" },
+          },
+        },
+      ],
+    });
+  });
+
   test("should throw if not prepared", async () => {
     const manifest = new SyncManifest(
       [

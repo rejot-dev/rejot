@@ -33,7 +33,35 @@ export class ExternalSyncMessageBus implements ISubscribeMessageBus {
   }
 
   setInitialCursors(cursors: Cursor[]): void {
-    this.#cursors = new Cursors(cursors);
+    const externalSchemaReferences = this.#syncManifest.getExternalSchemaReferences();
+    const newlyCreatedCursors: Cursor[] = [];
+
+    for (const ref of externalSchemaReferences) {
+      const cur = cursors.find((cursor) => {
+        return (
+          ref.manifestSlug === cursor.schema.manifest.slug &&
+          ref.publicSchema.name === cursor.schema.schema.name &&
+          ref.publicSchema.majorVersion === cursor.schema.schema.version.major
+        );
+      });
+      if (!cur) {
+        log.info(
+          `No initial cursor found for schema '${ref.manifestSlug}->${ref.publicSchema.name}@${ref.publicSchema.majorVersion}', creating starting cursor.`,
+        );
+        newlyCreatedCursors.push({
+          schema: {
+            manifest: { slug: ref.manifestSlug },
+            schema: {
+              name: ref.publicSchema.name,
+              version: { major: ref.publicSchema.majorVersion },
+            },
+          },
+          transactionId: null,
+        });
+      }
+    }
+
+    this.#cursors = new Cursors([...cursors, ...newlyCreatedCursors]);
   }
 
   async *subscribe(): AsyncIterableIterator<OperationMessage> {
