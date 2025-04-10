@@ -1,6 +1,7 @@
 ---
 description: Single Page Application Guidelines
 globs: apps/controller-spa/**
+alwaysApply: false
 ---
 # Single Page Application Guidelines
 

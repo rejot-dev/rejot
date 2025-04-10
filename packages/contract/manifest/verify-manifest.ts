@@ -18,9 +18,23 @@ export type ManifestError = {
   };
 };
 
+// Updated type structure for external references
+export type ExternalPublicSchemaReference = {
+  manifestSlug: string; // The slug of the external manifest being referenced
+  publicSchema: {
+    name: string; // The name of the public schema being referenced
+    majorVersion: number; // The required major version of the public schema
+  };
+  referencedBy: {
+    // Information about the consumer schema making the reference
+    manifestSlug: string; // Slug of the manifest containing the consumer schema
+  };
+};
+
 export type VerificationResult = {
-  isValid: boolean;
+  isValid: boolean; // isValid remains true if there are only external references, but no errors
   errors: ManifestError[];
+  externalReferences: ExternalPublicSchemaReference[]; // Use the renamed type
 };
 
 /**
@@ -74,12 +88,16 @@ export function verifyConnectionReferences(
 }
 
 /**
- * Verifies that all public schemas referenced by consumer schemas exist and version compatibility
+ * Verifies public schema references within the provided manifests.
+ * Identifies references to manifests not included in the set.
+ * Returns both validation errors and identified external references.
  */
-export function verifyPublicSchemaReferences(
-  manifests: z.infer<typeof SyncManifestSchema>[],
-): ManifestError[] {
+export function verifyPublicSchemaReferences(manifests: z.infer<typeof SyncManifestSchema>[]): {
+  errors: ManifestError[];
+  externalReferences: ExternalPublicSchemaReference[];
+} {
   const errors: ManifestError[] = [];
+  const unresolvedExternalReferences: ExternalPublicSchemaReference[] = [];
 
   // Build a map of all available public schemas across all manifests
   const publicSchemaMap = new Map<string, Map<string, number[]>>();
@@ -102,15 +120,19 @@ export function verifyPublicSchemaReferences(
       const sourceManifestSchemas = publicSchemaMap.get(consumerSchema.sourceManifestSlug);
 
       if (!sourceManifestSchemas) {
-        errors.push({
-          type: "PUBLIC_SCHEMA_NOT_FOUND",
-          message: `Consumer schema references manifest '${consumerSchema.sourceManifestSlug}' which does not exist`,
-          location: {
+        // This references an external manifest not included in the verification set.
+        // Record it as an external reference instead of erroring or skipping.
+        unresolvedExternalReferences.push({
+          manifestSlug: consumerSchema.sourceManifestSlug,
+          publicSchema: {
+            name: consumerSchema.publicSchema.name,
+            majorVersion: consumerSchema.publicSchema.majorVersion,
+          },
+          referencedBy: {
             manifestSlug: manifest.slug,
-            context: `consumerSchema.sourceManifestSlug: ${consumerSchema.sourceManifestSlug}`,
           },
         });
-        return;
+        return; // Continue to the next consumer schema
       }
 
       const availableVersions = sourceManifestSchemas.get(consumerSchema.publicSchema.name);
@@ -140,7 +162,7 @@ export function verifyPublicSchemaReferences(
     });
   });
 
-  return errors;
+  return { errors, externalReferences: unresolvedExternalReferences }; // Return both errors and external references
 }
 
 /**
@@ -190,16 +212,18 @@ export function verifyManifests(
     errors.push(...verifyConnectionReferences(manifest));
   });
 
-  // Verify cross-manifest references, only works if all manifests are provided.
-  // The sync manifest controller might have a subset and therefore cannot verify public schema references here
+  const publicSchemaReferencesResult = verifyPublicSchemaReferences(manifests);
+
+  // Verify cross-manifest references
   if (checkPublicSchemaReferences) {
-    errors.push(...verifyPublicSchemaReferences(manifests));
+    errors.push(...publicSchemaReferencesResult.errors);
   }
 
   errors.push(...verifyPublicSchemaUniqueness(manifests));
 
   return {
-    isValid: errors.length === 0,
+    isValid: errors.length === 0, // Validity depends only on errors, not external references
     errors,
+    externalReferences: publicSchemaReferencesResult.externalReferences,
   };
 }

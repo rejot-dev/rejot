@@ -2,11 +2,15 @@ import { z } from "zod";
 import {
   SyncManifestSchema,
   ConsumerSchemaSchema,
-  verifyManifests,
-  type ManifestError,
   type ConnectionConfigSchema,
   type PublicSchemaSchema,
-} from "@rejot-dev/contract/manifest";
+} from "./manifest";
+import {
+  verifyManifests,
+  type ManifestError,
+  type ExternalPublicSchemaReference,
+  type VerificationResult,
+} from "./verify-manifest";
 import logger from "@rejot-dev/contract/logger";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 
@@ -54,10 +58,15 @@ interface SyncManifestOptions {
 
 export class SyncManifest {
   readonly #manifests: Manifest[];
+  readonly #externalSchemaReferences: ExternalPublicSchemaReference[];
 
   constructor(manifests: Manifest[], options: SyncManifestOptions = {}) {
-    const verificationResult = verifyManifests(manifests, options.checkPublicSchemaReferences);
-    if (!verificationResult.isValid) {
+    const verificationResult: VerificationResult = verifyManifests(
+      manifests,
+      options.checkPublicSchemaReferences,
+    );
+
+    if (verificationResult.errors.length > 0) {
       const errorMessages = verificationResult.errors
         .map(
           (error: ManifestError) =>
@@ -68,7 +77,12 @@ export class SyncManifest {
     }
 
     this.#manifests = manifests;
+    this.#externalSchemaReferences = verificationResult.externalReferences;
+
     log.info(`SyncManifest initialized with ${manifests.length} manifests`);
+    if (this.#externalSchemaReferences.length > 0) {
+      log.info(`Identified ${this.#externalSchemaReferences.length} external schema references.`);
+    }
   }
 
   get manifests(): Manifest[] {
@@ -146,32 +160,45 @@ export class SyncManifest {
     };
   }
 
+  get hasUnresolvedExternalReferences(): boolean {
+    return this.#externalSchemaReferences.length > 0;
+  }
+
   /**
-   * Get the consumer schemas for the external sync services.
+   * Get the consumer schemas that reference external manifests.
    *
-   * @returns A map of external sync service slugs to their consumer schemas. The consumer schemas
-   *          contain a reference to the public schema we want to obtain.
+   * @returns A map where keys are the slugs of external manifests, and values are arrays
+   *          of consumer schemas (from the loaded manifests) that reference those external manifests.
+   * @throws Error if the internal state is inconsistent (e.g., referenced manifest or schema not found).
    */
   getExternalConsumerSchemas(): Record<string, z.infer<typeof ConsumerSchemaSchema>[]> {
-    const mySlugs = this.#manifests.map((manifest) => manifest.slug);
-    const externalSlugToConsumerSchema = this.#manifests.flatMap((manifest) =>
-      manifest.consumerSchemas
-        .filter((consumer) => !mySlugs.includes(consumer.sourceManifestSlug))
-        .map((consumer) => ({
-          slug: consumer.sourceManifestSlug,
-          consumerSchema: consumer,
-        })),
-    );
+    // If we have no manifests loaded, return an empty result
+    if (this.#manifests.length === 0) {
+      return {};
+    }
 
-    return externalSlugToConsumerSchema.reduce<
-      Record<string, z.infer<typeof ConsumerSchemaSchema>[]>
-    >((acc, { slug, consumerSchema }) => {
-      if (!acc[slug]) {
-        acc[slug] = [];
+    // Get all the manifests' slugs for easy checking
+    const loadedManifestSlugs = new Set(this.#manifests.map((m) => m.slug));
+
+    // Collect all consumer schemas that reference external manifests
+    const result: Record<string, z.infer<typeof ConsumerSchemaSchema>[]> = {};
+
+    // Loop through all manifests and identify consumer schemas referencing external manifests
+    for (const manifest of this.#manifests) {
+      for (const consumerSchema of manifest.consumerSchemas) {
+        // Check if the sourceManifestSlug references a manifest not in our loaded set
+        if (!loadedManifestSlugs.has(consumerSchema.sourceManifestSlug)) {
+          // This is a reference to an external manifest
+          if (!result[consumerSchema.sourceManifestSlug]) {
+            result[consumerSchema.sourceManifestSlug] = [];
+          }
+
+          result[consumerSchema.sourceManifestSlug].push(consumerSchema);
+        }
       }
-      acc[slug].push(consumerSchema);
-      return acc;
-    }, {});
+    }
+
+    return result;
   }
 
   getConsumerSchemasForPublicSchema(
@@ -218,5 +245,14 @@ export class SyncManifest {
         manifestSlug: manifest.slug,
       })),
     );
+  }
+
+  /**
+   * Get the list of identified external schema references.
+   * These are consumer schemas that reference a public schema in a manifest
+   * not provided during the initialization of this SyncManifest instance.
+   */
+  getExternalSchemaReferences(): ExternalPublicSchemaReference[] {
+    return this.#externalSchemaReferences;
   }
 }

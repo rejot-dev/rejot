@@ -25,10 +25,12 @@ const testPublicSchema = createPublicSchema("public-account", {
 });
 
 const testConsumerSchema = createConsumerSchema({
-  sourceManifestSlug: "default",
-  publicSchema: {
-    name: "public-account",
-    majorVersion: 1,
+  source: {
+    manifestSlug: "default",
+    publicSchema: {
+      name: "public-account",
+      majorVersion: 1,
+    },
   },
   destinationDataStoreSlug: "data-destination-1",
   transformations: [

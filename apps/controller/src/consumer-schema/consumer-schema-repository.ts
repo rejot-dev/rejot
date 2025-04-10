@@ -376,7 +376,8 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
             )
           `,
         ),
-      );
+      )
+      .orderBy(schema.consumerSchema.name);
 
     return consumerSchemas.map((cs) => ({
       code: cs.consumerSchema.code,

@@ -11,6 +11,11 @@ alwaysApply: false
 ## Overview
 - Code is organized by domain functionality rather than technical implementation
 
+## General Rules
+- Don't add unneccesary prefixes to errors such as "Internal Error:"
+- Prefer to throw instead of logging a warning and returning something empty.
+- Don't add comments clarifying your changes. Comments should mostly explain WHY code looks like it does.
+
 ## File Naming Conventions
 ### General Pattern
 - Use dots to indicate the main object: `organization.repository.ts`
@@ -33,6 +38,9 @@ Sort imports in this order (with blank line between categories):
 - PREFER to recreate types instead of importing them. E.g. a component defines its own types, so do services and repositories.
 - Do NOT export 'default', only use named exports.
 - Prefix node built-in imports with `node:`
+
+## Other
+- Prefer to destruct objects in things like for-loops.
 
 ## API Development
 ### Architecture

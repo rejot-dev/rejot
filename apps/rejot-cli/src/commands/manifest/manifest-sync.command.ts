@@ -160,7 +160,7 @@ export class ManifestSyncCommand extends Command {
 
       const subscribeMessageBuses: ISubscribeMessageBus[] = [eventStoreMessageBus];
 
-      if (Object.keys(syncManifest.getExternalConsumerSchemas()).length > 0) {
+      if (syncManifest.hasUnresolvedExternalReferences) {
         let syncServiceResolver: ISyncServiceResolver;
         if (resolver === "localhost") {
           syncServiceResolver = createResolver({ type: "localhost", apiPort });
