@@ -1,17 +1,24 @@
 import { z } from "zod";
 import { ConsumerSchemaSchema } from "../manifest/manifest.ts";
+import { PublicSchema } from "../public-schema/public-schema.ts";
 
 export interface ConsumerSchemaTransformation {
   transformationType: "postgresql";
   sql: string;
 }
 
-export type CreateConsumerSchemaOptions = {
-  sourceManifestSlug: string;
+export type ConsumerSchemaSourceLiteral = {
+  manifestSlug: string;
   publicSchema: {
     name: string;
     majorVersion: number;
   };
+};
+
+export type ConsumerSchemaSource = ConsumerSchemaSourceLiteral | PublicSchema;
+
+export type CreateConsumerSchemaOptions = {
+  source: ConsumerSchemaSource;
   destinationDataStoreSlug: string;
   transformations: ConsumerSchemaTransformation[];
 };
@@ -26,12 +33,21 @@ export class ConsumerSchema {
   #options: z.infer<typeof ConsumerSchemaSchema>;
 
   constructor(options: CreateConsumerSchemaOptions) {
-    if (options.sourceManifestSlug.length === 0) {
-      throw new InvalidConsumerSchemaError("Source manifest slug cannot be empty");
-    }
+    const source = options.source;
+    if ("manifestSlug" in source) {
+      if (source.manifestSlug.length === 0) {
+        throw new InvalidConsumerSchemaError("Source manifest slug cannot be empty");
+      }
 
-    if (options.publicSchema.name.length === 0) {
-      throw new InvalidConsumerSchemaError("Public schema name cannot be empty");
+      if (source.publicSchema.name.length === 0) {
+        throw new InvalidConsumerSchemaError("Public schema name cannot be empty");
+      }
+    } else if (source instanceof PublicSchema) {
+      if (source.data.name.length === 0) {
+        throw new InvalidConsumerSchemaError("Public schema name cannot be empty");
+      }
+    } else {
+      throw new InvalidConsumerSchemaError("Invalid source type");
     }
 
     if (options.destinationDataStoreSlug.length === 0) {
@@ -43,8 +59,11 @@ export class ConsumerSchema {
     }
 
     this.#options = {
-      sourceManifestSlug: options.sourceManifestSlug,
-      publicSchema: options.publicSchema,
+      sourceManifestSlug: "manifestSlug" in source ? source.manifestSlug : "",
+      publicSchema:
+        "manifestSlug" in source
+          ? source.publicSchema
+          : { name: source.data.name, majorVersion: 1 },
       destinationDataStoreSlug: options.destinationDataStoreSlug,
       transformations: options.transformations,
     };
@@ -63,8 +82,10 @@ export function deserializeConsumerSchema(schema: string): ConsumerSchema {
   const parsedSchema = ConsumerSchemaSchema.parse(JSON.parse(schema));
 
   return new ConsumerSchema({
-    sourceManifestSlug: parsedSchema.sourceManifestSlug,
-    publicSchema: parsedSchema.publicSchema,
+    source: {
+      manifestSlug: parsedSchema.sourceManifestSlug,
+      publicSchema: parsedSchema.publicSchema,
+    },
     destinationDataStoreSlug: parsedSchema.destinationDataStoreSlug,
     transformations: parsedSchema.transformations,
   });

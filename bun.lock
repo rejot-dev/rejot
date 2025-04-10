@@ -172,6 +172,13 @@
         "zod-to-json-schema": "^3.24.3",
       },
     },
+    "packages/sqlparser": {
+      "name": "@rejot/sqlparser",
+      "version": "0.0.1",
+      "dependencies": {
+        "@rejot-dev/sqlparser-wasm": "^0.1.0",
+      },
+    },
     "packages/sync": {
       "name": "@rejot-dev/sync",
       "version": "0.0.1",
@@ -733,7 +740,11 @@
 
     "@rejot-dev/controller": ["@rejot-dev/controller@workspace:apps/controller"],
 
+    "@rejot-dev/sqlparser-wasm": ["@rejot-dev/sqlparser-wasm@0.1.0", "", {}, "sha512-9C1LAPHhbw6LZzVrXe0n6/G1MAZCNmRxb/NTWrklc8Ov7nQ9W9cJo1oGk850C2H3uKU6RpCNYzqENKlV9pHgxg=="],
+
     "@rejot-dev/sync": ["@rejot-dev/sync@workspace:packages/sync"],
+
+    "@rejot/sqlparser": ["@rejot/sqlparser@workspace:packages/sqlparser"],
 
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.34.7", "", { "os": "android", "cpu": "arm" }, "sha512-l6CtzHYo8D2TQ3J7qJNpp3Q1Iye56ssIAtqbM2H8axxCEEwvN7o8Ze9PuIapbxFL3OHrJU2JBX6FIIVnP/rYyw=="],
 

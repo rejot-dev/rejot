@@ -153,10 +153,14 @@ test("verifyManifests - non-existent source manifest", () => {
   };
 
   const result = verifyManifests([manifest]);
-  expect(result.isValid).toBe(false);
-  expect(result.errors).toHaveLength(1);
-  expect(result.errors[0].type).toBe("PUBLIC_SCHEMA_NOT_FOUND");
-  expect(result.errors[0].message).toContain("non-existent");
+  expect(result.isValid).toBe(true);
+  expect(result.errors).toHaveLength(0);
+  expect(result.externalReferences).toHaveLength(1);
+
+  const extRef = result.externalReferences[0];
+  expect(extRef.manifestSlug).toBe("non-existent");
+  expect(extRef.publicSchema.name).toBe("test");
+  expect(extRef.publicSchema.majorVersion).toBe(1);
 });
 
 test("verifyManifests - duplicate public schema definition", () => {
@@ -191,4 +195,104 @@ test("verifyManifests - duplicate public schema definition", () => {
   expect(result.errors[0].type).toBe("DUPLICATE_PUBLIC_SCHEMA");
   expect(result.errors[0].message).toContain("manifest1");
   expect(result.errors[0].location.manifestSlug).toBe("manifest2");
+});
+
+test("verifyManifests - identifies multiple external references", () => {
+  const manifest: Manifest = {
+    ...createBasicManifest("local-manifest"),
+    consumerSchemas: [
+      {
+        sourceManifestSlug: "external-manifest-1",
+        publicSchema: {
+          name: "schema1",
+          majorVersion: 1,
+        },
+        destinationDataStoreSlug: "ds1",
+        transformations: [],
+      },
+      {
+        sourceManifestSlug: "external-manifest-1",
+        publicSchema: {
+          name: "schema2",
+          majorVersion: 2,
+        },
+        destinationDataStoreSlug: "ds1",
+        transformations: [],
+      },
+      {
+        sourceManifestSlug: "external-manifest-2",
+        publicSchema: {
+          name: "schema3",
+          majorVersion: 1,
+        },
+        destinationDataStoreSlug: "ds1",
+        transformations: [],
+      },
+    ],
+  };
+
+  const result = verifyManifests([manifest]);
+  expect(result.isValid).toBe(true);
+  expect(result.errors).toHaveLength(0);
+
+  // Should have three external references
+  expect(result.externalReferences).toHaveLength(3);
+
+  // References should be to two different external manifests
+  const externalManifests = new Set(result.externalReferences.map((ref) => ref.manifestSlug));
+  expect(externalManifests.size).toBe(2);
+  expect(externalManifests.has("external-manifest-1")).toBe(true);
+  expect(externalManifests.has("external-manifest-2")).toBe(true);
+
+  // Check one reference in detail
+  const schema2Ref = result.externalReferences.find((ref) => ref.publicSchema.name === "schema2");
+  expect(schema2Ref).toBeDefined();
+  expect(schema2Ref?.manifestSlug).toBe("external-manifest-1");
+  expect(schema2Ref?.publicSchema.majorVersion).toBe(2);
+});
+
+test("verifyManifests - handles both errors and external references", () => {
+  // A manifest with both validation errors and external references
+  const manifest: Manifest = {
+    ...createBasicManifest("test-manifest"),
+    connections: [
+      {
+        slug: "conn1",
+        config: {
+          connectionType: "postgres",
+          host: "localhost",
+          port: 5432,
+          database: "test",
+          user: "user",
+          password: "pass",
+        },
+      },
+    ],
+    dataStores: [
+      { connectionSlug: "conn2", publicationName: "pub" }, // Invalid connection
+    ],
+    consumerSchemas: [
+      {
+        sourceManifestSlug: "external-manifest", // External reference
+        publicSchema: {
+          name: "external-schema",
+          majorVersion: 1,
+        },
+        destinationDataStoreSlug: "ds1",
+        transformations: [],
+      },
+    ],
+  };
+
+  const result = verifyManifests([manifest]);
+
+  // Should be invalid due to the connection error
+  expect(result.isValid).toBe(false);
+  expect(result.errors).toHaveLength(1);
+  expect(result.errors[0].type).toBe("CONNECTION_NOT_FOUND");
+
+  // But still track the external reference
+  expect(result.externalReferences).toHaveLength(1);
+  expect(result.externalReferences[0].manifestSlug).toBe("external-manifest");
+  expect(result.externalReferences[0].publicSchema.name).toBe("external-schema");
 });
