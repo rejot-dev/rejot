@@ -1,15 +1,11 @@
 import { resolve } from "node:path";
 
-import { z } from "zod";
 import { existsSync } from "node:fs";
 
-import { PublicSchemaSchema, ConsumerSchemaSchema } from "../manifest/manifest.ts";
 import { PublicSchema } from "../public-schema/public-schema.ts";
 import { ConsumerSchema } from "../consumer-schema/consumer-schema.ts";
 
-export async function collectPublicSchemas(
-  modulePath: string,
-): Promise<z.infer<typeof PublicSchemaSchema>[]> {
+export async function collectPublicSchemas(modulePath: string): Promise<PublicSchema[]> {
   const resolvedModulePath = resolve(process.cwd(), modulePath);
   if (!existsSync(resolvedModulePath)) {
     throw new Error(`Module path ${resolvedModulePath} does not exist`);
@@ -42,12 +38,10 @@ export async function collectPublicSchemas(
     }
   }
 
-  return publicSchemas.map((schema) => schema.data);
+  return publicSchemas;
 }
 
-export async function collectConsumerSchemas(
-  modulePath: string,
-): Promise<z.infer<typeof ConsumerSchemaSchema>[]> {
+export async function collectConsumerSchemas(modulePath: string): Promise<ConsumerSchema[]> {
   const resolvedModulePath = resolve(process.cwd(), modulePath);
   if (!existsSync(resolvedModulePath)) {
     throw new Error(`Module path ${resolvedModulePath} does not exist`);
@@ -76,5 +70,5 @@ export async function collectConsumerSchemas(
     }
   }
 
-  return consumerSchemas.map((schema) => schema.data);
+  return consumerSchemas;
 }

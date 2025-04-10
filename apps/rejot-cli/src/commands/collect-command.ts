@@ -2,6 +2,7 @@ import { Args, Command, Flags } from "@oclif/core";
 import { collectPublicSchemas, collectConsumerSchemas } from "@rejot-dev/contract/collect";
 import { writeManifest } from "@rejot-dev/contract/manifest";
 import { readManifest } from "@rejot-dev/contract/manifest.fs";
+import { validateManifest } from "@rejot-dev/sync/validate-manifest";
 
 export default class Collect extends Command {
   static override args = {
@@ -14,8 +15,8 @@ export default class Collect extends Command {
   static override description = "Collect public and consumer schemas from a TypeScript file.";
   static override examples = [
     "<%= config.bin %> <%= command.id %> schema.ts",
-    "<%= config.bin %> <%= command.id %> schema.ts --type public",
-    "<%= config.bin %> <%= command.id %> schema.ts --type consumer",
+    "<%= config.bin %> <%= command.id %> schema.ts --write",
+    "<%= config.bin %> <%= command.id %> schema.ts --check",
   ];
   static override flags = {
     manifest: Flags.string({
@@ -23,40 +24,46 @@ export default class Collect extends Command {
       required: true,
       default: "./rejot-manifest.json",
     }),
-    type: Flags.string({
-      description:
-        "Type of schema to collect (public or consumer). If not specified, collects both.",
+    write: Flags.boolean({
+      description: "Write the manifest to the file.",
       required: false,
-      options: ["public", "consumer"],
+    }),
+    check: Flags.boolean({
+      description: "Type check the consumer schemas against the public schemas.",
+      required: false,
     }),
   };
 
   public async run(): Promise<void> {
     const { args, flags } = await this.parse(Collect);
-    const { manifest: manifestPath, type } = flags;
+    const { manifest: manifestPath, write, check } = flags;
 
     const currentManifest = await readManifest(manifestPath);
-    const updates: Record<string, unknown> = {};
 
-    if (!type || type === "public") {
-      const publicSchemas = await collectPublicSchemas(args.schema);
-      updates.publicSchemas = publicSchemas;
+    const publicSchemas = await collectPublicSchemas(args.schema);
+    const consumerSchemas = await collectConsumerSchemas(args.schema);
+
+    const newManifest = {
+      ...currentManifest,
+      publicSchemas: publicSchemas.map((schema) => schema.data),
+      consumerSchemas: consumerSchemas.map((schema) => schema.data),
+    };
+
+    if (check) {
+      await validateManifest(newManifest);
     }
 
-    if (!type || type === "consumer") {
-      const consumerSchemas = await collectConsumerSchemas(args.schema);
-      updates.consumerSchemas = consumerSchemas;
+    if (write) {
+      await writeManifest(
+        {
+          ...currentManifest,
+          publicSchemas: publicSchemas.map((schema) => schema.data),
+          consumerSchemas: consumerSchemas.map((schema) => schema.data),
+        },
+        manifestPath,
+      );
+
+      console.log(`public and consumer schemas collected and manifest written to ${manifestPath}`);
     }
-
-    await writeManifest(
-      {
-        ...currentManifest,
-        ...updates,
-      },
-      manifestPath,
-    );
-
-    const schemaTypes = type || "public and consumer";
-    console.log(`${schemaTypes} schemas collected and manifest written to ${manifestPath}`);
   }
 }

@@ -206,7 +206,7 @@ export class PostgresClient {
       const client = await poolOrClient.pool.connect();
       try {
         await client.query("BEGIN");
-        return await cb(
+        const result = await cb(
           new PostgresClient({
             type: "client",
             client,
@@ -214,6 +214,7 @@ export class PostgresClient {
             config: this.#config,
           }),
         );
+        return result;
       } catch (e) {
         await client.query("ROLLBACK");
         throw e;

@@ -15,6 +15,7 @@ alwaysApply: false
 - Don't add unneccesary prefixes to errors such as "Internal Error:"
 - Prefer to throw instead of logging a warning and returning something empty.
 - Don't add comments clarifying your changes. Comments should mostly explain WHY code looks like it does.
+- Do NOT use type casts unless it VERY explicitly makes sense
 
 ## File Naming Conventions
 ### General Pattern

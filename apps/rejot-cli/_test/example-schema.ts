@@ -39,9 +39,9 @@ const testConsumerSchema = createConsumerSchema({
         INSERT INTO users_destination 
           (id, full_name)
         VALUES 
-          ($1, $2 || ' ' || $3)
+          (:id, :email || ' ' || :name)
         ON CONFLICT (id) DO UPDATE
-          SET full_name = $2 || ' ' || $3
+          SET full_name = :email || ' ' || :name
         ;
       `,
     ),

@@ -26,7 +26,8 @@
     "./public-schema": "./public-schema/public-schema.ts",
     "./sync": "./sync/sync.ts",
     "./schema-validator": "./schema-validator.ts",
-    "./message-bus": "./message-bus/message-bus.ts"
+    "./message-bus": "./message-bus/message-bus.ts",
+    "./json-schema": "./json-schema/json-schema.ts"
   },
   "type": "module",
   "dependencies": {

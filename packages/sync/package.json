@@ -10,6 +10,7 @@
   },
   "exports": {
     "./consts": "./src/sync-consts.ts",
+    "./validate-manifest": "./src/manifest/validate-manifest.ts",
     "./sync-controller": "./src/sync-controller.ts",
     "./sync-controller-new": "./src/sync-controller/sync-controller.ts",
     "./sync-manifest": "./src/manifest/sync-manifest.ts",

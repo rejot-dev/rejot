@@ -6,8 +6,28 @@ import {
   ConnectionConfigSchema,
   ConsumerSchemaTransformationSchema,
   PublicSchemaTransformationSchema,
+  type ConsumerSchemaSchema,
+  type PublicSchemaSchema,
 } from "../manifest/manifest.ts";
 import type { IEventStore, TransformedOperationWithSource } from "../event-store/event-store.ts";
+
+// Define ValidationResult interface at the contract level
+export interface ValidationResult {
+  isValid: boolean;
+  errors: ValidationError[];
+  publicSchemaName: string;
+  consumerSchemaInfo: {
+    sourceManifestSlug: string;
+    destinationDataStore: string;
+  };
+}
+
+export interface ValidationError {
+  message: string;
+  transformationIndex?: number;
+  sql?: string;
+  placeholders?: string[];
+}
 
 export interface CreateSourceOptions {
   publicationName?: string;
@@ -71,5 +91,20 @@ export interface IConsumerSchemaTransformationAdapter<
 }
 
 export type AnyIConsumerSchemaTransformationAdapter = IConsumerSchemaTransformationAdapter<
+  z.infer<typeof ConsumerSchemaTransformationSchema>
+>;
+
+export interface IConsumerSchemaValidationAdapter<
+  TTransformation extends z.infer<typeof ConsumerSchemaTransformationSchema>,
+> {
+  transformationType: TTransformation["transformationType"];
+
+  validateConsumerSchema(
+    publicSchema: z.infer<typeof PublicSchemaSchema>,
+    consumerSchema: z.infer<typeof ConsumerSchemaSchema>,
+  ): Promise<ValidationResult>;
+}
+
+export type AnyIConsumerSchemaValidationAdapter = IConsumerSchemaValidationAdapter<
   z.infer<typeof ConsumerSchemaTransformationSchema>
 >;

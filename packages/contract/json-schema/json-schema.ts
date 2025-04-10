@@ -256,3 +256,5 @@ export const JsonSchemaSchema = JsonSchemaMeta.extend({
 });
 
 export type JsonSchema = z.infer<typeof JsonSchemaSchema>;
+
+export * from "./json-schema-utils";
