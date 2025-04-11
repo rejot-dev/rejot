@@ -71,6 +71,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
             },
           },
           sourceManifestSlug: testSchema.manifest.slug,
+          objectKeys: { id: "1" },
         },
       },
     ]);
@@ -86,7 +87,7 @@ pgRollbackDescribe("PostgresEventStoreRepository", (ctx) => {
     expect(events[1].object).toEqual({ id: "1", name: "Test 1 Updated" });
     expect(events[1].manifestSlug).toBe("test-manifest");
     expect(events[2].operation).toBe("delete");
-    expect(events[2].object).toBeNull();
+    expect(events[2].object).toEqual({ id: "1" });
     expect(events[2].manifestSlug).toBe("test-manifest");
   });
 

@@ -77,6 +77,7 @@ pgRollbackDescribe("PostgreSQL Sink tests", (ctx) => {
       sink.writeData({
         type: "delete",
         keyColumns: ["id"],
+        objectKeys: { id: 1 },
       }),
     ).rejects.toThrow("Not implemented!");
   });

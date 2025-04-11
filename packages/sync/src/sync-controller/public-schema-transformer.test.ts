@@ -23,6 +23,7 @@ describe("PublicSchemaTransformer", () => {
         return {
           type: "delete",
           keyColumns: operation.keyColumns,
+          objectKeys: operation.oldKeys || {},
         };
       }
       return {
@@ -142,6 +143,7 @@ describe("PublicSchemaTransformer", () => {
           keyColumns: ["id"],
           table: "test_table",
           tableSchema: "public",
+          oldKeys: { id: 1 },
         },
       ],
       ack: () => {},
@@ -160,6 +162,7 @@ describe("PublicSchemaTransformer", () => {
           minor: 0,
         },
       },
+      objectKeys: { id: 1 },
     });
   });
 

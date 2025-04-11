@@ -3,6 +3,7 @@ import { SinkWriter } from "./sink-writer";
 import type {
   IConnectionAdapter,
   IConsumerSchemaTransformationAdapter,
+  OperationTransformationPair,
 } from "@rejot-dev/contract/adapter";
 import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
@@ -58,9 +59,11 @@ describe("SinkWriter", () => {
       async (
         _destinationDataStoreSlug: string,
         _transactionId: string,
-        operation: TransformedOperationWithSource,
-        _transformation: z.infer<typeof PostgresConsumerSchemaTransformationSchema>,
-      ): Promise<TransformedOperationWithSource> => operation,
+        operationTransformationPairs: OperationTransformationPair<
+          z.infer<typeof PostgresConsumerSchemaTransformationSchema>
+        >[],
+      ): Promise<TransformedOperationWithSource[]> =>
+        operationTransformationPairs.map((pair) => pair.operation),
     );
   }
 
@@ -210,11 +213,17 @@ describe("SinkWriter", () => {
     expect(transformationAdapter.applyConsumerSchemaTransformation.mock.calls[0]).toEqual([
       "test-connection",
       "test-transaction",
-      operations[0],
-      {
-        transformationType: "postgresql",
-        sql: "INSERT INTO test_table (id, name) VALUES ($1, $2)",
-      },
+      [
+        {
+          operation: operations[0],
+          transformations: [
+            {
+              transformationType: "postgresql",
+              sql: "INSERT INTO test_table (id, name) VALUES ($1, $2)",
+            },
+          ],
+        },
+      ],
     ]);
   });
 

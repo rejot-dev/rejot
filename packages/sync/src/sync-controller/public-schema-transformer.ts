@@ -74,6 +74,7 @@ export class PublicSchemaTransformer {
                   minor: publicSchema.version.minor,
                 },
               },
+              objectKeys: transformedData.objectKeys,
             });
           } else {
             transformedOperations.push({

@@ -107,6 +107,14 @@ export const EVENT_STORE_MIGRATIONS: Migration[] = [
       DROP TABLE rejot_events.data_store;
     `,
   },
+  {
+    version: 7,
+    description: "Drop events_check constraint",
+    up: `
+      ALTER TABLE rejot_events.events
+      DROP CONSTRAINT IF EXISTS events_check;
+    `,
+  },
 ];
 
 export class EventStoreSchemaManager {

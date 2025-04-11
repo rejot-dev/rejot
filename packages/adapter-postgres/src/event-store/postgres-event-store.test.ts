@@ -3,6 +3,7 @@ import type {
   TransformedOperationWithSource,
   TransformedOperationWithSourceInsert,
   TransformedOperationWithSourceUpdate,
+  TransformedOperationWithSourceDelete,
 } from "@rejot-dev/contract/event-store";
 import { pgRollbackDescribe } from "../util/postgres-test-utils";
 import { PostgresEventStore } from "./postgres-event-store";
@@ -225,5 +226,31 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
     await expect(store.read([{ schema: TEST_SCHEMA, transactionId: null }], 1001)).rejects.toThrow(
       "Limit must be less than or equal to 1000",
     );
+  });
+
+  test("should handle delete operation with only entity's id", async () => {
+    const store = new PostgresEventStore(ctx.client, new SyncManifest([TEST_MANIFEST]));
+    await store.prepare();
+
+    const deleteOp: TransformedOperationWithSourceDelete = {
+      type: "delete",
+      sourcePublicSchema: {
+        name: "test-schema",
+        version: { major: 1, minor: 0 },
+      },
+      sourceManifestSlug: "test-manifest",
+      objectKeys: { id: "1" },
+    };
+
+    await store.write("tx1", [deleteOp]);
+
+    // Read with null cursor
+    const result = await store.read([{ schema: TEST_SCHEMA, transactionId: null }], 10);
+    expect(result.length).toBe(1);
+    const deleteOperation = result[0].operations.find(
+      (op): op is TransformedOperationWithSourceDelete => op.type === "delete",
+    );
+    expect(deleteOperation).toBeDefined();
+    expect(deleteOperation!.objectKeys["id"]).toBe("1");
   });
 });

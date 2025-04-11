@@ -26,6 +26,7 @@ export interface TransformedOperationWithSourceUpdate extends TransformedOperati
 
 export interface TransformedOperationWithSourceDelete extends TransformedOperationWithSourceBase {
   type: "delete";
+  objectKeys: Record<string, unknown>;
 }
 
 export type TransformedOperationWithSource =

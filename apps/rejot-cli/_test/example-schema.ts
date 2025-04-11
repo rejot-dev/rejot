@@ -51,6 +51,10 @@ const testConsumerSchema = createConsumerSchema({
         ;
       `,
     ),
+    createPostgresConsumerSchemaTransformation(
+      "DELETE FROM users_destination WHERE id = :id",
+      "delete",
+    ),
   ],
 });
 

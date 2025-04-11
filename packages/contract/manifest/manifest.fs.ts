@@ -34,7 +34,9 @@ export async function readManifest(path: string): Promise<Manifest> {
 
     if (json.manifestVersion !== CURRENT_MANIFEST_FILE_VERSION) {
       // TODO: Implement upgrades
-      throw new Error("Manifest file is not valid");
+      throw new Error(
+        "Manifest file is an old manifest file format versions and we haven't implemented upgrades.",
+      );
     }
 
     return SyncManifestSchema.parse(json);

@@ -24,6 +24,7 @@ export interface TableOperationUpdate extends TableOperationBase {
 
 export interface TableOperationDelete extends TableOperationBase {
   type: "delete";
+  oldKeys: Record<string, unknown>;
 }
 
 export type TableOperation = TableOperationInsert | TableOperationUpdate | TableOperationDelete;
@@ -46,6 +47,7 @@ export interface TransformedOperationUpdate extends TransformedOperationBase {
 
 export interface TransformedOperationDelete extends TransformedOperationBase {
   type: "delete";
+  objectKeys: Record<string, unknown>;
 }
 
 export type TransformedOperation =

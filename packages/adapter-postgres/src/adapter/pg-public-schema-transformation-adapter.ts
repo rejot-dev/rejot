@@ -43,6 +43,7 @@ export class PostgresPublicSchemaTransformationAdapter
       return {
         type: operation.type,
         keyColumns: operation.keyColumns,
+        objectKeys: operation.oldKeys,
       };
     }
 

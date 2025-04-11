@@ -18,4 +18,5 @@ export const PostgresPublicSchemaTransformationSchema = z.object({
 export const PostgresConsumerSchemaTransformationSchema = z.object({
   transformationType: z.literal("postgresql"),
   sql: z.string(),
+  whenOperation: z.enum(["insertOrUpdate", "delete"]).optional(),
 });

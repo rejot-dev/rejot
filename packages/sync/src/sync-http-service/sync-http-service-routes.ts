@@ -38,6 +38,7 @@ export const SyncControllerReadResponseSchema = z
               minor: z.number(),
             }),
           }),
+          objectKeys: z.record(z.any()),
         }),
         z.object({
           type: z.enum(["insert", "update"]),

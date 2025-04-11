@@ -3,6 +3,7 @@ import { z } from "zod";
 import type {
   AnyIConnectionAdapter,
   AnyIConsumerSchemaTransformationAdapter,
+  OperationTransformationPair,
 } from "@rejot-dev/contract/adapter";
 import type { IDataSink } from "@rejot-dev/contract/sync";
 import { type Cursor } from "@rejot-dev/contract/cursor";
@@ -56,24 +57,85 @@ export class SinkWriter {
     operations: TransformedOperationWithSource[];
     transactionId: string;
   }) {
-    await Promise.all(
-      operations.map(async (operation) => {
-        const consumerSchemas = this.#syncManifest.getConsumerSchemasForPublicSchema(operation);
+    // Group operations by destination and transformation type
+    const operationsByDestinationAndType = this.#groupOperationsByDestinationAndType(operations);
 
-        return consumerSchemas.flatMap((consumerSchema) =>
-          consumerSchema.transformations.map((transformation) =>
-            this.#getTransformationAdapter(
-              transformation.transformationType,
-            ).applyConsumerSchemaTransformation(
-              consumerSchema.destinationDataStoreSlug,
-              transactionId,
-              operation,
-              transformation,
-            ),
-          ),
+    // Execute operations for each destination and type
+    const allPromises: Promise<TransformedOperationWithSource[]>[] = [];
+
+    for (const [destinationSlug, operationsByType] of operationsByDestinationAndType.entries()) {
+      for (const [transformationType, pairs] of operationsByType.entries()) {
+        const adapter = this.#getTransformationAdapter(transformationType);
+
+        allPromises.push(
+          adapter.applyConsumerSchemaTransformation(destinationSlug, transactionId, pairs),
         );
-      }),
-    );
+      }
+    }
+
+    await Promise.all(allPromises);
+  }
+
+  #groupOperationsByDestinationAndType(operations: TransformedOperationWithSource[]): Map<
+    string, // destinationSlug
+    Map<
+      z.infer<typeof ConsumerSchemaTransformationSchema>["transformationType"],
+      OperationTransformationPair<z.infer<typeof ConsumerSchemaTransformationSchema>>[]
+    >
+  > {
+    // Maps destination slug -> transformation type -> array of operation-transformation pairs
+    const result = new Map<
+      string,
+      Map<
+        z.infer<typeof ConsumerSchemaTransformationSchema>["transformationType"],
+        OperationTransformationPair<z.infer<typeof ConsumerSchemaTransformationSchema>>[]
+      >
+    >();
+
+    for (const operation of operations) {
+      const consumerSchemas = this.#syncManifest.getConsumerSchemasForPublicSchema(operation);
+
+      // Group transformations by destination and type
+      for (const consumerSchema of consumerSchemas) {
+        const destinationSlug = consumerSchema.destinationDataStoreSlug;
+
+        if (!result.has(destinationSlug)) {
+          result.set(destinationSlug, new Map());
+        }
+
+        const transformationsByType = result.get(destinationSlug)!;
+
+        // Group transformations by type
+        const transformationsByTransformationType = new Map<
+          z.infer<typeof ConsumerSchemaTransformationSchema>["transformationType"],
+          z.infer<typeof ConsumerSchemaTransformationSchema>[]
+        >();
+
+        for (const transformation of consumerSchema.transformations) {
+          const type = transformation.transformationType;
+
+          if (!transformationsByTransformationType.has(type)) {
+            transformationsByTransformationType.set(type, []);
+          }
+
+          transformationsByTransformationType.get(type)!.push(transformation);
+        }
+
+        // Add operation-transformation pairs to the result
+        for (const [type, transformations] of transformationsByTransformationType.entries()) {
+          if (!transformationsByType.has(type)) {
+            transformationsByType.set(type, []);
+          }
+
+          transformationsByType.get(type)!.push({
+            operation,
+            transformations,
+          });
+        }
+      }
+    }
+
+    return result;
   }
 
   #createSinks() {
