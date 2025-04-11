@@ -71,11 +71,13 @@ test("verifyManifests - public schema reference validation", () => {
           tables: ["users"],
         },
         outputSchema: { type: "object", properties: {} },
-        transformation: {
-          transformationType: "postgresql",
-          table: "users",
-          sql: "SELECT * FROM users",
-        },
+        transformations: [
+          {
+            transformationType: "postgresql",
+            table: "users",
+            sql: "SELECT * FROM users",
+          },
+        ],
         version: { major: 1, minor: 0 },
       },
     ],
@@ -171,11 +173,13 @@ test("verifyManifests - duplicate public schema definition", () => {
       tables: ["users"],
     },
     outputSchema: { type: "object", properties: {} },
-    transformation: {
-      transformationType: "postgresql",
-      table: "users",
-      sql: "SELECT * FROM users",
-    },
+    transformations: [
+      {
+        transformationType: "postgresql",
+        table: "users",
+        sql: "SELECT * FROM users",
+      },
+    ],
     version: { major: 1, minor: 0 },
   };
 

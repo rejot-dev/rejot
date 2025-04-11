@@ -74,11 +74,13 @@ describe("PublicSchemaTransformer", () => {
               },
               required: ["id", "name"],
             },
-            transformation: {
-              transformationType: "postgresql" as const,
-              table: "test_table",
-              sql: "SELECT * FROM test_table WHERE id = $1",
-            },
+            transformations: [
+              {
+                transformationType: "postgresql" as const,
+                table: "test_table",
+                sql: "SELECT * FROM test_table WHERE id = $1",
+              },
+            ],
             version: {
               major: 1,
               minor: 0,

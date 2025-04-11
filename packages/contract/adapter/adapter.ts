@@ -67,7 +67,7 @@ export interface IPublicSchemaTransformationAdapter<
     sourceDataStoreSlug: string,
     operation: TableOperation,
     transformation: TTransformation,
-  ): Promise<TransformedOperation>;
+  ): Promise<TransformedOperation | null>;
 }
 
 export type AnyIPublicSchemaTransformationAdapter = IPublicSchemaTransformationAdapter<

@@ -27,11 +27,13 @@ describe("PostgresConsumerSchemaValidationAdapter", () => {
         tables: ["test_table"],
       },
       outputSchema,
-      transformation: {
-        transformationType: "postgresql",
-        table: "test_table",
-        sql: "SELECT * FROM test_table",
-      },
+      transformations: [
+        {
+          transformationType: "postgresql",
+          table: "test_table",
+          sql: "SELECT * FROM test_table",
+        },
+      ],
       version: {
         major: 1,
         minor: 0,

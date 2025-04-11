@@ -14,10 +14,16 @@ const testPublicSchema = createPublicSchema("public-account", {
     email: z.string(),
     name: z.string(),
   }),
-  transformation: createPostgresPublicSchemaTransformation(
-    "account",
-    "SELECT id, email, username as name FROM account WHERE id = $1",
-  ),
+  transformations: [
+    createPostgresPublicSchemaTransformation(
+      "account",
+      "SELECT id, email, username as name FROM account WHERE id = $1",
+    ),
+    createPostgresPublicSchemaTransformation(
+      "account_details",
+      "SELECT id, details FROM account_details WHERE account_id = $1",
+    ),
+  ],
   version: {
     major: 1,
     minor: 0,

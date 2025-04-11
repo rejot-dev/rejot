@@ -47,41 +47,48 @@ export class PublicSchemaTransformer {
       );
 
       for (const publicSchema of publicSchemas) {
-        const transformationAdapter = this.#getTransformationAdapter(
-          publicSchema.transformation.transformationType,
-        );
+        // Process each transformation in the array
+        for (const transformation of publicSchema.transformations) {
+          const transformationAdapter = this.#getTransformationAdapter(
+            transformation.transformationType,
+          );
 
-        const transformedData = await transformationAdapter.applyPublicSchemaTransformation(
-          dataStoreSlug,
-          operation,
-          publicSchema.transformation,
-        );
+          const transformedData = await transformationAdapter.applyPublicSchemaTransformation(
+            dataStoreSlug,
+            operation,
+            transformation,
+          );
 
-        if (transformedData.type === "delete") {
-          transformedOperations.push({
-            type: transformedData.type,
-            sourceManifestSlug: publicSchema.source.manifestSlug,
-            sourcePublicSchema: {
-              name: publicSchema.name,
-              version: {
-                major: publicSchema.version.major,
-                minor: publicSchema.version.minor,
+          if (!transformedData) {
+            continue;
+          }
+
+          if (transformedData.type === "delete") {
+            transformedOperations.push({
+              type: transformedData.type,
+              sourceManifestSlug: publicSchema.source.manifestSlug,
+              sourcePublicSchema: {
+                name: publicSchema.name,
+                version: {
+                  major: publicSchema.version.major,
+                  minor: publicSchema.version.minor,
+                },
               },
-            },
-          });
-        } else {
-          transformedOperations.push({
-            type: transformedData.type,
-            sourceManifestSlug: publicSchema.source.manifestSlug,
-            sourcePublicSchema: {
-              name: publicSchema.name,
-              version: {
-                major: publicSchema.version.major,
-                minor: publicSchema.version.minor,
+            });
+          } else {
+            transformedOperations.push({
+              type: transformedData.type,
+              sourceManifestSlug: publicSchema.source.manifestSlug,
+              sourcePublicSchema: {
+                name: publicSchema.name,
+                version: {
+                  major: publicSchema.version.major,
+                  minor: publicSchema.version.minor,
+                },
               },
-            },
-            object: transformedData.object,
-          });
+              object: transformedData.object,
+            });
+          }
         }
       }
     }

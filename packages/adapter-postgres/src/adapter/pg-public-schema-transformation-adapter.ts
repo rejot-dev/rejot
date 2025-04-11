@@ -27,7 +27,11 @@ export class PostgresPublicSchemaTransformationAdapter
     sourceDataStoreSlug: string,
     operation: TableOperation,
     transformation: z.infer<typeof PostgresPublicSchemaTransformationSchema>,
-  ): Promise<TransformedOperation> {
+  ): Promise<TransformedOperation | null> {
+    if (operation.table !== transformation.table) {
+      return null;
+    }
+
     const connection = this.#connectionAdapter.getConnection(sourceDataStoreSlug);
     if (!connection) {
       throw new Error(`Connection with slug ${sourceDataStoreSlug} not found`);

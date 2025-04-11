@@ -279,56 +279,62 @@ export class SyncManifestController {
       );
 
       for (const publicSchema of publicSchemas) {
-        const transformationAdapter = this.#publicSchemaTransformationAdapters.find(
-          (adapter) =>
-            adapter.transformationType === publicSchema.transformation.transformationType,
-        );
-
-        if (!transformationAdapter) {
-          throw new Error(
-            `No transformation adapter found for transformation type: ${publicSchema.transformation.transformationType}`,
+        // Process each transformation in the array
+        for (const transformation of publicSchema.transformations) {
+          const transformationAdapter = this.#publicSchemaTransformationAdapters.find(
+            (adapter) => adapter.transformationType === transformation.transformationType,
           );
-        }
 
-        const transformedData = await transformationAdapter.applyPublicSchemaTransformation(
-          dataStoreSlug,
-          operation,
-          publicSchema.transformation,
-        );
-
-        if (transformedData.type === "delete") {
-          transformedOperations.push({
-            type: transformedData.type,
-            sourceManifestSlug: publicSchema.source.manifestSlug,
-            sourcePublicSchema: {
-              name: publicSchema.name,
-              version: {
-                major: publicSchema.version.major,
-                minor: publicSchema.version.minor,
-              },
-            },
-          });
-        } else {
-          // Validate transformation result adheres to expected schema
-          const validation = this.#schemaValidator.validate(publicSchema, transformedData.object);
-          if (!validation.success) {
+          if (!transformationAdapter) {
             throw new Error(
-              `Invalid transformation result for public schema: ${validation.errors.join(", ")}`,
+              `No transformation adapter found for transformation type: ${transformation.transformationType}`,
             );
           }
 
-          transformedOperations.push({
-            type: transformedData.type,
-            sourceManifestSlug: publicSchema.source.manifestSlug,
-            sourcePublicSchema: {
-              name: publicSchema.name,
-              version: {
-                major: publicSchema.version.major,
-                minor: publicSchema.version.minor,
+          const transformedData = await transformationAdapter.applyPublicSchemaTransformation(
+            dataStoreSlug,
+            operation,
+            transformation,
+          );
+
+          if (!transformedData) {
+            continue;
+          }
+
+          if (transformedData.type === "delete") {
+            transformedOperations.push({
+              type: transformedData.type,
+              sourceManifestSlug: publicSchema.source.manifestSlug,
+              sourcePublicSchema: {
+                name: publicSchema.name,
+                version: {
+                  major: publicSchema.version.major,
+                  minor: publicSchema.version.minor,
+                },
               },
-            },
-            object: transformedData.object,
-          });
+            });
+          } else {
+            // Validate transformation result adheres to expected schema
+            const validation = this.#schemaValidator.validate(publicSchema, transformedData.object);
+            if (!validation.success) {
+              throw new Error(
+                `Invalid transformation result for public schema: ${validation.errors.join(", ")}`,
+              );
+            }
+
+            transformedOperations.push({
+              type: transformedData.type,
+              sourceManifestSlug: publicSchema.source.manifestSlug,
+              sourcePublicSchema: {
+                name: publicSchema.name,
+                version: {
+                  major: publicSchema.version.major,
+                  minor: publicSchema.version.minor,
+                },
+              },
+              object: transformedData.object,
+            });
+          }
         }
       }
     }

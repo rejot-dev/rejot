@@ -23,7 +23,7 @@ export type CreatePublicSchemaOptions<T extends z.ZodSchema> = {
 
   outputSchema: T;
 
-  transformation: PublicSchemaTransformation;
+  transformations: PublicSchemaTransformation[];
 
   version: Version;
 };
@@ -36,7 +36,7 @@ export type PublicSchemaOptions = {
 
   outputSchema: z.infer<typeof JsonSchemaSchema>;
 
-  transformation: PublicSchemaTransformation;
+  transformations: PublicSchemaTransformation[];
 
   version: Version;
 };
@@ -60,18 +60,22 @@ export class PublicSchema {
       throw new InvalidPublicationError("Publication must have at least one table");
     }
 
+    if (options.transformations.length === 0) {
+      throw new InvalidPublicationError("Publication must have at least one transformation");
+    }
+
     this.#name = name;
     this.#options = options;
   }
 
   get data(): z.infer<typeof PublicSchemaSchema> {
-    const { source, outputSchema, transformation, version } = this.#options;
+    const { source, outputSchema, transformations, version } = this.#options;
 
     return {
       name: this.#name,
       source,
       outputSchema,
-      transformation,
+      transformations,
       version,
     };
   }
@@ -88,20 +92,20 @@ export function createPublicSchema<T extends z.ZodSchema>(
   return new PublicSchema(publicSchemaName, {
     source: options.source,
     outputSchema: jsonSchema,
-    transformation: options.transformation,
+    transformations: options.transformations,
     version: options.version,
   });
 }
 
 export function deserializePublicSchema(schema: string): PublicSchema {
-  const { name, source, outputSchema, transformation, version } = PublicSchemaSchema.parse(
+  const { name, source, outputSchema, transformations, version } = PublicSchemaSchema.parse(
     JSON.parse(schema),
   );
 
   return new PublicSchema(name, {
     source,
     outputSchema,
-    transformation,
+    transformations,
     version,
   });
 }
