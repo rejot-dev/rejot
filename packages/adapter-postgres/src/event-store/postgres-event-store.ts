@@ -109,7 +109,7 @@ export class PostgresEventStore implements IEventStore {
 
         const baseOperation = {
           sourceManifestSlug: row.manifestSlug,
-          sourceDataStoreSlug: row.manifestSlug, // Using manifest slug as data store slug
+          sourceDataStoreSlug: row.manifestSlug, // TODO(Wilco): Using manifest slug as data store slug, this is wrong.
           sourcePublicSchema: {
             name: row.publicSchemaName,
             version: {
@@ -124,6 +124,7 @@ export class PostgresEventStore implements IEventStore {
             ? {
                 ...baseOperation,
                 type: "delete",
+                objectKeys: row.object,
               }
             : {
                 ...baseOperation,

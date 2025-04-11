@@ -53,7 +53,7 @@ export class PostgresEventStoreRepository {
           op.sourcePublicSchema.version.major,
           op.sourcePublicSchema.version.minor,
           op.sourceManifestSlug,
-          op.type === "delete" ? null : op.object,
+          op.type === "delete" ? op.objectKeys : op.object,
         ],
       );
     }

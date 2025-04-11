@@ -34,6 +34,13 @@ export interface CreateSourceOptions {
   slotName?: string;
 }
 
+export interface OperationTransformationPair<
+  TTransformation extends z.infer<typeof ConsumerSchemaTransformationSchema>,
+> {
+  operation: TransformedOperationWithSource;
+  transformations: TTransformation[];
+}
+
 export interface IConnectionAdapter<
   TConnectionConfig extends z.infer<typeof ConnectionConfigSchema>,
   TSource extends IDataSource,
@@ -85,9 +92,8 @@ export interface IConsumerSchemaTransformationAdapter<
   applyConsumerSchemaTransformation(
     destinationDataStoreSlug: string,
     transactionId: string,
-    operation: TransformedOperationWithSource,
-    transformation: TTransformation,
-  ): Promise<TransformedOperationWithSource>;
+    operationTransformationPairs: OperationTransformationPair<TTransformation>[],
+  ): Promise<TransformedOperationWithSource[]>;
 }
 
 export type AnyIConsumerSchemaTransformationAdapter = IConsumerSchemaTransformationAdapter<

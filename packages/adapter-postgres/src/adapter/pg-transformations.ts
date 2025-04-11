@@ -14,9 +14,11 @@ export function createPostgresPublicSchemaTransformation(
 
 export function createPostgresConsumerSchemaTransformation(
   sql: string,
+  whenOperation?: "insertOrUpdate" | "delete",
 ): ConsumerSchemaTransformation {
   return {
     transformationType: "postgresql",
     sql,
+    whenOperation,
   };
 }

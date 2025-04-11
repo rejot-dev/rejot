@@ -37,12 +37,14 @@ export type Operation = {
       tableSchema: string;
       keyColumns: string[];
       new: Record<string, unknown>;
+      oldKeys: Record<string, unknown>;
     }
   | {
       type: "delete";
       table: string;
       keyColumns: string[];
       tableSchema: string;
+      oldKeys: Record<string, unknown>;
     }
 );
 
@@ -161,9 +163,12 @@ export class PostgresReplicationListener {
       while (!abortSignal.aborted) {
         const { commitEndLsn, operations } = await next.promise;
 
+        // Process operations to handle primary key changes
+        const processedOperations = this.#processOperationsForPrimaryKeyChanges(operations);
+
         yield {
           id: commitEndLsn,
-          operations,
+          operations: processedOperations,
           ack: ack.resolve,
         };
 
@@ -288,6 +293,7 @@ export class PostgresReplicationListener {
         tableSchema: log.relation.schema,
         keyColumns: log.relation.keyColumns,
         new: log.new,
+        oldKeys: log.key || {},
       };
     }
 
@@ -297,6 +303,7 @@ export class PostgresReplicationListener {
         table: log.relation.name,
         tableSchema: log.relation.schema,
         keyColumns: log.relation.keyColumns,
+        oldKeys: log.key || {},
       };
     }
 
@@ -320,5 +327,59 @@ export class PostgresReplicationListener {
     // TODO(Wilco): Handle errors gracefully.
 
     console.error("#onError", error);
+  }
+
+  /**
+   * When the primary key changes in an update, we replace the the operation with an insert and
+   * delete operation.
+   *
+   * TODO(Wilco): unsure if this is the best approach, but primary key updates should be uncommon
+   *              in practice.
+   *
+   * @param operations The operations to process.
+   * @returns The processed operations.
+   */
+  #processOperationsForPrimaryKeyChanges(operations: Operation[]): Operation[] {
+    const result: Operation[] = [];
+
+    for (const operation of operations) {
+      if (operation.type === "update" && operation.keyColumns.length > 0) {
+        const primaryKeyChanged = operation.keyColumns.some((column) => {
+          if (!(column in operation.oldKeys)) {
+            // If the column is not in oldKeys, it means that it wasn't changed.
+            return false;
+          }
+          return operation.oldKeys[column] !== operation.new[column];
+        });
+
+        if (primaryKeyChanged) {
+          // Create an insert operation with the new values
+          result.push({
+            type: "insert",
+            table: operation.table,
+            tableSchema: operation.tableSchema,
+            keyColumns: operation.keyColumns,
+            new: operation.new,
+          });
+
+          // Create a delete operation with the old primary key
+          result.push({
+            type: "delete",
+            table: operation.table,
+            tableSchema: operation.tableSchema,
+            keyColumns: operation.keyColumns,
+            oldKeys: operation.oldKeys,
+          });
+        } else {
+          // No primary key change, add the original update
+          result.push(operation);
+        }
+      } else {
+        // Not an update or no primary keys, pass through unchanged
+        result.push(operation);
+      }
+    }
+
+    return result;
   }
 }

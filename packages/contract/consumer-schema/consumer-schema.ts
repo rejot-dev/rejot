@@ -5,6 +5,7 @@ import { PublicSchema } from "../public-schema/public-schema.ts";
 export interface ConsumerSchemaTransformation {
   transformationType: "postgresql";
   sql: string;
+  whenOperation?: "insertOrUpdate" | "delete";
 }
 
 export type ConsumerSchemaSourceLiteral = {

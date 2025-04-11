@@ -84,6 +84,7 @@ class TestSource implements IDataSource {
       return {
         type: operation.type,
         keyColumns: operation.keyColumns,
+        objectKeys: operation.oldKeys,
       };
     }
     return {
@@ -182,12 +183,14 @@ describe("Simple Sync Controller Operations", () => {
         keyColumns: ["id"],
         table: "test",
         tableSchema: "test",
+        oldKeys: { id: 1 },
       },
     ]);
     expect(sink.receivedOperations).toEqual([
       {
         type: "delete",
         keyColumns: ["id"],
+        objectKeys: { id: 1 },
       },
     ]);
 

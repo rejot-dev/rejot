@@ -72,6 +72,7 @@ test("ManifestTransformationRepository - returns schemas with highest minor vers
     table: "users",
     tableSchema: "public",
     keyColumns: ["id"],
+    oldKeys: { id: "123" },
   };
   const schemas = await repo.getPublicSchemasForOperation("ds1", operation);
 
@@ -137,6 +138,7 @@ test("ManifestTransformationRepository - returns empty array for non-matching da
     table: "users",
     tableSchema: "public",
     keyColumns: ["id"],
+    oldKeys: { id: "123" },
   };
   const schemas = await repo.getPublicSchemasForOperation("non-existent", operation);
   expect(schemas).toHaveLength(0);
@@ -176,6 +178,7 @@ test("ManifestTransformationRepository - returns empty array for non-matching ta
     table: "non-existent",
     tableSchema: "public",
     keyColumns: ["id"],
+    oldKeys: { id: "123" },
   };
   const schemas = await repo.getPublicSchemasForOperation("ds1", operation);
   expect(schemas).toHaveLength(0);

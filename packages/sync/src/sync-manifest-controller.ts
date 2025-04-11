@@ -312,6 +312,7 @@ export class SyncManifestController {
                   minor: publicSchema.version.minor,
                 },
               },
+              objectKeys: transformedData.objectKeys,
             });
           } else {
             // Validate transformation result adheres to expected schema

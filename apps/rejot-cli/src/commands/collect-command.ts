@@ -38,7 +38,13 @@ export default class Collect extends Command {
     const { args, flags } = await this.parse(Collect);
     const { manifest: manifestPath, write, check } = flags;
 
-    const currentManifest = await readManifest(manifestPath);
+    let currentManifest: Awaited<ReturnType<typeof readManifest>>;
+    try {
+      currentManifest = await readManifest(manifestPath);
+    } catch (error) {
+      console.warn(`Pre-existing manifest file '${manifestPath}' has invalid format.`);
+      throw error;
+    }
 
     const publicSchemas = await collectPublicSchemas(args.schema);
     const consumerSchemas = await collectConsumerSchemas(args.schema);

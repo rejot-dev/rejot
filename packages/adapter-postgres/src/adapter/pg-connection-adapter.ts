@@ -94,4 +94,22 @@ export class PostgresConnectionAdapter
 
     return existingConnection;
   }
+
+  setConnection(
+    connectionSlug: string,
+    connection: z.infer<typeof PostgresConnectionSchema>,
+    client: PostgresClient,
+  ) {
+    const existingConnection = this.#connections.get(connectionSlug);
+
+    if (existingConnection) {
+      throw new Error(`Connection with slug ${connectionSlug} already exists`);
+    }
+
+    this.#connections.set(connectionSlug, {
+      slug: connectionSlug,
+      config: connection,
+      client,
+    });
+  }
 }
