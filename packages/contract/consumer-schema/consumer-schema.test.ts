@@ -162,7 +162,7 @@ test("createConsumerSchema with PublicSchema as direct source", () => {
       },
     ],
     version: {
-      major: 1,
+      major: 2,
       minor: 0,
     },
   });
@@ -184,6 +184,7 @@ test("createConsumerSchema with PublicSchema as direct source", () => {
   } = consumerSchema.data;
 
   expect(resultPublicSchema.name).toBe("test-public-schema");
+  expect(resultPublicSchema.majorVersion).toBe(2);
   expect(destinationDataStoreSlug).toBe("destination-store");
   expect(transformations).toEqual([
     {

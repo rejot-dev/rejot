@@ -64,7 +64,7 @@ export class ConsumerSchema {
       publicSchema:
         "manifestSlug" in source
           ? source.publicSchema
-          : { name: source.data.name, majorVersion: 1 },
+          : { name: source.data.name, majorVersion: source.data.version.major },
       destinationDataStoreSlug: options.destinationDataStoreSlug,
       transformations: options.transformations,
     };
