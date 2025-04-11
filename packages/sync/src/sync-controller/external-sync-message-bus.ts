@@ -99,6 +99,7 @@ export class ExternalSyncMessageBus implements ISubscribeMessageBus {
         });
 
         yield* transactions;
+        this.#cursors.advanceWithMessages(transactions);
       }
 
       await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
