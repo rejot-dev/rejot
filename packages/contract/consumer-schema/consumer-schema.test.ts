@@ -154,11 +154,13 @@ test("createConsumerSchema with PublicSchema as direct source", () => {
       type: "object",
       properties: {},
     },
-    transformation: {
-      transformationType: "postgresql",
-      table: "table1",
-      sql: "SELECT * FROM table1;",
-    },
+    transformations: [
+      {
+        transformationType: "postgresql",
+        table: "table1",
+        sql: "SELECT * FROM table1;",
+      },
+    ],
     version: {
       major: 1,
       minor: 0,

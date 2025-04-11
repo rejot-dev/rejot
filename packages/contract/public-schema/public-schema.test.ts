@@ -11,22 +11,21 @@ test("createPublicSchema", () => {
       id: z.string(),
       name: z.string(),
     }),
-    transformation: createPostgresPublicSchemaTransformation(
-      "test",
-      "SELECT id, name FROM test WHERE id = $1;",
-    ),
+    transformations: [
+      createPostgresPublicSchemaTransformation("test", "SELECT id, name FROM test WHERE id = $1;"),
+    ],
     version: {
       major: 1,
       minor: 0,
     },
   });
 
-  const { source, transformation, version } = publication.data;
+  const { source, transformations, version } = publication.data;
 
   expect(source).toEqual({ dataStoreSlug: "test", tables: ["test"] });
-  expect(transformation).toEqual(
+  expect(transformations).toEqual([
     createPostgresPublicSchemaTransformation("test", "SELECT id, name FROM test WHERE id = $1;"),
-  );
+  ]);
   expect(version).toEqual({
     major: 1,
     minor: 0,
@@ -40,10 +39,9 @@ test("public schema - serialize & deserialize", () => {
       id: z.number(),
       name: z.string(),
     }),
-    transformation: createPostgresPublicSchemaTransformation(
-      "test",
-      "SELECT id, name FROM test WHERE id = $1;",
-    ),
+    transformations: [
+      createPostgresPublicSchemaTransformation("test", "SELECT id, name FROM test WHERE id = $1;"),
+    ],
     version: {
       major: 1,
       minor: 0,
@@ -53,15 +51,17 @@ test("public schema - serialize & deserialize", () => {
   const serialized = JSON.stringify(publication.data);
   const deserialized = deserializePublicSchema(serialized);
 
-  const { name, source, transformation, version, outputSchema } = deserialized.data;
+  const { name, source, transformations, version, outputSchema } = deserialized.data;
 
   expect(name).toEqual("test");
   expect(source).toEqual({ dataStoreSlug: "test", tables: ["test"] });
-  expect(transformation).toEqual({
-    transformationType: "postgresql",
-    table: "test",
-    sql: "SELECT id, name FROM test WHERE id = $1;",
-  });
+  expect(transformations).toEqual([
+    {
+      transformationType: "postgresql",
+      table: "test",
+      sql: "SELECT id, name FROM test WHERE id = $1;",
+    },
+  ]);
   expect(version).toEqual({
     major: 1,
     minor: 0,
@@ -80,4 +80,21 @@ test("public schema - serialize & deserialize", () => {
     additionalProperties: false,
     required: ["id", "name"],
   });
+});
+
+test("public schema - enforces at least one transformation", () => {
+  expect(() =>
+    createPublicSchema("test", {
+      source: { dataStoreSlug: "test", tables: ["test"] },
+      outputSchema: z.object({
+        id: z.number(),
+        name: z.string(),
+      }),
+      transformations: [], // Empty transformations array
+      version: {
+        major: 1,
+        minor: 0,
+      },
+    }),
+  ).toThrow("Publication must have at least one transformation");
 });

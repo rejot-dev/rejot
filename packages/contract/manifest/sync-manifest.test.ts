@@ -66,11 +66,13 @@ test("SyncManifest - getExternalConsumerSchemas with no external references", ()
         name: "internal-schema",
         version: { major: 1, minor: 0 },
         source: { dataStoreSlug: "ds1", tables: ["table1"] },
-        transformation: {
-          transformationType: "postgresql" as const,
-          table: "table1",
-          sql: "SELECT * FROM table1",
-        },
+        transformations: [
+          {
+            transformationType: "postgresql" as const,
+            table: "table1",
+            sql: "SELECT * FROM table1",
+          },
+        ],
         outputSchema: {
           type: "object" as const,
           properties: {},

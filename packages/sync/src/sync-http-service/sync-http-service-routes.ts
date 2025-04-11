@@ -93,7 +93,7 @@ export const publicSchemasRoute = {
         dataStoreSlug: z.string(),
         tables: z.array(z.string()),
       }),
-      transformation: z.record(z.any()),
+      transformations: z.array(z.record(z.any())),
       version: z.object({
         major: z.number(),
         minor: z.number(),

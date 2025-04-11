@@ -45,7 +45,7 @@ export const PublicSchemaSchema = z.object({
     tables: z.array(z.string()).min(1),
   }),
   outputSchema: JsonSchemaSchema,
-  transformation: PublicSchemaTransformationSchema,
+  transformations: z.array(PublicSchemaTransformationSchema).min(1),
   version: z.object({
     major: z.number(),
     minor: z.number(),

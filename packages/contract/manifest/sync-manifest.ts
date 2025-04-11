@@ -225,13 +225,13 @@ export class SyncManifest {
             schema.source.tables.includes(operation.table)
           );
         })
-        .map(({ name, source, transformation, version, outputSchema }) => ({
+        .map(({ name, source, transformations, version, outputSchema }) => ({
           name,
           source: {
             ...source,
             manifestSlug: manifest.slug,
           },
-          transformation,
+          transformations,
           version,
           outputSchema,
         })),

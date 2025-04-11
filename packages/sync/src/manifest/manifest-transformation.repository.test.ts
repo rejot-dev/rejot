@@ -1,12 +1,12 @@
 import { test, expect } from "bun:test";
 import { z } from "zod";
 import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
-import { ManifestTransformationRepository } from "./manifest-transformation.repository";
+import { ManifestTransformationRepository } from "./manifest-transformation.repository.ts";
 import type { TableOperation } from "@rejot-dev/contract/sync";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
-test("ManifestTransformationRepository - returns schemas for highest minor version", async () => {
+test("ManifestTransformationRepository - returns schemas with highest minor version for each major version", async () => {
   const manifest: Manifest = {
     slug: "test-manifest",
     manifestVersion: 1,
@@ -21,11 +21,13 @@ test("ManifestTransformationRepository - returns schemas for highest minor versi
           tables: ["users"],
         },
         outputSchema: { type: "object", properties: {} },
-        transformation: {
-          transformationType: "postgresql",
-          table: "users",
-          sql: "SELECT id, name FROM users WHERE id = $1",
-        },
+        transformations: [
+          {
+            transformationType: "postgresql",
+            table: "users",
+            sql: "SELECT id, name FROM users WHERE id = $1",
+          },
+        ],
         version: { major: 1, minor: 0 },
       },
       {
@@ -35,11 +37,13 @@ test("ManifestTransformationRepository - returns schemas for highest minor versi
           tables: ["users"],
         },
         outputSchema: { type: "object", properties: {} },
-        transformation: {
-          transformationType: "postgresql",
-          table: "users",
-          sql: "SELECT id, name, email FROM users WHERE id = $1",
-        },
+        transformations: [
+          {
+            transformationType: "postgresql",
+            table: "users",
+            sql: "SELECT id, name, email FROM users WHERE id = $1",
+          },
+        ],
         version: { major: 1, minor: 1 },
       },
       {
@@ -49,11 +53,13 @@ test("ManifestTransformationRepository - returns schemas for highest minor versi
           tables: ["users"],
         },
         outputSchema: { type: "object", properties: {} },
-        transformation: {
-          transformationType: "postgresql",
-          table: "users",
-          sql: "SELECT * FROM users WHERE id = $1",
-        },
+        transformations: [
+          {
+            transformationType: "postgresql",
+            table: "users",
+            sql: "SELECT * FROM users WHERE id = $1",
+          },
+        ],
         version: { major: 2, minor: 0 },
       },
     ],
@@ -73,21 +79,25 @@ test("ManifestTransformationRepository - returns schemas for highest minor versi
   expect(schemas).toHaveLength(2);
   expect(schemas).toContainEqual(
     expect.objectContaining({
-      transformation: {
-        transformationType: "postgresql",
-        table: "users",
-        sql: "SELECT id, name, email FROM users WHERE id = $1",
-      },
+      transformations: [
+        {
+          transformationType: "postgresql",
+          table: "users",
+          sql: "SELECT id, name, email FROM users WHERE id = $1",
+        },
+      ],
       version: { major: 1, minor: 1 },
     }),
   );
   expect(schemas).toContainEqual(
     expect.objectContaining({
-      transformation: {
-        transformationType: "postgresql",
-        table: "users",
-        sql: "SELECT * FROM users WHERE id = $1",
-      },
+      transformations: [
+        {
+          transformationType: "postgresql",
+          table: "users",
+          sql: "SELECT * FROM users WHERE id = $1",
+        },
+      ],
       version: { major: 2, minor: 0 },
     }),
   );
@@ -108,11 +118,13 @@ test("ManifestTransformationRepository - returns empty array for non-matching da
           tables: ["users"],
         },
         outputSchema: { type: "object", properties: {} },
-        transformation: {
-          transformationType: "postgresql",
-          table: "users",
-          sql: "SELECT * FROM users WHERE id = $1",
-        },
+        transformations: [
+          {
+            transformationType: "postgresql",
+            table: "users",
+            sql: "SELECT * FROM users WHERE id = $1",
+          },
+        ],
         version: { major: 1, minor: 0 },
       },
     ],
@@ -145,11 +157,13 @@ test("ManifestTransformationRepository - returns empty array for non-matching ta
           tables: ["users"],
         },
         outputSchema: { type: "object", properties: {} },
-        transformation: {
-          transformationType: "postgresql",
-          table: "users",
-          sql: "SELECT * FROM users WHERE id = $1",
-        },
+        transformations: [
+          {
+            transformationType: "postgresql",
+            table: "users",
+            sql: "SELECT * FROM users WHERE id = $1",
+          },
+        ],
         version: { major: 1, minor: 0 },
       },
     ],
