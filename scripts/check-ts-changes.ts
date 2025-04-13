@@ -5,7 +5,7 @@ import { glob } from "glob";
 import { readFileSync } from "fs";
 import { join, relative } from "path";
 
-type CheckType = "types" | "test";
+type CheckType = "types" | "test" | "install";
 type TestFailure = {
   file: string;
   line: string;
@@ -157,6 +157,18 @@ async function waitForRunCompletion(proc: {
 
 async function checkPackage(packagePath: string, checkType: CheckType): Promise<boolean> {
   try {
+    if (checkType === "install") {
+      // For install type, just run bun install and return true
+      const proc = Bun.spawn(["bun", "install"], {
+        cwd: packagePath,
+        stdout: "inherit",
+        stderr: "inherit",
+      });
+      await proc.exited;
+      return true;
+    }
+
+    // For types and test checks
     const command =
       checkType === "types"
         ? ["bunx", "tsc", "--noEmit", "--watch", "--pretty", "false"]
@@ -170,7 +182,8 @@ async function checkPackage(packagePath: string, checkType: CheckType): Promise<
 
     // Show header for the package being checked
     const relativePackagePath = relative(process.cwd(), packagePath);
-    const checkTypeDisplay = checkType === "types" ? "types" : "tests";
+    const checkTypeDisplay =
+      checkType === "types" ? "types" : checkType === "test" ? "tests" : "install";
     console.log(`\n=== Checking ${checkTypeDisplay} in ${relativePackagePath} ===\n`);
 
     // Wait for a complete run
@@ -198,7 +211,11 @@ async function main() {
   try {
     // Get check type and all flag from command line arguments
     const args = process.argv.slice(2);
-    const checkType: CheckType = args.includes("test") ? "test" : "types";
+    const checkType: CheckType = args.includes("test")
+      ? "test"
+      : args.includes("install")
+        ? "install"
+        : "types";
     const checkAll = args.includes("--all");
 
     const packages = await getWorkspacePackages();

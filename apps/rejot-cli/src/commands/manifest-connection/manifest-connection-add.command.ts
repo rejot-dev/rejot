@@ -1,6 +1,6 @@
 import { Command, Flags } from "@oclif/core";
 import path from "node:path";
-import { readManifest, writeManifest } from "@rejot-dev/contract/manifest.fs";
+import { readManifest, writeManifest } from "@rejot-dev/contract-tools/manifest";
 import { connectionFlags, parseConnectionFlags } from "./manifest-connection-config.ts";
 
 export class ManifestConnectionAddCommand extends Command {

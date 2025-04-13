@@ -16,10 +16,12 @@ COPY package.json bun.lock .npmrc ./
 COPY apps/controller/package.json apps/controller/package.json
 COPY apps/controller-spa/package.json apps/controller-spa/package.json
 COPY apps/rejot-cli/package.json apps/rejot-cli/package.json
+COPY apps/mcp/package.json apps/mcp/package.json
 
 COPY packages/adapter-postgres/package.json packages/adapter-postgres/package.json
 COPY packages/api-interface-controller/package.json packages/api-interface-controller/package.json
 COPY packages/contract/package.json packages/contract/package.json
+COPY packages/contract-tools/package.json packages/contract-tools/package.json
 COPY packages/sync/package.json packages/sync/package.json
 COPY packages/sqlparser/package.json packages/sqlparser/package.json
 
