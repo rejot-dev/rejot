@@ -1,5 +1,5 @@
 {
-  "name": "@rejot-dev/cli",
+  "name": "@rejot-dev/mcp",
   "type": "module",
   "version": "0.0.7",
   "license": "Apache-2.0",
@@ -7,17 +7,15 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rejot-dev/rejot.git",
-    "directory": "apps/rejot-cli"
+    "directory": "apps/mcp"
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "bun test"
-  },
-  "bin": {
-    "rejot-cli": "./bin/run.js"
+    "test": "bun test",
+    "inspect": "mcp-inspector bun run src/index.ts"
   },
   "devDependencies": {
-    "@oclif/test": "^4.1.12",
+    "@modelcontextprotocol/inspector": "^0.8.2",
     "@types/bun": "^1.2.2",
     "@types/node": "^22.13.4"
   },
@@ -25,23 +23,14 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@oclif/core": "^4.2.8",
+    "@modelcontextprotocol/sdk": "^1.9.0",
     "@rejot-dev/adapter-postgres": "*",
     "@rejot-dev/contract": "*",
     "@rejot-dev/contract-tools": "*",
     "@rejot-dev/sync": "*",
-    "@types/debug": "^4.1.12",
-    "debug": "^4.4.0",
-    "oclif": "^4.17.34"
+    "pg": "^8.14.1"
   },
-  "oclif": {
-    "bin": "rejot-cli",
-    "commands": {
-      "strategy": "explicit",
-      "target": "./src/index.ts",
-      "identifier": "commands"
-    },
-    "dirname": "rejot-cli",
-    "topicSeparator": " "
+  "bin": {
+    "rejot-mcp": "./src/index.ts"
   }
 }

@@ -1,7 +1,8 @@
 import { Command, Flags } from "@oclif/core";
 import path from "node:path";
-import { readManifest } from "@rejot-dev/contract/manifest.fs";
+import { readManifest } from "@rejot-dev/contract-tools/manifest";
 import { verifyManifests } from "@rejot-dev/contract/manifest";
+import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
 
 export class ManifestInfoCommand extends Command {
   static override id = "manifest";
@@ -60,56 +61,12 @@ export class ManifestInfoCommand extends Command {
         this.exit(1);
       }
 
-      // Pretty print the manifest
-      this.log("Manifest Configuration:\n");
-
-      // Print connections
-      this.log("Connections:");
-      if (manifest.connections.length === 0) {
-        this.log("  No connections configured");
-      } else {
-        for (const conn of manifest.connections) {
-          this.log(`  - ${conn.slug} (${conn.config.connectionType})`);
-          switch (conn.config.connectionType) {
-            case "postgres":
-              this.log(`    Host: ${conn.config.host}:${conn.config.port}`);
-              this.log(`    Database: ${conn.config.database}`);
-              this.log(`    User: ${conn.config.user}`);
-              this.log(
-                `    string: postgres://${conn.config.user}@${conn.config.host}:${conn.config.port}/${conn.config.database}`,
-              );
-              break;
-            case "in-memory":
-              this.log(`    In-memory connection`);
-              break;
-          }
-        }
-      }
-      this.log("");
-
-      // Print data stores
-      this.log("Data Stores (Replication Sources):");
-      if (manifest.dataStores.length === 0) {
-        this.log("  No data stores configured");
-      } else {
-        for (const ds of manifest.dataStores) {
-          this.log(`  - Connection: ${ds.connectionSlug}`);
-          this.log(`    Publication / slot: ${ds.publicationName ?? ""} / ${ds.slotName ?? ""}`);
-        }
-      }
-      this.log("");
-
-      // Print event stores
-      this.log("Event Stores (Replication Targets):");
-      if (manifest.eventStores.length === 0) {
-        this.log("  No event stores configured");
-      } else {
-        for (const es of manifest.eventStores) {
-          this.log(`  - Connection: ${es.connectionSlug}`);
-        }
+      // Use the ManifestPrinter for the main display
+      const output = ManifestPrinter.printManifest(manifest);
+      for (const line of output) {
+        this.log(line);
       }
 
-      // Print help if no components are configured
       if (
         manifest.connections.length === 0 &&
         manifest.dataStores.length === 0 &&

@@ -1,4 +1,4 @@
-import { SyncManifestSchema } from "./manifest.ts";
+import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
 import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { dirname } from "node:path";

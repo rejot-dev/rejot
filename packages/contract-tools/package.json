@@ -1,0 +1,23 @@
+{
+  "name": "@rejot-dev/contract-tools",
+  "version": "0.0.7",
+  "private": false,
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rejot-dev/rejot.git",
+    "directory": "packages/contract-tools"
+  },
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "exports": {
+    "./manifest": "./manifest/index.ts",
+    "./manifest/manifest-printer": "./manifest/manifest-printer.ts",
+    "./manifest/manifest.fs": "./manifest/manifest.fs.ts"
+  },
+  "type": "module",
+  "dependencies": {
+    "@rejot-dev/contract": "*"
+  }
+}

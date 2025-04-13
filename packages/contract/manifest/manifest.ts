@@ -78,5 +78,4 @@ export const SyncManifestSchema = z.object({
   consumerSchemas: z.array(ConsumerSchemaSchema),
 });
 
-export { writeManifest } from "./manifest.fs.ts";
 export { verifyManifests, type ManifestError, type VerificationResult } from "./verify-manifest";

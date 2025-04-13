@@ -3,7 +3,7 @@ import { mkdtemp, rm, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { runCommand } from "@oclif/test";
-import { initManifest } from "@rejot-dev/contract/manifest.fs";
+import { initManifest } from "@rejot-dev/contract-tools/manifest";
 
 describe("ManifestDataStore commands", () => {
   let tmpDir: string;

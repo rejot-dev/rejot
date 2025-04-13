@@ -1,6 +1,6 @@
 import { Args, Command, Flags } from "@oclif/core";
 import path from "node:path";
-import { readManifest, writeManifest } from "@rejot-dev/contract/manifest.fs";
+import { readManifest, writeManifest } from "@rejot-dev/contract-tools/manifest";
 
 export class ManifestEventStoreRemoveCommand extends Command {
   static override id = "manifest:eventstore:remove";
