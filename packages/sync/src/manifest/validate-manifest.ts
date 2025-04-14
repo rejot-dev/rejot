@@ -56,8 +56,8 @@ export async function validateManifest(manifest: z.infer<typeof SyncManifestSche
   ];
 
   // Get all consumer schemas from the manifest
-  const consumerSchemas = manifest.consumerSchemas;
-  const publicSchemas = manifest.publicSchemas;
+  const consumerSchemas = manifest.consumerSchemas ?? [];
+  const publicSchemas = manifest.publicSchemas ?? [];
 
   const validationResults: ValidationResult[] = [];
 

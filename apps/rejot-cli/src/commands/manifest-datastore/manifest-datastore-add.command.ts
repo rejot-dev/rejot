@@ -29,6 +29,7 @@ export class ManifestDataStoreAddCommand extends Command {
     await validateUniqueConnection(manifestPath, flags.connection);
 
     const manifest = await readManifest(manifestPath);
+    manifest.dataStores = manifest.dataStores ?? [];
     manifest.dataStores.push({
       connectionSlug: flags.connection,
       publicationName: flags.publication,

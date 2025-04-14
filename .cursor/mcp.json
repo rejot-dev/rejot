@@ -2,7 +2,7 @@
   "mcpServers": {
     "rejot-mcp": {
       "command": "bun",
-      "args": ["./apps/mcp/src/index.ts"]
+      "args": ["./apps/mcp/index.ts", "--project", "."]
     }
   }
 }

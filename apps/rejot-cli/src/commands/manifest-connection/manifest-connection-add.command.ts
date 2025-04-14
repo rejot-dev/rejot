@@ -31,12 +31,13 @@ export class ManifestConnectionAddCommand extends Command {
       const manifest = await readManifest(manifestPath);
 
       // Check if connection with same slug already exists
-      if (manifest.connections.some((conn) => conn.slug === flags.slug)) {
+      if ((manifest.connections ?? []).some((conn) => conn.slug === flags.slug)) {
         this.error(
           `Connection with slug '${flags.slug}' already exists. Use the 'update' command to update it.`,
         );
       }
 
+      manifest.connections = manifest.connections ?? [];
       manifest.connections.push({
         slug: flags.slug,
         config: connectionConfig,

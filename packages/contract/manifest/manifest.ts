@@ -50,6 +50,7 @@ export const PublicSchemaSchema = z.object({
     major: z.number(),
     minor: z.number(),
   }),
+  definitionFile: z.string().optional(),
 });
 
 export const ConsumerSchemaSchema = z.object({
@@ -63,6 +64,7 @@ export const ConsumerSchemaSchema = z.object({
   destinationDataStoreSlug: z.string().min(1),
 
   transformations: z.array(ConsumerSchemaTransformationSchema).min(1),
+  definitionFile: z.string().optional(),
 });
 
 export const SyncManifestSchema = z.object({
@@ -71,11 +73,13 @@ export const SyncManifestSchema = z.object({
   /** Version of the manifest file format. */
   manifestVersion: z.number(),
 
-  connections: z.array(ConnectionSchema),
-  dataStores: z.array(DataStoreSchema),
-  eventStores: z.array(EventStoreSchema),
-  publicSchemas: z.array(PublicSchemaSchema),
-  consumerSchemas: z.array(ConsumerSchemaSchema),
+  connections: z.array(ConnectionSchema).optional(),
+  dataStores: z.array(DataStoreSchema).optional(),
+  eventStores: z.array(EventStoreSchema).optional(),
+  publicSchemas: z.array(PublicSchemaSchema).optional(),
+  consumerSchemas: z.array(ConsumerSchemaSchema).optional(),
+
+  workspaces: z.array(z.string()).optional(),
 });
 
 export { verifyManifests, type ManifestError, type VerificationResult } from "./verify-manifest";

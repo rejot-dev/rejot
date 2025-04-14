@@ -114,13 +114,13 @@ export class ManifestSyncCommand extends Command {
       // Create event store from the first manifest's event store config
       // TODO: Support multiple event stores or validate they are the same
       const manifest = manifests[0];
-      if (!manifest.eventStores?.[0]) {
+      if (!(manifest.eventStores ?? [])[0]) {
         throw new Error("No event store configuration found in manifest");
       }
 
-      const eventStoreConfig = manifest.eventStores[0];
-      const eventStoreConnection = manifest.connections.find(
-        ({ slug }) => slug === eventStoreConfig.connectionSlug,
+      const eventStoreConfig = (manifest.eventStores ?? [])[0];
+      const eventStoreConnection = (manifest.connections ?? []).find(
+        (conn) => conn.slug === eventStoreConfig.connectionSlug,
       );
 
       if (!eventStoreConnection) {

@@ -33,7 +33,7 @@ const addConsumerSchemaWithExternalReference = (
 ): Manifest => ({
   ...manifest,
   consumerSchemas: [
-    ...manifest.consumerSchemas,
+    ...(manifest.consumerSchemas ?? []),
     {
       sourceManifestSlug: externalManifestSlug,
       publicSchema: {

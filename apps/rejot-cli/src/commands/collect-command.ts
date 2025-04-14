@@ -1,7 +1,8 @@
 import { Args, Command, Flags } from "@oclif/core";
 import { collectPublicSchemas, collectConsumerSchemas } from "@rejot-dev/contract/collect";
-import { readManifest, writeManifest } from "@rejot-dev/contract-tools/manifest";
+import { readManifest, writeManifest, findManifestPath } from "@rejot-dev/contract-tools/manifest";
 import { validateManifest } from "@rejot-dev/sync/validate-manifest";
+import { relative, resolve, dirname } from "node:path";
 
 export default class Collect extends Command {
   static override args = {
@@ -20,8 +21,7 @@ export default class Collect extends Command {
   static override flags = {
     manifest: Flags.string({
       description: "Path to the manifest file to write to.",
-      required: true,
-      default: "./rejot-manifest.json",
+      required: false,
     }),
     write: Flags.boolean({
       description: "Write the manifest to the file.",
@@ -35,9 +35,18 @@ export default class Collect extends Command {
 
   public async run(): Promise<void> {
     const { args, flags } = await this.parse(Collect);
-    const { manifest: manifestPath, write, check } = flags;
+    const { write, check } = flags;
 
-    let currentManifest: Awaited<ReturnType<typeof readManifest>>;
+    // Find manifest path - either from flag or by searching up directory tree
+    const manifestPath = resolve(
+      flags.manifest ??
+        (await findManifestPath()) ??
+        this.error(
+          "No manifest file found. Please specify one with --manifest or create one with 'rejot manifest init'",
+        ),
+    );
+
+    let currentManifest;
     try {
       currentManifest = await readManifest(manifestPath);
     } catch (error) {
@@ -45,13 +54,23 @@ export default class Collect extends Command {
       throw error;
     }
 
-    const publicSchemas = await collectPublicSchemas(args.schema);
-    const consumerSchemas = await collectConsumerSchemas(args.schema);
+    const schemaPath = resolve(args.schema);
+    const publicSchemas = await collectPublicSchemas(schemaPath);
+    const consumerSchemas = await collectConsumerSchemas(schemaPath);
+
+    // Calculate relative path from manifest directory to schema file
+    const relativeSchemaPath = relative(dirname(manifestPath), schemaPath);
 
     const newManifest = {
       ...currentManifest,
-      publicSchemas: publicSchemas.map((schema) => schema.data),
-      consumerSchemas: consumerSchemas.map((schema) => schema.data),
+      publicSchemas: publicSchemas.map((schema) => ({
+        ...schema.data,
+        definitionFile: relativeSchemaPath,
+      })),
+      consumerSchemas: consumerSchemas.map((schema) => ({
+        ...schema.data,
+        definitionFile: relativeSchemaPath,
+      })),
     };
 
     if (check) {
@@ -59,16 +78,8 @@ export default class Collect extends Command {
     }
 
     if (write) {
-      await writeManifest(
-        {
-          ...currentManifest,
-          publicSchemas: publicSchemas.map((schema) => schema.data),
-          consumerSchemas: consumerSchemas.map((schema) => schema.data),
-        },
-        manifestPath,
-      );
-
-      console.log(`public and consumer schemas collected and manifest written to ${manifestPath}`);
+      await writeManifest(newManifest, manifestPath);
+      console.log(`Public and consumer schemas collected and manifest written to ${manifestPath}`);
     }
   }
 }

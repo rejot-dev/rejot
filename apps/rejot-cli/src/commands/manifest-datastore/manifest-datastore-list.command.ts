@@ -16,13 +16,13 @@ export class ManifestDataStoreListCommand extends Command {
     const manifestPath = path.resolve(flags.manifest);
     const manifest = await readManifest(manifestPath);
 
-    if (manifest.dataStores.length === 0) {
+    if ((manifest.dataStores ?? []).length === 0) {
       this.log("No data stores found in manifest");
       return;
     }
 
     this.log("Data Stores:");
-    for (const ds of manifest.dataStores) {
+    for (const ds of manifest.dataStores ?? []) {
       this.log(`  - Connection: ${ds.connectionSlug}`);
       this.log(`    Publication: ${ds.publicationName}`);
     }

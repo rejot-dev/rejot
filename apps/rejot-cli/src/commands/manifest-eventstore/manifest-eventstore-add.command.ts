@@ -26,15 +26,16 @@ export class ManifestEventStoreAddCommand extends Command {
     const manifest = await readManifest(manifestPath);
 
     // Check if connection exists
-    if (!manifest.connections.some((conn) => conn.slug === flags.connection)) {
+    if (!(manifest.connections ?? []).some((conn) => conn.slug === flags.connection)) {
       this.error(`Connection '${flags.connection}' not found in manifest`);
     }
 
     // Check if event store with same connection already exists
-    if (manifest.eventStores.some((es) => es.connectionSlug === flags.connection)) {
+    if ((manifest.eventStores ?? []).some((es) => es.connectionSlug === flags.connection)) {
       this.error(`Event store with connection '${flags.connection}' already exists`);
     }
 
+    manifest.eventStores = manifest.eventStores ?? [];
     manifest.eventStores.push({
       connectionSlug: flags.connection,
     });

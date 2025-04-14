@@ -92,7 +92,7 @@ export class SyncManifest {
   getSourceDataStores(): SourceDataStore[] {
     const dataStores = this.#manifests
       .flatMap((manifest) =>
-        manifest.dataStores.map((ds) => ({
+        (manifest.dataStores ?? []).map((ds) => ({
           ...ds,
           sourceManifestSlug: manifest.slug,
         })),
@@ -127,7 +127,7 @@ export class SyncManifest {
     const slugs = Array.from(
       new Set(
         this.#manifests.flatMap((manifest) =>
-          manifest.consumerSchemas.map((cs) => cs.destinationDataStoreSlug),
+          (manifest.consumerSchemas ?? []).map((cs) => cs.destinationDataStoreSlug),
         ),
       ),
     );
@@ -149,10 +149,12 @@ export class SyncManifest {
 
   getConnectionBySlug(connectionSlug: string): Connection | undefined {
     const connection = this.#manifests
-      .flatMap((manifest) => manifest.connections)
+      .flatMap((manifest) => manifest.connections ?? [])
       .find((connection) => connection.slug === connectionSlug);
 
-    if (!connection) return undefined;
+    if (!connection) {
+      return undefined;
+    }
 
     return {
       slug: connection.slug,
@@ -185,7 +187,7 @@ export class SyncManifest {
 
     // Loop through all manifests and identify consumer schemas referencing external manifests
     for (const manifest of this.#manifests) {
-      for (const consumerSchema of manifest.consumerSchemas) {
+      for (const consumerSchema of manifest.consumerSchemas ?? []) {
         // Check if the sourceManifestSlug references a manifest not in our loaded set
         if (!loadedManifestSlugs.has(consumerSchema.sourceManifestSlug)) {
           // This is a reference to an external manifest
@@ -205,7 +207,7 @@ export class SyncManifest {
     operation: TransformedOperationWithSource,
   ): z.infer<typeof ConsumerSchemaSchema>[] {
     return this.#manifests.flatMap((manifest) =>
-      manifest.consumerSchemas.filter(
+      (manifest.consumerSchemas ?? []).filter(
         (consumerSchema) => consumerSchema.publicSchema.name === operation.sourcePublicSchema.name,
       ),
     );
@@ -216,9 +218,11 @@ export class SyncManifest {
     operation: Operation,
   ): (z.infer<typeof PublicSchemaSchema> & { source: { manifestSlug: string } })[] {
     return this.#manifests.flatMap((manifest) =>
-      manifest.publicSchemas
+      (manifest.publicSchemas ?? [])
         .filter((schema) => {
-          const dataStore = manifest.dataStores.find((ds) => ds.connectionSlug === dataStoreSlug);
+          const dataStore = (manifest.dataStores ?? []).find(
+            (ds) => ds.connectionSlug === dataStoreSlug,
+          );
           return (
             dataStore &&
             schema.source.dataStoreSlug === dataStoreSlug &&
@@ -240,7 +244,7 @@ export class SyncManifest {
 
   getPublicSchemas(): (z.infer<typeof PublicSchemaSchema> & { manifestSlug: string })[] {
     return this.#manifests.flatMap((manifest) =>
-      manifest.publicSchemas.map((schema) => ({
+      (manifest.publicSchemas ?? []).map((schema) => ({
         ...schema,
         manifestSlug: manifest.slug,
       })),
