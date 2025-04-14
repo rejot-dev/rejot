@@ -34,12 +34,15 @@ export class ManifestConnectionUpdateCommand extends Command {
       const manifest = await readManifest(manifestPath);
 
       // Find the connection to update
-      const connectionIndex = manifest.connections.findIndex((conn) => conn.slug === args.slug);
+      const connectionIndex = (manifest.connections ?? []).findIndex(
+        (conn) => conn.slug === args.slug,
+      );
       if (connectionIndex === -1) {
         this.error(`Connection '${args.slug}' not found in manifest`);
       }
 
       // Update the connection
+      manifest.connections = manifest.connections ?? [];
       manifest.connections[connectionIndex] = {
         slug: args.slug,
         config: connectionConfig,

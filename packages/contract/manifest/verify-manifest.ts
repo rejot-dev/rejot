@@ -44,41 +44,41 @@ export function verifyConnectionReferences(
   manifest: z.infer<typeof SyncManifestSchema>,
 ): ManifestError[] {
   const errors: ManifestError[] = [];
-  const connectionSlugs = new Set(manifest.connections.map(({ slug }) => slug));
 
-  // Verify dataStore connections
-  manifest.dataStores.forEach((dataStore, index) => {
-    if (!connectionSlugs.has(dataStore.connectionSlug)) {
+  // Get all connection slugs
+  const connectionSlugs = new Set((manifest.connections ?? []).map((c) => c.slug));
+
+  // Check data store references
+  (manifest.dataStores ?? []).forEach((ds) => {
+    if (!connectionSlugs.has(ds.connectionSlug)) {
       errors.push({
         type: "CONNECTION_NOT_FOUND",
-        message: `DataStore references connection '${dataStore.connectionSlug}' which does not exist in the manifest`,
+        message: `Data store references connection '${ds.connectionSlug}' which does not exist`,
         location: {
           manifestSlug: manifest.slug,
-          context: `dataStore.connectionSlug[${index}]: ${dataStore.connectionSlug}`,
+          context: `dataStore.connectionSlug: ${ds.connectionSlug}`,
         },
         hint: {
-          message:
-            "Check that the connection slug is correct and that the connection is defined in the manifest",
-          suggestions: `Available connections: ${Array.from(connectionSlugs).join(", ")}`,
+          message: "Add the connection to the manifest before referencing it in a data store",
+          suggestions: `Use 'rejot manifest connection add --slug ${ds.connectionSlug}' to add the connection`,
         },
       });
     }
   });
 
-  // Verify eventStore connections
-  manifest.eventStores.forEach((eventStore, index) => {
-    if (!connectionSlugs.has(eventStore.connectionSlug)) {
+  // Check event store references
+  (manifest.eventStores ?? []).forEach((es) => {
+    if (!connectionSlugs.has(es.connectionSlug)) {
       errors.push({
         type: "CONNECTION_NOT_FOUND",
-        message: `EventStore references connection '${eventStore.connectionSlug}' which does not exist in the manifest`,
+        message: `Event store references connection '${es.connectionSlug}' which does not exist`,
         location: {
           manifestSlug: manifest.slug,
-          context: `eventStore.connectionSlug[${index}]: ${eventStore.connectionSlug}`,
+          context: `eventStore.connectionSlug: ${es.connectionSlug}`,
         },
         hint: {
-          message:
-            "Check that the connection slug is correct and that the connection is defined in the manifest",
-          suggestions: `Available connections: ${Array.from(connectionSlugs).join(", ")}`,
+          message: "Add the connection to the manifest before referencing it in an event store",
+          suggestions: `Use 'rejot manifest connection add --slug ${es.connectionSlug}' to add the connection`,
         },
       });
     }
@@ -102,7 +102,7 @@ export function verifyPublicSchemaReferences(manifests: z.infer<typeof SyncManif
   // Build a map of all available public schemas across all manifests
   const publicSchemaMap = new Map<string, Map<string, number[]>>();
   manifests.forEach((manifest) => {
-    manifest.publicSchemas.forEach((schema) => {
+    (manifest.publicSchemas ?? []).forEach((schema) => {
       if (!publicSchemaMap.has(manifest.slug)) {
         publicSchemaMap.set(manifest.slug, new Map());
       }
@@ -116,7 +116,7 @@ export function verifyPublicSchemaReferences(manifests: z.infer<typeof SyncManif
 
   // Verify consumer schema references
   manifests.forEach((manifest) => {
-    manifest.consumerSchemas.forEach((consumerSchema) => {
+    (manifest.consumerSchemas ?? []).forEach((consumerSchema) => {
       const sourceManifestSchemas = publicSchemaMap.get(consumerSchema.sourceManifestSlug);
 
       if (!sourceManifestSchemas) {
@@ -177,7 +177,7 @@ export function verifyPublicSchemaUniqueness(
   const publicSchemaMapManifest = new Map<string, string>();
 
   manifests.forEach((manifest) => {
-    manifest.publicSchemas.forEach((schema, index) => {
+    (manifest.publicSchemas ?? []).forEach((schema, index) => {
       const key = `${schema.name}:${schema.version.major}.${schema.version.minor}`;
       const previousManifest = publicSchemaMapManifest.get(key);
       if (previousManifest) {

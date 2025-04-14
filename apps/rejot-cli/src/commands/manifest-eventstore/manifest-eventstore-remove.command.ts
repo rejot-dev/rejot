@@ -27,9 +27,11 @@ export class ManifestEventStoreRemoveCommand extends Command {
     const manifestPath = path.resolve(flags.manifest);
 
     const manifest = await readManifest(manifestPath);
-    const initialLength = manifest.eventStores.length;
+    const initialLength = (manifest.eventStores ?? []).length;
 
-    manifest.eventStores = manifest.eventStores.filter((es) => es.connectionSlug !== args.slug);
+    manifest.eventStores = (manifest.eventStores ?? []).filter(
+      (es) => es.connectionSlug !== args.slug,
+    );
 
     if (manifest.eventStores.length === initialLength) {
       this.error(`Event store with connection '${args.slug}' not found in manifest`);

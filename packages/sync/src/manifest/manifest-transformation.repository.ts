@@ -17,7 +17,7 @@ export class ManifestTransformationRepository implements IPublicSchemaTransforma
   ): Promise<z.infer<typeof PublicSchemaSchema>[]> {
     // Find all public schemas that use this datastore
     const relevantSchemas = this.#manifests.flatMap((manifest) =>
-      manifest.publicSchemas.filter(
+      (manifest.publicSchemas ?? []).filter(
         (schema) =>
           schema.source.dataStoreSlug === dataStoreSlug &&
           schema.source.tables.includes(operation.table),

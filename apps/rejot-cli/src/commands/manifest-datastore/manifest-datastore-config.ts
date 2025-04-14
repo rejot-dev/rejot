@@ -25,7 +25,7 @@ export async function validateConnection(
   connectionSlug: string,
 ): Promise<void> {
   const manifest = await readManifest(manifestPath);
-  if (!manifest.connections.some((conn) => conn.slug === connectionSlug)) {
+  if (!(manifest.connections ?? []).some((conn) => conn.slug === connectionSlug)) {
     throw new Error(`Connection '${connectionSlug}' not found in manifest`);
   }
 }
@@ -35,7 +35,7 @@ export async function validateUniqueConnection(
   connectionSlug: string,
 ): Promise<void> {
   const manifest = await readManifest(manifestPath);
-  if (manifest.dataStores.some((ds) => ds.connectionSlug === connectionSlug)) {
+  if ((manifest.dataStores ?? []).some((ds) => ds.connectionSlug === connectionSlug)) {
     throw new Error(`Data store with connection '${connectionSlug}' already exists`);
   }
 }
@@ -45,7 +45,7 @@ export async function validateDataStoreExists(
   connectionSlug: string,
 ): Promise<void> {
   const manifest = await readManifest(manifestPath);
-  if (!manifest.dataStores.some((ds) => ds.connectionSlug === connectionSlug)) {
+  if (!(manifest.dataStores ?? []).some((ds) => ds.connectionSlug === connectionSlug)) {
     throw new Error(`Data store with connection '${connectionSlug}' not found in manifest`);
   }
 }

@@ -12,15 +12,15 @@
   "scripts": {
     "check": "tsc --noEmit",
     "test": "bun test",
-    "inspect": "mcp-inspector bun run src/index.ts"
+    "inspect": "mcp-inspector bun run \"$PWD/index.ts\" --project \"$PWD/../..\""
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^0.8.2",
-    "@types/bun": "^1.2.2",
-    "@types/node": "^22.13.4"
+    "@types/bun": "^1.2.9",
+    "@types/node": "^22.14.1"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.7.3"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.9.0",
@@ -28,9 +28,10 @@
     "@rejot-dev/contract": "*",
     "@rejot-dev/contract-tools": "*",
     "@rejot-dev/sync": "*",
+    "@std/cli": "npm:@jsr/std__cli",
     "pg": "^8.14.1"
   },
   "bin": {
-    "rejot-mcp": "./src/index.ts"
+    "rejot-mcp": "./index.ts"
   }
 }

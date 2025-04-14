@@ -27,9 +27,9 @@ export class ManifestConnectionRemoveCommand extends Command {
     const manifestPath = path.resolve(flags.manifest);
 
     const manifest = await readManifest(manifestPath);
-    const initialLength = manifest.connections.length;
+    const initialLength = (manifest.connections ?? []).length;
 
-    manifest.connections = manifest.connections.filter((conn) => conn.slug !== args.slug);
+    manifest.connections = (manifest.connections ?? []).filter((conn) => conn.slug !== args.slug);
 
     if (manifest.connections.length === initialLength) {
       this.error(`Connection '${args.slug}' not found in manifest`);

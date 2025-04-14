@@ -8,7 +8,7 @@ export class ManifestPrinter {
   static printManifest(manifest: Manifest): string[] {
     const output: string[] = ["Manifest Configuration:\n"];
 
-    output.push(...this.printConnections(manifest.connections));
+    output.push(...this.printConnections(manifest.connections ?? []));
     output.push("");
     output.push(...this.printDataStores(manifest));
     output.push("");
@@ -48,12 +48,12 @@ export class ManifestPrinter {
   private static printDataStores(manifest: Manifest): string[] {
     const output: string[] = ["Data Stores (Replication Sources):"];
 
-    if (manifest.dataStores.length === 0) {
+    if ((manifest.dataStores ?? []).length === 0) {
       output.push("  No data stores configured");
       return output;
     }
 
-    for (const ds of manifest.dataStores) {
+    for (const ds of manifest.dataStores ?? []) {
       output.push(`  - Connection: ${ds.connectionSlug}`);
       output.push(`    Publication / slot: ${ds.publicationName ?? ""} / ${ds.slotName ?? ""}`);
     }
@@ -64,12 +64,12 @@ export class ManifestPrinter {
   private static printEventStores(manifest: Manifest): string[] {
     const output: string[] = ["Event Stores (Replication Targets):"];
 
-    if (manifest.eventStores.length === 0) {
+    if ((manifest.eventStores ?? []).length === 0) {
       output.push("  No event stores configured");
       return output;
     }
 
-    for (const es of manifest.eventStores) {
+    for (const es of manifest.eventStores ?? []) {
       output.push(`  - Connection: ${es.connectionSlug}`);
     }
 

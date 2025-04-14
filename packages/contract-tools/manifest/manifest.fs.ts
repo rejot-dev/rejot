@@ -1,12 +1,13 @@
 import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
 import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 import { z } from "zod";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
-const CURRENT_MANIFEST_FILE_VERSION = 0;
+export const CURRENT_MANIFEST_FILE_VERSION = 0;
+export const DEFAULT_MANIFEST_FILENAME = "rejot-manifest.json";
 
 const emptyManifest: Manifest = {
   slug: "default",
@@ -17,6 +18,47 @@ const emptyManifest: Manifest = {
   publicSchemas: [],
   consumerSchemas: [],
 };
+
+/**
+ * Recursively searches for a manifest file starting from the given directory and moving up
+ * the directory tree until it finds one or reaches the root directory.
+ *
+ * @param startDir - The directory to start searching from. Defaults to current working directory.
+ * @param filename - The name of the manifest file to search for. Defaults to rejot-manifest.json.
+ * @returns The absolute path to the found manifest file, or null if none is found.
+ */
+export async function findManifestPath(
+  startDir: string = process.cwd(),
+  filename: string = DEFAULT_MANIFEST_FILENAME,
+): Promise<string | null> {
+  let currentDir = startDir;
+
+  while (true) {
+    const manifestPath = join(currentDir, filename);
+
+    try {
+      // Check if manifest exists in current directory
+      await readFile(manifestPath, { flag: constants.O_RDONLY });
+      return manifestPath;
+    } catch (error) {
+      if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+        // Get parent directory
+        const parentDir = dirname(currentDir);
+
+        // If we're at root (parent dir is same as current), stop searching
+        if (parentDir === currentDir) {
+          return null;
+        }
+
+        // Continue search in parent directory
+        currentDir = parentDir;
+      } else {
+        // Unexpected error, propagate it
+        throw error;
+      }
+    }
+  }
+}
 
 export async function writeManifest(manifest: Manifest, path: string) {
   await mkdir(dirname(path), { recursive: true });

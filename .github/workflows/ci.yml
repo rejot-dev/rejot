@@ -111,7 +111,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [packages/sync, packages/contract, packages/sqlparser, packages/contract-tools]
+        package:
+          [apps/mcp, packages/sync, packages/contract, packages/sqlparser, packages/contract-tools]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4

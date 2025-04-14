@@ -21,13 +21,13 @@ export class ManifestConnectionListCommand extends Command {
 
     const manifest = await readManifest(manifestPath);
 
-    if (manifest.connections.length === 0) {
-      this.log("No connections found in manifest");
+    if ((manifest.connections ?? []).length === 0) {
+      this.log("No connections defined");
       return;
     }
 
     this.log("Connections:");
-    for (const conn of manifest.connections) {
+    for (const conn of manifest.connections ?? []) {
       switch (conn.config.connectionType) {
         case "postgres":
           this.log(`  - ${conn.slug} (${conn.config.connectionType})`);

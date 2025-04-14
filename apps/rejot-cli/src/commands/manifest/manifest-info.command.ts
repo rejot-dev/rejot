@@ -68,9 +68,9 @@ export class ManifestInfoCommand extends Command {
       }
 
       if (
-        manifest.connections.length === 0 &&
-        manifest.dataStores.length === 0 &&
-        manifest.eventStores.length === 0
+        (manifest.connections ?? []).length === 0 &&
+        (manifest.dataStores ?? []).length === 0 &&
+        (manifest.eventStores ?? []).length === 0
       ) {
         this.log("\nTo configure the manifest, use the following commands:");
         this.log("1. Add a connection:    rejot manifest connection add --slug my-db ...");

@@ -21,13 +21,13 @@ export class ManifestEventStoreListCommand extends Command {
 
     const manifest = await readManifest(manifestPath);
 
-    if (manifest.eventStores.length === 0) {
+    if ((manifest.eventStores ?? []).length === 0) {
       this.log("No event stores found in manifest");
       return;
     }
 
     this.log("Event Stores:");
-    for (const es of manifest.eventStores) {
+    for (const es of manifest.eventStores ?? []) {
       this.log(`  - Connection: ${es.connectionSlug}`);
     }
   }

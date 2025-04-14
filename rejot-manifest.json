@@ -1,0 +1,10 @@
+{
+  "slug": "@rejot",
+  "manifestVersion": 0,
+  "connections": [],
+  "dataStores": [],
+  "eventStores": [],
+  "publicSchemas": [],
+  "consumerSchemas": [],
+  "workspaces": ["./apps/*"]
+}

@@ -14,10 +14,12 @@
   "exports": {
     "./manifest": "./manifest/index.ts",
     "./manifest/manifest-printer": "./manifest/manifest-printer.ts",
+    "./manifest/manifest-workspace-resolver": "./manifest/manifest-workspace-resolver.ts",
     "./manifest/manifest.fs": "./manifest/manifest.fs.ts"
   },
   "type": "module",
   "dependencies": {
-    "@rejot-dev/contract": "*"
+    "@rejot-dev/contract": "*",
+    "glob": "^11.0.1"
   }
 }
