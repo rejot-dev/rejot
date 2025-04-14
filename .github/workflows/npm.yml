@@ -12,7 +12,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        package:
+        package: &packages
           - path: packages/adapter-postgres
             name: "@rejot-dev/adapter-postgres"
           - path: packages/contract
@@ -42,3 +42,22 @@ jobs:
         run: bun publish --access public
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  verify-installation:
+    needs: publish-npm
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: *packages
+    steps:
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.8
+
+      - name: Create test directory
+        run: mkdir test-install && cd test-install
+
+      - name: Install published package
+        working-directory: ./test-install
+        run: bun install ${{ matrix.package.name }}@${GITHUB_REF_NAME#v}
