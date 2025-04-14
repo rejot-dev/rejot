@@ -1,10 +1,10 @@
 {
   "name": "@rejot-dev/sqlparser",
-  "version": "0.0.1",
+  "version": "0.0.8",
   "exports": {
     ".": "./index.ts"
   },
-  "private": true,
+  "private": false,
   "scripts": {
     "test": "bun test",
     "check": "tsc --noEmit"

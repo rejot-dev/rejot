@@ -19,6 +19,8 @@ jobs:
             name: "@rejot-dev/contract"
           - path: packages/sync
             name: "@rejot-dev/sync"
+          - path: packages/sqlparser
+            name: "@rejot-dev/sqlparser"
           - path: apps/rejot-cli
             name: "@rejot-dev/cli"
 
