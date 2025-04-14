@@ -11,18 +11,16 @@ jobs:
       contents: read
       packages: write
     strategy:
+      fail-fast: false
       matrix:
-        package: &packages
-          - path: packages/adapter-postgres
-            name: "@rejot-dev/adapter-postgres"
-          - path: packages/contract
-            name: "@rejot-dev/contract"
-          - path: packages/sync
-            name: "@rejot-dev/sync"
-          - path: packages/sqlparser
-            name: "@rejot-dev/sqlparser"
-          - path: apps/rejot-cli
-            name: "@rejot-dev/cli"
+        # NOTE! Also add to verify-installation job! (yaml anchors not supported in github actions yet)
+        path:
+          - packages/adapter-postgres
+          - packages/contract
+          - packages/sync
+          - packages/sqlparser
+          - packages/contract-tools
+          - apps/rejot-cli
 
     steps:
       - name: Checkout repository
@@ -38,7 +36,7 @@ jobs:
         run: bun install
 
       - name: Publish package
-        working-directory: ${{ matrix.package.path }}
+        working-directory: ${{ matrix.path }}
         run: bun publish --access public
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -47,8 +45,14 @@ jobs:
     needs: publish-npm
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        package: *packages
+        package:
+          - "@rejot-dev/adapter-postgres"
+          - "@rejot-dev/contract"
+          - "@rejot-dev/sync"
+          - "@rejot-dev/sqlparser"
+          - "@rejot-dev/cli"
     steps:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -60,4 +64,4 @@ jobs:
 
       - name: Install published package
         working-directory: ./test-install
-        run: bun install ${{ matrix.package.name }}@${GITHUB_REF_NAME#v}
+        run: bun install ${{ matrix.package }}@${GITHUB_REF_NAME#v}
