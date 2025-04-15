@@ -9,6 +9,7 @@ import { RejotPgOutputPlugin } from "./pgoutput-plugin.ts";
 import { assertUnreachable } from "./util/asserts.ts";
 import type { Transaction } from "@rejot-dev/contract/sync";
 import logger from "@rejot-dev/contract/logger";
+import { AsyncQueue } from "./async-queue.ts";
 
 type ConnectionConfig = {
   host?: string;
@@ -77,31 +78,6 @@ type TransactionBufferState = "empty" | "begin";
 type OnCommitCallback = (buffer: TransactionBuffer) => Promise<boolean>;
 
 const log = logger.createLogger("postgres-replication-listener");
-
-class AsyncQueue<T> {
-  private queue: T[] = [];
-  private waitingResolvers: Array<(value: T) => void> = [];
-
-  enqueue(item: T) {
-    const prevResolve = this.waitingResolvers.shift();
-    if (prevResolve) {
-      prevResolve(item);
-    } else {
-      this.queue.push(item);
-    }
-  }
-
-  dequeue(): Promise<T> {
-    return new Promise((resolve) => {
-      const item = this.queue.shift();
-      if (item) {
-        resolve(item);
-      } else {
-        this.waitingResolvers.push(resolve);
-      }
-    });
-  }
-}
 
 export class PostgresReplicationListener {
   #logicalReplicationService: LogicalReplicationService;
