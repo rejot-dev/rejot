@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { IIntrospectionAdapter } from "@rejot-dev/contract/adapter";
+import type { IIntrospectionAdapter, Table, Column } from "@rejot-dev/contract/adapter";
 import type { PostgresConnectionSchema } from "../postgres-schemas";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter";
 
@@ -93,23 +93,7 @@ export class PostgresIntrospectionAdapter
     }));
   }
 
-  async getTableSchema(
-    connectionSlug: string,
-    tableName: string,
-  ): Promise<
-    {
-      columnName: string;
-      dataType: string;
-      isNullable: boolean;
-      columnDefault: string | null;
-      foreignKey?: {
-        constraintName: string;
-        referencedTableSchema: string;
-        referencedTableName: string;
-        referencedColumnName: string;
-      };
-    }[]
-  > {
+  async getTableSchema(connectionSlug: string, tableName: string): Promise<Table> {
     const normalizedTable = normalizePostgresTable(tableName);
     const connection = this.#connectionAdapter.getConnection(connectionSlug);
     if (!connection) {
@@ -118,6 +102,13 @@ export class PostgresIntrospectionAdapter
 
     const { rows } = await connection.client.query(
       `
+      WITH key_columns AS (
+        SELECT a.attname as column_name
+        FROM pg_index i
+        JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+        WHERE i.indrelid = (SELECT oid FROM pg_class WHERE relname = $1 AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = $2))
+        AND i.indisprimary
+      )
       SELECT DISTINCT
         ON (c.oid, a.attname) n.nspname || '.' || c.relname AS table_name,
         a.attname AS column_name,
@@ -129,9 +120,9 @@ export class PostgresIntrospectionAdapter
         pg_catalog.pg_get_expr (ad.adbin, ad.adrelid) AS column_default,
         n.nspname AS table_schema,
         con.conname AS constraint_name,
-        rn.nspname AS referenced_table_schema,
-        ref.relname AS referenced_table_name,
-        refatt.attname AS referenced_column_name
+        rn.nspname || '.' || ref.relname AS referenced_table,
+        refatt.attname AS referenced_column_name,
+        CASE WHEN kc.column_name IS NOT NULL THEN true ELSE false END as is_key
       FROM
         pg_catalog.pg_class c
         JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
@@ -145,11 +136,12 @@ export class PostgresIntrospectionAdapter
         LEFT JOIN pg_catalog.pg_namespace rn ON rn.oid = ref.relnamespace
         LEFT JOIN pg_catalog.pg_attribute refatt ON refatt.attrelid = ref.oid
         AND refatt.attnum = con.confkey[1]
+        LEFT JOIN key_columns kc ON kc.column_name = a.attname
       WHERE
-        n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast') -- Exclude internal schemas
-        AND c.relkind = 'r' -- Only regular tables
-        AND a.attnum > 0 -- Exclude system columns
-        AND NOT a.attisdropped -- Exclude dropped columns
+        n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+        AND c.relkind = 'r'
+        AND a.attnum > 0
+        AND NOT a.attisdropped
         AND c.relname = $1
         AND n.nspname = $2
       ORDER BY
@@ -160,7 +152,7 @@ export class PostgresIntrospectionAdapter
       [normalizedTable.name, normalizedTable.schema],
     );
 
-    return rows.map((column) => ({
+    const columns: Column[] = rows.map((column) => ({
       columnName: column["column_name"],
       dataType: column["data_type"],
       isNullable: column["is_nullable"] === "YES",
@@ -169,38 +161,47 @@ export class PostgresIntrospectionAdapter
         ? {
             foreignKey: {
               constraintName: column["constraint_name"],
-              referencedTableSchema: column["referenced_table_schema"],
-              referencedTableName: column["referenced_table_name"],
+              referencedTable: column["referenced_table"],
               referencedColumnName: column["referenced_column_name"],
             },
           }
         : {}),
     }));
+
+    const keyColumns = rows
+      .filter((column) => column["is_key"])
+      .map((column) => column["column_name"]);
+
+    return {
+      schema: normalizedTable.schema,
+      name: normalizedTable.name,
+      columns,
+      keyColumns,
+    };
   }
 
-  async getAllTableSchemas(connectionSlug: string): Promise<
-    Map<
-      string,
-      {
-        columnName: string;
-        dataType: string;
-        isNullable: boolean;
-        columnDefault: string | null;
-        foreignKey?: {
-          constraintName: string;
-          referencedTableSchema: string;
-          referencedTableName: string;
-          referencedColumnName: string;
-        };
-      }[]
-    >
-  > {
+  async getAllTableSchemas(connectionSlug: string): Promise<Map<string, Table>> {
     const connection = this.#connectionAdapter.getConnection(connectionSlug);
     if (!connection) {
       throw new Error(`Connection with slug ${connectionSlug} not found`);
     }
 
     const { rows } = await connection.client.query(sql`
+      WITH
+        key_columns AS (
+          SELECT
+            c.relname AS table_name,
+            n.nspname AS schema_name,
+            a.attname AS column_name
+          FROM
+            pg_index i
+            JOIN pg_attribute a ON a.attrelid = i.indrelid
+            AND a.attnum = ANY (i.indkey)
+            JOIN pg_class c ON c.oid = i.indrelid
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE
+            i.indisprimary
+        )
       SELECT DISTINCT
         ON (c.oid, a.attname) n.nspname || '.' || c.relname AS table_name,
         a.attname AS column_name,
@@ -212,9 +213,12 @@ export class PostgresIntrospectionAdapter
         pg_catalog.pg_get_expr (ad.adbin, ad.adrelid) AS column_default,
         n.nspname AS table_schema,
         con.conname AS constraint_name,
-        rn.nspname AS referenced_table_schema,
-        ref.relname AS referenced_table_name,
-        refatt.attname AS referenced_column_name
+        rn.nspname || '.' || ref.relname AS referenced_table,
+        refatt.attname AS referenced_column_name,
+        CASE
+          WHEN kc.column_name IS NOT NULL THEN TRUE
+          ELSE FALSE
+        END AS is_key
       FROM
         pg_catalog.pg_class c
         JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
@@ -228,56 +232,61 @@ export class PostgresIntrospectionAdapter
         LEFT JOIN pg_catalog.pg_namespace rn ON rn.oid = ref.relnamespace
         LEFT JOIN pg_catalog.pg_attribute refatt ON refatt.attrelid = ref.oid
         AND refatt.attnum = con.confkey[1]
+        LEFT JOIN key_columns kc ON kc.column_name = a.attname
+        AND kc.table_name = c.relname
+        AND kc.schema_name = n.nspname
       WHERE
-        n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast') -- Exclude internal schemas
-        AND c.relkind = 'r' -- Only regular tables
-        AND a.attnum > 0 -- Exclude system columns
-        AND NOT a.attisdropped -- Exclude dropped columns
+        n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+        AND c.relkind = 'r'
+        AND a.attnum > 0
+        AND NOT a.attisdropped
       ORDER BY
         c.oid,
         a.attname,
         con.conname NULLS LAST;
     `);
 
-    // Group rows by table_name
-    const tableSchemas = new Map<
-      string,
-      {
-        columnName: string;
-        dataType: string;
-        isNullable: boolean;
-        columnDefault: string | null;
-        foreignKey?: {
-          constraintName: string;
-          referencedTableSchema: string;
-          referencedTableName: string;
-          referencedColumnName: string;
-        };
-      }[]
-    >();
+    // Group rows by table_name and transform into Table interface
+    const tableSchemas = new Map<string, Table>();
 
     for (const row of rows) {
-      if (!tableSchemas.has(row["table_name"])) {
-        tableSchemas.set(row["table_name"], []);
+      const tableName = row["table_name"];
+      if (!tableSchemas.has(tableName)) {
+        tableSchemas.set(tableName, {
+          schema: row["table_schema"],
+          name: tableName.split(".")[1],
+          columns: [],
+          keyColumns: [],
+        });
       }
 
-      tableSchemas.get(row["table_name"])?.push({
-        columnName: row["column_name"],
-        dataType: row["data_type"],
-        isNullable: row["is_nullable"] === "YES",
-        columnDefault: row["column_default"],
-        ...(row["constraint_name"]
-          ? {
-              foreignKey: {
-                constraintName: row["constraint_name"],
-                referencedTableSchema: row["referenced_table_schema"],
-                referencedTableName: row["referenced_table_name"],
-                referencedColumnName: row["referenced_column_name"],
-              },
-            }
-          : {}),
-      });
+      const table = tableSchemas.get(tableName)!;
+
+      // Add column if not already present
+      if (!table.columns.some((col) => col.columnName === row["column_name"])) {
+        table.columns.push({
+          columnName: row["column_name"],
+          dataType: row["data_type"],
+          isNullable: row["is_nullable"] === "YES",
+          columnDefault: row["column_default"],
+          ...(row["constraint_name"]
+            ? {
+                foreignKey: {
+                  constraintName: row["constraint_name"],
+                  referencedTable: row["referenced_table"],
+                  referencedColumnName: row["referenced_column_name"],
+                },
+              }
+            : {}),
+        });
+      }
+
+      // Add to keyColumns if it's a key
+      if (row["is_key"] && !table.keyColumns.includes(row["column_name"])) {
+        table.keyColumns.push(row["column_name"]);
+      }
     }
+
     return tableSchemas;
   }
 }
