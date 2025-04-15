@@ -1,10 +1,40 @@
 import { z } from "zod";
 import { SyncManifestSchema, ConnectionSchema } from "@rejot-dev/contract/manifest";
+import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 type Connection = z.infer<typeof ConnectionSchema>;
 
 export class ManifestPrinter {
+  static printSyncManifest(syncManifest: SyncManifest): string[] {
+    const output: string[] = ["Sync Manifest Configuration:\n"];
+
+    // Print all sections using the new getters
+    output.push(...this.printConnections(syncManifest.connections));
+    output.push("");
+    output.push(...this.printDataStores({ dataStores: syncManifest.dataStores } as Manifest));
+    output.push("");
+    output.push(...this.printEventStores({ eventStores: syncManifest.eventStores } as Manifest));
+    output.push("");
+
+    // Print external references if any
+    output.push("External Schema References:");
+    const externalRefs = syncManifest.getExternalSchemaReferences();
+    if (externalRefs.length === 0) {
+      output.push("  No external schema references");
+    } else {
+      for (const ref of externalRefs) {
+        output.push(`  - External Manifest: ${ref.manifestSlug}`);
+        output.push(
+          `    Schema Name: ${ref.publicSchema.name} (v${ref.publicSchema.majorVersion})`,
+        );
+        output.push(`    Referenced By: ${ref.referencedBy.manifestSlug}`);
+      }
+    }
+
+    return output;
+  }
+
   static printManifest(manifest: Manifest): string[] {
     const output: string[] = ["Manifest Configuration:\n"];
 

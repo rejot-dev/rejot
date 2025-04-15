@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-import type { IDataSink, IDataSource, TransformedOperation, TableOperation } from "../sync/sync.ts";
+import type {
+  IDataSink,
+  IDataSource,
+  TransformedOperation,
+  TableOperation,
+  IConnection,
+} from "../sync/sync.ts";
 import { type Cursor } from "../cursor/cursors";
 import {
   ConnectionConfigSchema,
@@ -56,6 +62,11 @@ export interface IConnectionAdapter<
   ): TSource;
   createSink(connectionSlug: string, connectionConfig: TConnectionConfig): TSink;
   createEventStore(connectionSlug: string, connectionConfig: TConnectionConfig): TEventStore;
+
+  getOrCreateConnection(
+    connectionSlug: string,
+    connectionConfig: TConnectionConfig,
+  ): IConnection<TConnectionConfig>;
 }
 
 export type AnyIConnectionAdapter = IConnectionAdapter<
@@ -113,4 +124,53 @@ export interface IConsumerSchemaValidationAdapter<
 
 export type AnyIConsumerSchemaValidationAdapter = IConsumerSchemaValidationAdapter<
   z.infer<typeof ConsumerSchemaTransformationSchema>
+>;
+
+export interface IIntrospectionAdapter<
+  TConnectionConfig extends z.infer<typeof ConnectionConfigSchema>,
+> {
+  connectionType: TConnectionConfig["connectionType"];
+
+  checkHealth(
+    connectionSlug: string,
+  ): Promise<{ status: "healthy" | "unhealthy"; message?: string }>;
+  getTables(connectionSlug: string): Promise<{ schema: string; name: string }[]>;
+  getTableSchema(
+    connectionSlug: string,
+    tableName: string,
+  ): Promise<
+    {
+      columnName: string;
+      dataType: string;
+      isNullable: boolean;
+      columnDefault: string | null;
+      foreignKey?: {
+        constraintName: string;
+        referencedTableSchema: string;
+        referencedTableName: string;
+        referencedColumnName: string;
+      };
+    }[]
+  >;
+  getAllTableSchemas(connectionSlug: string): Promise<
+    Map<
+      string,
+      {
+        columnName: string;
+        dataType: string;
+        isNullable: boolean;
+        columnDefault: string | null;
+        foreignKey?: {
+          constraintName: string;
+          referencedTableSchema: string;
+          referencedTableName: string;
+          referencedColumnName: string;
+        };
+      }[]
+    >
+  >;
+}
+
+export type AnyIIntrospectionAdapter = IIntrospectionAdapter<
+  z.infer<typeof ConnectionConfigSchema>
 >;

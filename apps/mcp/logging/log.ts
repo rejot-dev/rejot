@@ -21,7 +21,14 @@ export class FileLogger implements ILogger {
   }
 
   log(type: "info" | "error" | "warn", message: string, ...args: unknown[]): void {
-    const logMessage = `[${type.toUpperCase()}] ${new Date().toISOString()} - ${message} ${JSON.stringify(args)}\n`;
+    let logMessage = `[${type.toUpperCase()}] ${new Date().toISOString()} - ${message}`;
+
+    if (args.length > 0) {
+      logMessage += ` ${JSON.stringify(args)}`;
+    }
+
+    logMessage += "\n";
+
     fs.appendFileSync(this.logFilePath, logMessage);
   }
 

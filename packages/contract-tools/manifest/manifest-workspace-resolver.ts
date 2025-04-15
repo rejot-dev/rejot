@@ -5,6 +5,7 @@ import { z } from "zod";
 import { DEFAULT_MANIFEST_FILENAME, readManifest } from "./manifest.fs";
 import { dirname, join, relative } from "node:path";
 import { findManifestPath } from "./manifest.fs";
+import { SyncManifest, type SyncManifestOptions } from "@rejot-dev/contract/sync-manifest";
 
 export interface Workspace {
   rootPath: string;
@@ -34,6 +35,7 @@ export interface ManifestInfo {
 export interface IManifestWorkspaceResolver {
   resolveWorkspace(options?: ResolveWorkspaceOptions): Promise<Workspace>;
   getManifestInfo(filePath: string): Promise<ManifestInfo>;
+  workspaceToSyncManifest(workspace: Workspace): SyncManifest;
 }
 
 export class ManifestWorkspaceResolver implements IManifestWorkspaceResolver {
@@ -107,4 +109,18 @@ export class ManifestWorkspaceResolver implements IManifestWorkspaceResolver {
 
     return result;
   }
+
+  workspaceToSyncManifest(workspace: Workspace, options: SyncManifestOptions = {}): SyncManifest {
+    return workspaceToSyncManifest(workspace, options);
+  }
+}
+
+export function workspaceToSyncManifest(
+  workspace: Workspace,
+  options: SyncManifestOptions = {},
+): SyncManifest {
+  return new SyncManifest(
+    [workspace.ancestor.manifest, ...workspace.children.map((child) => child.manifest)],
+    options,
+  );
 }

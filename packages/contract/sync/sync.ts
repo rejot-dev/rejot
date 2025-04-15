@@ -1,3 +1,6 @@
+import type { z } from "zod";
+import type { ConnectionConfigSchema } from "../manifest/manifest";
+
 type OperationType = "insert" | "update" | "delete";
 
 /**
@@ -139,4 +142,13 @@ export interface IDataSink {
    * @param operation The operation that generated the data
    */
   writeData(operation: TransformedOperation): Promise<void>;
+}
+
+// TODO(Wilco): Source/Sink should probably extend this.
+export interface IConnection<TConnectionConfig extends z.infer<typeof ConnectionConfigSchema>> {
+  slug: string;
+  config: TConnectionConfig;
+
+  prepare(): Promise<void>;
+  close(): Promise<void>;
 }

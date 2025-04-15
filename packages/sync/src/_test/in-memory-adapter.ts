@@ -4,6 +4,7 @@ import { InMemoryConnectionConfigSchema } from "@rejot-dev/contract/manifest";
 import { z } from "zod";
 import { InMemoryEventStore } from "./in-memory-event-store";
 import { InMemorySink } from "./in-memory-sink";
+import type { IConnection } from "@rejot-dev/contract/sync";
 
 export class InMemoryConnectionAdapter
   implements
@@ -51,5 +52,17 @@ export class InMemoryConnectionAdapter
       this.#sinks.set(_connectionSlug, sink);
     }
     return sink;
+  }
+
+  getOrCreateConnection(
+    connectionSlug: string,
+    connection: z.infer<typeof InMemoryConnectionConfigSchema>,
+  ): IConnection<z.infer<typeof InMemoryConnectionConfigSchema>> {
+    return {
+      slug: connectionSlug,
+      config: connection,
+      prepare: async () => {},
+      close: async () => {},
+    };
   }
 }
