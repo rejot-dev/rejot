@@ -78,6 +78,31 @@ type OnCommitCallback = (buffer: TransactionBuffer) => Promise<boolean>;
 
 const log = logger.createLogger("postgres-replication-listener");
 
+class AsyncQueue<T> {
+  private queue: T[] = [];
+  private waitingResolvers: Array<(value: T) => void> = [];
+
+  enqueue(item: T) {
+    const prevResolve = this.waitingResolvers.shift();
+    if (prevResolve) {
+      prevResolve(item);
+    } else {
+      this.queue.push(item);
+    }
+  }
+
+  dequeue(): Promise<T> {
+    return new Promise((resolve) => {
+      const item = this.queue.shift();
+      if (item) {
+        resolve(item);
+      } else {
+        this.waitingResolvers.push(resolve);
+      }
+    });
+  }
+}
+
 export class PostgresReplicationListener {
   #logicalReplicationService: LogicalReplicationService;
   #transactionBuffer: Partial<TransactionBuffer> & { state: TransactionBufferState };
@@ -122,7 +147,6 @@ export class PostgresReplicationListener {
 
     return true;
   }
-
   async *startIteration(
     publicationName: string,
     slotName: string,
@@ -132,15 +156,22 @@ export class PostgresReplicationListener {
       throw new Error("PostgresReplicationListener is already running.");
     }
 
-    // This is a very shitty way of unwrapping a callback to iterator.
-    let next = Promise.withResolvers<TransactionBuffer>();
-    let ack = Promise.withResolvers<boolean>();
+    const queue = new AsyncQueue<{
+      buffer: TransactionBuffer;
+      ackResolver: (value: boolean) => void;
+      ackPromise: Promise<boolean>;
+    }>();
 
     this.#onCommit = async (buffer) => {
-      next.resolve(buffer);
-      const didAck = await ack.promise;
-      ack = Promise.withResolvers<boolean>();
-      return didAck;
+      const { resolve: ackResolver, promise: ackPromise } = Promise.withResolvers<boolean>();
+
+      queue.enqueue({
+        buffer,
+        ackResolver,
+        ackPromise,
+      });
+
+      return ackPromise;
     };
 
     const plugin = new RejotPgOutputPlugin({
@@ -148,12 +179,11 @@ export class PostgresReplicationListener {
       publicationNames: [publicationName],
     });
 
-    // We don't await this, because it never returns.
+    // Subscribe but do not await, it never returns
     this.#logicalReplicationService.subscribe(plugin, slotName);
 
     abortSignal.addEventListener("abort", async () => {
       log.info("Abort signal received, stopping listener");
-      next.reject(new Error("pg-aborted"));
       await this.stop();
     });
 
@@ -161,7 +191,8 @@ export class PostgresReplicationListener {
 
     try {
       while (!abortSignal.aborted) {
-        const { commitEndLsn, operations } = await next.promise;
+        const { buffer, ackResolver } = await queue.dequeue();
+        const { commitEndLsn, operations } = buffer;
 
         // Process operations to handle primary key changes
         const processedOperations = this.#processOperationsForPrimaryKeyChanges(operations);
@@ -169,10 +200,8 @@ export class PostgresReplicationListener {
         yield {
           id: commitEndLsn,
           operations: processedOperations,
-          ack: ack.resolve,
+          ack: ackResolver,
         };
-
-        next = Promise.withResolvers<TransactionBuffer>();
       }
     } catch (error) {
       if (error instanceof Error && error.message === "pg-aborted") {
