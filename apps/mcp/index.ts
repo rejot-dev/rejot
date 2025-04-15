@@ -1,10 +1,11 @@
 import { parseArgs } from "@std/cli/parse-args";
 
-import { ManifestInfoTool } from "./tools/manifest/manifest-info.tool";
-import { initLog, logError } from "./logging/log";
+import { defaultLogger, initLog, logError } from "./logging/log";
 import { RejotMcp } from "./rejot-mcp";
 import { ProjectInitializer } from "./project/project";
 import { ManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest";
+import { DbIntrospectionTool } from "./tools/db-introspection/db-introspection.tool";
+import { ManifestInfoTool } from "./tools/manifest/manifest-info.tool";
 
 initLog();
 
@@ -16,12 +17,15 @@ if (!("project" in args)) {
   process.exit(1);
 }
 
-// Create instances of our initializers
-const manifestInfoTool = new ManifestInfoTool();
-const projectInitializer = new ProjectInitializer(new ManifestWorkspaceResolver());
+const rejotMcp = new RejotMcp(args.project, defaultLogger, [
+  new ProjectInitializer(new ManifestWorkspaceResolver()),
+  new DbIntrospectionTool(),
+  new ManifestInfoTool(),
+]);
 
-const rejotMcp = new RejotMcp(args.project, [manifestInfoTool, projectInitializer]);
-
-rejotMcp.connect().catch((err) => {
-  logError(`Server error: ${err}`);
-});
+rejotMcp
+  .connect()
+  .then(() => {})
+  .catch((err) => {
+    logError(`Server error: ${err}`);
+  });

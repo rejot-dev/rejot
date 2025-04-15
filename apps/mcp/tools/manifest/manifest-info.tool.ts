@@ -2,14 +2,30 @@ import { z } from "zod";
 import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
 import { readManifest } from "@rejot-dev/contract-tools/manifest";
 import { verifyManifests } from "@rejot-dev/contract/manifest";
-import type { IRejotMcp } from "@/rejot-mcp";
-import type { IFactory } from "@/rejot-mcp";
+import type { IRejotMcp, IFactory } from "@/rejot-mcp";
+import type { McpState } from "@/state/mcp-state";
 
 export class ManifestInfoTool implements IFactory {
-  async initialize(mcp: IRejotMcp): Promise<void> {
-    mcp.server.tool(
+  async initialize(_state: McpState): Promise<void> {
+    // No state initialization needed
+  }
+
+  async register(mcp: IRejotMcp): Promise<void> {
+    mcp.registerTool(
+      "rejot_workspace_manifest_info",
+      "Get information about the workspace's manifest.",
+      {},
+      async () => {
+        const output = ManifestPrinter.printSyncManifest(mcp.state.syncManifest);
+        return {
+          content: [{ type: "text", text: output.join("\n") }],
+        };
+      },
+    );
+
+    mcp.registerTool(
       "mcp_rejot_mcp_manifest_info",
-      "Get information about the manifest",
+      "Get information about a specific manifest",
       {
         manifestAbsoluteFilePath: z.string(),
       },
@@ -58,10 +74,4 @@ export class ManifestInfoTool implements IFactory {
       },
     );
   }
-}
-
-// Legacy function for backward compatibility
-export function registerManifestInfoTool(mcp: IRejotMcp): void {
-  const tool = new ManifestInfoTool();
-  void tool.initialize(mcp);
 }

@@ -6,6 +6,7 @@ import type {
   Workspace,
   ManifestInfo,
 } from "@rejot-dev/contract-tools/manifest";
+import { workspaceToSyncManifest } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 
 // Create a sample manifest
 const createBasicManifest = (slug: string) => ({
@@ -37,6 +38,7 @@ const createMockWorkspaceResolver = (testWorkspace: Workspace): IManifestWorkspa
           rootPath: "/test/root",
         }),
     ),
+    workspaceToSyncManifest: mock((workspace: Workspace) => workspaceToSyncManifest(workspace)),
   };
 };
 
@@ -88,7 +90,8 @@ describe("ProjectInitializer", () => {
     const mockMcp = new MockRejotMcp("/test/project/dir");
 
     // Act
-    await projectInitializer.initialize(mockMcp);
+    await projectInitializer.initialize(mockMcp.state);
+    await projectInitializer.register(mockMcp);
 
     // Assert
     // 1. Verify that resolveWorkspace was called with correct parameters
@@ -117,7 +120,8 @@ describe("ProjectInitializer", () => {
     const mockMcp = new MockRejotMcp("/test/project/dir");
 
     // Act
-    await projectInitializer.initialize(mockMcp);
+    await projectInitializer.initialize(mockMcp.state);
+    await projectInitializer.register(mockMcp);
 
     // Get the registered resource template
     const resources = mockMcp.getResources();
@@ -143,7 +147,8 @@ describe("ProjectInitializer", () => {
     const mockMcp = new MockRejotMcp("/test/project/dir");
 
     // Act
-    await projectInitializer.initialize(mockMcp);
+    await projectInitializer.initialize(mockMcp.state);
+    await projectInitializer.register(mockMcp);
 
     // Get the registered resource template
     const resources = mockMcp.getResources();
@@ -162,7 +167,8 @@ describe("ProjectInitializer", () => {
     const mockMcp = new MockRejotMcp("/complex/project/dir");
 
     // Act
-    await projectInitializer.initialize(mockMcp);
+    await projectInitializer.initialize(mockMcp.state);
+    await projectInitializer.register(mockMcp);
 
     // Assert
     const resources = mockMcp.getResources();

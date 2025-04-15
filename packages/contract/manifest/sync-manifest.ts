@@ -52,7 +52,7 @@ export type Purpose =
   /** Publishes an HTTP endpoint to allow others to sync from us. */
   | "EVENT_STORE_PUBLISHER";
 
-interface SyncManifestOptions {
+export interface SyncManifestOptions {
   checkPublicSchemaReferences?: boolean;
 }
 
@@ -87,6 +87,18 @@ export class SyncManifest {
 
   get manifests(): Manifest[] {
     return this.#manifests;
+  }
+
+  get connections(): Connection[] {
+    return this.#manifests.flatMap((manifest) => manifest.connections ?? []);
+  }
+
+  get dataStores(): NonNullable<Manifest["dataStores"]> {
+    return this.#manifests.flatMap((manifest) => manifest.dataStores ?? []);
+  }
+
+  get eventStores(): NonNullable<Manifest["eventStores"]> {
+    return this.#manifests.flatMap((manifest) => manifest.eventStores ?? []);
   }
 
   getSourceDataStores(): SourceDataStore[] {
@@ -148,9 +160,7 @@ export class SyncManifest {
   }
 
   getConnectionBySlug(connectionSlug: string): Connection | undefined {
-    const connection = this.#manifests
-      .flatMap((manifest) => manifest.connections ?? [])
-      .find((connection) => connection.slug === connectionSlug);
+    const connection = this.connections.find((connection) => connection.slug === connectionSlug);
 
     if (!connection) {
       return undefined;

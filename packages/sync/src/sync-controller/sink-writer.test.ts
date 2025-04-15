@@ -43,6 +43,12 @@ describe("SinkWriter", () => {
     createEventStore = mock(() => {
       throw new Error("Not implemented");
     });
+    getOrCreateConnection = mock((_connectionSlug: string, _config: PostgresConfig) => ({
+      slug: _connectionSlug,
+      config: _config,
+      prepare: async () => {},
+      close: async () => {},
+    }));
   }
 
   // Mock PostgreSQL transformation adapter

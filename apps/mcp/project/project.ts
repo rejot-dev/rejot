@@ -1,11 +1,13 @@
 import { defaultLogger, type ILogger } from "@/logging/log";
-import type { IRejotMcp } from "@/rejot-mcp";
+import type { IRejotMcp, IFactory } from "@/rejot-mcp";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type IManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest";
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
+import type { McpState } from "@/state/mcp-state";
+import type { ManifestError } from "@rejot-dev/contract/manifest";
 
-export class ProjectInitializer {
+export class ProjectInitializer implements IFactory {
   readonly #workspaceResolver: IManifestWorkspaceResolver;
   readonly #logger: ILogger;
 
@@ -14,20 +16,46 @@ export class ProjectInitializer {
     this.#logger = logger;
   }
 
-  async initialize(mcp: IRejotMcp): Promise<void> {
+  async initialize(state: McpState): Promise<void> {
     this.#logger.info("initializeProject", {
-      projectDir: mcp.projectDir,
+      projectDir: state.projectDir,
     });
 
+    // Resolve workspace
     const workspace = await this.#workspaceResolver.resolveWorkspace({
-      startDir: mcp.projectDir,
+      startDir: state.projectDir,
     });
 
-    this.#logger.info("workspace", {
+    this.#logger.info("Workspace resolved", {
       rootPath: workspace.rootPath,
       ancestor: workspace.ancestor.path,
       children: workspace.children.map((c) => c.path),
     });
+
+    state.setWorkspace(workspace);
+
+    // Create sync manifest
+    try {
+      const syncManifest = this.#workspaceResolver.workspaceToSyncManifest(workspace);
+      state.setSyncManifest(syncManifest);
+    } catch (error) {
+      // Handle sync manifest creation errors
+      if (error instanceof Error && "errors" in error) {
+        state.setError({
+          message: "Failed to create sync manifest",
+          errors: (error as { errors: ManifestError[] }).errors,
+        });
+      } else {
+        state.setError({
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+      throw error;
+    }
+  }
+
+  async register(mcp: IRejotMcp): Promise<void> {
+    const workspace = mcp.state.workspace;
 
     const list = () => {
       const rootUri = `rejot://workspace/${workspace.ancestor.path}`;

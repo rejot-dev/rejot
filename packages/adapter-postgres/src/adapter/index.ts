@@ -10,3 +10,5 @@ export {
 } from "./pg-transformations.ts";
 
 export { PostgresConsumerSchemaValidationAdapter } from "./pg-consumer-schema-validation-adapter.ts";
+
+export { PostgresIntrospectionAdapter } from "./pg-introspection-adapter.ts";

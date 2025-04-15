@@ -8,10 +8,9 @@ import { PostgresEventStore } from "../event-store/postgres-event-store.ts";
 import { PostgresClient } from "../util/postgres-client.ts";
 import { PostgresSink } from "../postgres-sink.ts";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
+import type { IConnection } from "@rejot-dev/contract/sync";
 
-export interface PostgresConnection {
-  slug: string;
-  config: z.infer<typeof PostgresConnectionSchema>;
+export interface PostgresConnection extends IConnection<z.infer<typeof PostgresConnectionSchema>> {
   client: PostgresClient;
 }
 
@@ -42,7 +41,7 @@ export class PostgresConnectionAdapter
     options?: CreateSourceOptions,
   ): PostgresSource {
     return new PostgresSource({
-      client: this.#getOrCreateConnection(connectionSlug, connection).client,
+      client: this.getOrCreateConnection(connectionSlug, connection).client,
       publicSchemaSql: "",
       options: {
         createPublication: true,
@@ -57,7 +56,7 @@ export class PostgresConnectionAdapter
     connection: z.infer<typeof PostgresConnectionSchema>,
   ): PostgresSink {
     return new PostgresSink({
-      client: this.#getOrCreateConnection(connectionSlug, connection).client,
+      client: this.getOrCreateConnection(connectionSlug, connection).client,
       consumerSchemaSQL: "",
     });
   }
@@ -67,7 +66,7 @@ export class PostgresConnectionAdapter
     connection: z.infer<typeof PostgresConnectionSchema>,
   ): PostgresEventStore {
     return new PostgresEventStore(
-      this.#getOrCreateConnection(connectionSlug, connection).client,
+      this.getOrCreateConnection(connectionSlug, connection).client,
       this.#manifest,
     );
   }
@@ -76,17 +75,20 @@ export class PostgresConnectionAdapter
     return this.#connections.get(connectionSlug);
   }
 
-  #getOrCreateConnection(
+  getOrCreateConnection(
     connectionSlug: string,
     connection: z.infer<typeof PostgresConnectionSchema>,
   ): PostgresConnection {
     let existingConnection = this.#connections.get(connectionSlug);
 
     if (!existingConnection) {
+      const client = PostgresClient.fromConfig(connection);
       existingConnection = {
         slug: connectionSlug,
         config: connection,
-        client: PostgresClient.fromConfig(connection),
+        prepare: () => client.connect(),
+        close: () => client.end(),
+        client,
       };
 
       this.#connections.set(connectionSlug, existingConnection);
@@ -109,6 +111,8 @@ export class PostgresConnectionAdapter
     this.#connections.set(connectionSlug, {
       slug: connectionSlug,
       config: connection,
+      prepare: () => client.connect(),
+      close: () => client.end(),
       client,
     });
   }

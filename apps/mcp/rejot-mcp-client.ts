@@ -22,15 +22,13 @@ await client.connect(transport);
 
 console.log("connected");
 
-const listResult = await client.listResources();
-const listTemplateResult = await client.listResourceTemplates();
-
-console.dir(
-  {
-    listResult,
-    listTemplateResult,
+const result = await client.callTool({
+  name: "mcp_rejot_db_check_health",
+  arguments: {
+    connectionSlug: "data-destination-1",
   },
-  { depth: null },
-);
+});
+
+console.dir(result, { depth: null });
 
 await client.close();

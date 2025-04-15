@@ -1,9 +1,12 @@
 import { z } from "zod";
-import type { IMcpServer } from "../interfaces/mcp-server.interface";
+import type { IMcpServer, ToolCallback } from "../interfaces/mcp-server.interface";
 import type { ResourceListHandler, ResourceGetHandler } from "../interfaces/mcp-server.interface";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { ZodRawShape } from "zod";
 import type { IRejotMcp, IFactory } from "../rejot-mcp";
+import { ReJotMcpError } from "@/state/mcp-error";
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import { McpState } from "@/state/mcp-state";
 
 /**
  * Represents a registered tool in the MCP server
@@ -258,8 +261,10 @@ export class MockRejotMcp implements IRejotMcp {
   #mockServer: MockMcpServer;
   #projectDir: string;
   #factories: IFactory[] = [];
+  #state: McpState;
 
   constructor(projectDir: string, factories: IFactory[] = []) {
+    this.#state = new McpState(projectDir);
     this.#projectDir = projectDir;
     this.#factories = factories;
 
@@ -274,6 +279,32 @@ export class MockRejotMcp implements IRejotMcp {
     );
   }
 
+  registerTool<Args extends ZodRawShape>(
+    name: string,
+    description: string,
+    paramsSchema: Args,
+    cb: ToolCallback<Args>,
+  ): void {
+    this.#mockServer.tool(
+      name,
+      description,
+      paramsSchema,
+      (data: { [x: string]: unknown }, extra: RequestHandlerExtra) => {
+        try {
+          return cb(data, extra);
+        } catch (error) {
+          if (error instanceof ReJotMcpError) {
+            return {
+              content: error.toContent(),
+            };
+          }
+
+          throw error;
+        }
+      },
+    );
+  }
+
   get projectDir(): string {
     return this.#projectDir;
   }
@@ -282,9 +313,17 @@ export class MockRejotMcp implements IRejotMcp {
     return this.#mockServer;
   }
 
+  get state(): McpState {
+    return this.#state;
+  }
+
   async connect(): Promise<void> {
     for (const factory of this.#factories) {
-      await factory.initialize(this);
+      await factory.initialize(this.#state);
+    }
+
+    for (const factory of this.#factories) {
+      await factory.register(this);
     }
 
     // Don't need to connect to any transport in the mock
