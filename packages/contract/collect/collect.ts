@@ -5,6 +5,10 @@ import { existsSync } from "node:fs";
 import { PublicSchema } from "../public-schema/public-schema.ts";
 import { ConsumerSchema } from "../consumer-schema/consumer-schema.ts";
 
+import { logger } from "../logger/logger.ts";
+
+const log = logger.createLogger("collect");
+
 export async function collectPublicSchemas(modulePath: string): Promise<PublicSchema[]> {
   const resolvedModulePath = resolve(process.cwd(), modulePath);
   if (!existsSync(resolvedModulePath)) {
@@ -18,7 +22,7 @@ export async function collectPublicSchemas(modulePath: string): Promise<PublicSc
   const publicSchemas: PublicSchema[] = [];
 
   if (!module.default) {
-    console.warn(`No default export found in ${modulePath}`);
+    log.error(`No default export found in ${modulePath}`);
     return [];
   }
 
@@ -34,9 +38,13 @@ export async function collectPublicSchemas(modulePath: string): Promise<PublicSc
         }
       } else if (item instanceof PublicSchema) {
         publicSchemas.push(item);
+      } else {
+        log.warn(`Found unidentified Public Schema in ${modulePath}: ${JSON.stringify(item)}`);
       }
     }
   }
+
+  log.info(`Collected ${publicSchemas.length} public schemas`);
 
   return publicSchemas;
 }
@@ -51,7 +59,7 @@ export async function collectConsumerSchemas(modulePath: string): Promise<Consum
   const consumerSchemas: ConsumerSchema[] = [];
 
   if (!module.default) {
-    console.warn(`No default export found in ${modulePath}`);
+    log.warn(`No default export found in ${modulePath}`);
     return [];
   }
   if (module.default instanceof ConsumerSchema) {
@@ -66,9 +74,13 @@ export async function collectConsumerSchemas(modulePath: string): Promise<Consum
         }
       } else if (item instanceof ConsumerSchema) {
         consumerSchemas.push(item);
+      } else {
+        log.warn(`Found unidentified Consumer Schema in ${modulePath}: ${JSON.stringify(item)}`);
       }
     }
   }
+
+  log.info(`Collected ${consumerSchemas.length} consumer schemas`);
 
   return consumerSchemas;
 }
