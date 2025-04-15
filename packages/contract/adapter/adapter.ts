@@ -126,6 +126,25 @@ export type AnyIConsumerSchemaValidationAdapter = IConsumerSchemaValidationAdapt
   z.infer<typeof ConsumerSchemaTransformationSchema>
 >;
 
+export interface Column {
+  columnName: string;
+  dataType: string;
+  isNullable: boolean;
+  columnDefault: string | null;
+  foreignKey?: {
+    constraintName: string;
+    referencedTable: string;
+    referencedColumnName: string;
+  };
+}
+
+export interface Table {
+  schema: string;
+  name: string;
+  columns: Column[];
+  keyColumns: string[];
+}
+
 export interface IIntrospectionAdapter<
   TConnectionConfig extends z.infer<typeof ConnectionConfigSchema>,
 > {
@@ -135,40 +154,8 @@ export interface IIntrospectionAdapter<
     connectionSlug: string,
   ): Promise<{ status: "healthy" | "unhealthy"; message?: string }>;
   getTables(connectionSlug: string): Promise<{ schema: string; name: string }[]>;
-  getTableSchema(
-    connectionSlug: string,
-    tableName: string,
-  ): Promise<
-    {
-      columnName: string;
-      dataType: string;
-      isNullable: boolean;
-      columnDefault: string | null;
-      foreignKey?: {
-        constraintName: string;
-        referencedTableSchema: string;
-        referencedTableName: string;
-        referencedColumnName: string;
-      };
-    }[]
-  >;
-  getAllTableSchemas(connectionSlug: string): Promise<
-    Map<
-      string,
-      {
-        columnName: string;
-        dataType: string;
-        isNullable: boolean;
-        columnDefault: string | null;
-        foreignKey?: {
-          constraintName: string;
-          referencedTableSchema: string;
-          referencedTableName: string;
-          referencedColumnName: string;
-        };
-      }[]
-    >
-  >;
+  getTableSchema(connectionSlug: string, tableName: string): Promise<Table>;
+  getAllTableSchemas(connectionSlug: string): Promise<Map<string, Table>>;
 }
 
 export type AnyIIntrospectionAdapter = IIntrospectionAdapter<

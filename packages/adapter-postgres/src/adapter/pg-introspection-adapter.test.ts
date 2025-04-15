@@ -60,6 +60,13 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
         published BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS test_post_tags (
+        post_id INTEGER NOT NULL REFERENCES test_posts(id),
+        tag_name VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (post_id, tag_name)
+      );
     `);
   });
 
@@ -93,12 +100,15 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
     const schema = await adapter.getTableSchema(connectionSlug, "public.test_users");
 
     // Assert
-    expect(schema.length).toBeGreaterThanOrEqual(4); // Should have at least the columns we defined
+    expect(schema.schema).toBe("public");
+    expect(schema.name).toBe("test_users");
+    expect(schema.columns.length).toBeGreaterThanOrEqual(4); // Should have at least the columns we defined
+    expect(schema.keyColumns).toContain("id"); // Primary key should be present
 
     // Check for specific columns
-    const idColumn = schema.find((col) => col.columnName === "id");
-    const nameColumn = schema.find((col) => col.columnName === "name");
-    const emailColumn = schema.find((col) => col.columnName === "email");
+    const idColumn = schema.columns.find((col) => col.columnName === "id");
+    const nameColumn = schema.columns.find((col) => col.columnName === "name");
+    const emailColumn = schema.columns.find((col) => col.columnName === "email");
 
     expect(idColumn).toBeDefined();
     expect(idColumn?.dataType).toContain("integer");
@@ -112,11 +122,15 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
     const schema = await adapter.getTableSchema(connectionSlug, "public.test_posts");
 
     // Assert
-    const userIdColumn = schema.find((col) => col.columnName === "user_id");
+    expect(schema.schema).toBe("public");
+    expect(schema.name).toBe("test_posts");
+    expect(schema.keyColumns).toContain("id"); // Primary key should be present
+
+    const userIdColumn = schema.columns.find((col) => col.columnName === "user_id");
 
     expect(userIdColumn).toBeDefined();
     expect(userIdColumn?.foreignKey).toBeDefined();
-    expect(userIdColumn?.foreignKey?.referencedTableName).toBe("test_users");
+    expect(userIdColumn?.foreignKey?.referencedTable).toBe("public.test_users");
     expect(userIdColumn?.foreignKey?.referencedColumnName).toBe("id");
   });
 
@@ -135,16 +149,67 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
     expect(testPostsSchema).toBeDefined();
 
     if (testUsersSchema) {
-      expect(testUsersSchema.length).toBeGreaterThanOrEqual(4); // Should have at least the columns we defined
-      expect(testUsersSchema.some((col) => col.columnName === "id")).toBe(true);
+      expect(testUsersSchema.schema).toBe("public");
+      expect(testUsersSchema.name).toBe("test_users");
+      expect(testUsersSchema.columns.length).toBeGreaterThanOrEqual(4);
+      expect(testUsersSchema.keyColumns).toContain("id");
+      expect(testUsersSchema.columns.some((col) => col.columnName === "id")).toBe(true);
     }
 
     if (testPostsSchema) {
-      expect(testPostsSchema.length).toBeGreaterThanOrEqual(6); // Should have at least the columns we defined
-      expect(testPostsSchema.some((col) => col.columnName === "user_id")).toBe(true);
+      expect(testPostsSchema.schema).toBe("public");
+      expect(testPostsSchema.name).toBe("test_posts");
+      expect(testPostsSchema.columns.length).toBeGreaterThanOrEqual(6);
+      expect(testPostsSchema.keyColumns).toContain("id");
+      expect(testPostsSchema.columns.some((col) => col.columnName === "user_id")).toBe(true);
 
-      const userIdColumn = testPostsSchema.find((col) => col.columnName === "user_id");
+      const userIdColumn = testPostsSchema.columns.find((col) => col.columnName === "user_id");
       expect(userIdColumn?.foreignKey).toBeDefined();
+      expect(userIdColumn?.foreignKey?.referencedTable).toBe("public.test_users");
+    }
+  });
+
+  test("should get schema for a table with compound primary key", async () => {
+    // Act
+    const schema = await adapter.getTableSchema(connectionSlug, "public.test_post_tags");
+
+    // Assert
+    expect(schema.schema).toBe("public");
+    expect(schema.name).toBe("test_post_tags");
+    expect(schema.keyColumns).toHaveLength(2);
+    expect(schema.keyColumns).toContain("post_id");
+    expect(schema.keyColumns).toContain("tag_name");
+
+    // Check foreign key
+    const postIdColumn = schema.columns.find((col) => col.columnName === "post_id");
+    expect(postIdColumn).toBeDefined();
+    expect(postIdColumn?.foreignKey).toBeDefined();
+    expect(postIdColumn?.foreignKey?.referencedTable).toBe("public.test_posts");
+    expect(postIdColumn?.foreignKey?.referencedColumnName).toBe("id");
+
+    // Check tag_name column
+    const tagNameColumn = schema.columns.find((col) => col.columnName === "tag_name");
+    expect(tagNameColumn).toBeDefined();
+    expect(tagNameColumn?.dataType).toBe("character varying(50)");
+    expect(tagNameColumn?.isNullable).toBe(false);
+  });
+
+  test("should include compound primary key columns in getAllTableSchemas", async () => {
+    // Act
+    const allSchemas = await adapter.getAllTableSchemas(connectionSlug);
+    const postTagsSchema = allSchemas.get("public.test_post_tags");
+
+    // Assert
+    expect(postTagsSchema).toBeDefined();
+    if (postTagsSchema) {
+      expect(postTagsSchema.keyColumns).toHaveLength(2);
+      expect(postTagsSchema.keyColumns).toContain("post_id");
+      expect(postTagsSchema.keyColumns).toContain("tag_name");
+
+      // Verify foreign key is still present
+      const postIdColumn = postTagsSchema.columns.find((col) => col.columnName === "post_id");
+      expect(postIdColumn?.foreignKey).toBeDefined();
+      expect(postIdColumn?.foreignKey?.referencedTable).toBe("public.test_posts");
     }
   });
 });

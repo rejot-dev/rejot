@@ -103,7 +103,7 @@ export class DbIntrospectionTool implements IFactory {
       },
     );
 
-    mcp.server.tool(
+    mcp.registerTool(
       "mcp_rejot_db_get_table_schema",
       "Get schema information for a specific table",
       {
@@ -122,18 +122,24 @@ export class DbIntrospectionTool implements IFactory {
             content: [
               {
                 type: "text",
-                text: `Table schema for ${tableName}:\n${schema
-                  .map((col) => {
-                    let colInfo = `${col.columnName} (${col.dataType})${col.isNullable ? " NULL" : " NOT NULL"}`;
-                    if (col.columnDefault !== null) {
-                      colInfo += ` DEFAULT ${col.columnDefault}`;
-                    }
-                    if (col.foreignKey) {
-                      colInfo += `\n  -> FK ${col.foreignKey.constraintName}: references ${col.foreignKey.referencedTableSchema}.${col.foreignKey.referencedTableName}(${col.foreignKey.referencedColumnName})`;
-                    }
-                    return colInfo;
-                  })
-                  .join("\n")}`,
+                text: `Table schema for ${tableName}:
+Schema: ${schema.schema}
+Name: ${schema.name}
+Key Columns: ${schema.keyColumns.join(", ")}
+
+Columns:
+${schema.columns
+  .map((col) => {
+    let colInfo = `${col.columnName} (${col.dataType})${col.isNullable ? " NULL" : " NOT NULL"}`;
+    if (col.columnDefault !== null) {
+      colInfo += ` DEFAULT ${col.columnDefault}`;
+    }
+    if (col.foreignKey) {
+      colInfo += `\n  -> FK ${col.foreignKey.constraintName}: references ${col.foreignKey.referencedTable}(${col.foreignKey.referencedColumnName})`;
+    }
+    return colInfo;
+  })
+  .join("\n")}`,
               },
             ],
           };
@@ -151,7 +157,66 @@ export class DbIntrospectionTool implements IFactory {
       },
     );
 
-    mcp.server.tool(
+    mcp.registerTool(
+      "mcp_rejot_db_get_all_table_schemas",
+      "Get schema information for all tables in the database",
+      {
+        connectionSlug: z.string(),
+      },
+      async ({ connectionSlug }) => {
+        try {
+          const adapter = await this.#ensureConnection(connectionSlug, mcp.state);
+
+          const allSchemas = await adapter.introspectionAdapter.getAllTableSchemas(connectionSlug);
+
+          // Convert the Map to an array of tables for easier formatting
+          const tables = Array.from(allSchemas.values());
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Found ${tables.length} tables:
+
+${tables
+  .map(
+    (schema) => `
+Table: ${schema.schema}.${schema.name}
+Key Columns: ${schema.keyColumns.join(", ")}
+
+Columns:
+${schema.columns
+  .map((col) => {
+    let colInfo = `${col.columnName} (${col.dataType})${col.isNullable ? " NULL" : " NOT NULL"}`;
+    if (col.columnDefault !== null) {
+      colInfo += ` DEFAULT ${col.columnDefault}`;
+    }
+    if (col.foreignKey) {
+      colInfo += `\n  -> FK ${col.foreignKey.constraintName}: references ${col.foreignKey.referencedTable}(${col.foreignKey.referencedColumnName})`;
+    }
+    return colInfo;
+  })
+  .join("\n")}`,
+  )
+  .join("\n")}`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                isError: true,
+                type: "text",
+                text: `Error getting all table schemas: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+          };
+        }
+      },
+    );
+
+    mcp.registerTool(
       "mcp_rejot_db_check_health",
       "Check the health of a database connection",
       {
