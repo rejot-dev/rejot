@@ -96,7 +96,9 @@ export class FileLogger extends ILogger {
   }
 
   init(): void {
-    fs.writeFileSync(this.#logFilePath, "Log Initialized.\n", { flag: "w" });
+    fs.writeFileSync(this.#logFilePath, formatLogMessage(LogLevel.ERROR, "Log Initialized."), {
+      flag: "w",
+    });
   }
 
   log(type: LogLevel, message: string, ...args: unknown[]): void {
@@ -117,12 +119,16 @@ export class NoopLogger extends ILogger {
 
 export class NamespacedLogger extends ILogger {
   #logger: ILogger;
-  #namespace: string;
+  #namespace?: string;
 
-  constructor(logger: ILogger, namespace: string) {
+  constructor(logger: ILogger, namespace?: string) {
     super();
     this.#logger = logger;
     this.#namespace = namespace;
+  }
+
+  swapLogger(logger: ILogger): void {
+    this.#logger = logger;
   }
 
   get logLevel(): LogLevel {
@@ -138,7 +144,11 @@ export class NamespacedLogger extends ILogger {
   }
 
   log(type: LogLevel, message: string, ...args: unknown[]): void {
-    this.#logger.log(type, `[${this.#namespace}] ${message}`, ...args);
+    if (this.#namespace) {
+      this.#logger.log(type, `[${this.#namespace}] ${message}`, ...args);
+    } else {
+      this.#logger.log(type, message, ...args);
+    }
   }
 }
 
@@ -152,17 +162,21 @@ export const setLogLevel = (level: LogLevelName | string): void => {
   loggerSingleton.logLevel = LogLevel[level as LogLevelName];
 };
 
-export function getLogger(namespace?: string): ILogger {
-  if (namespace) {
-    return new NamespacedLogger(loggerSingleton, namespace);
-  }
+const loggerInstances: NamespacedLogger[] = [];
 
-  return loggerSingleton;
+export function getLogger(namespace?: string): ILogger {
+  const instance = new NamespacedLogger(loggerSingleton, namespace);
+  loggerInstances.push(instance);
+  return instance;
 }
 
 export function setLogger(logger: ILogger): ILogger {
   loggerSingleton = logger;
   loggerSingleton.init();
+
+  for (const instance of loggerInstances) {
+    instance.swapLogger(logger);
+  }
 
   return loggerSingleton;
 }

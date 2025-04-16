@@ -16,6 +16,9 @@ interface AdapterPair {
   introspectionAdapter: AnyIIntrospectionAdapter;
 }
 
+const CONNECTION_SLUG_DESCRIPTION =
+  "The slug of the connection to get information about. This can be found in the connection array of the manifest.";
+
 export class DbIntrospectionTool implements IFactory {
   #adapters: Map<ValidConnectionType, AdapterPair>;
 
@@ -74,9 +77,11 @@ export class DbIntrospectionTool implements IFactory {
       "mcp_rejot_db_get_tables",
       "Get all tables from a database connection",
       {
-        connectionSlug: z.string(),
+        connectionSlug: z.string().describe(CONNECTION_SLUG_DESCRIPTION),
       },
       async ({ connectionSlug }) => {
+        mcp.state.assertIsInitialized();
+
         try {
           const adapter = await this.#ensureConnection(connectionSlug, mcp.state);
 
@@ -107,10 +112,12 @@ export class DbIntrospectionTool implements IFactory {
       "mcp_rejot_db_get_table_schema",
       "Get schema information for a specific table",
       {
-        connectionSlug: z.string(),
+        connectionSlug: z.string().describe(CONNECTION_SLUG_DESCRIPTION),
         tableName: z.string(),
       },
       async ({ connectionSlug, tableName }) => {
+        mcp.state.assertIsInitialized();
+
         try {
           const adapter = await this.#ensureConnection(connectionSlug, mcp.state);
 
@@ -161,9 +168,11 @@ ${schema.columns
       "mcp_rejot_db_get_all_table_schemas",
       "Get schema information for all tables in the database",
       {
-        connectionSlug: z.string(),
+        connectionSlug: z.string().describe(CONNECTION_SLUG_DESCRIPTION),
       },
       async ({ connectionSlug }) => {
+        mcp.state.assertIsInitialized();
+
         try {
           const adapter = await this.#ensureConnection(connectionSlug, mcp.state);
 
@@ -220,33 +229,25 @@ ${schema.columns
       "mcp_rejot_db_check_health",
       "Check the health of a database connection",
       {
-        connectionSlug: z.string(),
+        connectionSlug: z.string().describe(CONNECTION_SLUG_DESCRIPTION),
       },
       async ({ connectionSlug }) => {
-        try {
-          const adapter = await this.#ensureConnection(connectionSlug, mcp.state);
+        mcp.state.assertIsInitialized();
 
-          const health = await adapter.introspectionAdapter.checkHealth(connectionSlug);
+        await this.#ensureConnection(connectionSlug, mcp.state);
 
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Connection health: ${health.status}${health.message ? `\nMessage: ${health.message}` : ""}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                isError: true,
-                type: "text",
-                text: `Error checking health: ${error instanceof Error ? error.message : String(error)}`,
-              },
-            ],
-          };
-        }
+        const adapter = await this.#ensureConnection(connectionSlug, mcp.state);
+
+        const health = await adapter.introspectionAdapter.checkHealth(connectionSlug);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Connection health: ${health.status}${health.message ? `\nMessage: ${health.message}` : ""}`,
+            },
+          ],
+        };
       },
     );
   }
@@ -264,7 +265,7 @@ export class ConnectionNotFoundError extends ReJotMcpError {
     return this.#connectionSlug;
   }
 
-  toContent(): CallToolResult["content"] {
+  toCallToolContent(): CallToolResult["content"] {
     return [
       {
         isError: true,
@@ -287,7 +288,7 @@ export class AdapterNotFoundError extends ReJotMcpError {
     return this.#connectionType;
   }
 
-  toContent(): CallToolResult["content"] {
+  toCallToolContent(): CallToolResult["content"] {
     return [
       {
         isError: true,

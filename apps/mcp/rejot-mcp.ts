@@ -1,12 +1,19 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { IMcpServer, ToolCallback } from "./interfaces/mcp-server.interface";
+import type {
+  IMcpServer,
+  ReadResourceTemplateCallback,
+  ResourceTemplate,
+  ToolCallback,
+} from "./interfaces/mcp-server.interface";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { McpState } from "./state/mcp-state";
 import type { ZodRawShape } from "zod";
 import { ReJotMcpError } from "./state/mcp-error";
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { ILogger } from "@rejot-dev/contract/logger";
+import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
+import type { ReadResourceResult } from "@modelcontextprotocol/sdk/types.js";
 
 // Factory interface for initializers
 export interface IFactory {
@@ -37,6 +44,12 @@ export interface IRejotMcp {
     description: string,
     paramsSchema: Args,
     cb: ToolCallback<Args>,
+  ): void;
+
+  registerResource(
+    name: string,
+    template: ResourceTemplate,
+    handler: ReadResourceTemplateCallback,
   ): void;
 }
 
@@ -97,14 +110,14 @@ export class RejotMcp implements IRejotMcp {
       description,
       paramsSchema,
       // @ts-expect-error: Seems to be an error in MCP library
-      (data: { [x: string]: unknown }, extra: RequestHandlerExtra) => {
+      async (data: { [x: string]: unknown }, extra: RequestHandlerExtra) => {
         try {
-          return cb(data, extra);
+          return await cb(data, extra);
         } catch (error) {
           if (error instanceof ReJotMcpError) {
             this.#logger.warn(`Tool ${name} returned error: ${error.message}`);
             return {
-              content: error.toContent(),
+              content: error.toCallToolContent(),
             };
           }
 
@@ -115,15 +128,57 @@ export class RejotMcp implements IRejotMcp {
     );
   }
 
+  registerResource(
+    name: string,
+    template: ResourceTemplate,
+    handler: ReadResourceTemplateCallback,
+  ): void {
+    this.#server.resource(
+      name,
+      template,
+      async (
+        uri: URL,
+        variables: Variables,
+        extra: RequestHandlerExtra,
+      ): Promise<ReadResourceResult> => {
+        try {
+          return handler(uri, variables, extra);
+        } catch (error) {
+          if (error instanceof ReJotMcpError) {
+            return {
+              contents: error.toReadResourceContent(uri.toString()),
+            };
+          }
+
+          this.#logger.error(`Unhandled error in resource ${name}: ${error}`);
+          throw error;
+        }
+      },
+    );
+  }
+
   async #initialize(): Promise<void> {
-    for (const factory of this.#factories) {
-      await factory.initialize(this.#state);
+    try {
+      for (const factory of this.#factories) {
+        await factory.initialize(this.#state);
+      }
+    } catch (error) {
+      if (error instanceof ReJotMcpError) {
+        this.#state.addInitializationError(error);
+      }
     }
   }
 
   async #register(): Promise<void> {
-    for (const factory of this.#factories) {
-      await factory.register(this);
+    try {
+      for (const factory of this.#factories) {
+        await factory.register(this);
+      }
+    } catch (error) {
+      if (error instanceof ReJotMcpError) {
+        this.#state.addInitializationError(error);
+      }
+      throw error;
     }
   }
 
@@ -138,16 +193,11 @@ export class RejotMcp implements IRejotMcp {
     await this.#server.connect(transport);
     this.#logger.info(`ReJot MCP server connected to ${this.projectDir}`);
 
-    if (this.#state.error) {
-      // If state initialization failed, log error and throw
-      const error = this.#state.error;
-      const errorMessage = error?.errors
-        ? `State initialization failed: ${error.message}\nErrors:\n${error.errors
-            .map((e) => `- ${e.message}`)
-            .join("\n")}`
-        : `State initialization failed: ${error?.message ?? "Unknown error"}`;
-
-      this.#logger.error(errorMessage);
+    if (this.#state.initializationErrors.length > 0) {
+      this.#logger.warn("State initialization failed:");
+      for (const error of this.#state.initializationErrors) {
+        this.#logger.warn(`  - ${error.message}`);
+      }
     }
   }
 }

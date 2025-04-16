@@ -1,13 +1,13 @@
 import { describe, it, expect, mock } from "bun:test";
 import { MockRejotMcp } from "../_test/mock-mcp-server";
-import { ProjectInitializer } from "./project";
+import { WorkspaceResources } from "./workspace.resources";
 import type {
   IManifestWorkspaceResolver,
   Workspace,
   ManifestInfo,
 } from "@rejot-dev/contract-tools/manifest";
 import { workspaceToSyncManifest } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
-
+import { WorkspaceService } from "./workspace";
 // Create a sample manifest
 const createBasicManifest = (slug: string) => ({
   slug,
@@ -80,18 +80,18 @@ const createComplexTestWorkspace = (): Workspace => ({
   ],
 });
 
-describe("ProjectInitializer", () => {
+describe("WorkspaceResources", () => {
   it("should initialize and register workspace resources", async () => {
     // Arrange
     const testWorkspace = createTestWorkspace();
     const mockWorkspaceResolver = createMockWorkspaceResolver(testWorkspace);
-    const projectInitializer = new ProjectInitializer(mockWorkspaceResolver);
+    const workspaceResources = new WorkspaceResources(new WorkspaceService(mockWorkspaceResolver));
 
     const mockMcp = new MockRejotMcp("/test/project/dir");
 
     // Act
-    await projectInitializer.initialize(mockMcp.state);
-    await projectInitializer.register(mockMcp);
+    await workspaceResources.initialize(mockMcp.state);
+    await workspaceResources.register(mockMcp);
 
     // Assert
     // 1. Verify that resolveWorkspace was called with correct parameters
@@ -115,13 +115,13 @@ describe("ProjectInitializer", () => {
     // Arrange
     const testWorkspace = createTestWorkspace();
     const mockWorkspaceResolver = createMockWorkspaceResolver(testWorkspace);
-    const projectInitializer = new ProjectInitializer(mockWorkspaceResolver);
+    const workspaceResources = new WorkspaceResources(new WorkspaceService(mockWorkspaceResolver));
 
     const mockMcp = new MockRejotMcp("/test/project/dir");
 
     // Act
-    await projectInitializer.initialize(mockMcp.state);
-    await projectInitializer.register(mockMcp);
+    await workspaceResources.initialize(mockMcp.state);
+    await workspaceResources.register(mockMcp);
 
     // Get the registered resource template
     const resources = mockMcp.getResources();
@@ -142,13 +142,13 @@ describe("ProjectInitializer", () => {
       children: [],
     };
     const mockWorkspaceResolver = createMockWorkspaceResolver(testWorkspace);
-    const projectInitializer = new ProjectInitializer(mockWorkspaceResolver);
+    const workspaceResources = new WorkspaceResources(new WorkspaceService(mockWorkspaceResolver));
 
     const mockMcp = new MockRejotMcp("/test/project/dir");
 
     // Act
-    await projectInitializer.initialize(mockMcp.state);
-    await projectInitializer.register(mockMcp);
+    await workspaceResources.initialize(mockMcp.state);
+    await workspaceResources.register(mockMcp);
 
     // Get the registered resource template
     const resources = mockMcp.getResources();
@@ -162,13 +162,13 @@ describe("ProjectInitializer", () => {
     // Arrange
     const testWorkspace = createComplexTestWorkspace();
     const mockWorkspaceResolver = createMockWorkspaceResolver(testWorkspace);
-    const projectInitializer = new ProjectInitializer(mockWorkspaceResolver);
+    const workspaceResources = new WorkspaceResources(new WorkspaceService(mockWorkspaceResolver));
 
     const mockMcp = new MockRejotMcp("/complex/project/dir");
 
     // Act
-    await projectInitializer.initialize(mockMcp.state);
-    await projectInitializer.register(mockMcp);
+    await workspaceResources.initialize(mockMcp.state);
+    await workspaceResources.register(mockMcp);
 
     // Assert
     const resources = mockMcp.getResources();

@@ -33,7 +33,7 @@ export interface ManifestInfo {
 }
 
 export interface IManifestWorkspaceResolver {
-  resolveWorkspace(options?: ResolveWorkspaceOptions): Promise<Workspace>;
+  resolveWorkspace(options?: ResolveWorkspaceOptions): Promise<Workspace | null>;
   getManifestInfo(filePath: string): Promise<ManifestInfo>;
   workspaceToSyncManifest(workspace: Workspace): SyncManifest;
 }
@@ -50,7 +50,7 @@ export class ManifestWorkspaceResolver implements IManifestWorkspaceResolver {
     };
   }
 
-  async resolveWorkspace(options: ResolveWorkspaceOptions = {}): Promise<Workspace> {
+  async resolveWorkspace(options: ResolveWorkspaceOptions = {}): Promise<Workspace | null> {
     const {
       startDir = process.cwd(),
       filename = DEFAULT_MANIFEST_FILENAME,
@@ -60,7 +60,7 @@ export class ManifestWorkspaceResolver implements IManifestWorkspaceResolver {
     // Find the ancestor manifest path
     const manifestPath = await findManifestPath(startDir, filename);
     if (!manifestPath) {
-      throw new Error("Ancestor manifest not found");
+      return null;
     }
 
     const ancestorManifest = await readManifest(manifestPath);

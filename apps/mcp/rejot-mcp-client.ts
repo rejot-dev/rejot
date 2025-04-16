@@ -29,6 +29,7 @@ const result = await client.callTool({
   },
 });
 
+console.log("result");
 console.dir(result, { depth: null });
 
 await client.close();

@@ -16,6 +16,7 @@ export class ManifestInfoTool implements IFactory {
       "Get information about the workspace's manifest.",
       {},
       async () => {
+        mcp.state.assertIsInitialized();
         const output = ManifestPrinter.printSyncManifest(mcp.state.syncManifest);
         return {
           content: [{ type: "text", text: output.join("\n") }],
