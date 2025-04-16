@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { type ILogger } from "./logging/log";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { IMcpServer, ToolCallback } from "./interfaces/mcp-server.interface";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
@@ -7,6 +6,7 @@ import { McpState } from "./state/mcp-state";
 import type { ZodRawShape } from "zod";
 import { ReJotMcpError } from "./state/mcp-error";
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type { ILogger } from "@rejot-dev/contract/logger";
 
 // Factory interface for initializers
 export interface IFactory {

@@ -2,12 +2,13 @@ import { Command, Flags } from "@oclif/core";
 import fs from "node:fs/promises";
 
 import { SUPPORTED_SINK_SCHEMES, SUPPORTED_SOURCE_SCHEMES } from "../rejot-cli-consts.ts";
-import logger, { setLogLevel, type LogLevel } from "@rejot-dev/contract/logger";
+import { getLogger, setLogLevel } from "@rejot-dev/contract/logger";
 import { createSourceAndSink, parseConnectionString } from "../factory.ts";
 import { DEFAULT_PUBLICATION_NAME } from "@rejot-dev/adapter-postgres/consts";
 import { SyncController } from "@rejot-dev/sync/sync-controller";
 
-const log = logger.createLogger("cli");
+const log = getLogger("cli:sync-command");
+
 export default class SyncCommand extends Command {
   static override id = "sync";
 
@@ -156,16 +157,7 @@ export default class SyncCommand extends Command {
 
     this.validateInputs(flags);
 
-    // Casting because oclif checks the values for us
-    setLogLevel(logLevel as LogLevel);
-
-    // Override console methods with custom logger to capture logs from libraries that are not using namespaced loggers
-    const consoleLogger = logger.createLogger("console");
-    console.log = consoleLogger.info.bind(logger);
-    console.info = consoleLogger.info.bind(logger);
-    console.warn = consoleLogger.warn.bind(logger);
-    console.error = consoleLogger.error.bind(logger);
-    console.debug = consoleLogger.debug.bind(logger);
+    setLogLevel(logLevel);
 
     log.debug(`Public schema file: ${publicSchemaPath}`);
     if (consumerSchemaPath) {

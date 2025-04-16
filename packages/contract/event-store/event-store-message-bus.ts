@@ -1,5 +1,5 @@
 import { Cursors, type Cursor } from "../cursor/cursors";
-import { logger } from "../logger/logger";
+import { getLogger } from "../logger/logger";
 import type { IMessageBus, OperationMessage } from "../message-bus/message-bus";
 import type { IEventStore } from "./event-store";
 
@@ -15,7 +15,7 @@ type State = (typeof State)[keyof typeof State];
 
 const INTERVAL_MS = 100;
 
-const log = logger.createLogger("event-store-message-bus");
+const log = getLogger();
 
 export class EventStoreMessageBus implements IMessageBus {
   readonly #eventStore: IEventStore;

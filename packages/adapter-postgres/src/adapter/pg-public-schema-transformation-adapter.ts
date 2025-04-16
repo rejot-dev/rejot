@@ -3,11 +3,11 @@ import { z } from "zod";
 import type { IPublicSchemaTransformationAdapter } from "@rejot-dev/contract/adapter";
 import type { PostgresPublicSchemaTransformationSchema } from "../postgres-schemas.ts";
 import type { TransformedOperation, TableOperation } from "@rejot-dev/contract/sync";
-import logger from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
 import { isPostgresError, PG_PROTOCOL_VIOLATION } from "../util/postgres-error-codes.ts";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
 
-const log = logger.createLogger("pg-public-schema-transformation-adapter");
+const log = getLogger("pg-public-schema-transformation-adapter");
 
 export class PostgresPublicSchemaTransformationAdapter
   implements

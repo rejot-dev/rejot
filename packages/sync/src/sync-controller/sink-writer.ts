@@ -10,9 +10,9 @@ import { type Cursor } from "@rejot-dev/contract/cursor";
 import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 import type { ConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
-import { logger } from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
 
-const log = logger.createLogger("sink-writer");
+const log = getLogger("sink-writer");
 
 export class SinkWriter {
   readonly #syncManifest: SyncManifest;

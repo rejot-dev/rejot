@@ -3,9 +3,8 @@ import type { ISyncServiceResolver } from "../sync-http-service/sync-http-resolv
 import type { ISubscribeMessageBus, OperationMessage } from "@rejot-dev/contract/message-bus";
 import type { Cursor } from "@rejot-dev/contract/cursor";
 import { Cursors } from "@rejot-dev/contract/cursor";
-import logger from "@rejot-dev/contract/logger";
 import { fetchRead } from "../sync-http-service/sync-http-service-fetch";
-
+import { getLogger } from "@rejot-dev/contract/logger";
 const State = {
   INITIAL: 1,
   PREPARED: 2,
@@ -18,7 +17,7 @@ type State = (typeof State)[keyof typeof State];
 
 const INTERVAL_MS = 100;
 
-const log = logger.createLogger("external-sync-message-bus");
+const log = getLogger("sync:external-sync-message-bus");
 
 export class ExternalSyncMessageBus implements ISubscribeMessageBus {
   readonly #syncManifest: SyncManifest;

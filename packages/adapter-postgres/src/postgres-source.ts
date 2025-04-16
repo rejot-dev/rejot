@@ -1,5 +1,5 @@
 import { PostgresClient } from "./util/postgres-client";
-import logger from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
 import type {
   IDataSource,
   Transaction,
@@ -11,7 +11,7 @@ import { PostgresReplicationListener } from "./postgres-replication-listener";
 import { DEFAULT_PUBLICATION_NAME } from "./postgres-consts";
 import { isPostgresError, PG_DUPLICATE_OBJECT } from "./util/postgres-error-codes";
 
-const log = logger.createLogger("pg-source");
+const log = getLogger("pg-source");
 
 type PostgresOptions = {
   publicationName?: string;

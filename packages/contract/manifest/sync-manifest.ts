@@ -11,10 +11,10 @@ import {
   type ExternalPublicSchemaReference,
   type VerificationResult,
 } from "./verify-manifest";
-import logger from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 
-const log = logger.createLogger("sync-manifest");
+const log = getLogger("sync-manifest");
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 

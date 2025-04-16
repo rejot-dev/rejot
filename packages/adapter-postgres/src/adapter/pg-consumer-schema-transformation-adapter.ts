@@ -6,7 +6,7 @@ import type {
 } from "@rejot-dev/contract/adapter";
 import type { PostgresConsumerSchemaTransformationSchema } from "../postgres-schemas.ts";
 import type { Cursor } from "@rejot-dev/contract/cursor";
-import logger from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
 import {
@@ -16,7 +16,7 @@ import {
 import { convertNamedToPositionalPlaceholders } from "../sql-transformer/sql-transformer.ts";
 import type { ConsumerSchemaTransformation } from "@rejot-dev/contract/consumer-schema";
 
-const log = logger.createLogger("pg-consumer-schema-transformation-adapter");
+const log = getLogger("pg-consumer-schema-transformation-adapter");
 
 export class PostgresConsumerSchemaTransformationAdapter
   implements

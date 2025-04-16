@@ -1,5 +1,5 @@
 import type { IEventStore, TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-import logger from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
 import { PostgresClient } from "../util/postgres-client";
 import { EventStoreSchemaManager } from "./pg-event-store-schema-manager";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
@@ -7,7 +7,7 @@ import { PostgresEventStoreRepository } from "./pg-event-store-repository";
 import type { Cursor, PublicSchemaReference } from "@rejot-dev/contract/cursor";
 import type { OperationMessage } from "@rejot-dev/contract/message-bus";
 
-const log = logger.createLogger("postgres-event-store");
+const log = getLogger("postgres-event-store");
 
 export class PostgresEventStore implements IEventStore {
   #client: PostgresClient;

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
-import logger from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
 import type {
   AnyIConnectionAdapter,
   AnyIPublicSchemaTransformationAdapter,
@@ -14,7 +14,7 @@ import { fetchRead } from "./sync-http-service/sync-http-service-fetch";
 import type { ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
 import { SchemaValidator } from "@rejot-dev/contract/schema-validator";
 
-const log = logger.createLogger("sync-manifest-controller");
+const log = getLogger("sync-manifest-controller");
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 

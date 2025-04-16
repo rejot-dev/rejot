@@ -1,9 +1,9 @@
 import type { AnyIConnectionAdapter } from "@rejot-dev/contract/adapter";
 import type { IDataSource, Transaction } from "@rejot-dev/contract/sync";
 import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
-import logger from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
 
-const log = logger.createLogger("source-reader");
+const log = getLogger("source-reader");
 
 export type SourceReaderState = "initial" | "prepared" | "running" | "stopped" | "closed";
 

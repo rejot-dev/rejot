@@ -9,6 +9,21 @@ type Manifest = z.infer<typeof SyncManifestSchema>;
 export const CURRENT_MANIFEST_FILE_VERSION = 0;
 export const DEFAULT_MANIFEST_FILENAME = "rejot-manifest.json";
 
+export class UnreadableManifestError extends Error {
+  get name(): string {
+    return "UnreadableManifestError";
+  }
+
+  constructor(opts: { path: string; manifestVersion?: number; cause?: unknown; message?: string }) {
+    super(
+      `UnreadableManifestError: ${opts.message ?? "Failed to read manifest file"} at ${opts.path} (version: ${opts.manifestVersion ?? "unknown"})`,
+      {
+        cause: opts.cause,
+      },
+    );
+  }
+}
+
 const emptyManifest: Manifest = {
   slug: "default",
   manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
@@ -71,14 +86,20 @@ export async function readManifest(path: string): Promise<Manifest> {
     const json = JSON.parse(content);
 
     if (!("manifestVersion" in json)) {
-      throw new Error("Manifest file is not valid");
+      throw new UnreadableManifestError({
+        path,
+        message: "Manifest file is missing manifestVersion",
+      });
     }
 
     if (json.manifestVersion !== CURRENT_MANIFEST_FILE_VERSION) {
       // TODO: Implement upgrades
-      throw new Error(
-        "Manifest file is an old manifest file format versions and we haven't implemented upgrades.",
-      );
+      throw new UnreadableManifestError({
+        path,
+        manifestVersion: json.manifestVersion,
+        message:
+          "Manifest file is an old manifest file format versions and we haven't implemented upgrades.",
+      });
     }
 
     return SyncManifestSchema.parse(json);
@@ -86,7 +107,11 @@ export async function readManifest(path: string): Promise<Manifest> {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       return emptyManifest;
     }
-    throw error;
+
+    throw new UnreadableManifestError({
+      path,
+      cause: error,
+    });
   }
 }
 

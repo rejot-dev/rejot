@@ -1,74 +1,168 @@
-import debug from "debug";
+import fs from "fs";
 
-const BASE_NAMESPACE = "rejot";
+export const LogLevel = {
+  ERROR: 0,
+  WARN: 10,
+  INFO: 20,
+  DEBUG: 30,
+  TRACE: 40,
+} as const;
 
-// Create different logger levels
-export const logger = {
-  // Info logs
-  info: debug(`${BASE_NAMESPACE}:info`),
+export type LogLevelName = keyof typeof LogLevel;
+export type LogLevel = (typeof LogLevel)[LogLevelName];
 
-  // Warning logs
-  warn: debug(`${BASE_NAMESPACE}:warn`),
+export function formatLogMessage(type: LogLevel, message: string, ...args: unknown[]): string {
+  const levelName = Object.entries(LogLevel).find(([_, value]) => value === type)?.[0] ?? "UNKNOWN";
+  let logMessage = `[${levelName}] ${new Date().toISOString()} - ${message}`;
 
-  // Error logs
-  error: debug(`${BASE_NAMESPACE}:error`),
-
-  // Debug logs for detailed information
-  debug: debug(`${BASE_NAMESPACE}:debug`),
-
-  // Trace logs for very detailed debugging
-  trace: debug(`${BASE_NAMESPACE}:trace`),
-
-  // Create a namespaced logger for specific components
-  createLogger: (namespace: string) => ({
-    info: debug(`${BASE_NAMESPACE}:${namespace}:info`),
-    warn: debug(`${BASE_NAMESPACE}:${namespace}:warn`),
-    error: debug(`${BASE_NAMESPACE}:${namespace}:error`),
-    debug: debug(`${BASE_NAMESPACE}:${namespace}:debug`),
-    trace: debug(`${BASE_NAMESPACE}:${namespace}:trace`),
-  }),
-};
-
-// Log level type
-export type LogLevel = "error" | "warn" | "info" | "debug" | "trace";
-
-// Set log level function that replaces individual enable functions
-export const setLogLevel = (level: LogLevel): void => {
-  switch (level) {
-    case "error":
-      debug.enable(`${BASE_NAMESPACE}*:error`);
-      break;
-    case "warn":
-      debug.enable(`${BASE_NAMESPACE}:*:error,${BASE_NAMESPACE}:*:warn`);
-      break;
-    case "info":
-      debug.enable(`${BASE_NAMESPACE}:*:error,${BASE_NAMESPACE}:*:warn,${BASE_NAMESPACE}:*:info`);
-      break;
-    case "debug":
-      debug.enable(
-        `${BASE_NAMESPACE}:*:error,${BASE_NAMESPACE}:*:warn,${BASE_NAMESPACE}:*:info,${BASE_NAMESPACE}:*:debug`,
-      );
-      break;
-    case "trace":
-      debug.enable(
-        `${BASE_NAMESPACE}:*:error,${BASE_NAMESPACE}:*:warn,${BASE_NAMESPACE}:*:info,${BASE_NAMESPACE}:*:debug,${BASE_NAMESPACE}:*:trace`,
-      );
-      break;
-    default:
-      debug.enable(`${BASE_NAMESPACE}:*`);
-      break;
+  if (args.length > 0) {
+    logMessage += ` ${JSON.stringify(args)}`;
   }
+
+  logMessage += "\n";
+
+  return logMessage;
+}
+
+export function shouldLog(type: LogLevel, currentLogLevel: LogLevel): boolean {
+  return type <= currentLogLevel;
+}
+
+export abstract class ILogger {
+  #logLevel: LogLevel;
+
+  constructor(logLevel: LogLevel | string = LogLevel.INFO) {
+    if (typeof logLevel === "string") {
+      if (!(logLevel in LogLevel)) {
+        throw new Error(`Invalid log level: ${logLevel}`);
+      }
+
+      this.#logLevel = LogLevel[logLevel as LogLevelName];
+    } else {
+      this.#logLevel = logLevel;
+    }
+  }
+
+  get logLevel(): LogLevel {
+    return this.#logLevel;
+  }
+
+  set logLevel(level: LogLevel) {
+    this.#logLevel = level;
+  }
+
+  abstract init(): void;
+  abstract log(type: LogLevel, message: string, ...args: unknown[]): void;
+
+  protected _log(type: LogLevel, message: string, ...args: unknown[]): void {
+    if (shouldLog(type, this.logLevel)) {
+      this.log(type, message, ...args);
+    }
+  }
+
+  info(message: string, ...args: unknown[]): void {
+    this._log(LogLevel.INFO, message, ...args);
+  }
+  warn(message: string, ...args: unknown[]): void {
+    this._log(LogLevel.WARN, message, ...args);
+  }
+  error(message: string, ...args: unknown[]): void {
+    this._log(LogLevel.ERROR, message, ...args);
+  }
+  debug(message: string, ...args: unknown[]): void {
+    this._log(LogLevel.DEBUG, message, ...args);
+  }
+  trace(message: string, ...args: unknown[]): void {
+    this._log(LogLevel.TRACE, message, ...args);
+  }
+}
+
+export class ConsoleLogger extends ILogger {
+  init(): void {
+    //
+  }
+
+  log(type: LogLevel, message: string, ...args: unknown[]): void {
+    console.log(formatLogMessage(type, message, ...args));
+  }
+}
+
+export class FileLogger extends ILogger {
+  #logFilePath: string;
+
+  constructor(logFilePath: string, logLevel: LogLevel | string = LogLevel.INFO) {
+    super(logLevel);
+    this.#logFilePath = logFilePath;
+  }
+
+  init(): void {
+    fs.writeFileSync(this.#logFilePath, "Log Initialized.\n", { flag: "w" });
+  }
+
+  log(type: LogLevel, message: string, ...args: unknown[]): void {
+    const logMessage = formatLogMessage(type, message, ...args);
+    fs.appendFileSync(this.#logFilePath, logMessage);
+  }
+}
+
+export class NoopLogger extends ILogger {
+  init(): void {
+    //
+  }
+
+  log(_type: LogLevel, _message: string, ..._args: unknown[]): void {
+    //
+  }
+}
+
+export class NamespacedLogger extends ILogger {
+  #logger: ILogger;
+  #namespace: string;
+
+  constructor(logger: ILogger, namespace: string) {
+    super();
+    this.#logger = logger;
+    this.#namespace = namespace;
+  }
+
+  get logLevel(): LogLevel {
+    return this.#logger.logLevel;
+  }
+
+  set logLevel(level: LogLevel) {
+    this.#logger.logLevel = level;
+  }
+
+  init(): void {
+    this.#logger.init();
+  }
+
+  log(type: LogLevel, message: string, ...args: unknown[]): void {
+    this.#logger.log(type, `[${this.#namespace}] ${message}`, ...args);
+  }
+}
+
+let loggerSingleton: ILogger = new NoopLogger();
+
+export const setLogLevel = (level: LogLevelName | string): void => {
+  if (!(level in LogLevel)) {
+    throw new Error(`Invalid log level: ${level}`);
+  }
+
+  loggerSingleton.logLevel = LogLevel[level as LogLevelName];
 };
 
-// Default log level
-setLogLevel("info");
+export function getLogger(namespace?: string): ILogger {
+  if (namespace) {
+    return new NamespacedLogger(loggerSingleton, namespace);
+  }
 
-export type Logger = {
-  info: debug.Debugger;
-  warn: debug.Debugger;
-  error: debug.Debugger;
-  debug: debug.Debugger;
-  trace: debug.Debugger;
-};
+  return loggerSingleton;
+}
 
-export default logger;
+export function setLogger(logger: ILogger): ILogger {
+  loggerSingleton = logger;
+  loggerSingleton.init();
+
+  return loggerSingleton;
+}
