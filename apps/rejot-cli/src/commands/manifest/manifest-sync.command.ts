@@ -2,7 +2,7 @@ import { Args, Command, Flags } from "@oclif/core";
 import fs from "node:fs/promises";
 import { z } from "zod";
 import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
-import logger, { setLogLevel, type LogLevel } from "@rejot-dev/contract/logger";
+import { setLogLevel, getLogger } from "@rejot-dev/contract/logger";
 import {
   PostgresConnectionAdapter,
   PostgresPublicSchemaTransformationAdapter,
@@ -21,7 +21,8 @@ import { EventStoreMessageBus } from "@rejot-dev/contract/event-store-message-bu
 import { SyncHTTPController } from "@rejot-dev/sync/sync-http-service";
 import type { ISubscribeMessageBus } from "@rejot-dev/contract/message-bus";
 import { createResolver, type ISyncServiceResolver } from "@rejot-dev/sync/sync-http-resolver";
-const log = logger.createLogger("cli");
+
+const log = getLogger("manifest:sync");
 
 export class ManifestSyncCommand extends Command {
   static override id = "manifest:sync";
@@ -71,16 +72,7 @@ export class ManifestSyncCommand extends Command {
 
     const manifestPaths = z.array(z.string()).parse(argv);
 
-    // Set log level
-    setLogLevel(logLevel as LogLevel);
-
-    // Override console methods with custom logger
-    const consoleLogger = logger.createLogger("console");
-    console.log = consoleLogger.info.bind(logger);
-    console.info = consoleLogger.info.bind(logger);
-    console.warn = consoleLogger.warn.bind(logger);
-    console.error = consoleLogger.error.bind(logger);
-    console.debug = consoleLogger.debug.bind(logger);
+    setLogLevel(logLevel.toUpperCase());
 
     try {
       // Read and parse manifest files
@@ -232,9 +224,9 @@ export class ManifestSyncCommand extends Command {
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
-        log.error("Invalid manifest file:", error.errors);
+        log.error("(ZodError) Invalid manifest file:", error.errors);
       } else {
-        log.error(error);
+        log.error("Unknown error:", error);
       }
       this.exit(1);
     }

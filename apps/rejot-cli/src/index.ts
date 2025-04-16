@@ -13,6 +13,8 @@ import { ManifestEventStoreAddCommand } from "./commands/manifest-eventstore/man
 import { ManifestEventStoreRemoveCommand } from "./commands/manifest-eventstore/manifest-eventstore-remove.command.ts";
 import { ManifestEventStoreListCommand } from "./commands/manifest-eventstore/manifest-eventstore-list.command.ts";
 import { ManifestSyncCommand } from "./commands/manifest/manifest-sync.command.ts";
+import { ConsoleLogger } from "@rejot-dev/contract/logger";
+import { setLogger } from "@rejot-dev/contract/logger";
 
 export const commands = {
   sync: SyncCommand,
@@ -31,3 +33,5 @@ export const commands = {
   "manifest:eventstore:list": ManifestEventStoreListCommand,
   "manifest:sync": ManifestSyncCommand,
 };
+
+setLogger(new ConsoleLogger("DEBUG"));

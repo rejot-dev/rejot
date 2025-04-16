@@ -5,9 +5,9 @@ import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import type { PublicSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 import type { Transaction } from "@rejot-dev/contract/sync";
-import logger from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
 
-const log = logger.createLogger("public-schema-transformer");
+const log = getLogger("public-schema-transformer");
 
 export class PublicSchemaTransformer {
   readonly #syncManifest: SyncManifest;

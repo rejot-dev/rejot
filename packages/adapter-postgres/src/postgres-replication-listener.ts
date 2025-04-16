@@ -8,8 +8,8 @@ import type {
 import { RejotPgOutputPlugin } from "./pgoutput-plugin.ts";
 import { assertUnreachable } from "./util/asserts.ts";
 import type { Transaction } from "@rejot-dev/contract/sync";
-import logger from "@rejot-dev/contract/logger";
 import { AsyncQueue } from "./async-queue.ts";
+import { getLogger } from "@rejot-dev/contract/logger";
 
 type ConnectionConfig = {
   host?: string;
@@ -77,7 +77,7 @@ type TransactionBufferState = "empty" | "begin";
 
 type OnCommitCallback = (buffer: TransactionBuffer) => Promise<boolean>;
 
-const log = logger.createLogger("postgres-replication-listener");
+const log = getLogger("postgres-replication-listener");
 
 export class PostgresReplicationListener {
   #logicalReplicationService: LogicalReplicationService;
@@ -106,6 +106,8 @@ export class PostgresReplicationListener {
     this.#transactionBuffer = {
       state: "empty",
     };
+
+    log.info("PostgresReplicationListener initialized", { database: config.database });
   }
 
   async start(publicationName: string, slotName: string): Promise<boolean> {
@@ -117,7 +119,9 @@ export class PostgresReplicationListener {
     try {
       await this.#logicalReplicationService.subscribe(plugin, slotName);
       this.#isRunning = true;
+      log.info("Successfully subscribed to replication slot", { publicationName, slotName });
     } catch (error) {
+      log.error("Failed to subscribe to replication slot", { publicationName, slotName, error });
       throw new Error("Failed to subscribe to logical replication service", { cause: error });
     }
 
@@ -192,20 +196,20 @@ export class PostgresReplicationListener {
     await this.#logicalReplicationService.stop();
   }
 
-  async #onData(lsn: string, log: Message) {
-    if (log.tag === "begin") {
+  async #onData(lsn: string, message: Message) {
+    if (message.tag === "begin") {
       // Reset buffer at start of transaction
       this.#transactionBuffer = {
         state: "begin",
-        commitLsn: log.commitLsn,
+        commitLsn: message.commitLsn,
         commitEndLsn: lsn,
-        commitTime: log.commitTime.valueOf(),
-        xid: log.xid,
+        commitTime: message.commitTime.valueOf(),
+        xid: message.xid,
         operations: [],
         relations: new Map(),
       };
-    } else if (log.tag === "commit") {
-      if (this.#transactionBuffer.commitLsn !== log.commitLsn) {
+    } else if (message.tag === "commit") {
+      if (this.#transactionBuffer.commitLsn !== message.commitLsn) {
         throw new Error("Commit LSN mismatch");
       }
 
@@ -220,7 +224,7 @@ export class PostgresReplicationListener {
         throw new Error("Transaction buffer is missing required properties");
       }
 
-      this.#transactionBuffer.commitTime = log.commitTime.valueOf();
+      this.#transactionBuffer.commitTime = message.commitTime.valueOf();
 
       try {
         // Store the LSN we need for acknowledgment before any processing
@@ -231,49 +235,50 @@ export class PostgresReplicationListener {
         if (this.#onCommit) {
           processed = await this.#onCommit(transactionBuffer);
         } else {
+          log.error("No onCommit callback set");
           throw new Error("No onCommit callback set");
         }
 
         if (processed) {
-          console.log("transaction buffer processed, acknowledging.", commitEndLsn);
+          log.debug("Transaction buffer processed, acknowledging", { commitEndLsn });
           await this.#logicalReplicationService.acknowledge(commitEndLsn);
           this.#transactionBuffer = {
             state: "empty",
           };
         } else {
-          console.log("transaction buffer not processed, stopping listener.");
+          log.warn("Transaction buffer not processed, stopping listener", { commitEndLsn });
           await this.stop();
         }
       } catch (error) {
-        console.error("ERROR during processing of onCommit transaction buffer.", error);
-        console.log("stopping listener");
+        log.error("Error processing transaction buffer", { error });
+        log.info("Stopping listener due to error");
         await this.stop();
       }
-    } else if (log.tag === "relation") {
+    } else if (message.tag === "relation") {
       if (!this.#transactionBuffer?.relations) {
         throw new Error("Got relation before begin.");
       }
 
       // Store relation info in the buffer
-      this.#transactionBuffer.relations.set(log.relationOid, {
-        schema: log.schema,
-        name: log.name,
-        keyColumns: log.keyColumns,
-        relationOid: log.relationOid,
-        columns: log.columns.map((column) => ({
+      this.#transactionBuffer.relations.set(message.relationOid, {
+        schema: message.schema,
+        name: message.name,
+        keyColumns: message.keyColumns,
+        relationOid: message.relationOid,
+        columns: message.columns.map((column) => ({
           flags: column.flags,
           name: column.name,
           typeOid: column.typeOid,
           typeMod: column.typeMod,
         })),
       });
-    } else if (log.tag === "insert" || log.tag === "update" || log.tag === "delete") {
+    } else if (message.tag === "insert" || message.tag === "update" || message.tag === "delete") {
       if (!this.#transactionBuffer?.operations) {
         throw new Error("Got operation before relation.");
       }
 
       // Handle DML operations (insert, update, delete)
-      const operation = this.#createOperation(log);
+      const operation = this.#createOperation(message);
       if (operation) {
         this.#transactionBuffer.operations.push(operation);
       }
@@ -317,21 +322,20 @@ export class PostgresReplicationListener {
 
   #onHeartbeat(lsn: string, timestamp: number, shouldRespond: boolean) {
     if (this.#transactionBuffer.state === "empty" && shouldRespond) {
-      console.log("acknowledging heartbeat", lsn, timestamp);
+      log.debug("Acknowledging heartbeat", { lsn, timestamp });
       this.#logicalReplicationService.acknowledge(lsn);
     }
   }
 
   #onError(error: Error) {
     if (error.message === "Connection terminated unexpectedly") {
-      console.log(
-        `Connection terminated unexpectedly, stopping listener. Database: ${this.#config.database}`,
-      );
+      log.error("Database connection terminated unexpectedly", {
+        database: this.#config.database,
+        error,
+      });
+    } else {
+      log.error("Replication error occurred", { error });
     }
-
-    // TODO(Wilco): Handle errors gracefully.
-
-    console.error("#onError", error);
   }
 
   /**
@@ -351,13 +355,21 @@ export class PostgresReplicationListener {
       if (operation.type === "update" && operation.keyColumns.length > 0) {
         const primaryKeyChanged = operation.keyColumns.some((column) => {
           if (!(column in operation.oldKeys)) {
-            // If the column is not in oldKeys, it means that it wasn't changed.
             return false;
           }
           return operation.oldKeys[column] !== operation.new[column];
         });
 
         if (primaryKeyChanged) {
+          log.debug("Primary key change detected, splitting update into insert/delete", {
+            table: operation.table,
+            oldKeys: operation.oldKeys,
+            newKeys: operation.keyColumns.reduce(
+              (acc, col) => ({ ...acc, [col]: operation.new[col] }),
+              {},
+            ),
+          });
+
           // Create an insert operation with the new values
           result.push({
             type: "insert",
@@ -376,11 +388,9 @@ export class PostgresReplicationListener {
             oldKeys: operation.oldKeys,
           });
         } else {
-          // No primary key change, add the original update
           result.push(operation);
         }
       } else {
-        // Not an update or no primary keys, pass through unchanged
         result.push(operation);
       }
     }

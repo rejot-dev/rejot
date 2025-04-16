@@ -4,11 +4,11 @@ import type {
   Transaction,
   TransformedOperation,
 } from "@rejot-dev/contract/sync";
-import logger from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
 import { ResultSetStore, type BackfillSource } from "./result-set-store";
 import { DEFAULT_BACKFILL_TIMEOUT_MS } from "./sync-consts";
 
-const log = logger.createLogger("sync-controller");
+const log = getLogger("sync-controller");
 
 type SyncControllerConfig = {
   source: IDataSource;

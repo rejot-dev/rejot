@@ -1,4 +1,3 @@
-import { defaultLogger, type ILogger } from "@/logging/log";
 import type { IRejotMcp, IFactory } from "@/rejot-mcp";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type IManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest";
@@ -6,12 +5,13 @@ import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 import type { McpState } from "@/state/mcp-state";
 import type { ManifestError } from "@rejot-dev/contract/manifest";
+import { getLogger, type ILogger } from "@rejot-dev/contract/logger";
 
 export class ProjectInitializer implements IFactory {
   readonly #workspaceResolver: IManifestWorkspaceResolver;
   readonly #logger: ILogger;
 
-  constructor(workspaceResolver: IManifestWorkspaceResolver, logger: ILogger = defaultLogger) {
+  constructor(workspaceResolver: IManifestWorkspaceResolver, logger: ILogger = getLogger()) {
     this.#workspaceResolver = workspaceResolver;
     this.#logger = logger;
   }

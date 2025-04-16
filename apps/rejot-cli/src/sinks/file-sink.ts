@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
-import logger from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
 import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
 
-const log = logger.createLogger("file-sink");
+const log = getLogger("file-sink");
 
 type FileOutputSchema = {
   operation: string;

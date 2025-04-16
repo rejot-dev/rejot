@@ -5,9 +5,9 @@ import { existsSync } from "node:fs";
 import { PublicSchema } from "../public-schema/public-schema.ts";
 import { ConsumerSchema } from "../consumer-schema/consumer-schema.ts";
 
-import { logger } from "../logger/logger.ts";
+import { getLogger } from "../logger/logger.ts";
 
-const log = logger.createLogger("collect");
+const log = getLogger("collect");
 
 export async function collectPublicSchemas(modulePath: string): Promise<PublicSchema[]> {
   const resolvedModulePath = resolve(process.cwd(), modulePath);
