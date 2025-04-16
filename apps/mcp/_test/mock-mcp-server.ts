@@ -1,5 +1,10 @@
 import { z } from "zod";
-import type { IMcpServer, ToolCallback } from "../interfaces/mcp-server.interface";
+import type {
+  IMcpServer,
+  ToolCallback,
+  ResourceTemplate,
+  ReadResourceTemplateCallback,
+} from "../interfaces/mcp-server.interface";
 import type { ResourceListHandler, ResourceGetHandler } from "../interfaces/mcp-server.interface";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { ZodRawShape } from "zod";
@@ -7,6 +12,7 @@ import type { IRejotMcp, IFactory } from "../rejot-mcp";
 import { ReJotMcpError } from "@/state/mcp-error";
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import { McpState } from "@/state/mcp-state";
+import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
 
 /**
  * Represents a registered tool in the MCP server
@@ -295,7 +301,7 @@ export class MockRejotMcp implements IRejotMcp {
         } catch (error) {
           if (error instanceof ReJotMcpError) {
             return {
-              content: error.toContent(),
+              content: error.toCallToolContent(),
             };
           }
 
@@ -315,6 +321,30 @@ export class MockRejotMcp implements IRejotMcp {
 
   get state(): McpState {
     return this.#state;
+  }
+
+  registerResource(
+    name: string,
+    template: ResourceTemplate,
+    handler: ReadResourceTemplateCallback,
+  ): void {
+    this.#mockServer.resource(
+      name,
+      template,
+      async (uri: URL, variables: Variables, extra: RequestHandlerExtra) => {
+        try {
+          return await handler(uri, variables, extra);
+        } catch (error) {
+          if (error instanceof ReJotMcpError) {
+            return {
+              contents: error.toReadResourceContent(uri.toString()),
+            };
+          }
+
+          throw error;
+        }
+      },
+    );
   }
 
   async connect(): Promise<void> {

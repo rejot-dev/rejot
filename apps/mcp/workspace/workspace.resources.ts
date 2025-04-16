@@ -1,63 +1,43 @@
 import type { IRejotMcp, IFactory } from "@/rejot-mcp";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { type IManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest";
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 import type { McpState } from "@/state/mcp-state";
-import type { ManifestError } from "@rejot-dev/contract/manifest";
-import { getLogger, type ILogger } from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
+import type { IWorkspaceService } from "./workspace";
 
-export class ProjectInitializer implements IFactory {
-  readonly #workspaceResolver: IManifestWorkspaceResolver;
-  readonly #logger: ILogger;
+const log = getLogger("mcp.workspace.resources");
 
-  constructor(workspaceResolver: IManifestWorkspaceResolver, logger: ILogger = getLogger()) {
-    this.#workspaceResolver = workspaceResolver;
-    this.#logger = logger;
+export class WorkspaceResources implements IFactory {
+  readonly #workspaceService: IWorkspaceService;
+
+  constructor(workspaceService: IWorkspaceService) {
+    this.#workspaceService = workspaceService;
   }
 
   async initialize(state: McpState): Promise<void> {
-    this.#logger.info("initializeProject", {
+    log.info("WorkspaceResources initialize", {
       projectDir: state.projectDir,
     });
 
-    // Resolve workspace
-    const workspace = await this.#workspaceResolver.resolveWorkspace({
-      startDir: state.projectDir,
-    });
-
-    this.#logger.info("Workspace resolved", {
-      rootPath: workspace.rootPath,
-      ancestor: workspace.ancestor.path,
-      children: workspace.children.map((c) => c.path),
-    });
+    const { workspace, syncManifest } = await this.#workspaceService.initWorkspace(
+      state.projectDir,
+    );
 
     state.setWorkspace(workspace);
-
-    // Create sync manifest
-    try {
-      const syncManifest = this.#workspaceResolver.workspaceToSyncManifest(workspace);
-      state.setSyncManifest(syncManifest);
-    } catch (error) {
-      // Handle sync manifest creation errors
-      if (error instanceof Error && "errors" in error) {
-        state.setError({
-          message: "Failed to create sync manifest",
-          errors: (error as { errors: ManifestError[] }).errors,
-        });
-      } else {
-        state.setError({
-          message: error instanceof Error ? error.message : String(error),
-        });
-      }
-      throw error;
-    }
+    state.setSyncManifest(syncManifest);
   }
 
   async register(mcp: IRejotMcp): Promise<void> {
-    const workspace = mcp.state.workspace;
-
     const list = () => {
+      if (!mcp.state.hasWorkspace) {
+        return {
+          resources: [],
+        };
+      }
+
+      const workspace = mcp.state.workspace;
+
       const rootUri = `rejot://workspace/${workspace.ancestor.path}`;
       const rootResource = {
         name: `Root Manifest ('${workspace.ancestor.manifest.slug}'), URI: ${rootUri}`,
@@ -70,7 +50,7 @@ export class ProjectInitializer implements IFactory {
         ...workspace.children.map((c) => {
           const uri = `rejot://workspace/${c.path}`;
 
-          this.#logger.info("child", {
+          log.info("child", {
             uri,
           });
 
@@ -85,15 +65,17 @@ export class ProjectInitializer implements IFactory {
       return { resources };
     };
 
-    mcp.server.resource(
+    mcp.registerResource(
       "ReJot Manifests",
       new ResourceTemplate("rejot://workspace/{+path}", {
         list,
       }),
       async (uri) => {
-        this.#logger.info("READ rejot://workspace/{+path}:", {
+        log.info("READ rejot://workspace/{+path}:", {
           uri,
         });
+
+        const workspace = mcp.state.workspace;
 
         // Extract the path from the URI
         const pathParam = uri.pathname.replace(/^\//, "");

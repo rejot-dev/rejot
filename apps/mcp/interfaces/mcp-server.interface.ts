@@ -13,7 +13,6 @@ import type { ZodRawShape, ZodType, ZodOptional } from "zod";
 /**
  * URL variables from a resource template
  */
-export type Variables = Record<string, string>;
 
 // Re-export the types we need from the actual McpServer implementation
 export type ResourceMetadata = ActualResourceMetadata;
