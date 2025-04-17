@@ -79,6 +79,8 @@ export class RejotMcp implements IRejotMcp {
     publish to other teams. These are called 'public schemas' and they're strongly tied to a version and
     contract. Other teams can subscribe to these schemas using a consumer schema.
 
+    ALWAYS use the tools in this MCP to edit the manifest.
+
     - In most cases it makes sense to get the workspace's manifest information first.
     - If you do not know a connection's slug. Get the workspace manifest first.
     - You don't have to check health before doing other operations.
@@ -121,7 +123,8 @@ export class RejotMcp implements IRejotMcp {
             };
           }
 
-          this.#logger.error(`Unhandled error in tool ${name}: ${error}`);
+          this.#logger.error(`Unhandled error in tool ${name}`);
+          this.#logger.logErrorInstance(error);
           throw error;
         }
       },
@@ -158,27 +161,33 @@ export class RejotMcp implements IRejotMcp {
   }
 
   async #initialize(): Promise<void> {
-    try {
-      for (const factory of this.#factories) {
+    for (const factory of this.#factories) {
+      try {
         await factory.initialize(this.#state);
-      }
-    } catch (error) {
-      if (error instanceof ReJotMcpError) {
-        this.#state.addInitializationError(error);
+      } catch (error) {
+        if (error instanceof ReJotMcpError) {
+          this.#logger.warn("Initialization error", {
+            error: error.message,
+          });
+          this.#state.addInitializationError(error);
+        } else {
+          throw error;
+        }
       }
     }
   }
 
   async #register(): Promise<void> {
-    try {
-      for (const factory of this.#factories) {
+    for (const factory of this.#factories) {
+      try {
         await factory.register(this);
+      } catch (error) {
+        if (error instanceof ReJotMcpError) {
+          this.#state.addInitializationError(error);
+        } else {
+          throw error;
+        }
       }
-    } catch (error) {
-      if (error instanceof ReJotMcpError) {
-        this.#state.addInitializationError(error);
-      }
-      throw error;
     }
   }
 

@@ -4,6 +4,10 @@ import { constants } from "node:fs";
 import { dirname, join } from "node:path";
 import { z } from "zod";
 
+import { getLogger } from "@rejot-dev/contract/logger";
+
+const log = getLogger(import.meta.url);
+
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
 export const CURRENT_MANIFEST_FILE_VERSION = 0;
@@ -17,6 +21,21 @@ export class UnreadableManifestError extends Error {
   constructor(opts: { path: string; manifestVersion?: number; cause?: unknown; message?: string }) {
     super(
       `UnreadableManifestError: ${opts.message ?? "Failed to read manifest file"} at ${opts.path} (version: ${opts.manifestVersion ?? "unknown"})`,
+      {
+        cause: opts.cause,
+      },
+    );
+  }
+}
+
+export class ManifestWriteError extends Error {
+  get name(): string {
+    return "ManifestWriteError";
+  }
+
+  constructor(opts: { path: string; cause?: unknown; message?: string }) {
+    super(
+      `ManifestWriteError: ${opts.message ?? "Failed to write manifest file"} at ${opts.path}`,
       {
         cause: opts.cause,
       },
@@ -50,7 +69,6 @@ export async function findManifestPath(
 
   while (true) {
     const manifestPath = join(currentDir, filename);
-
     try {
       // Check if manifest exists in current directory
       await readFile(manifestPath, { flag: constants.O_RDONLY });
@@ -78,6 +96,7 @@ export async function findManifestPath(
 export async function writeManifest(manifest: Manifest, path: string) {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, JSON.stringify(manifest, null, 2));
+  log.info("file written", { path });
 }
 
 export async function readManifest(path: string): Promise<Manifest> {

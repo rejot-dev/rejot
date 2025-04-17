@@ -3,7 +3,8 @@ import { initManifest } from "@rejot-dev/contract-tools/manifest";
 import type { IRejotMcp, IFactory } from "@/rejot-mcp";
 import type { McpState } from "@/state/mcp-state";
 import type { IWorkspaceService } from "@/workspace/workspace";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
+import { ensurePathRelative } from "@/util/fs.util";
 
 export class ManifestInitTool implements IFactory {
   readonly #workspaceService: IWorkspaceService;
@@ -21,19 +22,24 @@ export class ManifestInitTool implements IFactory {
       "mcp_rejot_mcp_manifest_init",
       "Initialize a new manifest file at the specified path",
       {
-        manifestAbsoluteFilePath: z
+        relativeManifestFilePath: z
           .string()
           .describe(
             "The path to the manifest file to create. Normally the file name is 'rejot-manifest.json'.",
           ),
         slug: z.string().describe("The slug for the manifest."),
       },
-      async ({ manifestAbsoluteFilePath, slug }) => {
+      async ({ relativeManifestFilePath, slug }) => {
+        ensurePathRelative(relativeManifestFilePath);
+
+        const manifestAbsoluteFilePath = join(mcp.state.projectDir, relativeManifestFilePath);
+
         try {
           await initManifest(manifestAbsoluteFilePath, slug);
           const { workspace, syncManifest } = await this.#workspaceService.initWorkspace(
             dirname(manifestAbsoluteFilePath),
           );
+
           mcp.state.setWorkspace(workspace);
           mcp.state.setSyncManifest(syncManifest);
           mcp.state.clearInitializationErrors();

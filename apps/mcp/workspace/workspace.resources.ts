@@ -16,13 +16,13 @@ export class WorkspaceResources implements IFactory {
   }
 
   async initialize(state: McpState): Promise<void> {
-    log.info("WorkspaceResources initialize", {
-      projectDir: state.projectDir,
-    });
-
     const { workspace, syncManifest } = await this.#workspaceService.initWorkspace(
       state.projectDir,
     );
+
+    log.info("WorkspaceResources initialized", {
+      workspace,
+    });
 
     state.setWorkspace(workspace);
     state.setSyncManifest(syncManifest);

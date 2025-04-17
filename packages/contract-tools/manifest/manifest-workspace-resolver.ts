@@ -6,18 +6,20 @@ import { DEFAULT_MANIFEST_FILENAME, readManifest } from "./manifest.fs";
 import { dirname, join, relative } from "node:path";
 import { findManifestPath } from "./manifest.fs";
 import { SyncManifest, type SyncManifestOptions } from "@rejot-dev/contract/sync-manifest";
+import { getLogger } from "@rejot-dev/contract/logger";
+
+const log = getLogger("manifest.workspace-resolver");
+
+export interface ManifestWithPath {
+  /** Path is relative to the rootPath in the workspace. */
+  path: string;
+  manifest: z.infer<typeof SyncManifestSchema>;
+}
 
 export interface Workspace {
   rootPath: string;
-  ancestor: {
-    path: string;
-    manifest: z.infer<typeof SyncManifestSchema>;
-  };
-
-  children: {
-    path: string;
-    manifest: z.infer<typeof SyncManifestSchema>;
-  }[];
+  ancestor: ManifestWithPath;
+  children: ManifestWithPath[];
 }
 
 export interface ResolveWorkspaceOptions {
@@ -60,8 +62,11 @@ export class ManifestWorkspaceResolver implements IManifestWorkspaceResolver {
     // Find the ancestor manifest path
     const manifestPath = await findManifestPath(startDir, filename);
     if (!manifestPath) {
+      log.warn("resolveWorkspace did not find a manifest");
       return null;
     }
+
+    log.info("resolveWorkspace found a manifest", { manifestPath });
 
     const ancestorManifest = await readManifest(manifestPath);
 
@@ -123,4 +128,12 @@ export function workspaceToSyncManifest(
     [workspace.ancestor.manifest, ...workspace.children.map((child) => child.manifest)],
     options,
   );
+}
+
+export function getManifestBySlug(workspace: Workspace, slug: string): ManifestWithPath | null {
+  if (workspace.ancestor.manifest.slug === slug) {
+    return workspace.ancestor;
+  }
+
+  return workspace.children.find((child) => child.manifest.slug === slug) ?? null;
 }

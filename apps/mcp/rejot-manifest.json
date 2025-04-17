@@ -1,0 +1,21 @@
+{
+  "slug": "wilco-postgres",
+  "manifestVersion": 0,
+  "connections": [
+    {
+      "slug": "wilco-postgres",
+      "config": {
+        "connectionType": "postgres",
+        "host": "localhost",
+        "port": 5432,
+        "user": "postgres",
+        "password": "postgres",
+        "database": "postgres"
+      }
+    }
+  ],
+  "dataStores": [],
+  "eventStores": [],
+  "publicSchemas": [],
+  "consumerSchemas": []
+}

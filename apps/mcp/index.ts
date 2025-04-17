@@ -8,6 +8,8 @@ import { ManifestInfoTool } from "./tools/manifest/manifest-info.tool";
 import { ManifestInitTool } from "./tools/manifest/manifest-init.tool";
 import { setLogger, FileLogger } from "@rejot-dev/contract/logger";
 import { WorkspaceService } from "./workspace/workspace";
+import { ManifestConnectionTool } from "./tools/manifest-connection/manifest-connection.tool";
+
 // Open the log file when starting up
 const args = parseArgs(process.argv.slice(2));
 
@@ -25,6 +27,7 @@ const rejotMcp = new RejotMcp(args.project, log, [
   new DbIntrospectionTool(),
   new ManifestInfoTool(),
   new ManifestInitTool(workspaceService),
+  new ManifestConnectionTool(),
 ]);
 
 rejotMcp
@@ -32,10 +35,5 @@ rejotMcp
   .then(() => {})
   .catch((err) => {
     log.error(`Server error: ${err.message}`);
-
-    if (err instanceof Error) {
-      for (const stack of err.stack?.split("\n") ?? []) {
-        log.error(stack);
-      }
-    }
+    log.logErrorInstance(err);
   });

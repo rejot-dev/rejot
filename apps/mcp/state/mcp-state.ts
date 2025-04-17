@@ -5,6 +5,9 @@ import {
   type ReJotMcpError,
   CombinedRejotMcpError,
 } from "./mcp-error";
+import { getLogger } from "@rejot-dev/contract/logger";
+
+const log = getLogger("mcp.state");
 
 export type McpStateStatus = "uninitialized" | "initializing" | "ready" | "error";
 
@@ -68,6 +71,7 @@ export class McpState {
 
   assertIsInitialized(): void {
     if (this.#initializationErrors.length > 0) {
+      log.warn("assertIsInitialized failed");
       throw new CombinedRejotMcpError(this.#initializationErrors);
     }
   }

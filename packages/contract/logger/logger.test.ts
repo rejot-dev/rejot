@@ -154,3 +154,42 @@ test("NamespacedLogger inherits log level changes from underlying logger", () =>
   expect(mockLogger.messages.length).toBe(1);
   expect(mockLogger.messages[0].message).toBe("[TestModule] warning message");
 });
+
+test("logErrorInstance handles regular Error objects", () => {
+  const mockLogger = new MockLogger(LogLevel.ERROR);
+  const error = new Error("Test error");
+
+  mockLogger.logErrorInstance(error);
+
+  // Should log each line of the stack trace
+  expect(mockLogger.messages.length).toBeGreaterThan(1);
+  expect(mockLogger.messages[0].message).toContain("Error: Test error");
+  expect(mockLogger.messages.every((msg) => msg.type === LogLevel.ERROR)).toBe(true);
+});
+
+test("logErrorInstance handles Error with cause", () => {
+  const mockLogger = new MockLogger(LogLevel.ERROR);
+  const cause = new Error("Root cause");
+  const error = new Error("Main error", { cause });
+
+  mockLogger.logErrorInstance(error);
+
+  // Should log both error stacks
+  expect(mockLogger.messages.some((msg) => msg.message.includes("Error: Main error"))).toBe(true);
+  expect(mockLogger.messages.some((msg) => msg.message.includes("Caused by: Root cause"))).toBe(
+    true,
+  );
+  expect(mockLogger.messages.every((msg) => msg.type === LogLevel.ERROR)).toBe(true);
+});
+
+test("logErrorInstance handles non-Error objects", () => {
+  const mockLogger = new MockLogger(LogLevel.ERROR);
+  const notAnError = { message: "fake error" };
+
+  mockLogger.logErrorInstance(notAnError);
+
+  expect(mockLogger.messages.length).toBe(1);
+  expect(mockLogger.messages[0].message).toBe("Not an error object:");
+  expect(mockLogger.messages[0].args).toEqual([{ message: "fake error" }]);
+  expect(mockLogger.messages[0].type).toBe(LogLevel.ERROR);
+});

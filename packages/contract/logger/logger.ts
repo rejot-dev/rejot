@@ -1,4 +1,5 @@
 import fs from "fs";
+import { fileURLToPath } from "url";
 
 export const LogLevel = {
   ERROR: 0,
@@ -57,6 +58,23 @@ export abstract class ILogger {
   protected _log(type: LogLevel, message: string, ...args: unknown[]): void {
     if (shouldLog(type, this.logLevel)) {
       this.log(type, message, ...args);
+    }
+  }
+
+  logErrorInstance(error: unknown): void {
+    if (error instanceof Error) {
+      for (const stack of error.stack?.split("\n") ?? []) {
+        this.error(stack);
+      }
+
+      if (error.cause instanceof Error) {
+        this.error(`Caused by: ${error.cause.message}`);
+        for (const stack of error.cause.stack?.split("\n") ?? []) {
+          this.error(stack);
+        }
+      }
+    } else {
+      this.error("Not an error object:", error);
     }
   }
 
@@ -164,7 +182,14 @@ export const setLogLevel = (level: LogLevelName | string): void => {
 
 const loggerInstances: NamespacedLogger[] = [];
 
+/**
+ *
+ * @param namespace recommended to be import.meta.url
+ * @returns
+ */
 export function getLogger(namespace?: string): ILogger {
+  namespace = getNamespaceFromFilePath(namespace);
+
   const instance = new NamespacedLogger(loggerSingleton, namespace);
   loggerInstances.push(instance);
   return instance;
@@ -179,4 +204,29 @@ export function setLogger(logger: ILogger): ILogger {
   }
 
   return loggerSingleton;
+}
+
+function getNamespaceFromFilePath(namespace?: string): string | undefined {
+  if (!namespace) {
+    return namespace;
+  }
+
+  if (!namespace.startsWith("file://")) {
+    return namespace;
+  }
+
+  const path = fileURLToPath(namespace);
+  // Find either packages or apps directory in the path
+  const packagesIndex = path.indexOf("/packages/");
+  const appsIndex = path.indexOf("/apps/");
+
+  if (packagesIndex !== -1) {
+    // Get the relative path starting from packages/
+    return path.substring(packagesIndex + 1); // +1 to remove the leading slash
+  } else if (appsIndex !== -1) {
+    // Get the relative path starting from apps/
+    return path.substring(appsIndex + 1); // +1 to remove the leading slash
+  }
+
+  return namespace;
 }
