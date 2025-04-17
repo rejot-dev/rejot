@@ -4,6 +4,8 @@ import { readManifest } from "@rejot-dev/contract-tools/manifest";
 import { verifyManifests } from "@rejot-dev/contract/manifest";
 import type { IRejotMcp, IFactory } from "@/rejot-mcp";
 import type { McpState } from "@/state/mcp-state";
+import { join } from "node:path";
+import { ensurePathRelative } from "@/util/fs.util";
 
 export class ManifestInfoTool implements IFactory {
   async initialize(_state: McpState): Promise<void> {
@@ -28,9 +30,13 @@ export class ManifestInfoTool implements IFactory {
       "mcp_rejot_mcp_manifest_info",
       "Get information about a specific manifest",
       {
-        manifestAbsoluteFilePath: z.string(),
+        relativeManifestFilePath: z.string(),
       },
-      async ({ manifestAbsoluteFilePath }) => {
+      async ({ relativeManifestFilePath }) => {
+        ensurePathRelative(relativeManifestFilePath);
+
+        const manifestAbsoluteFilePath = join(mcp.state.projectDir, relativeManifestFilePath);
+
         try {
           const manifest = await readManifest(manifestAbsoluteFilePath);
           const errors = verifyManifests([manifest]);

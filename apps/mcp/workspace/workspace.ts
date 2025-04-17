@@ -1,9 +1,6 @@
 import type { IManifestWorkspaceResolver, Workspace } from "@rejot-dev/contract-tools/manifest";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
-import { getLogger } from "@rejot-dev/contract/logger";
 import { ReJotMcpError } from "@/state/mcp-error";
-
-const log = getLogger("mcp.workspace");
 
 export interface IWorkspaceService {
   initWorkspace(projectDir: string): Promise<{ workspace: Workspace; syncManifest: SyncManifest }>;
@@ -30,12 +27,6 @@ export class WorkspaceService implements IWorkspaceService {
         "Create a new manifest if this is a new workspace",
       );
     }
-
-    log.info("Workspace resolved", {
-      rootPath: workspace.rootPath,
-      ancestor: workspace.ancestor.path,
-      children: workspace.children.map((c) => c.path),
-    });
 
     try {
       const syncManifest = this.#workspaceResolver.workspaceToSyncManifest(workspace);
