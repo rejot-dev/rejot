@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const PostgresConnectionSchema = z.object({
-  connectionType: z.literal("postgres"),
+  connectionType: z.literal("postgres").describe("Postgres connection type."),
   host: z.string(),
   port: z.number(),
   user: z.string(),
@@ -10,13 +10,13 @@ export const PostgresConnectionSchema = z.object({
 });
 
 export const PostgresPublicSchemaTransformationSchema = z.object({
-  transformationType: z.literal("postgresql"),
+  transformationType: z.literal("postgresql").describe("Postgres transformation type."),
   table: z.string(),
   sql: z.string(),
 });
 
 export const PostgresConsumerSchemaTransformationSchema = z.object({
-  transformationType: z.literal("postgresql"),
+  transformationType: z.literal("postgresql").describe("Postgres transformation type."),
   sql: z.string(),
   whenOperation: z.enum(["insertOrUpdate", "delete"]).optional(),
 });
