@@ -1,6 +1,6 @@
 {
-  "name": "@rejot-dev/contract",
-  "version": "0.0.9",
+  "name": "@schuttejan/contract-test-publish",
+  "version": "0.0.1",
   "private": false,
   "license": "Apache-2.0",
   "repository": {
@@ -9,7 +9,17 @@
     "directory": "packages/contract"
   },
   "scripts": {
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "build": "bun run manifest-jsonschema.ts > schema.json && tsc",
+    "prepublishOnly": "bun run build"
+  },
+  "publishConfig": {
+    "directory": "dist",
+    "files": [
+      "**/*",
+      "../schema.json"
+    ]
   },
   "exports": {
     "./adapter": "./adapter/adapter.ts",
