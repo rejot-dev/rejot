@@ -15,8 +15,8 @@ export class WorkspaceResources implements IFactory {
   }
 
   async initialize(state: McpState): Promise<void> {
-    const { workspace, syncManifest } = await this.#workspaceService.resolveWorkspace(
-      state.projectDir,
+    const { workspace } = await this.#workspaceService.resolveWorkspace(
+      state.workspaceDirectoryPath,
     );
 
     log.info("WorkspaceResources initialized", {
@@ -24,7 +24,6 @@ export class WorkspaceResources implements IFactory {
     });
 
     state.setWorkspace(workspace);
-    state.setSyncManifest(syncManifest);
   }
 
   async register(mcp: IRejotMcp): Promise<void> {

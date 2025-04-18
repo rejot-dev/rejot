@@ -1,7 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { parsePostgresConnectionString } from "@rejot-dev/adapter-postgres/postgres-client";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
@@ -31,15 +31,21 @@ const isToolResponse = (obj: unknown): obj is ToolResponse => {
   });
 };
 
+const expectContentErrorFree = (content: ToolResponse["content"]) => {
+  content.forEach((item, index) => {
+    expect(item.isError, `Error in response content[${index}]: ${item.text}`).toBeFalsy();
+  });
+};
+
 describe("MCP Integration Tests", () => {
   let client: Client;
   let tmpDir: string;
-  const MANIFEST_FILE = "rejot-manifest.json";
+  let testSuccess = false;
 
-  const assertToolCall = async <T extends ToolResponse>(
+  const assertToolCall = async (
     toolName: string,
     args: Record<string, unknown>,
-  ): Promise<T> => {
+  ): Promise<ToolResponse> => {
     const result = await client.callTool({
       name: toolName,
       arguments: args,
@@ -51,14 +57,7 @@ describe("MCP Integration Tests", () => {
     // After validation, we can safely assert the type
     const typedResult = result as ToolResponse;
 
-    // Check that no content items have isError set to true
-    typedResult.content.forEach(
-      (item: { type: string; text: string; isError?: boolean }, index: number) => {
-        expect(item.isError, `Error in response content[${index}]: ${item.text}`).toBeFalsy();
-      },
-    );
-
-    return result as T;
+    return typedResult;
   };
 
   beforeAll(async () => {
@@ -81,7 +80,14 @@ describe("MCP Integration Tests", () => {
 
   afterAll(async () => {
     await client.close();
-    await rm(tmpDir, { recursive: true, force: true });
+
+    if (testSuccess) {
+      await rm(tmpDir, { recursive: true, force: true });
+    } else {
+      const logFilePath = join(tmpDir, "mcp.log");
+      console.log("Tmp directory used:", tmpDir);
+      console.log("Log file:", logFilePath);
+    }
   });
 
   // Ran only in Postgres test
@@ -94,54 +100,71 @@ describe("MCP Integration Tests", () => {
       }
       const pgConfig = parsePostgresConnectionString(connectionString);
 
-      // Initialize project
-      const initResult = await assertToolCall<ToolResponse>("mcp_rejot_mcp_manifest_init", {
-        relativeManifestFilePath: MANIFEST_FILE,
-        slug: "test-manifest",
+      // Initialize workspace
+      const initResult = await assertToolCall("rejot_workspace_init", {
+        slug: "@test-org/",
       });
+      expectContentErrorFree(initResult.content);
       expect(initResult.content[0].type).toBe("text");
-      expect(initResult.content[0].text).toContain("Created new manifest file");
+      expect(initResult.content[0].text).toContain("Workspace initialized successfully");
 
-      // Add Postgres connection
-      const connectionResult = await assertToolCall<ToolResponse>(
-        "rejot_manifest_connection_add_postgres",
-        {
-          manifestSlug: "test-manifest",
-          newConnectionSlug: "test-postgres",
-          postgresConnection: {
-            connectionType: "postgres",
-            ...pgConfig,
-          },
+      // Create a subdirectory for the sub-manifest
+      const subDir = "services";
+      await mkdir(join(tmpDir, subDir));
+
+      // Create a sub-manifest
+      const subManifestResult = await assertToolCall("rejot_manifest_init", {
+        relativeManifestFilePath: join(subDir, "rejot-manifest.json"),
+        slug: "@test-org/service1",
+      });
+      expectContentErrorFree(subManifestResult.content);
+      expect(subManifestResult.content[0].type).toBe("text");
+      expect(subManifestResult.content[0].text).toContain("Created new manifest file");
+
+      // Add Postgres connection to sub-manifest
+      const connectionResult = await assertToolCall("rejot_manifest_connection_add_postgres", {
+        manifestSlug: "@test-org/service1",
+        newConnectionSlug: "test-postgres",
+        postgresConnection: {
+          connectionType: "postgres",
+          ...pgConfig,
         },
-      );
+      });
+      expectContentErrorFree(connectionResult.content);
       expect(connectionResult.content[0].type).toBe("text");
 
       // Get manifest info
-      const infoResult = await assertToolCall<ToolResponse>("mcp_rejot_mcp_manifest_info", {
-        relativeManifestFilePath: MANIFEST_FILE,
-      });
+      const infoResult = await assertToolCall("rejot_workspace_info", {});
+      expectContentErrorFree(infoResult.content);
       expect(infoResult.content[0].type).toBe("text");
-      expect(infoResult.content[0].text).toContain("test-postgres"); // Verify connection is listed in the manifest info
+      expect(infoResult.content[0].text).toContain("@test-org/"); // Root manifest
+      expect(infoResult.content[0].text).toContain("@test-org/service1"); // Sub manifest
+      expect(infoResult.content[0].text).toContain("test-postgres"); // Verify connection is listed
 
       // Check database health
-      const healthResult = await assertToolCall<ToolResponse>("mcp_rejot_db_check_health", {
+      const healthResult = await assertToolCall("mcp_rejot_db_check_health", {
         connectionSlug: "test-postgres",
       });
+      expectContentErrorFree(healthResult.content);
       expect(healthResult.content[0].type).toBe("text");
 
       // Remove connection
-      const removeResult = await assertToolCall<ToolResponse>("rejot_manifest_connection_remove", {
-        manifestSlug: "test-manifest",
+      const removeResult = await assertToolCall("rejot_manifest_connection_remove", {
+        manifestSlug: "@test-org/service1",
         connectionSlug: "test-postgres",
       });
+      expectContentErrorFree(removeResult.content);
       expect(removeResult.content[0].type).toBe("text");
 
       // Verify connection was removed
-      const finalInfoResult = await assertToolCall<ToolResponse>("mcp_rejot_mcp_manifest_info", {
-        relativeManifestFilePath: MANIFEST_FILE,
-      });
+      const finalInfoResult = await assertToolCall("rejot_workspace_info", {});
+      expectContentErrorFree(finalInfoResult.content);
       expect(finalInfoResult.content[0].type).toBe("text");
+      expect(finalInfoResult.content[0].text).toContain("@test-org/"); // Root manifest still there
+      expect(finalInfoResult.content[0].text).toContain("@test-org/service1"); // Sub manifest still there
       expect(finalInfoResult.content[0].text).not.toContain("test-postgres"); // Verify connection is no longer listed
+
+      testSuccess = true;
     },
   );
 });

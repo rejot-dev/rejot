@@ -1,11 +1,14 @@
-import type { IManifestWorkspaceResolver, Workspace } from "@rejot-dev/contract-tools/manifest";
+import type {
+  IManifestWorkspaceResolver,
+  WorkspaceDefinition,
+} from "@rejot-dev/contract-tools/manifest";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 import { ReJotError } from "@rejot-dev/contract/error";
 
 export interface IWorkspaceService {
   resolveWorkspace(
     projectDir: string,
-  ): Promise<{ workspace: Workspace; syncManifest: SyncManifest }>;
+  ): Promise<{ workspace: WorkspaceDefinition; syncManifest: SyncManifest }>;
 }
 
 export class WorkspaceInitializationError extends ReJotError {
@@ -23,7 +26,7 @@ export class WorkspaceService implements IWorkspaceService {
 
   async resolveWorkspace(
     projectDir: string,
-  ): Promise<{ workspace: Workspace; syncManifest: SyncManifest }> {
+  ): Promise<{ workspace: WorkspaceDefinition; syncManifest: SyncManifest }> {
     const workspace = await this.#workspaceResolver.resolveWorkspace({
       startDir: projectDir,
     });

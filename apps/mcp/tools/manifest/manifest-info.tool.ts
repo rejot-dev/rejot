@@ -35,7 +35,10 @@ export class ManifestInfoTool implements IFactory {
       async ({ relativeManifestFilePath }) => {
         ensurePathRelative(relativeManifestFilePath);
 
-        const manifestAbsoluteFilePath = join(mcp.state.projectDir, relativeManifestFilePath);
+        const manifestAbsoluteFilePath = join(
+          mcp.state.workspaceDirectoryPath,
+          relativeManifestFilePath,
+        );
 
         try {
           const manifest = await readManifest(manifestAbsoluteFilePath);

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { SyncManifestSchema, ConnectionSchema } from "@rejot-dev/contract/manifest";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
+import type { WorkspaceDefinition } from "./manifest-workspace-resolver";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 type Connection = z.infer<typeof ConnectionSchema>;
@@ -101,6 +102,36 @@ export class ManifestPrinter {
 
     for (const es of manifest.eventStores ?? []) {
       output.push(`  - Connection: ${es.connectionSlug}`);
+    }
+
+    return output;
+  }
+
+  static printWorkspace(workspace: WorkspaceDefinition): string[] {
+    const output: string[] = ["Workspace Configuration:\n"];
+
+    // Print ancestor manifest info
+    output.push(`Root Path: ${workspace.rootPath}`);
+    output.push(`Ancestor Manifest: ${workspace.ancestor.manifest.slug}`);
+    output.push(`  Path: ${workspace.ancestor.path}\n`);
+
+    // Print all connections from ancestor
+    const connections = [
+      ...(workspace.ancestor.manifest.connections ?? []),
+      ...workspace.children.flatMap((child) => child.manifest.connections ?? []),
+    ];
+    output.push(...this.printConnections(connections));
+    output.push("");
+
+    // Print child manifests
+    output.push("Child Manifests:");
+    if (workspace.children.length === 0) {
+      output.push("  No child manifests found");
+    } else {
+      for (const child of workspace.children) {
+        output.push(`  - ${child.manifest.slug}`);
+        output.push(`    Path: ${child.path}`);
+      }
     }
 
     return output;

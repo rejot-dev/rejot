@@ -34,7 +34,7 @@ export interface IFactory {
  * Interface for RejotMcp to allow for mocking
  */
 export interface IRejotMcp {
-  projectDir: string;
+  workspaceDirectoryPath: string;
   server: IMcpServer;
   state: McpState;
   connect(transport: Transport): Promise<void>;
@@ -66,8 +66,8 @@ export class RejotMcp implements IRejotMcp {
     this.#server = server;
   }
 
-  get projectDir(): string {
-    return this.#state.projectDir;
+  get workspaceDirectoryPath(): string {
+    return this.#state.workspaceDirectoryPath;
   }
 
   get server(): IMcpServer {
@@ -176,9 +176,9 @@ export class RejotMcp implements IRejotMcp {
     // Only proceed with registration if state is ready
     await this.#register();
 
-    log.info(`ReJot MCP server initialized for project ${this.projectDir}`);
+    log.info(`ReJot MCP server initialized for project ${this.workspaceDirectoryPath}`);
     await this.#server.connect(transport);
-    log.info(`ReJot MCP server connected to ${this.projectDir}`);
+    log.info(`ReJot MCP server connected to ${this.workspaceDirectoryPath}`);
 
     if (this.#state.initializationErrors.length > 0) {
       log.warn("State initialization failed:");

@@ -1,26 +1,23 @@
 import { z } from "zod";
-import { initManifest } from "@rejot-dev/contract-tools/manifest";
+import { initManifest, writeManifest } from "@rejot-dev/contract-tools/manifest";
 import type { IRejotMcp, IFactory } from "@/rejot-mcp";
 import type { McpState } from "@/state/mcp-state";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { ensurePathRelative } from "@/util/fs.util";
-import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
+import type { SyncManifestSchema } from "@rejot-dev/contract/manifest";
+import { getLogger } from "@rejot-dev/contract/logger";
+
+const log = getLogger(import.meta.url);
 
 export class ManifestInitTool implements IFactory {
-  readonly #workspaceService: IWorkspaceService;
-
-  constructor(workspaceService: IWorkspaceService) {
-    this.#workspaceService = workspaceService;
-  }
-
   async initialize(_state: McpState): Promise<void> {
     // No state initialization needed
   }
 
   async register(mcp: IRejotMcp): Promise<void> {
     mcp.registerTool(
-      "mcp_rejot_mcp_manifest_init",
-      "Initialize a new manifest file at the specified path",
+      "rejot_manifest_init",
+      "Initialize a new manifest file at the specified path. Used for sub-manifests.",
       {
         relativeManifestFilePath: z
           .string()
@@ -30,26 +27,21 @@ export class ManifestInitTool implements IFactory {
         slug: z.string().describe("The slug for the manifest."),
       },
       async ({ relativeManifestFilePath, slug }) => {
+        log.debug("rejot_manifest_init", { relativeManifestFilePath, slug });
+
         ensurePathRelative(relativeManifestFilePath);
 
-        const manifestAbsoluteFilePath = join(mcp.state.projectDir, relativeManifestFilePath);
+        const manifestAbsoluteFilePath = join(
+          mcp.state.workspaceDirectoryPath,
+          relativeManifestFilePath,
+        );
+
+        let createdManifest: z.infer<typeof SyncManifestSchema>;
 
         try {
-          await initManifest(manifestAbsoluteFilePath, slug);
-          const { workspace, syncManifest } = await this.#workspaceService.resolveWorkspace(
-            dirname(manifestAbsoluteFilePath),
-          );
-
-          mcp.state.setWorkspace(workspace);
-          mcp.state.setSyncManifest(syncManifest);
-          mcp.state.clearInitializationErrors();
-
-          return {
-            content: [
-              { type: "text", text: `Created new manifest file at ${manifestAbsoluteFilePath}` },
-              // TODO: Explain next steps here maybe.
-            ],
-          };
+          createdManifest = await initManifest(manifestAbsoluteFilePath, slug, {
+            workspace: false,
+          });
         } catch (error) {
           if (error instanceof Error && "code" in error && error.code === "EEXIST") {
             return {
@@ -62,16 +54,39 @@ export class ManifestInitTool implements IFactory {
               ],
             };
           }
-          return {
-            content: [
-              {
-                isError: true,
-                type: "text",
-                text: `Failed to create manifest: ${error instanceof Error ? error.message : String(error)}`,
-              },
-            ],
-          };
+
+          throw error;
         }
+
+        mcp.state.workspace.children.push({
+          path: relativeManifestFilePath,
+          manifest: createdManifest,
+        });
+
+        if (!mcp.state.workspace.ancestor.manifest.workspaces) {
+          mcp.state.workspace.ancestor.manifest.workspaces = [];
+        }
+
+        if (!mcp.state.workspace.ancestor.manifest.workspaces.includes(relativeManifestFilePath)) {
+          mcp.state.workspace.ancestor.manifest.workspaces.push(relativeManifestFilePath);
+        }
+
+        log.debug("updating workspace root manifest");
+
+        await writeManifest(
+          mcp.state.workspace.ancestor.manifest,
+          join(mcp.state.workspace.rootPath, mcp.state.workspace.ancestor.path),
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Created new manifest file at ${relativeManifestFilePath} and updated the workspace (root manifest).`,
+            },
+            // TODO: Explain next steps here maybe.
+          ],
+        };
       },
     );
   }

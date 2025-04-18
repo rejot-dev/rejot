@@ -51,6 +51,7 @@ const emptyManifest: Manifest = {
   eventStores: [],
   publicSchemas: [],
   consumerSchemas: [],
+  workspaces: [],
 };
 
 /**
@@ -64,6 +65,7 @@ const emptyManifest: Manifest = {
 export async function findManifestPath(
   startDir: string = process.cwd(),
   filename: string = DEFAULT_MANIFEST_FILENAME,
+  recurse: boolean = true,
 ): Promise<string | null> {
   let currentDir = startDir;
 
@@ -75,6 +77,10 @@ export async function findManifestPath(
       return manifestPath;
     } catch (error) {
       if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+        if (!recurse) {
+          return null;
+        }
+
         // Get parent directory
         const parentDir = dirname(currentDir);
 
@@ -99,7 +105,7 @@ export async function writeManifest(manifest: Manifest, path: string) {
   log.info("file written", { path });
 }
 
-export async function readManifest(path: string): Promise<Manifest> {
+export async function readManifestOrGetEmpty(path: string): Promise<Manifest> {
   try {
     const content = await readFile(path, "utf-8");
     const json = JSON.parse(content);
@@ -134,26 +140,78 @@ export async function readManifest(path: string): Promise<Manifest> {
   }
 }
 
-export async function initManifest(path: string, slug: string): Promise<void> {
+export async function readManifest(path: string): Promise<Manifest | null> {
+  try {
+    const content = await readFile(path, "utf-8");
+    const json = JSON.parse(content);
+
+    if (!("manifestVersion" in json)) {
+      throw new UnreadableManifestError({
+        path,
+        message: "Manifest file is missing manifestVersion",
+      });
+    }
+
+    if (json.manifestVersion !== CURRENT_MANIFEST_FILE_VERSION) {
+      // TODO: Implement upgrades
+      throw new UnreadableManifestError({
+        path,
+        manifestVersion: json.manifestVersion,
+        message:
+          "Manifest file is an old manifest file format versions and we haven't implemented upgrades.",
+      });
+    }
+
+    return SyncManifestSchema.parse(json);
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return null;
+    }
+
+    throw new UnreadableManifestError({
+      path,
+      cause: error,
+    });
+  }
+}
+export interface InitManifestOptions {
+  workspace?: boolean;
+}
+
+export async function initManifest(
+  path: string,
+  slug: string,
+  options: InitManifestOptions = {
+    workspace: false,
+  },
+): Promise<Manifest> {
   // Try to create the directory first
   await mkdir(dirname(path), { recursive: true });
 
   // Open file with O_EXCL flag to ensure we only create a new file
   const fileHandle = await open(path, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL);
 
+  const manifest: Manifest = {
+    slug,
+    manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
+  };
+
+  if (options.workspace) {
+    manifest.workspaces = [];
+  } else {
+    manifest.connections = [];
+    manifest.dataStores = [];
+    manifest.eventStores = [];
+    manifest.publicSchemas = [];
+    manifest.consumerSchemas = [];
+  }
+
   try {
     // Write the initial manifest
-    await fileHandle.writeFile(
-      JSON.stringify(
-        {
-          ...emptyManifest,
-          slug,
-        },
-        null,
-        2,
-      ),
-    );
+    await fileHandle.writeFile(JSON.stringify(manifest, null, 2));
   } finally {
     await fileHandle.close();
   }
+
+  return manifest;
 }

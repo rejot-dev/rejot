@@ -63,8 +63,12 @@ export abstract class ILogger {
 
   logErrorInstance(error: unknown): void {
     if (error instanceof Error) {
-      for (const stack of error.stack?.split("\n") ?? []) {
-        this.error(stack);
+      const stack = error.stack?.split("\n") ?? [];
+
+      this.error("Error: " + error.message + (!stack.length ? " (no stack trace)" : ""));
+
+      for (const line of stack) {
+        this.error(line);
       }
 
       if (error.cause instanceof Error) {

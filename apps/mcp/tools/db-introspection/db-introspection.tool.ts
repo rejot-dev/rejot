@@ -74,7 +74,7 @@ export class DbIntrospectionTool implements IFactory {
 
   async register(mcp: IRejotMcp): Promise<void> {
     mcp.registerTool(
-      "mcp_rejot_db_get_tables",
+      "rejot_db_get_tables",
       "Get all tables from a database connection",
       {
         connectionSlug: z.string().describe(CONNECTION_SLUG_DESCRIPTION),
