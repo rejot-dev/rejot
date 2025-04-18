@@ -1,9 +1,9 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { parsePostgresConnectionString } from "@rejot-dev/adapter-postgres/postgres-client";
-import { mkdtemp, rm, mkdir } from "node:fs/promises";
+import { mkdtemp, rm, mkdir, cp } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 interface ToolResponse {
@@ -148,6 +148,21 @@ describe("MCP Integration Tests", () => {
       expectContentErrorFree(healthResult.content);
       expect(healthResult.content[0].type).toBe("text");
 
+      // Create test directory in sub-manifest and copy example schema
+      const testDir = join(tmpDir, subDir, "_test");
+      await mkdir(testDir);
+      await cp(
+        join(dirname(new URL(import.meta.url).pathname), "mcp-integration-test-example-schema.ts"),
+        join(testDir, "mcp-integration-test-example-schema.ts"),
+      );
+
+      const collectResult = await assertToolCall("rejot_collect_schemas", {
+        write: true,
+      });
+      expectContentErrorFree(collectResult.content);
+      expect(collectResult.content[0].type).toBe("text");
+      console.dir(collectResult.content, { depth: null });
+
       // Remove connection
       const removeResult = await assertToolCall("rejot_manifest_connection_remove", {
         manifestSlug: "@test-org/service1",
@@ -164,7 +179,7 @@ describe("MCP Integration Tests", () => {
       expect(finalInfoResult.content[0].text).toContain("@test-org/service1"); // Sub manifest still there
       expect(finalInfoResult.content[0].text).not.toContain("test-postgres"); // Verify connection is no longer listed
 
-      testSuccess = true;
+      testSuccess = false;
     },
   );
 });
