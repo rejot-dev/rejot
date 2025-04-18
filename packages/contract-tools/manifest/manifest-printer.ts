@@ -105,4 +105,23 @@ export class ManifestPrinter {
 
     return output;
   }
+
+  static printManifestErrors(errors: {
+    errors: Array<{ message: string; hint?: { message: string; suggestions?: string } }>;
+  }): string[] {
+    const output: string[] = ["Manifest contains errors:"];
+
+    for (const error of errors.errors) {
+      let message = `  - ${error.message}`;
+      if (error.hint) {
+        message += `\n      Hint: ${error.hint.message}`;
+        if (error.hint.suggestions) {
+          message += `\n      Suggestions: ${error.hint.suggestions}`;
+        }
+      }
+      output.push(message);
+    }
+
+    return output;
+  }
 }

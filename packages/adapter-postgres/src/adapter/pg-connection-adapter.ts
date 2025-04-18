@@ -7,7 +7,6 @@ import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "../postgres-consts.
 import { PostgresEventStore } from "../event-store/postgres-event-store.ts";
 import { PostgresClient } from "../util/postgres-client.ts";
 import { PostgresSink } from "../postgres-sink.ts";
-import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 import type { IConnection } from "@rejot-dev/contract/sync";
 
 export interface PostgresConnection extends IConnection<z.infer<typeof PostgresConnectionSchema>> {
@@ -23,13 +22,7 @@ export class PostgresConnectionAdapter
       PostgresEventStore
     >
 {
-  #manifest: SyncManifest;
-
   #connections: Map<string, PostgresConnection> = new Map();
-
-  constructor(manifest: SyncManifest) {
-    this.#manifest = manifest;
-  }
 
   get connectionType(): "postgres" {
     return "postgres";
@@ -65,10 +58,7 @@ export class PostgresConnectionAdapter
     connectionSlug: string,
     connection: z.infer<typeof PostgresConnectionSchema>,
   ): PostgresEventStore {
-    return new PostgresEventStore(
-      this.getOrCreateConnection(connectionSlug, connection).client,
-      this.#manifest,
-    );
+    return new PostgresEventStore(this.getOrCreateConnection(connectionSlug, connection).client);
   }
 
   getConnection(connectionSlug: string): PostgresConnection | undefined {

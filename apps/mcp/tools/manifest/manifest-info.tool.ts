@@ -42,21 +42,9 @@ export class ManifestInfoTool implements IFactory {
           const errors = verifyManifests([manifest]);
 
           if (!errors.isValid) {
-            const errorMessages = errors.errors.map((error) => {
-              let message = `  - ${error.message}`;
-              if (error.hint) {
-                message += `\n      Hint: ${error.hint.message}`;
-                if (error.hint.suggestions) {
-                  message += `\n      Suggestions: ${error.hint.suggestions}`;
-                }
-              }
-              return message;
-            });
-
+            const errorOutput = ManifestPrinter.printManifestErrors(errors);
             return {
-              content: [
-                { type: "text", text: "Manifest contains errors:\n" + errorMessages.join("\n\n") },
-              ],
+              content: [{ type: "text", text: errorOutput.join("\n") }],
             };
           }
 

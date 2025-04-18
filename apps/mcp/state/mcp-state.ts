@@ -1,11 +1,8 @@
 import type { Workspace } from "@rejot-dev/contract-tools/manifest";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
-import {
-  WorkspaceNotInitializedError,
-  type ReJotMcpError,
-  CombinedRejotMcpError,
-} from "./mcp-error";
+import { WorkspaceNotInitializedError, CombinedRejotMcpError } from "./mcp-error";
 import { getLogger } from "@rejot-dev/contract/logger";
+import type { ReJotError } from "@rejot-dev/contract/error";
 
 const log = getLogger("mcp.state");
 
@@ -13,7 +10,7 @@ export type McpStateStatus = "uninitialized" | "initializing" | "ready" | "error
 
 export class McpState {
   readonly projectDir: string;
-  #initializationErrors: ReJotMcpError[] = [];
+  #initializationErrors: ReJotError[] = [];
 
   // Core state
   #workspace: Workspace | undefined;
@@ -45,7 +42,7 @@ export class McpState {
     return this.#syncManifest;
   }
 
-  get initializationErrors(): ReJotMcpError[] {
+  get initializationErrors(): ReJotError[] {
     return this.#initializationErrors;
   }
 
@@ -61,7 +58,7 @@ export class McpState {
     this.#syncManifest = syncManifest;
   }
 
-  addInitializationError(error: ReJotMcpError): void {
+  addInitializationError(error: ReJotError): void {
     this.#initializationErrors.push(error);
   }
 
