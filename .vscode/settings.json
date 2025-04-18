@@ -6,5 +6,11 @@
     "$shared": {
       "controller-url": "http://localhost:3000"
     }
-  }
+  },
+  "json.schemas": [
+    {
+      "fileMatch": ["**/*rejot-manifest.json"],
+      "url": "./packages/contract/schema.json"
+    }
+  ]
 }

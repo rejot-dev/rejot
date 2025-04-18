@@ -1,0 +1,270 @@
+{
+  "type": "object",
+  "properties": {
+    "slug": {
+      "type": "string",
+      "description": "Unique identifier for this sync manifest, only use hyphens and alphanumeric characters."
+    },
+    "manifestVersion": {
+      "type": "number",
+      "description": "Version of the manifest file format."
+    },
+    "connections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Unique identifier for the connection."
+          },
+          "config": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "connectionType": {
+                    "type": "string",
+                    "const": "postgres",
+                    "description": "Postgres connection type."
+                  },
+                  "host": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "number"
+                  },
+                  "user": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "database": {
+                    "type": "string"
+                  }
+                },
+                "required": ["connectionType", "host", "port", "user", "password", "database"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "connectionType": {
+                    "type": "string",
+                    "const": "in-memory"
+                  }
+                },
+                "required": ["connectionType"],
+                "additionalProperties": false
+              }
+            ],
+            "description": "Configuration details specific to the connection type."
+          }
+        },
+        "required": ["slug", "config"],
+        "additionalProperties": false
+      }
+    },
+    "dataStores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "connectionSlug": {
+            "type": "string",
+            "description": "Slug of the connection to use for this data store."
+          },
+          "publicationName": {
+            "type": "string",
+            "description": "Name of the publication (for Postgres)."
+          },
+          "slotName": {
+            "type": "string",
+            "description": "Name of the replication slot (for Postgres)."
+          }
+        },
+        "required": ["connectionSlug"],
+        "additionalProperties": false
+      }
+    },
+    "eventStores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "connectionSlug": {
+            "type": "string",
+            "description": "Slug of the connection to use for this event store."
+          }
+        },
+        "required": ["connectionSlug"],
+        "additionalProperties": false
+      }
+    },
+    "publicSchemas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name for the public schema."
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "dataStoreSlug": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Slug of the data store that contains the source data."
+              },
+              "tables": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "description": "List of tables from the source data store that are required to produce the public schema data."
+              }
+            },
+            "required": ["dataStoreSlug", "tables"],
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "$ref": "http://json-schema.org/draft-07/schema#"
+          },
+          "transformations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "transformationType": {
+                      "type": "string",
+                      "const": "postgresql",
+                      "description": "Postgres transformation type."
+                    },
+                    "table": {
+                      "type": "string"
+                    },
+                    "sql": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["transformationType", "table", "sql"],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "minItems": 1,
+            "description": "Transformations to apply to the source data to arrive at the output schema."
+          },
+          "version": {
+            "type": "object",
+            "properties": {
+              "major": {
+                "type": "number"
+              },
+              "minor": {
+                "type": "number"
+              }
+            },
+            "required": ["major", "minor"],
+            "additionalProperties": false
+          },
+          "definitionFile": {
+            "type": "string",
+            "description": "Path to the source file defining this schema."
+          }
+        },
+        "required": ["name", "source", "outputSchema", "transformations", "version"],
+        "additionalProperties": false
+      },
+      "description": "Public Schemas governed by this manifest."
+    },
+    "consumerSchemas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sourceManifestSlug": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Slug of the manifest containing the definition of the public schema."
+          },
+          "publicSchema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "majorVersion": {
+                "type": "number"
+              }
+            },
+            "required": ["name", "majorVersion"],
+            "additionalProperties": false,
+            "description": "Reference to a specific version of a public schema."
+          },
+          "destinationDataStoreSlug": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Slug of the data store where the transformed data will be stored."
+          },
+          "transformations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "transformationType": {
+                      "type": "string",
+                      "const": "postgresql",
+                      "description": "Postgres transformation type."
+                    },
+                    "sql": {
+                      "type": "string"
+                    },
+                    "whenOperation": {
+                      "type": "string",
+                      "enum": ["insertOrUpdate", "delete"]
+                    }
+                  },
+                  "required": ["transformationType", "sql"],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "minItems": 1,
+            "description": "Transformation to apply to the public schema data in order to write it to the destination data store."
+          },
+          "definitionFile": {
+            "type": "string",
+            "description": "Path to the source file defining this schema."
+          }
+        },
+        "required": [
+          "sourceManifestSlug",
+          "publicSchema",
+          "destinationDataStoreSlug",
+          "transformations"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Consumer Schemas governed by this manifest."
+    },
+    "workspaces": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["slug", "manifestVersion"],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
