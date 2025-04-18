@@ -1,4 +1,3 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type {
   IMcpServer,
@@ -9,11 +8,12 @@ import type {
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { McpState } from "./state/mcp-state";
 import type { ZodRawShape } from "zod";
-import { ReJotMcpError } from "./state/mcp-error";
+import { rejotErrorToCallToolContent, rejotErrorToReadResourceContent } from "./state/mcp-error";
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
-import type { ILogger } from "@rejot-dev/contract/logger";
+import { getLogger } from "@rejot-dev/contract/logger";
 import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
 import type { ReadResourceResult } from "@modelcontextprotocol/sdk/types.js";
+import { ReJotError } from "@rejot-dev/contract/error";
 
 // Factory interface for initializers
 export interface IFactory {
@@ -53,40 +53,17 @@ export interface IRejotMcp {
   ): void;
 }
 
+const log = getLogger(import.meta.url);
+
 export class RejotMcp implements IRejotMcp {
-  #server: McpServer;
+  #server: IMcpServer;
   #factories: IFactory[];
-  #logger: ILogger;
   #state: McpState;
 
-  constructor(projectDir: string, logger: ILogger, factories: IFactory[]) {
-    this.#logger = logger;
+  constructor(projectDir: string, server: IMcpServer, factories: IFactory[]) {
     this.#factories = factories;
     this.#state = new McpState(projectDir);
-
-    this.#server = new McpServer(
-      {
-        name: "@rejot-dev/mcp",
-        version: "0.0.7",
-      },
-      {
-        instructions: `
-    This is the ReJot MCP server. ReJot provides a set of tools to facilitate micro-service
-    communication. As opposed to traditional approaches like REST APIs, ReJot operates on the database
-    layer.
-    
-    In the ReJot manifest, teams define their database connection details, as well as the entities they
-    publish to other teams. These are called 'public schemas' and they're strongly tied to a version and
-    contract. Other teams can subscribe to these schemas using a consumer schema.
-
-    ALWAYS use the tools in this MCP to edit the manifest.
-
-    - In most cases it makes sense to get the workspace's manifest information first.
-    - If you do not know a connection's slug. Get the workspace manifest first.
-    - You don't have to check health before doing other operations.
-          `,
-      },
-    );
+    this.#server = server;
   }
 
   get projectDir(): string {
@@ -116,15 +93,15 @@ export class RejotMcp implements IRejotMcp {
         try {
           return await cb(data, extra);
         } catch (error) {
-          if (error instanceof ReJotMcpError) {
-            this.#logger.warn(`Tool ${name} returned error: ${error.message}`);
+          const content = rejotErrorToCallToolContent(error);
+          if (content) {
             return {
-              content: error.toCallToolContent(),
+              content,
             };
           }
 
-          this.#logger.error(`Unhandled error in tool ${name}`);
-          this.#logger.logErrorInstance(error);
+          log.error(`Unhandled error in tool ${name}`);
+          log.logErrorInstance(error);
           throw error;
         }
       },
@@ -147,13 +124,14 @@ export class RejotMcp implements IRejotMcp {
         try {
           return handler(uri, variables, extra);
         } catch (error) {
-          if (error instanceof ReJotMcpError) {
+          const content = rejotErrorToReadResourceContent(error, uri.toString());
+          if (content) {
             return {
-              contents: error.toReadResourceContent(uri.toString()),
+              contents: content,
             };
           }
 
-          this.#logger.error(`Unhandled error in resource ${name}: ${error}`);
+          log.error(`Unhandled error in resource ${name}: ${error}`);
           throw error;
         }
       },
@@ -165,8 +143,8 @@ export class RejotMcp implements IRejotMcp {
       try {
         await factory.initialize(this.#state);
       } catch (error) {
-        if (error instanceof ReJotMcpError) {
-          this.#logger.warn("Initialization error", {
+        if (error instanceof ReJotError) {
+          log.warn("Initialization error", {
             error: error.message,
           });
           this.#state.addInitializationError(error);
@@ -182,7 +160,7 @@ export class RejotMcp implements IRejotMcp {
       try {
         await factory.register(this);
       } catch (error) {
-        if (error instanceof ReJotMcpError) {
+        if (error instanceof ReJotError) {
           this.#state.addInitializationError(error);
         } else {
           throw error;
@@ -198,14 +176,14 @@ export class RejotMcp implements IRejotMcp {
     // Only proceed with registration if state is ready
     await this.#register();
 
-    this.#logger.info(`ReJot MCP server initialized for project ${this.projectDir}`);
+    log.info(`ReJot MCP server initialized for project ${this.projectDir}`);
     await this.#server.connect(transport);
-    this.#logger.info(`ReJot MCP server connected to ${this.projectDir}`);
+    log.info(`ReJot MCP server connected to ${this.projectDir}`);
 
     if (this.#state.initializationErrors.length > 0) {
-      this.#logger.warn("State initialization failed:");
+      log.warn("State initialization failed:");
       for (const error of this.#state.initializationErrors) {
-        this.#logger.warn(`  - ${error.message}`);
+        log.warn(`  - ${error.message}`);
       }
     }
   }

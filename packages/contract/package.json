@@ -26,6 +26,8 @@
     "./sync-manifest": "./manifest/sync-manifest.ts",
     "./postgres": "./postgres/postgres.ts",
     "./public-schema": "./public-schema/public-schema.ts",
+    "./workspace": "./workspace/workspace.ts",
+    "./error": "./error/error.ts",
     "./sync": "./sync/sync.ts",
     "./schema-validator": "./schema-validator.ts",
     "./message-bus": "./message-bus/message-bus.ts",

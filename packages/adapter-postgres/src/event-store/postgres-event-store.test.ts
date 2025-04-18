@@ -7,34 +7,10 @@ import type {
 } from "@rejot-dev/contract/event-store";
 import { pgRollbackDescribe } from "../util/postgres-test-utils";
 import { PostgresEventStore } from "./postgres-event-store";
-import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 import type { PublicSchemaReference } from "@rejot-dev/contract/cursor";
 
 const TEST_SCHEMA_NAME = "rejot_events";
 const TEST_TABLE_NAME = "events";
-
-const TEST_MANIFEST = {
-  slug: "test-manifest",
-  manifestVersion: 1,
-  connections: [
-    {
-      slug: "test-store-1",
-      config: {
-        connectionType: "in-memory" as const,
-      },
-    },
-    {
-      slug: "test-store-2",
-      config: {
-        connectionType: "in-memory" as const,
-      },
-    },
-  ],
-  dataStores: [{ connectionSlug: "test-store-1" }, { connectionSlug: "test-store-2" }],
-  eventStores: [],
-  publicSchemas: [],
-  consumerSchemas: [],
-};
 
 const TEST_SCHEMA: PublicSchemaReference = {
   manifest: {
@@ -48,7 +24,7 @@ const TEST_SCHEMA: PublicSchemaReference = {
 
 pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
   beforeEach(async () => {
-    const store = new PostgresEventStore(ctx.client, new SyncManifest([TEST_MANIFEST]));
+    const store = new PostgresEventStore(ctx.client);
     await store.prepare();
   });
 
@@ -69,7 +45,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
   });
 
   test("should write and read operations across multiple data stores", async () => {
-    const store = new PostgresEventStore(ctx.client, new SyncManifest([TEST_MANIFEST]));
+    const store = new PostgresEventStore(ctx.client);
     await store.prepare();
 
     const testOps1: TransformedOperationWithSource[] = [
@@ -120,7 +96,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
   });
 
   test("should handle cursor-based pagination correctly", async () => {
-    const store = new PostgresEventStore(ctx.client, new SyncManifest([TEST_MANIFEST]));
+    const store = new PostgresEventStore(ctx.client);
     await store.prepare();
 
     // Write operations to both data stores
@@ -190,7 +166,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
   });
 
   test("should handle empty cursor and null cursor the same", async () => {
-    const store = new PostgresEventStore(ctx.client, new SyncManifest([TEST_MANIFEST]));
+    const store = new PostgresEventStore(ctx.client);
     await store.prepare();
 
     const testOp: TransformedOperationWithSource = {
@@ -215,7 +191,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
   });
 
   test("should enforce read limits", async () => {
-    const store = new PostgresEventStore(ctx.client, new SyncManifest([TEST_MANIFEST]));
+    const store = new PostgresEventStore(ctx.client);
     await store.prepare();
 
     // Should throw for invalid limits
@@ -229,7 +205,7 @@ pgRollbackDescribe("PostgreSQL Event Store tests", (ctx) => {
   });
 
   test("should handle delete operation with only entity's id", async () => {
-    const store = new PostgresEventStore(ctx.client, new SyncManifest([TEST_MANIFEST]));
+    const store = new PostgresEventStore(ctx.client);
     await store.prepare();
 
     const deleteOp: TransformedOperationWithSourceDelete = {

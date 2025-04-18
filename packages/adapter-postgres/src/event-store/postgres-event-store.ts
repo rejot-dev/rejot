@@ -2,7 +2,6 @@ import type { IEventStore, TransformedOperationWithSource } from "@rejot-dev/con
 import { getLogger } from "@rejot-dev/contract/logger";
 import { PostgresClient } from "../util/postgres-client";
 import { EventStoreSchemaManager } from "./pg-event-store-schema-manager";
-import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 import { PostgresEventStoreRepository } from "./pg-event-store-repository";
 import type { Cursor, PublicSchemaReference } from "@rejot-dev/contract/cursor";
 import type { OperationMessage } from "@rejot-dev/contract/message-bus";
@@ -13,7 +12,7 @@ export class PostgresEventStore implements IEventStore {
   #client: PostgresClient;
   #schemaManager: EventStoreSchemaManager;
 
-  constructor(client: PostgresClient, _manifest: SyncManifest) {
+  constructor(client: PostgresClient) {
     this.#client = client;
     this.#schemaManager = new EventStoreSchemaManager(client);
   }

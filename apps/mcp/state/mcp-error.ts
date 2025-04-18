@@ -1,20 +1,9 @@
 import type { CallToolResult, ReadResourceResult } from "@modelcontextprotocol/sdk/types.js";
+import { ReJotError } from "@rejot-dev/contract/error";
 
-export abstract class ReJotMcpError extends Error {
-  protected hints: string[] = [];
-
+export abstract class ReJotMcpError extends ReJotError {
   constructor(message: string, cause?: Error) {
     super(message, { cause });
-  }
-
-  withHint(hint: string): this {
-    this.hints.push(hint);
-    return this;
-  }
-
-  withHints(hints: string[]): this {
-    this.hints.push(...hints);
-    return this;
   }
 
   toCallToolContent(): CallToolResult["content"] {
@@ -22,7 +11,7 @@ export abstract class ReJotMcpError extends Error {
       {
         isError: true,
         type: "text",
-        text: this.getFormattedText(),
+        text: getFormattedText(this.message, this.hints),
       },
     ];
   }
@@ -30,21 +19,20 @@ export abstract class ReJotMcpError extends Error {
   toReadResourceContent(uri: string): ReadResourceResult["contents"] {
     return [
       {
-        text: this.getFormattedText(),
+        text: getFormattedText(this.message, this.hints),
         uri,
       },
     ];
   }
+}
 
-  protected getFormattedText(): string {
-    if (this.hints.length === 0) {
-      return this.message;
-    }
-
-    const hintsText = this.hints.map((hint) => `\n• ${hint}`).join("");
-
-    return `${this.message}\n\nHints:${hintsText}`;
+export function getFormattedText(message: string, hints: Readonly<string[]>): string {
+  if (hints.length === 0) {
+    return message;
   }
+
+  const hintsText = hints.map((hint) => `\n• ${hint}`).join("");
+  return `${message}\n\nHints:${hintsText}`;
 }
 
 export class WorkspaceNotInitializedError extends ReJotMcpError {
@@ -54,18 +42,60 @@ export class WorkspaceNotInitializedError extends ReJotMcpError {
 }
 
 export class CombinedRejotMcpError extends ReJotMcpError {
-  #errors: ReJotMcpError[];
+  #errors: ReJotError[];
 
-  constructor(errors: ReJotMcpError[]) {
+  get name(): string {
+    return "CombinedRejotMcpError";
+  }
+
+  constructor(errors: ReJotError[]) {
     super("CombinedRejotMcpError");
     this.#errors = errors;
   }
 
   toCallToolContent(): CallToolResult["content"] {
-    return this.#errors.flatMap((e) => e.toCallToolContent());
+    return this.#errors.flatMap((e) => rejotErrorToCallToolContent(e) ?? []);
   }
 
   toReadResourceContent(uri: string): ReadResourceResult["contents"] {
-    return this.#errors.flatMap((e) => e.toReadResourceContent(uri));
+    return this.#errors.flatMap((e) => rejotErrorToReadResourceContent(e, uri) ?? []);
   }
+}
+
+export function rejotErrorToCallToolContent(error: unknown): CallToolResult["content"] | null {
+  if (error instanceof ReJotMcpError) {
+    return error.toCallToolContent();
+  }
+
+  if (error instanceof ReJotError) {
+    return [
+      {
+        isError: true,
+        type: "text",
+        text: error.message,
+      },
+    ];
+  }
+
+  return null;
+}
+
+export function rejotErrorToReadResourceContent(
+  error: unknown,
+  uri: string,
+): ReadResourceResult["contents"] | null {
+  if (error instanceof ReJotMcpError) {
+    return error.toReadResourceContent(uri);
+  }
+
+  if (error instanceof ReJotError) {
+    return [
+      {
+        text: error.message,
+        uri,
+      },
+    ];
+  }
+
+  return null;
 }

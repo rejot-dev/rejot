@@ -8,11 +8,11 @@ import type {
 import type { ResourceListHandler, ResourceGetHandler } from "../interfaces/mcp-server.interface";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { ZodRawShape } from "zod";
-import type { IRejotMcp, IFactory } from "../rejot-mcp";
-import { ReJotMcpError } from "@/state/mcp-error";
+import { type IRejotMcp, type IFactory, RejotMcp } from "../rejot-mcp";
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
-import { McpState } from "@/state/mcp-state";
 import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
+import { McpState } from "../state/mcp-state";
+import { ReJotMcpError } from "../state/mcp-error";
 
 /**
  * Represents a registered tool in the MCP server
@@ -263,18 +263,15 @@ export class MockMcpServer implements Partial<IMcpServer> {
 /**
  * Mock implementation of RejotMcp for testing purposes
  */
-export class MockRejotMcp implements IRejotMcp {
+export class MockRejotMcp extends RejotMcp implements IRejotMcp {
   #mockServer: MockMcpServer;
+
   #projectDir: string;
   #factories: IFactory[] = [];
   #state: McpState;
 
   constructor(projectDir: string, factories: IFactory[] = []) {
-    this.#state = new McpState(projectDir);
-    this.#projectDir = projectDir;
-    this.#factories = factories;
-
-    this.#mockServer = new MockMcpServer(
+    const mockServer = new MockMcpServer(
       {
         name: "@rejot-dev/mcp",
         version: "0.0.1337",
@@ -283,6 +280,13 @@ export class MockRejotMcp implements IRejotMcp {
         instructions: "",
       },
     );
+
+    super(projectDir, mockServer, factories);
+
+    this.#state = new McpState(projectDir);
+    this.#projectDir = projectDir;
+    this.#factories = factories;
+    this.#mockServer = mockServer;
   }
 
   registerTool<Args extends ZodRawShape>(
@@ -291,7 +295,7 @@ export class MockRejotMcp implements IRejotMcp {
     paramsSchema: Args,
     cb: ToolCallback<Args>,
   ): void {
-    this.#mockServer.tool(
+    this.server.tool(
       name,
       description,
       paramsSchema,
@@ -328,7 +332,7 @@ export class MockRejotMcp implements IRejotMcp {
     template: ResourceTemplate,
     handler: ReadResourceTemplateCallback,
   ): void {
-    this.#mockServer.resource(
+    this.server.resource(
       name,
       template,
       async (uri: URL, variables: Variables, extra: RequestHandlerExtra) => {

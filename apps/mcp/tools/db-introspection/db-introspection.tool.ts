@@ -30,7 +30,7 @@ export class DbIntrospectionTool implements IFactory {
     //
   }
 
-  #getOrSetAdapter(connectionType: ValidConnectionType, state: McpState): AdapterPair {
+  #getOrSetAdapter(connectionType: ValidConnectionType): AdapterPair {
     const adapter = this.#adapters.get(connectionType);
     if (adapter) {
       return adapter;
@@ -40,7 +40,7 @@ export class DbIntrospectionTool implements IFactory {
     //              in the future we should resolve this based on installed dependencies / manifest.
 
     if (connectionType === "postgres") {
-      const postgresConnectionAdapter = new PostgresConnectionAdapter(state.syncManifest);
+      const postgresConnectionAdapter = new PostgresConnectionAdapter();
       const postgresIntrospectionAdapter = new PostgresIntrospectionAdapter(
         postgresConnectionAdapter,
       );
@@ -61,7 +61,7 @@ export class DbIntrospectionTool implements IFactory {
       throw new ConnectionNotFoundError(connectionSlug);
     }
 
-    const adapter = this.#getOrSetAdapter(manifestConnection.config.connectionType, state);
+    const adapter = this.#getOrSetAdapter(manifestConnection.config.connectionType);
     const connection = adapter.connectionAdapter.getOrCreateConnection(
       connectionSlug,
       manifestConnection.config,
@@ -261,18 +261,12 @@ export class ConnectionNotFoundError extends ReJotMcpError {
     this.#connectionSlug = connectionSlug;
   }
 
-  get connectionSlug(): string {
-    return this.#connectionSlug;
+  get name(): string {
+    return "ConnectionNotFoundError";
   }
 
-  toCallToolContent(): CallToolResult["content"] {
-    return [
-      {
-        isError: true,
-        type: "text",
-        text: this.message,
-      },
-    ];
+  get connectionSlug(): string {
+    return this.#connectionSlug;
   }
 }
 
@@ -282,6 +276,10 @@ export class AdapterNotFoundError extends ReJotMcpError {
   constructor(connectionType: ValidConnectionType) {
     super(`No adapter found for connection type: ${connectionType}`);
     this.#connectionType = connectionType;
+  }
+
+  get name(): string {
+    return "AdapterNotFoundError";
   }
 
   get connectionType(): ValidConnectionType {

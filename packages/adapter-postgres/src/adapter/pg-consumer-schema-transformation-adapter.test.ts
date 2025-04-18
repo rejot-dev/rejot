@@ -6,10 +6,8 @@ import { z } from "zod";
 import type { OperationTransformationPair } from "@rejot-dev/contract/adapter";
 import type { PostgresConsumerSchemaTransformationSchema } from "../postgres-schemas";
 import { PostgresConsumerDataStoreSchemaManager } from "../data-store/pg-consumer-data-store-schema-manager";
-import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
 pgRollbackDescribe("PostgresConsumerSchemaTransformationAdapter", (ctx) => {
-  let syncManifest: SyncManifest;
   let connectionAdapter: PostgresConnectionAdapter;
 
   beforeEach(async () => {
@@ -21,30 +19,7 @@ pgRollbackDescribe("PostgresConsumerSchemaTransformationAdapter", (ctx) => {
       ...getTestConnectionConfig(),
     };
 
-    syncManifest = new SyncManifest([
-      {
-        slug: "test-manifest",
-        manifestVersion: 0,
-        connections: [
-          {
-            slug: "test-connection",
-            config: connectionConfig,
-          },
-        ],
-        dataStores: [
-          {
-            connectionSlug: "test-connection",
-            publicationName: "test-publication",
-            slotName: "test-slot",
-          },
-        ],
-        eventStores: [],
-        publicSchemas: [],
-        consumerSchemas: [],
-      },
-    ]);
-
-    connectionAdapter = new PostgresConnectionAdapter(syncManifest);
+    connectionAdapter = new PostgresConnectionAdapter();
     connectionAdapter.setConnection("test-connection", connectionConfig, ctx.client);
 
     // Insert some test data for schemas

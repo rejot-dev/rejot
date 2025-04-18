@@ -1,11 +1,10 @@
-import type { IRejotMcp, IFactory } from "@/rejot-mcp";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
-import type { McpState } from "@/state/mcp-state";
 import { getLogger } from "@rejot-dev/contract/logger";
-import type { IWorkspaceService } from "./workspace";
-
+import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
+import type { IFactory, IRejotMcp } from "../rejot-mcp";
+import type { McpState } from "../state/mcp-state";
 const log = getLogger("mcp.workspace.resources");
 
 export class WorkspaceResources implements IFactory {
@@ -16,7 +15,7 @@ export class WorkspaceResources implements IFactory {
   }
 
   async initialize(state: McpState): Promise<void> {
-    const { workspace, syncManifest } = await this.#workspaceService.initWorkspace(
+    const { workspace, syncManifest } = await this.#workspaceService.resolveWorkspace(
       state.projectDir,
     );
 

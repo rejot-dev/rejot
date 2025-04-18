@@ -7,7 +7,8 @@ import type {
   ManifestInfo,
 } from "@rejot-dev/contract-tools/manifest";
 import { workspaceToSyncManifest } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
-import { WorkspaceService } from "./workspace";
+import { WorkspaceService } from "@rejot-dev/contract/workspace";
+
 // Create a sample manifest
 const createBasicManifest = (slug: string) => ({
   slug,
@@ -131,7 +132,6 @@ describe("WorkspaceResources", () => {
     expect(resources.length).toBe(1);
     expect(resources[0].name).toBe("ReJot Manifests");
 
-    // Our improved MockMcpServer implementation now correctly reads the URI template
     expect(resources[0].template.uri).toBe("rejot://workspace/{+path}");
   });
 

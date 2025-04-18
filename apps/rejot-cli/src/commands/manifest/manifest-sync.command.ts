@@ -89,7 +89,7 @@ export class ManifestSyncCommand extends Command {
       const syncManifest = new SyncManifest(manifests);
 
       // Create adapters
-      const postgresAdapter = new PostgresConnectionAdapter(syncManifest);
+      const postgresAdapter = new PostgresConnectionAdapter();
       const transformationAdapter = new PostgresPublicSchemaTransformationAdapter(postgresAdapter);
       const consumerTransformationAdapter = new PostgresConsumerSchemaTransformationAdapter(
         postgresAdapter,

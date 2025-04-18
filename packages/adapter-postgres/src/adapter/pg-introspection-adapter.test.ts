@@ -2,13 +2,11 @@ import { test, expect, beforeEach } from "bun:test";
 import { getTestConnectionConfig, pgRollbackDescribe } from "../util/postgres-test-utils";
 import { PostgresIntrospectionAdapter } from "./pg-introspection-adapter";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter";
-import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
 pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
   let adapter: PostgresIntrospectionAdapter;
   let connectionAdapter: PostgresConnectionAdapter;
   let testConfig: ReturnType<typeof getTestConnectionConfig> & { connectionType: "postgres" };
-  let syncManifest: SyncManifest;
   const connectionSlug = "test-connection";
 
   beforeEach(async () => {
@@ -17,28 +15,7 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
       ...getTestConnectionConfig(),
     };
 
-    // Create a basic manifest for testing
-    syncManifest = new SyncManifest([
-      {
-        slug: "test-manifest",
-        manifestVersion: 1,
-        connections: [
-          {
-            slug: connectionSlug,
-            config: {
-              ...testConfig,
-              connectionType: "postgres",
-            },
-          },
-        ],
-        dataStores: [],
-        eventStores: [],
-        publicSchemas: [],
-        consumerSchemas: [],
-      },
-    ]);
-
-    connectionAdapter = new PostgresConnectionAdapter(syncManifest);
+    connectionAdapter = new PostgresConnectionAdapter();
     connectionAdapter.setConnection(connectionSlug, testConfig, ctx.client);
 
     adapter = new PostgresIntrospectionAdapter(connectionAdapter);

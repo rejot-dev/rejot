@@ -1,12 +1,18 @@
 import type { IManifestWorkspaceResolver, Workspace } from "@rejot-dev/contract-tools/manifest";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
-import { ReJotMcpError } from "@/state/mcp-error";
+import { ReJotError } from "@rejot-dev/contract/error";
 
 export interface IWorkspaceService {
-  initWorkspace(projectDir: string): Promise<{ workspace: Workspace; syncManifest: SyncManifest }>;
+  resolveWorkspace(
+    projectDir: string,
+  ): Promise<{ workspace: Workspace; syncManifest: SyncManifest }>;
 }
 
-export class WorkspaceInitializationError extends ReJotMcpError {}
+export class WorkspaceInitializationError extends ReJotError {
+  get name(): string {
+    return "WorkspaceInitializationError";
+  }
+}
 
 export class WorkspaceService implements IWorkspaceService {
   readonly #workspaceResolver: IManifestWorkspaceResolver;
@@ -15,7 +21,7 @@ export class WorkspaceService implements IWorkspaceService {
     this.#workspaceResolver = workspaceResolver;
   }
 
-  async initWorkspace(
+  async resolveWorkspace(
     projectDir: string,
   ): Promise<{ workspace: Workspace; syncManifest: SyncManifest }> {
     const workspace = await this.#workspaceResolver.resolveWorkspace({
@@ -36,16 +42,9 @@ export class WorkspaceService implements IWorkspaceService {
         syncManifest,
       };
     } catch (error) {
-      // Handle sync manifest creation errors
-      if (error instanceof Error) {
-        throw new WorkspaceInitializationError("Failed to create sync manifest").withHint(
-          error.message,
-        );
-      }
-
-      throw new WorkspaceInitializationError(
-        error instanceof Error ? error.message : String(error),
-      );
+      throw new WorkspaceInitializationError("Failed to create sync manifest", {
+        cause: error,
+      });
     }
   }
 }

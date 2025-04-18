@@ -47,16 +47,9 @@ export class ManifestInfoCommand extends Command {
       const errors = verifyManifests([manifest]);
 
       if (!errors.isValid) {
-        this.log("Manifest contains errors:");
-        for (const error of errors.errors) {
-          this.log(`  - ${error.message}`);
-          if (error.hint) {
-            this.log(`      Hint: ${error.hint.message}`);
-            if (error.hint.suggestions) {
-              this.log(`      Suggestions: ${error.hint.suggestions}`);
-            }
-          }
-          this.log("");
+        const errorOutput = ManifestPrinter.printManifestErrors(errors);
+        for (const line of errorOutput) {
+          this.log(line);
         }
         this.exit(1);
       }
