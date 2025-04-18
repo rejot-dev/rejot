@@ -1,6 +1,6 @@
 {
   "name": "@rejot-dev/adapter-postgres",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "private": false,
   "license": "Apache-2.0",
   "repository": {
