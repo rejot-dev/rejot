@@ -17,7 +17,8 @@
     "./manifest/manifest-workspace-resolver": "./manifest/manifest-workspace-resolver.ts",
     "./manifest/manifest.fs": "./manifest/manifest.fs.ts",
     "./collect/file-finder": "./collect/file-finder.ts",
-    "./collect/git-ignore": "./collect/git-ignore.ts"
+    "./collect/git-ignore": "./collect/git-ignore.ts",
+    "./collect/vibe-collect": "./collect/vibe-collect.ts"
   },
   "type": "module",
   "dependencies": {

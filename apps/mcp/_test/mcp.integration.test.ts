@@ -161,7 +161,6 @@ describe("MCP Integration Tests", () => {
       });
       expectContentErrorFree(collectResult.content);
       expect(collectResult.content[0].type).toBe("text");
-      console.dir(collectResult.content, { depth: null });
 
       // Remove connection
       const removeResult = await assertToolCall("rejot_manifest_connection_remove", {
@@ -179,7 +178,7 @@ describe("MCP Integration Tests", () => {
       expect(finalInfoResult.content[0].text).toContain("@test-org/service1"); // Sub manifest still there
       expect(finalInfoResult.content[0].text).not.toContain("test-postgres"); // Verify connection is no longer listed
 
-      testSuccess = false;
+      testSuccess = true;
     },
   );
 });

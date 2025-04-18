@@ -11,8 +11,22 @@ export interface SearchResult {
 
 export interface SearchOptions {
   ignorePatterns?: GitIgnorePattern[];
+  caseSensitive?: boolean;
 }
 
+/**
+ * Searches for specified terms within files in a directory and its subdirectories.
+ *
+ * @param dir - The directory to search in. Can be absolute or relative path.
+ * @param searchTerms - Array of terms to search for in the files.
+ * @param options - Optional configuration for the search:
+ *                 - ignorePatterns: Patterns to exclude from search (like .gitignore patterns)
+ *                 - caseSensitive: Whether the search should be case-sensitive (default: false)
+ * @returns Promise<SearchResult[]> - Array of results containing:
+ *          - file: Absolute path to the file where match was found
+ *          - line: Line number of the match
+ *          - match: The matched line content
+ */
 export async function searchInDirectory(
   dir: string,
   searchTerms: string[],
@@ -27,14 +41,22 @@ export async function searchInDirectory(
 
     if (isWindows) {
       // Windows findstr doesn't support excluding patterns directly
-      // /S = recursive, /N = line numbers, /I = case-insensitive
-      args.push("/S", "/N", "/I");
+      // /S = recursive, /N = line numbers, /I = case-insensitive (unless caseSensitive is true)
+      args.push("/S", "/N");
+      if (!options.caseSensitive) {
+        args.push("/I");
+      }
       args.push(...searchTerms.map((term) => `"${term}"`));
       args.push("*.*");
     } else {
       // -r = recursive, -n = line numbers, -I = skip binary files
       // -e allows multiple patterns
-      args.push("-rniI");
+      args.push("-rnI");
+
+      // Add case sensitivity flag
+      if (!options.caseSensitive) {
+        args.push("-i");
+      }
 
       // Add exclude patterns for grep
       if (options.ignorePatterns?.length) {

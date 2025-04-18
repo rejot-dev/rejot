@@ -16,6 +16,7 @@
   "exports": {
     "./adapter": "./adapter/adapter.ts",
     "./collect": "./collect/collect.ts",
+    "./collect/mock": "./collect/mock-schema-collector.ts",
     "./consumer-schema": "./consumer-schema/consumer-schema.ts",
     "./cursor": "./cursor/cursors.ts",
     "./event-store": "./event-store/event-store.ts",

@@ -1,8 +1,7 @@
 import { zodToJsonSchema } from "zod-to-json-schema";
-
-import type { z } from "zod";
+import { z } from "zod";
 import { PublicSchemaSchema } from "../manifest/manifest.ts";
-import type { JsonSchemaSchema } from "../json-schema/json-schema.ts";
+import { JsonSchemaSchema } from "../json-schema/json-schema.ts";
 
 export type PublicSchemaTransformation = {
   transformationType: "postgresql";
@@ -15,17 +14,21 @@ export type Version = {
   minor: number;
 };
 
-export type CreatePublicSchemaOptions<T extends z.ZodSchema> = {
+export type CreatePublicSchemaOptionsBase = {
   source: {
     dataStoreSlug: string;
     tables: string[];
   };
-
-  outputSchema: T;
-
   transformations: PublicSchemaTransformation[];
-
   version: Version;
+};
+
+export type CreatePublicSchemaZodOptions<T extends z.ZodSchema> = CreatePublicSchemaOptionsBase & {
+  outputSchema: T;
+};
+
+export type CreatePublicSchemaJsonOptions = CreatePublicSchemaOptionsBase & {
+  outputSchema: z.infer<typeof JsonSchemaSchema>;
 };
 
 export type PublicSchemaOptions = {
@@ -33,13 +36,12 @@ export type PublicSchemaOptions = {
     dataStoreSlug: string;
     tables: string[];
   };
-
   outputSchema: z.infer<typeof JsonSchemaSchema>;
-
   transformations: PublicSchemaTransformation[];
-
   version: Version;
 };
+
+export type PublicSchemaData = z.infer<typeof PublicSchemaSchema>;
 
 export class InvalidPublicationError extends Error {
   constructor(message: string) {
@@ -47,77 +49,65 @@ export class InvalidPublicationError extends Error {
   }
 }
 
-export class PublicSchema {
-  #name: string;
-  #options: PublicSchemaOptions;
-  #definitionFile?: string;
-
-  constructor(name: string, options: PublicSchemaOptions) {
-    if (name.length === 0) {
-      throw new InvalidPublicationError("Publication name cannot be empty");
-    }
-
-    if (options.source.tables.length === 0) {
-      throw new InvalidPublicationError("Publication must have at least one table");
-    }
-
-    if (options.transformations.length === 0) {
-      throw new InvalidPublicationError("Publication must have at least one transformation");
-    }
-
-    this.#name = name;
-    this.#options = options;
+export function validatePublicSchema(name: string, options: PublicSchemaOptions): void {
+  if (name.length === 0) {
+    throw new InvalidPublicationError("Publication name cannot be empty");
   }
 
-  set definitionFile(definitionFile: string) {
-    this.#definitionFile = definitionFile;
+  if (options.source.tables.length === 0) {
+    throw new InvalidPublicationError("Publication must have at least one table");
   }
 
-  get definitionFile(): string | undefined {
-    return this.#definitionFile;
-  }
-
-  get data(): z.infer<typeof PublicSchemaSchema> {
-    const { source, outputSchema, transformations, version } = this.#options;
-
-    return {
-      name: this.#name,
-      source,
-      outputSchema,
-      transformations,
-      version,
-      definitionFile: this.#definitionFile,
-    };
+  if (options.transformations.length === 0) {
+    throw new InvalidPublicationError("Publication must have at least one transformation");
   }
 }
 
 export function createPublicSchema<T extends z.ZodSchema>(
   publicSchemaName: string,
-  options: CreatePublicSchemaOptions<T>,
-): PublicSchema {
-  // Transform the Zod schema to JSON Schema
-  const jsonSchema = zodToJsonSchema(options.outputSchema);
+  options: CreatePublicSchemaZodOptions<T>,
+): PublicSchemaData;
+export function createPublicSchema(
+  publicSchemaName: string,
+  options: CreatePublicSchemaJsonOptions,
+): PublicSchemaData;
+export function createPublicSchema<T extends z.ZodSchema>(
+  publicSchemaName: string,
+  options: CreatePublicSchemaZodOptions<T> | CreatePublicSchemaJsonOptions,
+): PublicSchemaData {
+  // Transform the Zod schema to JSON Schema if it's a Zod schema
+  const jsonSchema =
+    options.outputSchema instanceof z.ZodSchema
+      ? zodToJsonSchema(options.outputSchema)
+      : options.outputSchema;
 
-  // Create PublicSchema with the transformed schema
-  return new PublicSchema(publicSchemaName, {
+  const schemaOptions: PublicSchemaOptions = {
     source: options.source,
     outputSchema: jsonSchema,
     transformations: options.transformations,
     version: options.version,
-  });
+  };
+
+  validatePublicSchema(publicSchemaName, schemaOptions);
+
+  return {
+    name: publicSchemaName,
+    source: schemaOptions.source,
+    outputSchema: schemaOptions.outputSchema,
+    transformations: schemaOptions.transformations,
+    version: schemaOptions.version,
+  };
 }
 
-export function deserializePublicSchema(schema: string): PublicSchema {
-  const { name, source, outputSchema, transformations, version } = PublicSchemaSchema.parse(
-    JSON.parse(schema),
-  );
-
-  return new PublicSchema(name, {
-    source,
-    outputSchema,
-    transformations,
-    version,
+export function deserializePublicSchema(schema: string): PublicSchemaData {
+  const data = PublicSchemaSchema.parse(JSON.parse(schema));
+  validatePublicSchema(data.name, {
+    source: data.source,
+    outputSchema: data.outputSchema,
+    transformations: data.transformations,
+    version: data.version,
   });
+  return data;
 }
 
 export { type IPublicSchemaTransformationRepository } from "./public-schema-transformation.repository";

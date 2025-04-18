@@ -12,12 +12,20 @@ export const LogLevel = {
 export type LogLevelName = keyof typeof LogLevel;
 export type LogLevel = (typeof LogLevel)[LogLevelName];
 
+function serializeArg(arg: unknown): unknown {
+  if (arg instanceof Map) {
+    return Object.fromEntries(arg.entries());
+  }
+  return arg;
+}
+
 export function formatLogMessage(type: LogLevel, message: string, ...args: unknown[]): string {
   const levelName = Object.entries(LogLevel).find(([_, value]) => value === type)?.[0] ?? "UNKNOWN";
   let logMessage = `[${levelName}] ${new Date().toISOString()} - ${message}`;
 
   if (args.length > 0) {
-    logMessage += ` ${JSON.stringify(args)}`;
+    const serializedArgs = args.map(serializeArg);
+    logMessage += ` ${JSON.stringify(serializedArgs)}`;
   }
 
   logMessage += "\n";
