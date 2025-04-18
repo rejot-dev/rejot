@@ -1,14 +1,12 @@
-import { glob } from "glob";
-
 import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
 import { z } from "zod";
-import { DEFAULT_MANIFEST_FILENAME, readManifest } from "./manifest.fs";
-import { dirname, join, relative } from "node:path";
+import { DEFAULT_MANIFEST_FILENAME, readManifest, readManifestOrGetEmpty } from "./manifest.fs";
+import { dirname, join } from "node:path";
 import { findManifestPath } from "./manifest.fs";
 import { SyncManifest, type SyncManifestOptions } from "@rejot-dev/contract/sync-manifest";
 import { getLogger } from "@rejot-dev/contract/logger";
 
-const log = getLogger("manifest.workspace-resolver");
+const log = getLogger(import.meta.url);
 
 export interface ManifestWithPath {
   /** Path is relative to the rootPath in the workspace. */
@@ -16,7 +14,8 @@ export interface ManifestWithPath {
   manifest: z.infer<typeof SyncManifestSchema>;
 }
 
-export interface Workspace {
+export interface WorkspaceDefinition {
+  /** Absolute path */
   rootPath: string;
   ancestor: ManifestWithPath;
   children: ManifestWithPath[];
@@ -25,7 +24,6 @@ export interface Workspace {
 export interface ResolveWorkspaceOptions {
   startDir?: string;
   filename?: string;
-  absolutePaths?: boolean;
 }
 
 export interface ManifestInfo {
@@ -35,14 +33,14 @@ export interface ManifestInfo {
 }
 
 export interface IManifestWorkspaceResolver {
-  resolveWorkspace(options?: ResolveWorkspaceOptions): Promise<Workspace | null>;
+  resolveWorkspace(options?: ResolveWorkspaceOptions): Promise<WorkspaceDefinition | null>;
   getManifestInfo(filePath: string): Promise<ManifestInfo>;
-  workspaceToSyncManifest(workspace: Workspace): SyncManifest;
+  workspaceToSyncManifest(workspace: WorkspaceDefinition): SyncManifest;
 }
 
 export class ManifestWorkspaceResolver implements IManifestWorkspaceResolver {
   async getManifestInfo(filePath: string): Promise<ManifestInfo> {
-    const manifest = await readManifest(filePath);
+    const manifest = await readManifestOrGetEmpty(filePath);
     const rootPath = dirname(filePath);
 
     return {
@@ -52,12 +50,10 @@ export class ManifestWorkspaceResolver implements IManifestWorkspaceResolver {
     };
   }
 
-  async resolveWorkspace(options: ResolveWorkspaceOptions = {}): Promise<Workspace | null> {
-    const {
-      startDir = process.cwd(),
-      filename = DEFAULT_MANIFEST_FILENAME,
-      absolutePaths = false,
-    } = options;
+  async resolveWorkspace(
+    options: ResolveWorkspaceOptions = {},
+  ): Promise<WorkspaceDefinition | null> {
+    const { startDir = process.cwd(), filename = DEFAULT_MANIFEST_FILENAME } = options;
 
     // Find the ancestor manifest path
     const manifestPath = await findManifestPath(startDir, filename);
@@ -68,13 +64,13 @@ export class ManifestWorkspaceResolver implements IManifestWorkspaceResolver {
 
     log.info("resolveWorkspace found a manifest", { manifestPath });
 
-    const ancestorManifest = await readManifest(manifestPath);
+    const ancestorManifest = await readManifestOrGetEmpty(manifestPath);
 
     const rootPath = dirname(manifestPath);
-    const result: Workspace = {
+    const result: WorkspaceDefinition = {
       rootPath,
       ancestor: {
-        path: absolutePaths ? manifestPath : filename,
+        path: filename,
         manifest: ancestorManifest,
       },
       children: [],
@@ -85,29 +81,17 @@ export class ManifestWorkspaceResolver implements IManifestWorkspaceResolver {
       return result;
     }
 
-    // Find all child manifests based on workspace patterns
-    const childPaths: string[] = [];
-
-    for (const workspacePattern of ancestorManifest.workspaces) {
-      const absolutePattern = join(rootPath, workspacePattern);
-      const directories = await glob(absolutePattern);
-
-      for (const directory of directories) {
-        const childManifestPath = await findManifestPath(directory);
-        if (childManifestPath && childManifestPath !== manifestPath) {
-          childPaths.push(childManifestPath);
-        }
-      }
-    }
-
     // Read child manifests
-    for (const childPath of childPaths) {
-      const childManifest = await readManifest(childPath);
+    for (const childPath of ancestorManifest.workspaces) {
+      const absoluteChildPath = join(rootPath, childPath);
 
-      const pathToUse = absolutePaths ? childPath : relative(rootPath, childPath);
+      const childManifest = await readManifest(absoluteChildPath);
+      if (!childManifest) {
+        continue;
+      }
 
       result.children.push({
-        path: pathToUse,
+        path: childPath, // Use the original relative path from the manifest
         manifest: childManifest,
       });
     }
@@ -115,13 +99,16 @@ export class ManifestWorkspaceResolver implements IManifestWorkspaceResolver {
     return result;
   }
 
-  workspaceToSyncManifest(workspace: Workspace, options: SyncManifestOptions = {}): SyncManifest {
+  workspaceToSyncManifest(
+    workspace: WorkspaceDefinition,
+    options: SyncManifestOptions = {},
+  ): SyncManifest {
     return workspaceToSyncManifest(workspace, options);
   }
 }
 
 export function workspaceToSyncManifest(
-  workspace: Workspace,
+  workspace: WorkspaceDefinition,
   options: SyncManifestOptions = {},
 ): SyncManifest {
   return new SyncManifest(
@@ -130,7 +117,10 @@ export function workspaceToSyncManifest(
   );
 }
 
-export function getManifestBySlug(workspace: Workspace, slug: string): ManifestWithPath | null {
+export function getManifestBySlug(
+  workspace: WorkspaceDefinition,
+  slug: string,
+): ManifestWithPath | null {
   if (workspace.ancestor.manifest.slug === slug) {
     return workspace.ancestor;
   }

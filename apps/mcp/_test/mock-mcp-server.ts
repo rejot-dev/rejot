@@ -315,7 +315,7 @@ export class MockRejotMcp extends RejotMcp implements IRejotMcp {
     );
   }
 
-  get projectDir(): string {
+  get workspaceDirectoryPath(): string {
     return this.#projectDir;
   }
 

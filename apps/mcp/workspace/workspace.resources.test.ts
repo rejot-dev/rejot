@@ -3,7 +3,7 @@ import { MockRejotMcp } from "../_test/mock-mcp-server";
 import { WorkspaceResources } from "./workspace.resources";
 import type {
   IManifestWorkspaceResolver,
-  Workspace,
+  WorkspaceDefinition,
   ManifestInfo,
 } from "@rejot-dev/contract-tools/manifest";
 import { workspaceToSyncManifest } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
@@ -28,7 +28,9 @@ const createComplexManifest = (slug: string) => ({
 });
 
 // Create a mock of the IManifestWorkspaceResolver interface
-const createMockWorkspaceResolver = (testWorkspace: Workspace): IManifestWorkspaceResolver => {
+const createMockWorkspaceResolver = (
+  testWorkspace: WorkspaceDefinition,
+): IManifestWorkspaceResolver => {
   return {
     resolveWorkspace: mock(() => Promise.resolve(testWorkspace)),
     getManifestInfo: mock(
@@ -39,12 +41,14 @@ const createMockWorkspaceResolver = (testWorkspace: Workspace): IManifestWorkspa
           rootPath: "/test/root",
         }),
     ),
-    workspaceToSyncManifest: mock((workspace: Workspace) => workspaceToSyncManifest(workspace)),
+    workspaceToSyncManifest: mock((workspace: WorkspaceDefinition) =>
+      workspaceToSyncManifest(workspace),
+    ),
   };
 };
 
 // Helper to create a test workspace
-const createTestWorkspace = (): Workspace => ({
+const createTestWorkspace = (): WorkspaceDefinition => ({
   rootPath: "/test/root",
   ancestor: {
     path: "rejot-manifest.json",
@@ -59,7 +63,7 @@ const createTestWorkspace = (): Workspace => ({
 });
 
 // Helper to create a complex test workspace
-const createComplexTestWorkspace = (): Workspace => ({
+const createComplexTestWorkspace = (): WorkspaceDefinition => ({
   rootPath: "/complex/root",
   ancestor: {
     path: "rejot-manifest.json",

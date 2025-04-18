@@ -1,30 +1,34 @@
-import type { Workspace } from "@rejot-dev/contract-tools/manifest";
+import type { WorkspaceDefinition } from "@rejot-dev/contract-tools/manifest";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 import { WorkspaceNotInitializedError, CombinedRejotMcpError } from "./mcp-error";
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { ReJotError } from "@rejot-dev/contract/error";
+import { workspaceToSyncManifest } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 
 const log = getLogger("mcp.state");
 
 export type McpStateStatus = "uninitialized" | "initializing" | "ready" | "error";
 
 export class McpState {
-  readonly projectDir: string;
+  readonly #workspaceDirectoryPath: string;
   #initializationErrors: ReJotError[] = [];
 
   // Core state
-  #workspace: Workspace | undefined;
-  #syncManifest: SyncManifest | undefined;
+  #workspace: WorkspaceDefinition | undefined;
 
-  constructor(projectDir: string) {
-    this.projectDir = projectDir;
+  constructor(workspaceDirectoryPath: string) {
+    this.#workspaceDirectoryPath = workspaceDirectoryPath;
+  }
+
+  get workspaceDirectoryPath(): string {
+    return this.#workspaceDirectoryPath;
   }
 
   get hasWorkspace(): boolean {
     return !!this.#workspace;
   }
 
-  get workspace(): Workspace {
+  get workspace(): WorkspaceDefinition {
     if (!this.#workspace) {
       throw new WorkspaceNotInitializedError("McpState / Workspace not initialized").withHint(
         "A workspace has to be initialized first. By initiating the creation of a manifest.",
@@ -34,12 +38,7 @@ export class McpState {
   }
 
   get syncManifest(): SyncManifest {
-    if (!this.#syncManifest) {
-      throw new WorkspaceNotInitializedError("McpState / Sync manifest not initialized").withHint(
-        "A sync manifest has to be initialized first. By initiating the creation of a manifest.",
-      );
-    }
-    return this.#syncManifest;
+    return workspaceToSyncManifest(this.workspace);
   }
 
   get initializationErrors(): ReJotError[] {
@@ -50,12 +49,8 @@ export class McpState {
     this.#initializationErrors = [];
   }
 
-  setWorkspace(workspace: Workspace): void {
+  setWorkspace(workspace: WorkspaceDefinition): void {
     this.#workspace = workspace;
-  }
-
-  setSyncManifest(syncManifest: SyncManifest): void {
-    this.#syncManifest = syncManifest;
   }
 
   addInitializationError(error: ReJotError): void {

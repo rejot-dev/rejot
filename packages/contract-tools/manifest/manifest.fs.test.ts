@@ -1,5 +1,5 @@
 import { test, expect, beforeAll, afterAll } from "bun:test";
-import { initManifest, readManifest, writeManifest } from "./manifest.fs";
+import { initManifest, readManifestOrGetEmpty, writeManifest } from "./manifest.fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -18,7 +18,7 @@ afterAll(async () => {
 });
 
 test("writeManifest - overrides manifest", async () => {
-  const manifest = await readManifest(manifestPath);
+  const manifest = await readManifestOrGetEmpty(manifestPath);
 
   expect(manifest.slug).toBe("test-manifest");
 
@@ -38,7 +38,7 @@ test("writeManifest - overrides manifest", async () => {
 
   await writeManifest(manifest, manifestPath);
 
-  const manifest2 = await readManifest(manifestPath);
+  const manifest2 = await readManifestOrGetEmpty(manifestPath);
 
   expect(manifest2.connections).toEqual(manifest.connections);
 });
