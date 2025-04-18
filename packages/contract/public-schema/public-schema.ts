@@ -50,6 +50,7 @@ export class InvalidPublicationError extends Error {
 export class PublicSchema {
   #name: string;
   #options: PublicSchemaOptions;
+  #definitionFile?: string;
 
   constructor(name: string, options: PublicSchemaOptions) {
     if (name.length === 0) {
@@ -68,6 +69,14 @@ export class PublicSchema {
     this.#options = options;
   }
 
+  set definitionFile(definitionFile: string) {
+    this.#definitionFile = definitionFile;
+  }
+
+  get definitionFile(): string | undefined {
+    return this.#definitionFile;
+  }
+
   get data(): z.infer<typeof PublicSchemaSchema> {
     const { source, outputSchema, transformations, version } = this.#options;
 
@@ -77,6 +86,7 @@ export class PublicSchema {
       outputSchema,
       transformations,
       version,
+      definitionFile: this.#definitionFile,
     };
   }
 }

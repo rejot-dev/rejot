@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 
 import { existsSync } from "node:fs";
 
@@ -9,11 +9,15 @@ import { getLogger } from "../logger/logger.ts";
 
 const log = getLogger("collect");
 
-export async function collectPublicSchemas(modulePath: string): Promise<PublicSchema[]> {
+export async function collectPublicSchemas(
+  manifestPath: string,
+  modulePath: string,
+): Promise<PublicSchema[]> {
   const resolvedModulePath = resolve(process.cwd(), modulePath);
   if (!existsSync(resolvedModulePath)) {
-    throw new Error(`Module path ${resolvedModulePath} does not exist`);
+    throw new Error(`Module path '${resolvedModulePath}' does not exist`);
   }
+
   // TODO(Wilco): this imports Typescript directly, so will only work in Bun and Node from
   //              version >V22.6.0 with --experimental-strip-types
   //              In the future we can use ESBuild to transpile first.
@@ -27,6 +31,7 @@ export async function collectPublicSchemas(modulePath: string): Promise<PublicSc
   }
 
   if (module.default instanceof PublicSchema) {
+    console.log("not an array, not instanceof PublicSchema");
     publicSchemas.push(module.default);
   } else {
     for (const item of Object.values(module.default)) {
@@ -38,10 +43,12 @@ export async function collectPublicSchemas(modulePath: string): Promise<PublicSc
         }
       } else if (item instanceof PublicSchema) {
         publicSchemas.push(item);
-      } else {
-        log.warn(`Found unidentified Public Schema in ${modulePath}: ${JSON.stringify(item)}`);
       }
     }
+  }
+
+  for (const schema of publicSchemas) {
+    schema.definitionFile = relative(dirname(manifestPath), modulePath);
   }
 
   log.info(`Collected ${publicSchemas.length} public schemas`);
@@ -49,10 +56,13 @@ export async function collectPublicSchemas(modulePath: string): Promise<PublicSc
   return publicSchemas;
 }
 
-export async function collectConsumerSchemas(modulePath: string): Promise<ConsumerSchema[]> {
+export async function collectConsumerSchemas(
+  manifestPath: string,
+  modulePath: string,
+): Promise<ConsumerSchema[]> {
   const resolvedModulePath = resolve(process.cwd(), modulePath);
   if (!existsSync(resolvedModulePath)) {
-    throw new Error(`Module path ${resolvedModulePath} does not exist`);
+    throw new Error(`Module path '${resolvedModulePath}' does not exist`);
   }
   const module = await import(resolvedModulePath);
 
@@ -74,10 +84,12 @@ export async function collectConsumerSchemas(modulePath: string): Promise<Consum
         }
       } else if (item instanceof ConsumerSchema) {
         consumerSchemas.push(item);
-      } else {
-        log.warn(`Found unidentified Consumer Schema in ${modulePath}: ${JSON.stringify(item)}`);
       }
     }
+  }
+
+  for (const schema of consumerSchemas) {
+    schema.definitionFile = relative(dirname(manifestPath), modulePath);
   }
 
   log.info(`Collected ${consumerSchemas.length} consumer schemas`);

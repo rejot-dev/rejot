@@ -11,6 +11,7 @@ import { WorkspaceService } from "../../packages/contract/workspace/workspace";
 import { ManifestConnectionTool } from "./tools/manifest-connection/manifest-connection.tool";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ManifestInitTool } from "./tools/manifest/manifest-init.tool";
+import { CollectTool } from "./collect/collect.tool";
 
 // Open the log file when starting up
 const args = parseArgs(process.argv.slice(2));
@@ -59,6 +60,7 @@ const rejotMcp = new RejotMcp(args.project, server, [
   new WorkspaceTool(workspaceService),
   new ManifestConnectionTool(),
   new ManifestInitTool(),
+  new CollectTool(workspaceService),
 ]);
 
 rejotMcp

@@ -32,7 +32,7 @@ export class InvalidConsumerSchemaError extends Error {
 
 export class ConsumerSchema {
   #options: z.infer<typeof ConsumerSchemaSchema>;
-
+  #definitionFile?: string;
   constructor(options: CreateConsumerSchemaOptions) {
     const source = options.source;
     if ("manifestSlug" in source) {
@@ -70,8 +70,19 @@ export class ConsumerSchema {
     };
   }
 
+  set definitionFile(definitionFile: string) {
+    this.#definitionFile = definitionFile;
+  }
+
+  get definitionFile(): string | undefined {
+    return this.#definitionFile;
+  }
+
   get data(): z.infer<typeof ConsumerSchemaSchema> {
-    return this.#options;
+    return {
+      ...this.#options,
+      definitionFile: this.#definitionFile,
+    };
   }
 }
 

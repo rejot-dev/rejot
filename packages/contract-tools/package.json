@@ -15,7 +15,9 @@
     "./manifest": "./manifest/index.ts",
     "./manifest/manifest-printer": "./manifest/manifest-printer.ts",
     "./manifest/manifest-workspace-resolver": "./manifest/manifest-workspace-resolver.ts",
-    "./manifest/manifest.fs": "./manifest/manifest.fs.ts"
+    "./manifest/manifest.fs": "./manifest/manifest.fs.ts",
+    "./collect/file-finder": "./collect/file-finder.ts",
+    "./collect/git-ignore": "./collect/git-ignore.ts"
   },
   "type": "module",
   "dependencies": {

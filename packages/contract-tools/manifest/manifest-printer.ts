@@ -1,7 +1,13 @@
 import { z } from "zod";
-import { SyncManifestSchema, ConnectionSchema } from "@rejot-dev/contract/manifest";
+import {
+  SyncManifestSchema,
+  ConnectionSchema,
+  type PublicSchemaSchema,
+  type ConsumerSchemaSchema,
+} from "@rejot-dev/contract/manifest";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 import type { WorkspaceDefinition } from "./manifest-workspace-resolver";
+import { JsonSchemaPrinter } from "@rejot-dev/contract/json-schema";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 type Connection = z.infer<typeof ConnectionSchema>;
@@ -151,6 +157,89 @@ export class ManifestPrinter {
         }
       }
       output.push(message);
+    }
+
+    return output;
+  }
+
+  static printPublicSchema(publicSchemas: Array<z.infer<typeof PublicSchemaSchema>>): string[] {
+    const output: string[] = ["Public Schemas:"];
+
+    if (publicSchemas.length === 0) {
+      output.push("  No public schemas defined");
+      return output;
+    }
+
+    for (const publicSchema of publicSchemas) {
+      output.push(
+        `  - ${publicSchema.name} (v${publicSchema.version.major}.${publicSchema.version.minor})`,
+      );
+
+      output.push("    Source Tables:");
+      if (publicSchema.source.tables.length === 0) {
+        output.push("      No source tables defined");
+      } else {
+        for (const table of publicSchema.source.tables) {
+          output.push(`        - ${table}`);
+        }
+      }
+
+      output.push(`    Output Schema:`);
+      output.push(...JsonSchemaPrinter.printJsonSchema(publicSchema.outputSchema, 3));
+
+      output.push("    Transformations:");
+      if (publicSchema.transformations.length === 0) {
+        output.push("      No transformations defined");
+      } else {
+        // TODO: Enhance transformation printing if needed
+        output.push(`      ${publicSchema.transformations.length} transformation(s) configured`);
+      }
+
+      if (publicSchema.definitionFile) {
+        output.push(`    Definition File: ${publicSchema.definitionFile}`);
+      }
+
+      output.push(""); // Add a blank line between schemas
+    }
+
+    return output;
+  }
+
+  static printConsumerSchema(
+    consumerSchemas: Array<z.infer<typeof ConsumerSchemaSchema>>,
+  ): string[] {
+    const output: string[] = ["Consumer Schemas:"];
+
+    if (consumerSchemas.length === 0) {
+      output.push("  No consumer schemas defined");
+      return output;
+    }
+
+    for (const consumerSchema of consumerSchemas) {
+      output.push("  - Consumer Schema:"); // Indent each consumer schema
+      output.push("    Source:");
+      if (consumerSchema.sourceManifestSlug) {
+        output.push(`      External Manifest: ${consumerSchema.sourceManifestSlug}`);
+      }
+      output.push(
+        `      Public Schema: ${consumerSchema.publicSchema.name} (v${consumerSchema.publicSchema.majorVersion})`,
+      );
+
+      output.push(`    Destination Data Store: ${consumerSchema.destinationDataStoreSlug}`);
+
+      output.push("    Transformations:");
+      if (consumerSchema.transformations.length === 0) {
+        output.push("      No transformations defined");
+      } else {
+        // TODO: Enhance transformation printing if needed
+        output.push(`      ${consumerSchema.transformations.length} transformation(s) configured`);
+      }
+
+      if (consumerSchema.definitionFile) {
+        output.push(`    Definition File: ${consumerSchema.definitionFile}`);
+      }
+
+      output.push(""); // Add a blank line between schemas
     }
 
     return output;
