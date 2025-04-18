@@ -9,7 +9,9 @@
     "directory": "packages/contract"
   },
   "scripts": {
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "prepack": "bun run manifest-jsonschema.ts > schema.json",
+    "manifest:schema": "bun run manifest-jsonschema.ts"
   },
   "exports": {
     "./adapter": "./adapter/adapter.ts",

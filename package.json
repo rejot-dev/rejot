@@ -5,8 +5,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "pre-commit": "bunx lefthook run pre-commit",
-    "check-ts-changes": "bun run scripts/check-ts-changes.ts",
-    "manifest:schema": "bun run packages/contract-tools/manifest/manifest-jsonschema.ts"
+    "check-ts-changes": "bun run scripts/check-ts-changes.ts"
   },
   "homepage": "https://rejot.dev/",
   "repository": {
