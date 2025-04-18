@@ -61,7 +61,7 @@ export const PublicSchemaSchema = z.object({
     major: z.number(),
     minor: z.number(),
   }),
-  definitionFile: z.string().describe("Path to the source file defining this schema.").optional(),
+  definitionFile: z.string().optional().describe("Path to the source file defining this schema."),
 });
 
 export const ConsumerSchemaSchema = z.object({

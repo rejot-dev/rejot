@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
+import { mkdtemp, rm, writeFile, mkdir, realpath } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, isAbsolute } from "node:path";
 import { searchInDirectory } from "./file-finder";
 import type { GitIgnorePattern } from "./git-ignore";
 
@@ -115,6 +115,70 @@ describe("file-finder", () => {
       const results = await searchInDirectory(tmpDir, ["findMe"]);
       expect(results).toHaveLength(1);
       expect(results[0].match.trim()).toBe("findMe");
+    });
+
+    it("should return absolute paths regardless of input path type", async () => {
+      // Create a test file
+      await writeFile(join(tmpDir, "path-test.txt"), "findMe");
+
+      // Store original working directory
+      const originalCwd = process.cwd();
+
+      try {
+        // Test with relative path by changing into tmpDir first
+        process.chdir(tmpDir);
+        const resultsFromRelative = await searchInDirectory(".", ["findMe"]);
+
+        // Test with absolute path input
+        const resultsFromAbsolute = await searchInDirectory(tmpDir, ["findMe"]);
+
+        // Both results should be absolute paths
+        expect(isAbsolute(resultsFromRelative[0].file)).toBe(true);
+        expect(isAbsolute(resultsFromAbsolute[0].file)).toBe(true);
+
+        // Both paths should point to the same file (handle macOS /private symlink)
+        const realPathRelative = await realpath(resultsFromRelative[0].file);
+        const realPathAbsolute = await realpath(resultsFromAbsolute[0].file);
+        expect(realPathRelative).toBe(realPathAbsolute);
+      } finally {
+        // Restore original working directory
+        process.chdir(originalCwd);
+      }
+    });
+
+    describe("case sensitivity", () => {
+      beforeEach(async () => {
+        // Create test file with mixed case content
+        const content = `
+          UPPERCASE
+          lowercase
+          MixedCase
+          mixedcase
+        `;
+        await writeFile(join(tmpDir, "case-test.txt"), content);
+      });
+
+      it("should be case-insensitive by default", async () => {
+        const results = await searchInDirectory(tmpDir, ["mixedcase"]);
+        expect(results).toHaveLength(2);
+        expect(results.map((r) => r.match.trim())).toContain("MixedCase");
+        expect(results.map((r) => r.match.trim())).toContain("mixedcase");
+      });
+
+      it("should respect case sensitivity when enabled", async () => {
+        const results = await searchInDirectory(tmpDir, ["mixedcase"], { caseSensitive: true });
+        expect(results).toHaveLength(1);
+        expect(results[0].match.trim()).toBe("mixedcase");
+      });
+
+      it("should handle multiple case-sensitive patterns", async () => {
+        const results = await searchInDirectory(tmpDir, ["UPPERCASE", "lowercase"], {
+          caseSensitive: true,
+        });
+        expect(results).toHaveLength(2);
+        expect(results.map((r) => r.match.trim())).toContain("UPPERCASE");
+        expect(results.map((r) => r.match.trim())).toContain("lowercase");
+      });
     });
   });
 });

@@ -9,8 +9,8 @@ import {
 import { validateManifest } from "@rejot-dev/sync/validate-manifest";
 import { resolve } from "node:path";
 import { NoopLogger, setLogger } from "@rejot-dev/contract/logger";
-import type { PublicSchema } from "@rejot-dev/contract/public-schema";
-import type { ConsumerSchema } from "@rejot-dev/contract/consumer-schema";
+import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
+import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
 import { exists } from "node:fs/promises";
 
 export default class Collect extends Command {
@@ -70,8 +70,8 @@ export default class Collect extends Command {
       throw error;
     }
 
-    const allPublicSchemas: PublicSchema[] = [];
-    const allConsumerSchemas: ConsumerSchema[] = [];
+    const allPublicSchemas: PublicSchemaData[] = [];
+    const allConsumerSchemas: ConsumerSchemaData[] = [];
 
     // Process each schema file
     for (const schemaPath of argv) {
@@ -94,19 +94,13 @@ export default class Collect extends Command {
 
     const newManifest = {
       ...currentManifest,
-      publicSchemas: allPublicSchemas.map((schema) => schema.data),
-      consumerSchemas: allConsumerSchemas.map((schema) => schema.data),
+      publicSchemas: allPublicSchemas,
+      consumerSchemas: allConsumerSchemas,
     };
 
     if (print) {
-      console.log(
-        ManifestPrinter.printPublicSchema(allPublicSchemas.map((schema) => schema.data)).join("\n"),
-      );
-      console.log(
-        ManifestPrinter.printConsumerSchema(allConsumerSchemas.map((schema) => schema.data)).join(
-          "\n",
-        ),
-      );
+      console.log(ManifestPrinter.printPublicSchema(allPublicSchemas).join("\n"));
+      console.log(ManifestPrinter.printConsumerSchema(allConsumerSchemas).join("\n"));
     }
 
     if (check) {
