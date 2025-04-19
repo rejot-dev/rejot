@@ -3,10 +3,18 @@ import type { McpState } from "@/state/mcp-state";
 import { PostgresConnectionSchema } from "@rejot-dev/adapter-postgres/schemas";
 import { writeManifest } from "@rejot-dev/contract-tools/manifest";
 import { getManifestBySlug } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
+import { mergeAndUpdateManifest } from "@rejot-dev/contract-tools/manifest/manifest.fs";
+import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
 import { join } from "node:path";
 import { z } from "zod";
 
 export class ManifestConnectionTool implements IFactory {
+  #workspaceService: IWorkspaceService;
+
+  constructor(workspaceService: IWorkspaceService) {
+    this.#workspaceService = workspaceService;
+  }
+
   async initialize(_state: McpState): Promise<void> {
     //
   }
@@ -27,7 +35,9 @@ export class ManifestConnectionTool implements IFactory {
         postgresConnection,
         shouldReplaceIfConnectionExists,
       }) => {
-        const workspace = mcp.state.workspace;
+        const { workspace } = await this.#workspaceService.resolveWorkspace(
+          mcp.state.workspaceDirectoryPath,
+        );
         const manifestWithPath = getManifestBySlug(workspace, manifestSlug);
 
         if (!manifestWithPath) {
@@ -56,20 +66,16 @@ export class ManifestConnectionTool implements IFactory {
           };
         }
 
-        if (!manifest.connections) {
-          manifest.connections = [];
-        }
-
-        if (existingConnection) {
-          manifest.connections = manifest.connections.filter((c) => c.slug !== newConnectionSlug);
-        }
-
-        manifest.connections.push({
-          slug: newConnectionSlug,
-          config: postgresConnection,
-        });
-
-        await writeManifest(manifest, manifestAbsolutePath);
+        await mergeAndUpdateManifest(manifestAbsolutePath, [
+          {
+            connections: [
+              {
+                slug: newConnectionSlug,
+                config: postgresConnection,
+              },
+            ],
+          },
+        ]);
 
         return {
           content: [
@@ -92,7 +98,10 @@ export class ManifestConnectionTool implements IFactory {
         connectionSlug: z.string(),
       },
       async ({ manifestSlug, connectionSlug }) => {
-        const workspace = mcp.state.workspace;
+        const { workspace } = await this.#workspaceService.resolveWorkspace(
+          mcp.state.workspaceDirectoryPath,
+        );
+
         const manifestWithPath = getManifestBySlug(workspace, manifestSlug);
 
         if (!manifestWithPath) {

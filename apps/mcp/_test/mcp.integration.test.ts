@@ -37,10 +37,11 @@ const expectContentErrorFree = (content: ToolResponse["content"]) => {
   });
 };
 
-describe("MCP Integration Tests", () => {
+describe.skipIf(!process.env.REJOT_SYNC_CLI_TEST_CONNECTION)("MCP Integration Tests", () => {
   let client: Client;
   let tmpDir: string;
   let testSuccess = false;
+  let pgConfig: ReturnType<typeof parsePostgresConnectionString>;
 
   const assertToolCall = async (
     toolName: string,
@@ -76,6 +77,12 @@ describe("MCP Integration Tests", () => {
     });
 
     await client.connect(transport);
+
+    // Parse connection string if available
+    const connectionString = process.env.REJOT_SYNC_CLI_TEST_CONNECTION;
+    if (connectionString) {
+      pgConfig = parsePostgresConnectionString(connectionString);
+    }
   });
 
   afterAll(async () => {
@@ -90,29 +97,21 @@ describe("MCP Integration Tests", () => {
     }
   });
 
-  // Ran only in Postgres test
-  test.skipIf(process.env.REJOT_SYNC_CLI_TEST_CONNECTION === undefined)(
-    "full MCP workflow",
-    async () => {
-      const connectionString = process.env.REJOT_SYNC_CLI_TEST_CONNECTION;
-      if (!connectionString) {
-        throw new Error("REJOT_SYNC_CLI_TEST_CONNECTION environment variable is required");
-      }
-      const pgConfig = parsePostgresConnectionString(connectionString);
-
-      // Initialize workspace
+  describe("Workspace Setup", () => {
+    test("should initialize workspace", async () => {
       const initResult = await assertToolCall("rejot_workspace_init", {
         slug: "@test-org/",
       });
       expectContentErrorFree(initResult.content);
       expect(initResult.content[0].type).toBe("text");
       expect(initResult.content[0].text).toContain("Workspace initialized successfully");
+    });
 
+    test("should create sub-manifest", async () => {
       // Create a subdirectory for the sub-manifest
       const subDir = "services";
       await mkdir(join(tmpDir, subDir));
 
-      // Create a sub-manifest
       const subManifestResult = await assertToolCall("rejot_manifest_init", {
         relativeManifestFilePath: join(subDir, "rejot-manifest.json"),
         slug: "@test-org/service1",
@@ -121,7 +120,21 @@ describe("MCP Integration Tests", () => {
       expect(subManifestResult.content[0].type).toBe("text");
       expect(subManifestResult.content[0].text).toContain("Created new manifest file");
 
-      // Add Postgres connection to sub-manifest
+      // Verify manifests are listed
+      const infoResult = await assertToolCall("rejot_workspace_info", {});
+      expectContentErrorFree(infoResult.content);
+      expect(infoResult.content[0].type).toBe("text");
+      expect(infoResult.content[0].text).toContain("@test-org/"); // Root manifest
+      expect(infoResult.content[0].text).toContain("@test-org/service1"); // Sub manifest
+    });
+  });
+
+  describe("Database Connection", () => {
+    test("should add and verify postgres connection", async () => {
+      if (!pgConfig) {
+        throw new Error("REJOT_SYNC_CLI_TEST_CONNECTION environment variable is required");
+      }
+
       const connectionResult = await assertToolCall("rejot_manifest_connection_add_postgres", {
         manifestSlug: "@test-org/service1",
         newConnectionSlug: "test-postgres",
@@ -132,23 +145,27 @@ describe("MCP Integration Tests", () => {
       });
       expectContentErrorFree(connectionResult.content);
       expect(connectionResult.content[0].type).toBe("text");
+    });
 
-      // Get manifest info
+    test("verify connection is listed", async () => {
       const infoResult = await assertToolCall("rejot_workspace_info", {});
       expectContentErrorFree(infoResult.content);
-      expect(infoResult.content[0].type).toBe("text");
-      expect(infoResult.content[0].text).toContain("@test-org/"); // Root manifest
-      expect(infoResult.content[0].text).toContain("@test-org/service1"); // Sub manifest
-      expect(infoResult.content[0].text).toContain("test-postgres"); // Verify connection is listed
+      expect(infoResult.content[0].text).toContain("test-postgres");
+    });
 
-      // Check database health
+    test("check health of postgres connection", async () => {
       const healthResult = await assertToolCall("mcp_rejot_db_check_health", {
         connectionSlug: "test-postgres",
       });
       expectContentErrorFree(healthResult.content);
       expect(healthResult.content[0].type).toBe("text");
+    });
+  });
 
-      // Create test directory in sub-manifest and copy example schema
+  describe("Schema Management", () => {
+    test("should collect schemas", async () => {
+      // Create test directory and copy example schema
+      const subDir = "services";
       const testDir = join(tmpDir, subDir, "_test");
       await mkdir(testDir);
       await cp(
@@ -161,8 +178,11 @@ describe("MCP Integration Tests", () => {
       });
       expectContentErrorFree(collectResult.content);
       expect(collectResult.content[0].type).toBe("text");
+    });
+  });
 
-      // Remove connection
+  describe("Cleanup", () => {
+    test("should remove connection", async () => {
       const removeResult = await assertToolCall("rejot_manifest_connection_remove", {
         manifestSlug: "@test-org/service1",
         connectionSlug: "test-postgres",
@@ -173,12 +193,11 @@ describe("MCP Integration Tests", () => {
       // Verify connection was removed
       const finalInfoResult = await assertToolCall("rejot_workspace_info", {});
       expectContentErrorFree(finalInfoResult.content);
-      expect(finalInfoResult.content[0].type).toBe("text");
       expect(finalInfoResult.content[0].text).toContain("@test-org/"); // Root manifest still there
       expect(finalInfoResult.content[0].text).toContain("@test-org/service1"); // Sub manifest still there
       expect(finalInfoResult.content[0].text).not.toContain("test-postgres"); // Verify connection is no longer listed
 
       testSuccess = true;
-    },
-  );
+    });
+  });
 });

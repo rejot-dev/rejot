@@ -5,25 +5,6 @@ export abstract class ReJotMcpError extends ReJotError {
   constructor(message: string, cause?: Error) {
     super(message, { cause });
   }
-
-  toCallToolContent(): CallToolResult["content"] {
-    return [
-      {
-        isError: true,
-        type: "text",
-        text: getFormattedText(this.message, this.hints),
-      },
-    ];
-  }
-
-  toReadResourceContent(uri: string): ReadResourceResult["contents"] {
-    return [
-      {
-        text: getFormattedText(this.message, this.hints),
-        uri,
-      },
-    ];
-  }
 }
 
 export function getFormattedText(message: string, hints: Readonly<string[]>): string {
@@ -63,16 +44,12 @@ export class CombinedRejotMcpError extends ReJotMcpError {
 }
 
 export function rejotErrorToCallToolContent(error: unknown): CallToolResult["content"] | null {
-  if (error instanceof ReJotMcpError) {
-    return error.toCallToolContent();
-  }
-
   if (error instanceof ReJotError) {
     return [
       {
         isError: true,
         type: "text",
-        text: error.message,
+        text: getFormattedText(error.message, error.hints),
       },
     ];
   }
@@ -84,14 +61,10 @@ export function rejotErrorToReadResourceContent(
   error: unknown,
   uri: string,
 ): ReadResourceResult["contents"] | null {
-  if (error instanceof ReJotMcpError) {
-    return error.toReadResourceContent(uri);
-  }
-
   if (error instanceof ReJotError) {
     return [
       {
-        text: error.message,
+        text: getFormattedText(error.message, error.hints),
         uri,
       },
     ];

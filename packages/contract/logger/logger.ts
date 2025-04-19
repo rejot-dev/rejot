@@ -69,24 +69,24 @@ export abstract class ILogger {
     }
   }
 
-  logErrorInstance(error: unknown): void {
+  logErrorInstance(error: unknown, logLevel: LogLevel = LogLevel.ERROR): void {
     if (error instanceof Error) {
       const stack = error.stack?.split("\n") ?? [];
 
-      this.error("Error: " + error.message + (!stack.length ? " (no stack trace)" : ""));
+      this._log(logLevel, "Error: " + error.message + (!stack.length ? " (no stack trace)" : ""));
 
       for (const line of stack) {
-        this.error(line);
+        this._log(logLevel, line);
       }
 
       if (error.cause instanceof Error) {
-        this.error(`Caused by: ${error.cause.message}`);
+        this._log(logLevel, `Caused by: ${error.cause.message}`);
         for (const stack of error.cause.stack?.split("\n") ?? []) {
-          this.error(stack);
+          this._log(logLevel, stack);
         }
       }
     } else {
-      this.error("Not an error object:", error);
+      this._log(logLevel, "Not an error object:", error);
     }
   }
 

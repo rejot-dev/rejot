@@ -14,27 +14,15 @@ export class WorkspaceResources implements IFactory {
     this.#workspaceService = workspaceService;
   }
 
-  async initialize(state: McpState): Promise<void> {
-    const { workspace } = await this.#workspaceService.resolveWorkspace(
-      state.workspaceDirectoryPath,
-    );
-
-    log.info("WorkspaceResources initialized", {
-      workspace,
-    });
-
-    state.setWorkspace(workspace);
+  async initialize(_state: McpState): Promise<void> {
+    //
   }
 
   async register(mcp: IRejotMcp): Promise<void> {
-    const list = () => {
-      if (!mcp.state.hasWorkspace) {
-        return {
-          resources: [],
-        };
-      }
-
-      const workspace = mcp.state.workspace;
+    const list = async () => {
+      const { workspace } = await this.#workspaceService.resolveWorkspace(
+        mcp.state.workspaceDirectoryPath,
+      );
 
       const rootUri = `rejot://workspace/${workspace.ancestor.path}`;
       const rootResource = {
@@ -73,7 +61,9 @@ export class WorkspaceResources implements IFactory {
           uri,
         });
 
-        const workspace = mcp.state.workspace;
+        const { workspace } = await this.#workspaceService.resolveWorkspace(
+          mcp.state.workspaceDirectoryPath,
+        );
 
         // Extract the path from the URI
         const pathParam = uri.pathname.replace(/^\//, "");
