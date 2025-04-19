@@ -32,7 +32,7 @@ const createMockWorkspaceResolver = (
   testWorkspace: WorkspaceDefinition,
 ): IManifestWorkspaceResolver => {
   return {
-    resolveWorkspace: mock(() => Promise.resolve(testWorkspace)),
+    resolveWorkspace: mock((_options?: { startDir: string }) => Promise.resolve(testWorkspace)),
     getManifestInfo: mock(
       (filePath: string): Promise<ManifestInfo> =>
         Promise.resolve({
@@ -99,14 +99,20 @@ describe("WorkspaceResources", () => {
     await workspaceResources.register(mockMcp);
 
     // Assert
-    // 1. Verify that resolveWorkspace was called with correct parameters
+    // Get the registered resource template
+    const resources = mockMcp.getResources();
+    expect(resources.length).toBe(1);
+
+    // Trigger the list handler to make the resolveWorkspace call
+    const listHandler = resources[0].template.handlers.list;
+    await listHandler?.();
+
+    // Verify that resolveWorkspace was called with correct parameters
     expect(mockWorkspaceResolver.resolveWorkspace).toHaveBeenCalledWith({
       startDir: "/test/project/dir",
     });
 
-    // 2. Verify that resources were registered in the MCP server
-    const resources = mockMcp.getResources();
-
+    // Verify that resources were registered in the MCP server
     // Should have exactly one resource registered
     expect(resources.length).toBe(1);
 
@@ -187,7 +193,7 @@ describe("WorkspaceResources", () => {
     const listHandler = resources[0].template.handlers.list;
     expect(listHandler).toBeDefined();
 
-    const listResult = listHandler?.();
+    const listResult = await listHandler?.();
     expect(listResult).toBeDefined();
     expect(listResult?.resources).toBeArrayOfSize(4);
 

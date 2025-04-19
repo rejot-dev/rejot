@@ -58,11 +58,11 @@ const vibeCollector = new VibeCollector(new SchemaCollector());
 
 const rejotMcp = new RejotMcp(args.project, server, [
   new WorkspaceResources(workspaceService),
-  new DbIntrospectionTool(),
-  new ManifestInfoTool(),
+  new DbIntrospectionTool(workspaceService),
+  new ManifestInfoTool(workspaceService),
   new WorkspaceTool(workspaceService),
-  new ManifestConnectionTool(),
-  new ManifestInitTool(),
+  new ManifestConnectionTool(workspaceService),
+  new ManifestInitTool(workspaceService),
   new CollectTool(workspaceService, vibeCollector),
 ]);
 

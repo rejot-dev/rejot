@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { z } from "zod";
 
 import { getLogger } from "@rejot-dev/contract/logger";
+import { mergeManifests } from "../../contract/manifest/manifest-helpers";
 
 const log = getLogger(import.meta.url);
 
@@ -214,4 +215,14 @@ export async function initManifest(
   }
 
   return manifest;
+}
+
+export async function mergeAndUpdateManifest(
+  path: string,
+  manifests: Partial<Manifest>[],
+): Promise<Manifest> {
+  const existingManifest = await readManifestOrGetEmpty(path);
+  const mergedManifest = mergeManifests(existingManifest, ...manifests);
+  await writeManifest(mergedManifest, path);
+  return mergedManifest;
 }

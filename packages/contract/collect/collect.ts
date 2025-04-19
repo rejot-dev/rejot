@@ -50,10 +50,7 @@ async function importModule(modulePath: string): Promise<ModuleWithDefault> {
     return module;
   } catch (error) {
     if (error instanceof Error) {
-      if (
-        error.message.includes("test runner") ||
-        error.message.includes("before initialization")
-      ) {
+      if (error.message.includes("test") || error.message.includes("before initialization")) {
         log.warn(
           `Skipping ${modulePath} because it couldn't be initialized. This might be because it contains test code.`,
         );

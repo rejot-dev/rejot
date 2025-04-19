@@ -24,6 +24,7 @@
     "./logger": "./logger/logger.ts",
     "./manifest": "./manifest/manifest.ts",
     "./manifest.fs": "./manifest/manifest.fs.ts",
+    "./manifest-helpers": "./manifest/manifest-helpers.ts",
     "./sync-manifest": "./manifest/sync-manifest.ts",
     "./postgres": "./postgres/postgres.ts",
     "./public-schema": "./public-schema/public-schema.ts",

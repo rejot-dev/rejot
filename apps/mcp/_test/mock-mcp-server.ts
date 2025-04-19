@@ -12,7 +12,7 @@ import { type IRejotMcp, type IFactory, RejotMcp } from "../rejot-mcp";
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
 import { McpState } from "../state/mcp-state";
-import { ReJotMcpError } from "../state/mcp-error";
+import { rejotErrorToCallToolContent, rejotErrorToReadResourceContent } from "../state/mcp-error";
 
 /**
  * Represents a registered tool in the MCP server
@@ -303,9 +303,10 @@ export class MockRejotMcp extends RejotMcp implements IRejotMcp {
         try {
           return cb(data, extra);
         } catch (error) {
-          if (error instanceof ReJotMcpError) {
+          const content = rejotErrorToCallToolContent(error);
+          if (content) {
             return {
-              content: error.toCallToolContent(),
+              content,
             };
           }
 
@@ -339,9 +340,10 @@ export class MockRejotMcp extends RejotMcp implements IRejotMcp {
         try {
           return await handler(uri, variables, extra);
         } catch (error) {
-          if (error instanceof ReJotMcpError) {
+          const content = rejotErrorToReadResourceContent(error, uri.toString());
+          if (content) {
             return {
-              contents: error.toReadResourceContent(uri.toString()),
+              content,
             };
           }
 
