@@ -53,7 +53,7 @@ describe("PostgresConsumerSchemaValidationAdapter", () => {
       })),
     });
 
-    return { publicSchema: publicSchema.data, consumerSchema: consumerSchema.data };
+    return { publicSchema, consumerSchema };
   }
 
   test("should validate SQL with named placeholders that match schema keys", async () => {

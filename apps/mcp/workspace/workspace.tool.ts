@@ -2,7 +2,7 @@ import { z } from "zod";
 import { initManifest } from "@rejot-dev/contract-tools/manifest";
 import type { IRejotMcp, IFactory } from "@/rejot-mcp";
 import type { McpState } from "@/state/mcp-state";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
 import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
 import { getLogger } from "@rejot-dev/contract/logger";
@@ -35,11 +35,6 @@ export class WorkspaceTool implements IFactory {
           await initManifest(manifestAbsoluteFilePath, slug, { workspace: true });
           log.info(`Workspace initialized successfully at ${manifestAbsoluteFilePath}`);
 
-          const { workspace } = await this.#workspaceService.resolveWorkspace(
-            dirname(manifestAbsoluteFilePath),
-          );
-
-          mcp.state.setWorkspace(workspace);
           mcp.state.clearInitializationErrors();
 
           return {

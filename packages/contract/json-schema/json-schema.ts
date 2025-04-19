@@ -258,3 +258,4 @@ export const JsonSchemaSchema = JsonSchemaMeta.extend({
 export type JsonSchema = z.infer<typeof JsonSchemaSchema>;
 
 export * from "./json-schema-utils";
+export * from "./json-schema-printer";

@@ -11,6 +11,9 @@ import { WorkspaceService } from "../../packages/contract/workspace/workspace";
 import { ManifestConnectionTool } from "./tools/manifest-connection/manifest-connection.tool";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ManifestInitTool } from "./tools/manifest/manifest-init.tool";
+import { CollectTool } from "./collect/collect.tool";
+import { VibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
+import { SchemaCollector } from "@rejot-dev/contract/collect";
 
 // Open the log file when starting up
 const args = parseArgs(process.argv.slice(2));
@@ -21,8 +24,6 @@ if (!("project" in args)) {
 }
 
 const log = setLogger(new FileLogger(join(args.project, "mcp.log"), "DEBUG"));
-
-const workspaceService = new WorkspaceService(new ManifestWorkspaceResolver());
 
 const server = new McpServer(
   {
@@ -52,13 +53,17 @@ Some tips:
   },
 );
 
+const workspaceService = new WorkspaceService(new ManifestWorkspaceResolver());
+const vibeCollector = new VibeCollector(new SchemaCollector());
+
 const rejotMcp = new RejotMcp(args.project, server, [
   new WorkspaceResources(workspaceService),
-  new DbIntrospectionTool(),
-  new ManifestInfoTool(),
+  new DbIntrospectionTool(workspaceService),
+  new ManifestInfoTool(workspaceService),
   new WorkspaceTool(workspaceService),
-  new ManifestConnectionTool(),
-  new ManifestInitTool(),
+  new ManifestConnectionTool(workspaceService),
+  new ManifestInitTool(workspaceService),
+  new CollectTool(workspaceService, vibeCollector),
 ]);
 
 rejotMcp

@@ -10,7 +10,7 @@ import { McpState } from "./state/mcp-state";
 import type { ZodRawShape } from "zod";
 import { rejotErrorToCallToolContent, rejotErrorToReadResourceContent } from "./state/mcp-error";
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
-import { getLogger } from "@rejot-dev/contract/logger";
+import { getLogger, LogLevel } from "@rejot-dev/contract/logger";
 import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
 import type { ReadResourceResult } from "@modelcontextprotocol/sdk/types.js";
 import { ReJotError } from "@rejot-dev/contract/error";
@@ -95,6 +95,9 @@ export class RejotMcp implements IRejotMcp {
         } catch (error) {
           const content = rejotErrorToCallToolContent(error);
           if (content) {
+            const errorMessage = error instanceof ReJotError ? error.message : "Unknown error";
+            log.warn("Error converted to resource content: " + errorMessage);
+            log.logErrorInstance(error, LogLevel.WARN);
             return {
               content,
             };
@@ -126,6 +129,9 @@ export class RejotMcp implements IRejotMcp {
         } catch (error) {
           const content = rejotErrorToReadResourceContent(error, uri.toString());
           if (content) {
+            const errorMessage = error instanceof ReJotError ? error.message : "Unknown error";
+            log.warn("Error converted to resource content: " + errorMessage);
+            log.logErrorInstance(error, LogLevel.WARN);
             return {
               contents: content,
             };

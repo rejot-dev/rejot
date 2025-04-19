@@ -6,8 +6,16 @@ import type { IRejotMcp, IFactory } from "@/rejot-mcp";
 import type { McpState } from "@/state/mcp-state";
 import { join } from "node:path";
 import { ensurePathRelative } from "@/util/fs.util";
-
+import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
+import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
+import { workspaceToManifests } from "@rejot-dev/contract/manifest-helpers";
 export class ManifestInfoTool implements IFactory {
+  #workspaceService: IWorkspaceService;
+
+  constructor(workspaceService: IWorkspaceService) {
+    this.#workspaceService = workspaceService;
+  }
+
   async initialize(_state: McpState): Promise<void> {
     // No state initialization needed
   }
@@ -18,8 +26,14 @@ export class ManifestInfoTool implements IFactory {
       "Get information about the workspace's manifest.",
       {},
       async () => {
-        mcp.state.assertIsInitialized();
-        const output = ManifestPrinter.printSyncManifest(mcp.state.syncManifest);
+        const { workspace } = await this.#workspaceService.resolveWorkspace(
+          mcp.state.workspaceDirectoryPath,
+        );
+
+        const output = ManifestPrinter.printSyncManifest(
+          new SyncManifest(workspaceToManifests(workspace)),
+        );
+
         return {
           content: [{ type: "text", text: output.join("\n") }],
         };

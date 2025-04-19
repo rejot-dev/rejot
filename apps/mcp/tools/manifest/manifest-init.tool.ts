@@ -1,15 +1,22 @@
 import { z } from "zod";
-import { initManifest, writeManifest } from "@rejot-dev/contract-tools/manifest";
+import { initManifest } from "@rejot-dev/contract-tools/manifest";
 import type { IRejotMcp, IFactory } from "@/rejot-mcp";
 import type { McpState } from "@/state/mcp-state";
 import { join } from "node:path";
 import { ensurePathRelative } from "@/util/fs.util";
-import type { SyncManifestSchema } from "@rejot-dev/contract/manifest";
 import { getLogger } from "@rejot-dev/contract/logger";
+import { mergeAndUpdateManifest } from "@rejot-dev/contract-tools/manifest/manifest.fs";
+import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
 
 const log = getLogger(import.meta.url);
 
 export class ManifestInitTool implements IFactory {
+  #workspaceService: IWorkspaceService;
+
+  constructor(workspaceService: IWorkspaceService) {
+    this.#workspaceService = workspaceService;
+  }
+
   async initialize(_state: McpState): Promise<void> {
     // No state initialization needed
   }
@@ -36,10 +43,8 @@ export class ManifestInitTool implements IFactory {
           relativeManifestFilePath,
         );
 
-        let createdManifest: z.infer<typeof SyncManifestSchema>;
-
         try {
-          createdManifest = await initManifest(manifestAbsoluteFilePath, slug, {
+          await initManifest(manifestAbsoluteFilePath, slug, {
             workspace: false,
           });
         } catch (error) {
@@ -58,25 +63,16 @@ export class ManifestInitTool implements IFactory {
           throw error;
         }
 
-        mcp.state.workspace.children.push({
-          path: relativeManifestFilePath,
-          manifest: createdManifest,
-        });
-
-        if (!mcp.state.workspace.ancestor.manifest.workspaces) {
-          mcp.state.workspace.ancestor.manifest.workspaces = [];
-        }
-
-        if (!mcp.state.workspace.ancestor.manifest.workspaces.includes(relativeManifestFilePath)) {
-          mcp.state.workspace.ancestor.manifest.workspaces.push(relativeManifestFilePath);
-        }
-
+        const { workspace } = await this.#workspaceService.resolveWorkspace(
+          mcp.state.workspaceDirectoryPath,
+        );
         log.debug("updating workspace root manifest");
 
-        await writeManifest(
-          mcp.state.workspace.ancestor.manifest,
-          join(mcp.state.workspace.rootPath, mcp.state.workspace.ancestor.path),
-        );
+        await mergeAndUpdateManifest(join(workspace.rootPath, workspace.ancestor.path), [
+          {
+            workspaces: [relativeManifestFilePath],
+          },
+        ]);
 
         return {
           content: [

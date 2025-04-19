@@ -12,12 +12,20 @@ export const LogLevel = {
 export type LogLevelName = keyof typeof LogLevel;
 export type LogLevel = (typeof LogLevel)[LogLevelName];
 
+function serializeArg(arg: unknown): unknown {
+  if (arg instanceof Map) {
+    return Object.fromEntries(arg.entries());
+  }
+  return arg;
+}
+
 export function formatLogMessage(type: LogLevel, message: string, ...args: unknown[]): string {
   const levelName = Object.entries(LogLevel).find(([_, value]) => value === type)?.[0] ?? "UNKNOWN";
   let logMessage = `[${levelName}] ${new Date().toISOString()} - ${message}`;
 
   if (args.length > 0) {
-    logMessage += ` ${JSON.stringify(args)}`;
+    const serializedArgs = args.map(serializeArg);
+    logMessage += ` ${JSON.stringify(serializedArgs)}`;
   }
 
   logMessage += "\n";
@@ -61,24 +69,24 @@ export abstract class ILogger {
     }
   }
 
-  logErrorInstance(error: unknown): void {
+  logErrorInstance(error: unknown, logLevel: LogLevel = LogLevel.ERROR): void {
     if (error instanceof Error) {
       const stack = error.stack?.split("\n") ?? [];
 
-      this.error("Error: " + error.message + (!stack.length ? " (no stack trace)" : ""));
+      this._log(logLevel, "Error: " + error.message + (!stack.length ? " (no stack trace)" : ""));
 
       for (const line of stack) {
-        this.error(line);
+        this._log(logLevel, line);
       }
 
       if (error.cause instanceof Error) {
-        this.error(`Caused by: ${error.cause.message}`);
+        this._log(logLevel, `Caused by: ${error.cause.message}`);
         for (const stack of error.cause.stack?.split("\n") ?? []) {
-          this.error(stack);
+          this._log(logLevel, stack);
         }
       }
     } else {
-      this.error("Not an error object:", error);
+      this._log(logLevel, "Not an error object:", error);
     }
   }
 

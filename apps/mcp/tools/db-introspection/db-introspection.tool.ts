@@ -7,7 +7,9 @@ import type { McpState } from "@/state/mcp-state";
 import { PostgresConnectionAdapter } from "@rejot-dev/adapter-postgres";
 import { PostgresIntrospectionAdapter } from "@rejot-dev/adapter-postgres";
 import { ReJotMcpError } from "@/state/mcp-error";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
+import type { WorkspaceDefinition } from "@rejot-dev/contract-tools/manifest";
+import { getConnectionBySlugHelper } from "@rejot-dev/contract/manifest-helpers";
 
 type ValidConnectionType = z.infer<typeof ConnectionConfigSchema>["connectionType"];
 
@@ -20,9 +22,12 @@ const CONNECTION_SLUG_DESCRIPTION =
   "The slug of the connection to get information about. This can be found in the connection array of the manifest.";
 
 export class DbIntrospectionTool implements IFactory {
+  #workspaceService: IWorkspaceService;
+
   #adapters: Map<ValidConnectionType, AdapterPair>;
 
-  constructor() {
+  constructor(workspaceService: IWorkspaceService) {
+    this.#workspaceService = workspaceService;
     this.#adapters = new Map();
   }
 
@@ -52,11 +57,16 @@ export class DbIntrospectionTool implements IFactory {
       return pair;
     }
 
-    throw new AdapterNotFoundError(connectionType);
+    throw new AdapterNotFoundError(connectionType).withHint(
+      "This is a user error. The ReJot manifest is using an adapter that the user has not installed.",
+    );
   }
 
-  async #ensureConnection(connectionSlug: string, state: McpState): Promise<AdapterPair> {
-    const manifestConnection = state.syncManifest.getConnectionBySlug(connectionSlug);
+  async #ensureConnection(
+    connectionSlug: string,
+    workspace: WorkspaceDefinition,
+  ): Promise<AdapterPair> {
+    const manifestConnection = getConnectionBySlugHelper(workspace, connectionSlug);
     if (!manifestConnection) {
       throw new ConnectionNotFoundError(connectionSlug);
     }
@@ -80,10 +90,12 @@ export class DbIntrospectionTool implements IFactory {
         connectionSlug: z.string().describe(CONNECTION_SLUG_DESCRIPTION),
       },
       async ({ connectionSlug }) => {
-        mcp.state.assertIsInitialized();
+        const { workspace } = await this.#workspaceService.resolveWorkspace(
+          mcp.state.workspaceDirectoryPath,
+        );
 
         try {
-          const adapter = await this.#ensureConnection(connectionSlug, mcp.state);
+          const adapter = await this.#ensureConnection(connectionSlug, workspace);
 
           const tables = await adapter.introspectionAdapter.getTables(connectionSlug);
           return {
@@ -116,10 +128,12 @@ export class DbIntrospectionTool implements IFactory {
         tableName: z.string(),
       },
       async ({ connectionSlug, tableName }) => {
-        mcp.state.assertIsInitialized();
+        const { workspace } = await this.#workspaceService.resolveWorkspace(
+          mcp.state.workspaceDirectoryPath,
+        );
 
         try {
-          const adapter = await this.#ensureConnection(connectionSlug, mcp.state);
+          const adapter = await this.#ensureConnection(connectionSlug, workspace);
 
           const schema = await adapter.introspectionAdapter.getTableSchema(
             connectionSlug,
@@ -171,10 +185,12 @@ ${schema.columns
         connectionSlug: z.string().describe(CONNECTION_SLUG_DESCRIPTION),
       },
       async ({ connectionSlug }) => {
-        mcp.state.assertIsInitialized();
+        const { workspace } = await this.#workspaceService.resolveWorkspace(
+          mcp.state.workspaceDirectoryPath,
+        );
 
         try {
-          const adapter = await this.#ensureConnection(connectionSlug, mcp.state);
+          const adapter = await this.#ensureConnection(connectionSlug, workspace);
 
           const allSchemas = await adapter.introspectionAdapter.getAllTableSchemas(connectionSlug);
 
@@ -232,11 +248,11 @@ ${schema.columns
         connectionSlug: z.string().describe(CONNECTION_SLUG_DESCRIPTION),
       },
       async ({ connectionSlug }) => {
-        mcp.state.assertIsInitialized();
+        const { workspace } = await this.#workspaceService.resolveWorkspace(
+          mcp.state.workspaceDirectoryPath,
+        );
 
-        await this.#ensureConnection(connectionSlug, mcp.state);
-
-        const adapter = await this.#ensureConnection(connectionSlug, mcp.state);
+        const adapter = await this.#ensureConnection(connectionSlug, workspace);
 
         const health = await adapter.introspectionAdapter.checkHealth(connectionSlug);
 
@@ -284,17 +300,5 @@ export class AdapterNotFoundError extends ReJotMcpError {
 
   get connectionType(): ValidConnectionType {
     return this.#connectionType;
-  }
-
-  toCallToolContent(): CallToolResult["content"] {
-    return [
-      {
-        isError: true,
-        type: "text",
-        text:
-          this.message +
-          "\nThis is a user error. The ReJot manifest is using an adapter that the user has not installed.",
-      },
-    ];
   }
 }

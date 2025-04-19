@@ -1,7 +1,8 @@
 import { test, expect } from "bun:test";
+import { z } from "zod";
 import { createConsumerSchema, deserializeConsumerSchema } from "./consumer-schema.ts";
 import { createPostgresConsumerSchemaTransformation } from "@rejot-dev/adapter-postgres";
-import { PublicSchema } from "../public-schema/public-schema.ts";
+import { createPublicSchema } from "../public-schema/public-schema.ts";
 
 test("createConsumerSchema", () => {
   const consumerSchema = createConsumerSchema({
@@ -21,7 +22,7 @@ test("createConsumerSchema", () => {
   });
 
   const { sourceManifestSlug, publicSchema, destinationDataStoreSlug, transformations } =
-    consumerSchema.data;
+    consumerSchema;
 
   expect(sourceManifestSlug).toBe("source-manifest");
   expect(publicSchema).toEqual({
@@ -54,11 +55,11 @@ test("consumer schema - serialize & deserialize", () => {
     ],
   });
 
-  const serialized = JSON.stringify(consumerSchema.data);
+  const serialized = JSON.stringify(consumerSchema);
   const deserialized = deserializeConsumerSchema(serialized);
 
   const { sourceManifestSlug, publicSchema, destinationDataStoreSlug, transformations } =
-    deserialized.data;
+    deserialized;
 
   expect(sourceManifestSlug).toBe("source-manifest");
   expect(publicSchema).toEqual({
@@ -145,15 +146,15 @@ test("consumer schema - validation errors", () => {
 });
 
 test("createConsumerSchema with PublicSchema as direct source", () => {
-  const publicSchema = new PublicSchema("test-public-schema", {
+  const publicSchema = createPublicSchema("test-public-schema", {
     source: {
       dataStoreSlug: "source-store",
       tables: ["table1", "table2"],
     },
-    outputSchema: {
-      type: "object",
-      properties: {},
-    },
+    outputSchema: z.object({
+      id: z.number(),
+      name: z.string(),
+    }),
     transformations: [
       {
         transformationType: "postgresql",
@@ -181,7 +182,7 @@ test("createConsumerSchema with PublicSchema as direct source", () => {
     publicSchema: resultPublicSchema,
     destinationDataStoreSlug,
     transformations,
-  } = consumerSchema.data;
+  } = consumerSchema;
 
   expect(resultPublicSchema.name).toBe("test-public-schema");
   expect(resultPublicSchema.majorVersion).toBe(2);
