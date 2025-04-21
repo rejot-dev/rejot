@@ -23,7 +23,7 @@ if (!("project" in args)) {
   process.exit(1);
 }
 
-const log = setLogger(new FileLogger(join(args.project, "mcp.log"), "DEBUG"));
+const log = setLogger(new FileLogger(join(args["project"], "mcp.log"), "DEBUG"));
 
 const server = new McpServer(
   {
@@ -56,7 +56,7 @@ Some tips:
 const workspaceService = new WorkspaceService(new ManifestWorkspaceResolver());
 const vibeCollector = new VibeCollector(new SchemaCollector());
 
-const rejotMcp = new RejotMcp(args.project, server, [
+const rejotMcp = new RejotMcp(args["project"], server, [
   new WorkspaceResources(workspaceService),
   new DbIntrospectionTool(workspaceService),
   new ManifestInfoTool(workspaceService),

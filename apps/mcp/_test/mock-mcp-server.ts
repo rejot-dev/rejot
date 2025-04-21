@@ -127,33 +127,33 @@ export class MockMcpServer implements Partial<IMcpServer> {
 
         // Check for ResourceTemplate with _uriTemplate property
         if ("_uriTemplate" in templateArg) {
-          uriString = String(templateArg._uriTemplate);
+          uriString = String(templateArg["_uriTemplate"]);
         } else if ("uriTemplate" in templateArg) {
-          uriString = String(templateArg.uriTemplate);
+          uriString = String(templateArg["uriTemplate"]);
         } else if ("template" in templateArg) {
-          uriString = String(templateArg.template);
+          uriString = String(templateArg["template"]);
         } else if ("pattern" in templateArg) {
-          uriString = String(templateArg.pattern);
+          uriString = String(templateArg["pattern"]);
         }
 
         // Check for ResourceTemplate callbacks in _callbacks property
-        if ("_callbacks" in templateArg && templateArg._callbacks) {
-          const callbacks = templateArg._callbacks as Record<string, unknown>;
-          if ("list" in callbacks && typeof callbacks.list === "function") {
-            handlers.list = callbacks.list as ResourceListHandler;
+        if ("_callbacks" in templateArg && templateArg["_callbacks"]) {
+          const callbacks = templateArg["_callbacks"] as Record<string, unknown>;
+          if ("list" in callbacks && typeof callbacks["list"] === "function") {
+            handlers.list = callbacks["list"] as ResourceListHandler;
           }
         }
 
         // Also check direct properties
-        if ("list" in templateArg && typeof templateArg.list === "function") {
-          handlers.list = templateArg.list as ResourceListHandler;
+        if ("list" in templateArg && typeof templateArg["list"] === "function") {
+          handlers.list = templateArg["list"] as ResourceListHandler;
         }
 
         // And check handlers property
-        if ("handlers" in templateArg && templateArg.handlers) {
-          const templateHandlers = templateArg.handlers as Record<string, unknown>;
-          if ("list" in templateHandlers && typeof templateHandlers.list === "function") {
-            handlers.list = templateHandlers.list as ResourceListHandler;
+        if ("handlers" in templateArg && templateArg["handlers"]) {
+          const templateHandlers = templateArg["handlers"] as Record<string, unknown>;
+          if ("list" in templateHandlers && typeof templateHandlers["list"] === "function") {
+            handlers.list = templateHandlers["list"] as ResourceListHandler;
           }
         }
       }

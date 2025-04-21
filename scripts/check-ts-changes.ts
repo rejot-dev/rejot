@@ -2,8 +2,17 @@
 
 import { $ } from "bun";
 import { glob } from "glob";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync, appendFileSync } from "fs";
 import { join, relative } from "path";
+
+const LOG_FILE_PATH = join(process.cwd(), "check-ts-changes.log");
+let shouldLog = false;
+
+function log(text: string) {
+  if (shouldLog) {
+    appendFileSync(LOG_FILE_PATH, text);
+  }
+}
 
 type CheckType = "types" | "test" | "install";
 type TestFailure = {
@@ -118,13 +127,12 @@ function parseTestOutput(output: string, packagePath: string): TestFailure[] {
 
 function printFailures(failures: TestFailure[]) {
   for (const failure of failures) {
-    process.stdout.write(`\n❌ ${failure.file}:${failure.line}:${failure.column}\n`);
-    if (failure.testName) {
-      process.stdout.write(`   Test: ${failure.testName}\n`);
-    }
-    if (failure.error) {
-      process.stdout.write(`   ${failure.error}\n`);
-    }
+    const output =
+      `\n❌ ${failure.file}:${failure.line}:${failure.column}\n` +
+      (failure.testName ? `   Test: ${failure.testName}\n` : "") +
+      (failure.error ? `   ${failure.error}\n` : "");
+    log(output);
+    process.stdout.write(output);
   }
 }
 
@@ -139,6 +147,7 @@ async function waitForRunCompletion(proc: {
     for await (const chunk of stream) {
       const text = new TextDecoder().decode(chunk);
       buffer += text;
+      log(text);
 
       // Check for completion markers
       if (text.includes("Ran") && text.includes("tests across") && text.includes("files")) {
@@ -149,7 +158,6 @@ async function waitForRunCompletion(proc: {
     }
   };
 
-  // Process both stdout and stderr
   await Promise.all([processStream(proc.stdout), processStream(proc.stderr)]);
 
   return buffer;
@@ -158,21 +166,19 @@ async function waitForRunCompletion(proc: {
 async function checkPackage(packagePath: string, checkType: CheckType): Promise<boolean> {
   try {
     if (checkType === "install") {
-      // For install type, just run bun install and return true
       const proc = Bun.spawn(["bun", "install"], {
         cwd: packagePath,
-        stdout: "inherit",
-        stderr: "inherit",
+        stdout: "pipe",
+        stderr: "pipe",
       });
+
+      await waitForRunCompletion(proc);
       await proc.exited;
       return true;
     }
 
-    // For types and test checks
     const command =
-      checkType === "types"
-        ? ["bunx", "tsc", "--noEmit", "--watch", "--pretty", "false"]
-        : ["bun", "test", "--watch"];
+      checkType === "types" ? ["bunx", "tsc", "--build", "--pretty", "false"] : ["bun", "test"];
 
     const proc = Bun.spawn(command, {
       cwd: packagePath,
@@ -180,22 +186,20 @@ async function checkPackage(packagePath: string, checkType: CheckType): Promise<
       stderr: "pipe",
     });
 
-    // Show header for the package being checked
     const relativePackagePath = relative(process.cwd(), packagePath);
     const checkTypeDisplay =
       checkType === "types" ? "types" : checkType === "test" ? "tests" : "install";
-    console.log(`\n=== Checking ${checkTypeDisplay} in ${relativePackagePath} ===\n`);
+    const header = `\n=== Checking ${checkTypeDisplay} in ${relativePackagePath} ===\n`;
+    log(header + `  (Running '${command.join(" ")}' in ${packagePath})\n`);
+    console.log(header);
 
-    // Wait for a complete run
     const output = await waitForRunCompletion(proc);
 
-    // Parse the output based on check type
     const failures =
       checkType === "types"
         ? parseTypeScriptOutput(output, packagePath)
         : parseTestOutput(output, packagePath);
 
-    // Print any failures found
     if (failures.length > 0) {
       printFailures(failures);
       return false;
@@ -203,14 +207,22 @@ async function checkPackage(packagePath: string, checkType: CheckType): Promise<
 
     return true;
   } catch (_error) {
+    const errorMsg = `Error in package ${packagePath}: ${_error}\n`;
+    log(errorMsg);
+    console.error(errorMsg);
     return false;
   }
 }
 
 async function main() {
   try {
-    // Get check type and all flag from command line arguments
     const args = process.argv.slice(2);
+    shouldLog = args.includes("--log");
+
+    if (shouldLog) {
+      writeFileSync(LOG_FILE_PATH, "");
+    }
+
     const checkType: CheckType = args.includes("test")
       ? "test"
       : args.includes("install")
@@ -222,6 +234,9 @@ async function main() {
     const packagesToCheck = checkAll ? packages : await getChangedPackages(packages);
 
     if (packagesToCheck.length === 0) {
+      const msg = "No packages to check.\n";
+      log(msg);
+      console.log(msg);
       process.exit(0);
     }
 
@@ -235,6 +250,9 @@ async function main() {
 
     process.exit(hasErrors ? 1 : 0);
   } catch (_error) {
+    const errorMsg = `Fatal error: ${_error}\n`;
+    log(errorMsg);
+    console.error(errorMsg);
     process.exit(1);
   }
 }

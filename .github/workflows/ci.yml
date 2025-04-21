@@ -28,6 +28,9 @@ jobs:
           path: |
             node_modules
             */*/node_modules
+            packages/*/dist
+            apps/*/dist
+            **/tsconfig.tsbuildinfo
           key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
       - name: Define packages
@@ -51,6 +54,9 @@ jobs:
           path: |
             node_modules
             */*/node_modules
+            packages/*/dist
+            apps/*/dist
+            **/tsconfig.tsbuildinfo
           key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
       - name: Check formatting
@@ -73,6 +79,9 @@ jobs:
           path: |
             node_modules
             */*/node_modules
+            packages/*/dist
+            apps/*/dist
+            **/tsconfig.tsbuildinfo
           key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
       - name: Run linter
@@ -81,11 +90,6 @@ jobs:
   typecheck:
     needs: install
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        package: ${{ fromJSON(needs.install.outputs.packages) }}
-      fail-fast: false
-
     steps:
       - uses: actions/checkout@v4
 
@@ -100,11 +104,13 @@ jobs:
           path: |
             node_modules
             */*/node_modules
+            packages/*/dist
+            apps/*/dist
+            **/tsconfig.tsbuildinfo
           key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
-      - name: Type check ${{ matrix.package }}
-        working-directory: ${{ matrix.package }}
-        run: bun check
+      - name: Type check
+        run: bun run build
 
   test-package:
     needs: install
@@ -128,6 +134,9 @@ jobs:
           path: |
             node_modules
             */*/node_modules
+            packages/*/dist
+            apps/*/dist
+            **/tsconfig.tsbuildinfo
           key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
       - name: Run tests for ${{ matrix.package }}
@@ -175,6 +184,9 @@ jobs:
           path: |
             node_modules
             */*/node_modules
+            packages/*/dist
+            apps/*/dist
+            **/tsconfig.tsbuildinfo
           key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
       - name: Create Database Schema

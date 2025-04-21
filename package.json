@@ -5,7 +5,10 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "pre-commit": "bunx lefthook run pre-commit",
-    "check-ts-changes": "bun run scripts/check-ts-changes.ts"
+    "check-ts-changes": "bun run scripts/check-ts-changes.ts",
+    "clean": "rm -rf packages/*/dist apps/*/dist **/tsconfig.tsbuildinfo",
+    "build": "tsc --build",
+    "build:watch": "tsc --build --watch"
   },
   "homepage": "https://rejot.dev/",
   "repository": {
