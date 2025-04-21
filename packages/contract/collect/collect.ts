@@ -8,9 +8,13 @@ import { PublicSchemaSchema, ConsumerSchemaSchema } from "../manifest/manifest.t
 
 const log = getLogger("collect");
 
+export interface CollectedSchemas {
+  publicSchemas: PublicSchemaData[];
+  consumerSchemas: ConsumerSchemaData[];
+}
+
 export interface ISchemaCollector {
-  collectPublicSchemas(manifestPath: string, modulePath: string): Promise<PublicSchemaData[]>;
-  collectConsumerSchemas(manifestPath: string, modulePath: string): Promise<ConsumerSchemaData[]>;
+  collectSchemas(manifestPath: string, modulePath: string): Promise<CollectedSchemas>;
 }
 
 function isPublicSchemaData(obj: unknown): obj is PublicSchemaData {
@@ -61,27 +65,29 @@ async function importModule(modulePath: string): Promise<ModuleWithDefault> {
   }
 }
 
-type SchemaType = PublicSchemaData | ConsumerSchemaData;
-
-async function collectSchemas<T extends SchemaType>(
+async function collectSchemasInternal(
   manifestPath: string,
   modulePath: string,
-  isValidSchema: (obj: unknown) => obj is T,
-  schemaType: string,
-): Promise<T[]> {
-  const module = await importModule(modulePath);
-  const schemas: T[] = [];
+): Promise<CollectedSchemas> {
+  const result: CollectedSchemas = {
+    publicSchemas: [],
+    consumerSchemas: [],
+  };
 
+  const module = await importModule(modulePath);
   if (!module.default) {
     log.debug(`No default export found in ${modulePath}`);
-    return [];
+    return result;
   }
 
   // Helper function to process a single schema
   const processSchema = (schema: unknown) => {
-    if (isValidSchema(schema)) {
+    if (isPublicSchemaData(schema)) {
       schema.definitionFile = relative(dirname(manifestPath), modulePath);
-      schemas.push(schema);
+      result.publicSchemas.push(schema);
+    } else if (isConsumerSchemaData(schema)) {
+      schema.definitionFile = relative(dirname(manifestPath), modulePath);
+      result.consumerSchemas.push(schema);
     }
   };
 
@@ -95,55 +101,41 @@ async function collectSchemas<T extends SchemaType>(
   const defaultExport = module.default;
 
   // Case 1: Default export is a schema itself
-  if (isValidSchema(defaultExport)) {
-    defaultExport.definitionFile = relative(dirname(manifestPath), modulePath);
-    schemas.push(defaultExport);
-  }
-  // Case 2: Default export is an array
-  else if (Array.isArray(defaultExport)) {
-    processArray(defaultExport);
-  }
-  // Case 3: Default export is an object with schema values
-  else if (typeof defaultExport === "object" && defaultExport !== null) {
-    for (const value of Object.values(defaultExport)) {
-      if (Array.isArray(value)) {
-        processArray(value);
-      } else {
-        processSchema(value);
-      }
+  if (typeof defaultExport === "object" && defaultExport !== null) {
+    if (Array.isArray(defaultExport)) {
+      processArray(defaultExport);
+    } else {
+      processSchema(defaultExport);
     }
   }
 
-  log.info(`Collected ${schemas.length} ${schemaType} schemas`);
-  return schemas;
+  log.info(
+    `Collected ${result.publicSchemas.length} public and ${result.consumerSchemas.length} consumer schemas`,
+  );
+  return result;
 }
 
 export class SchemaCollector implements ISchemaCollector {
-  async collectPublicSchemas(
-    manifestPath: string,
-    modulePath: string,
-  ): Promise<PublicSchemaData[]> {
-    return collectPublicSchemas(manifestPath, modulePath);
-  }
-
-  async collectConsumerSchemas(
-    manifestPath: string,
-    modulePath: string,
-  ): Promise<ConsumerSchemaData[]> {
-    return collectConsumerSchemas(manifestPath, modulePath);
+  async collectSchemas(manifestPath: string, modulePath: string): Promise<CollectedSchemas> {
+    return collectSchemasInternal(manifestPath, modulePath);
   }
 }
 
+// Keep these for backward compatibility but mark as deprecated
+/** @deprecated Use SchemaCollector.collectSchemas instead */
 export async function collectPublicSchemas(
   manifestPath: string,
   modulePath: string,
 ): Promise<PublicSchemaData[]> {
-  return collectSchemas(manifestPath, modulePath, isPublicSchemaData, "public");
+  const result = await collectSchemasInternal(manifestPath, modulePath);
+  return result.publicSchemas;
 }
 
+/** @deprecated Use SchemaCollector.collectSchemas instead */
 export async function collectConsumerSchemas(
   manifestPath: string,
   modulePath: string,
 ): Promise<ConsumerSchemaData[]> {
-  return collectSchemas(manifestPath, modulePath, isConsumerSchemaData, "consumer");
+  const result = await collectSchemasInternal(manifestPath, modulePath);
+  return result.consumerSchemas;
 }
