@@ -11,3 +11,9 @@ pre-commit:
     - name: type-check
       run: bun run build
       glob: "{*.ts,tsconfig.json}"
+    - name: check-workspace-refs
+      run: bun scripts/check-workspace-refs.ts --update
+      glob: "{**/package.json,**/tsconfig.json}"
+    - name: check-dockerfile-packages
+      run: bun scripts/check-dockerfile-packages.ts
+      glob: "{**/package.json,Dockerfile}"
