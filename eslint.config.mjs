@@ -1,10 +1,11 @@
 // @ts-check
 
 import eslint from "@eslint/js";
-import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier";
 import eslintPluginReact from "eslint-plugin-react";
+import eslintPluginSimpleImportSort from "eslint-plugin-simple-import-sort";
 import eslintPluginTailwindcss from "eslint-plugin-tailwindcss";
+import tseslint from "typescript-eslint";
 
 const frontendAppFiles = ["apps/controller-spa/**/*.{ts,tsx}"];
 
@@ -13,6 +14,9 @@ export default tseslint.config(
   tseslint.configs.recommended,
   eslintConfigPrettier,
   {
+    plugins: {
+      "simple-import-sort": eslintPluginSimpleImportSort,
+    },
     rules: {
       "@typescript-eslint/no-unused-vars": [
         "error",
@@ -29,6 +33,27 @@ export default tseslint.config(
           allowShortCircuit: false,
         },
       ],
+      "simple-import-sort/imports": [
+        "warn",
+        {
+          groups: [
+            // Side effect imports.
+            ["^\\u0000"],
+            // Node.js builtins prefixed with `node:`.
+            ["^node:"],
+            // Packages.
+            // Things that start with a letter (or digit or underscore), or `@` followed by a letter.
+            ["^@?\\w"],
+            // Absolute imports and other imports such as Vue-style `@/foo`.
+            // Anything not matched in another group.
+            ["^"],
+            // Relative imports.
+            // Anything that starts with a dot.
+            ["^\\."],
+          ],
+        },
+      ],
+      "simple-import-sort/exports": "warn",
     },
   },
   {
