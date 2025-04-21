@@ -1,25 +1,27 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, writeFile, mkdir, rm } from "node:fs/promises";
+import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { collectPublicSchemas, collectConsumerSchemas } from "./collect";
+import { SchemaCollector } from "./collect";
 
 describe("collect", () => {
   let tmpDir: string;
   let manifestPath: string;
+  let collector: SchemaCollector;
 
   beforeEach(async () => {
     tmpDir = await mkdtemp(join(tmpdir(), "collect-test-"));
     manifestPath = join(tmpDir, "rejot-manifest.json");
     await writeFile(manifestPath, JSON.stringify({ slug: "@test/" }));
+    collector = new SchemaCollector();
   });
 
   afterEach(async () => {
     await rm(tmpDir, { recursive: true, force: true });
   });
 
-  describe("collectPublicSchemas", () => {
+  describe("collectSchemas", () => {
     it("should collect a single public schema", async () => {
       const schemaFile = join(tmpDir, "schema.ts");
       const schemaContent = `
@@ -50,11 +52,12 @@ describe("collect", () => {
       `;
       await writeFile(schemaFile, schemaContent);
 
-      const schemas = await collectPublicSchemas(manifestPath, schemaFile);
-      expect(schemas).toHaveLength(1);
-      expect(schemas[0].name).toBe("test-schema");
-      expect(schemas[0].version.major).toBe(1);
-      expect(schemas[0].definitionFile).toBe("schema.ts");
+      const result = await collector.collectSchemas(manifestPath, schemaFile);
+      expect(result.publicSchemas).toHaveLength(1);
+      expect(result.consumerSchemas).toHaveLength(0);
+      expect(result.publicSchemas[0].name).toBe("test-schema");
+      expect(result.publicSchemas[0].version.major).toBe(1);
+      expect(result.publicSchemas[0].definitionFile).toBe("schema.ts");
     });
 
     it("should collect multiple public schemas from array", async () => {
@@ -109,48 +112,41 @@ describe("collect", () => {
       `;
       await writeFile(schemaFile, schemaContent);
 
-      const schemas = await collectPublicSchemas(manifestPath, schemaFile);
-      expect(schemas).toHaveLength(2);
-      expect(schemas.map((s) => s.name)).toEqual(["schema1", "schema2"]);
+      const result = await collector.collectSchemas(manifestPath, schemaFile);
+      expect(result.publicSchemas).toHaveLength(2);
+      expect(result.consumerSchemas).toHaveLength(0);
+      expect(result.publicSchemas.map((s) => s.name)).toEqual(["schema1", "schema2"]);
     });
 
-    it("should handle nested directory structure", async () => {
-      const nestedDir = join(tmpDir, "nested", "schemas");
-      await mkdir(nestedDir, { recursive: true });
-
-      const schemaFile = join(nestedDir, "schema.ts");
+    it("should collect a single consumer schema", async () => {
+      const schemaFile = join(tmpDir, "consumer.ts");
       const schemaContent = `
         export default {
-          name: "nested-schema",
-          source: {
-            dataStoreSlug: "source-store",
-            tables: ["table1"]
+          sourceManifestSlug: "source-manifest",
+          publicSchema: {
+            name: "test-schema",
+            majorVersion: 1
           },
-          outputSchema: {
-            type: "object",
-            properties: { test: { type: "string" } }
-          },
+          destinationDataStoreSlug: "destination-store",
           transformations: [
             {
               transformationType: "postgresql",
-              table: "table1",
-              sql: "SELECT * FROM table1"
+              sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);"
             }
-          ],
-          version: {
-            major: 1,
-            minor: 0
-          }
+          ]
         };
       `;
       await writeFile(schemaFile, schemaContent);
 
-      const schemas = await collectPublicSchemas(manifestPath, schemaFile);
-      expect(schemas).toHaveLength(1);
-      expect(schemas[0].definitionFile).toBe("nested/schemas/schema.ts");
+      const result = await collector.collectSchemas(manifestPath, schemaFile);
+      expect(result.publicSchemas).toHaveLength(0);
+      expect(result.consumerSchemas).toHaveLength(1);
+      expect(result.consumerSchemas[0].publicSchema.name).toBe("test-schema");
+      expect(result.consumerSchemas[0].publicSchema.majorVersion).toBe(1);
+      expect(result.consumerSchemas[0].definitionFile).toBe("consumer.ts");
     });
 
-    it("should return empty array for invalid schema", async () => {
+    it("should return empty arrays for invalid schema", async () => {
       const schemaFile = join(tmpDir, "invalid.ts");
       const schemaContent = `
         export default {
@@ -159,13 +155,14 @@ describe("collect", () => {
       `;
       await writeFile(schemaFile, schemaContent);
 
-      const schemas = await collectPublicSchemas(manifestPath, schemaFile);
-      expect(schemas).toHaveLength(0);
+      const result = await collector.collectSchemas(manifestPath, schemaFile);
+      expect(result.publicSchemas).toHaveLength(0);
+      expect(result.consumerSchemas).toHaveLength(0);
     });
 
     it("should throw error for non-existent file", async () => {
       await expect(
-        collectPublicSchemas(manifestPath, join(tmpDir, "nonexistent.ts")),
+        collector.collectSchemas(manifestPath, join(tmpDir, "nonexistent.ts")),
       ).rejects.toThrow("Cannot find module");
     });
 
@@ -205,71 +202,52 @@ describe("collect", () => {
       `;
       await writeFile(schemaFile, schemaContent);
 
-      const schemas = await collectPublicSchemas(manifestPath, schemaFile);
-      expect(schemas).toHaveLength(1);
-      expect(schemas[0].name).toBe("test-schema");
-      expect(schemas[0].version.major).toBe(1);
-      expect(schemas[0].definitionFile).toBe("schema-with-test.ts");
-    });
-  });
-
-  describe("collectConsumerSchemas", () => {
-    it("should collect a single consumer schema", async () => {
-      const schemaFile = join(tmpDir, "consumer.ts");
-      const schemaContent = `
-        export default {
-          sourceManifestSlug: "source-manifest",
-          publicSchema: {
-            name: "test-schema",
-            majorVersion: 1
-          },
-          destinationDataStoreSlug: "destination-store",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);"
-            }
-          ]
-        };
-      `;
-      await writeFile(schemaFile, schemaContent);
-
-      const schemas = await collectConsumerSchemas(manifestPath, schemaFile);
-      expect(schemas).toHaveLength(1);
-      expect(schemas[0].publicSchema.name).toBe("test-schema");
-      expect(schemas[0].publicSchema.majorVersion).toBe(1);
-      expect(schemas[0].definitionFile).toBe("consumer.ts");
+      const result = await collector.collectSchemas(manifestPath, schemaFile);
+      expect(result.publicSchemas).toHaveLength(1);
+      expect(result.publicSchemas[0].name).toBe("test-schema");
+      expect(result.publicSchemas[0].version.major).toBe(1);
+      expect(result.publicSchemas[0].definitionFile).toBe("schema-with-test.ts");
     });
 
-    it("should collect multiple consumer schemas from array", async () => {
-      const schemaFile = join(tmpDir, "consumers.ts");
+    it("should collect both public and consumer schemas from a single file with named exports", async () => {
+      const schemaFile = join(tmpDir, "mixed-schemas.ts");
       const schemaContent = `
         export default [
           {
-            sourceManifestSlug: "source-manifest",
-            publicSchema: {
-              name: "schema1",
-              majorVersion: 1
+            name: "test-public-schema",
+            source: {
+              dataStoreSlug: "source-store",
+              tables: ["table1"]
             },
-            destinationDataStoreSlug: "destination-store",
+            outputSchema: {
+              type: "object",
+              properties: {
+                test: { type: "string" }
+              }
+            },
             transformations: [
               {
                 transformationType: "postgresql",
-                sql: "INSERT INTO table1 (id, name) VALUES ($1, $2);"
+                table: "table1",
+                sql: "SELECT * FROM table1"
               }
-            ]
+            ],
+            version: {
+              major: 1,
+              minor: 0
+            }
           },
           {
             sourceManifestSlug: "source-manifest",
             publicSchema: {
-              name: "schema2",
+              name: "test-schema",
               majorVersion: 1
             },
             destinationDataStoreSlug: "destination-store",
             transformations: [
               {
                 transformationType: "postgresql",
-                sql: "INSERT INTO table2 (id, value) VALUES ($1, $2);"
+                sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);"
               }
             ]
           }
@@ -277,56 +255,19 @@ describe("collect", () => {
       `;
       await writeFile(schemaFile, schemaContent);
 
-      const schemas = await collectConsumerSchemas(manifestPath, schemaFile);
-      expect(schemas).toHaveLength(2);
-      expect(schemas.map((s) => s.publicSchema.name)).toEqual(["schema1", "schema2"]);
-    });
+      const result = await collector.collectSchemas(manifestPath, schemaFile);
+      expect(result.publicSchemas).toHaveLength(1);
+      expect(result.consumerSchemas).toHaveLength(1);
 
-    it("should handle nested directory structure", async () => {
-      const nestedDir = join(tmpDir, "nested", "consumers");
-      await mkdir(nestedDir, { recursive: true });
+      // Verify public schema
+      expect(result.publicSchemas[0].name).toBe("test-public-schema");
+      expect(result.publicSchemas[0].version.major).toBe(1);
+      expect(result.publicSchemas[0].definitionFile).toBe("mixed-schemas.ts");
 
-      const schemaFile = join(nestedDir, "consumer.ts");
-      const schemaContent = `
-        export default {
-          sourceManifestSlug: "source-manifest",
-          publicSchema: {
-            name: "nested-schema",
-            majorVersion: 1
-          },
-          destinationDataStoreSlug: "destination-store",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);"
-            }
-          ]
-        };
-      `;
-      await writeFile(schemaFile, schemaContent);
-
-      const schemas = await collectConsumerSchemas(manifestPath, schemaFile);
-      expect(schemas).toHaveLength(1);
-      expect(schemas[0].definitionFile).toBe("nested/consumers/consumer.ts");
-    });
-
-    it("should return empty array for invalid schema", async () => {
-      const schemaFile = join(tmpDir, "invalid.ts");
-      const schemaContent = `
-        export default {
-          invalid: "consumer"
-        };
-      `;
-      await writeFile(schemaFile, schemaContent);
-
-      const schemas = await collectConsumerSchemas(manifestPath, schemaFile);
-      expect(schemas).toHaveLength(0);
-    });
-
-    it("should throw error for non-existent file", async () => {
-      await expect(
-        collectConsumerSchemas(manifestPath, join(tmpDir, "nonexistent.ts")),
-      ).rejects.toThrow("Cannot find module");
+      // Verify consumer schema
+      expect(result.consumerSchemas[0].publicSchema.name).toBe("test-schema");
+      expect(result.consumerSchemas[0].publicSchema.majorVersion).toBe(1);
+      expect(result.consumerSchemas[0].definitionFile).toBe("mixed-schemas.ts");
     });
   });
 });

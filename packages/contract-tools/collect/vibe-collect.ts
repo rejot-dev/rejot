@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { dirname, relative } from "node:path";
+import { dirname, relative, join } from "node:path";
 import { searchInDirectory } from "./file-finder";
 import { collectGitIgnore } from "./git-ignore";
 import { type ISchemaCollector } from "@rejot-dev/contract/collect";
@@ -10,12 +10,29 @@ import type { PublicSchemaSchema, ConsumerSchemaSchema } from "@rejot-dev/contra
 
 const log = getLogger(import.meta.url);
 
-export type SchemaCollection = {
+export type DiagnosticSeverity = "warning" | "error";
+
+export interface Diagnostic {
+  message: string;
+  severity: DiagnosticSeverity;
+  file: string;
+}
+
+export type CollectedSchemas = {
   publicSchemas: z.infer<typeof PublicSchemaSchema>[];
   consumerSchemas: z.infer<typeof ConsumerSchemaSchema>[];
+  diagnostics: Diagnostic[];
 };
 
-export type ManifestSchemaMap = Map<string, SchemaCollection>;
+export type ManifestSchemaMap = Map<string, CollectedSchemas>;
+
+function getPublicSchemaKey(schema: z.infer<typeof PublicSchemaSchema>): string {
+  return `${schema.name}@${schema.version.major}.${schema.version.minor}`;
+}
+
+function createDiagnostic(message: string, severity: DiagnosticSeverity, file: string): Diagnostic {
+  return { message, severity, file };
+}
 
 export interface IVibeCollector {
   findSchemaFiles(rootPath: string): Promise<string[]>;
@@ -76,6 +93,8 @@ export class VibeCollector implements IVibeCollector {
 
     // Create a map to track schemas for each manifest
     const manifestSchemas: ManifestSchemaMap = new Map();
+    const seenPublicSchemas = new Map<string, { manifestPath: string; file: string }>();
+    const seenConsumerSchemas = new Map<string, { manifestPath: string; file: string }>();
 
     // Process each file
     for (const filePath of filePaths) {
@@ -87,11 +106,7 @@ export class VibeCollector implements IVibeCollector {
         continue;
       }
 
-      const publicSchemas = await this.#schemaCollector.collectPublicSchemas(
-        nearestManifestPath,
-        filePath,
-      );
-      const consumerSchemas = await this.#schemaCollector.collectConsumerSchemas(
+      const { publicSchemas, consumerSchemas } = await this.#schemaCollector.collectSchemas(
         nearestManifestPath,
         filePath,
       );
@@ -105,17 +120,95 @@ export class VibeCollector implements IVibeCollector {
         continue;
       }
 
-      // TODO(Wilco): Merging should be smarter, based on version etc.
-
       // Add to or update the manifest collection
       const existing = manifestSchemas.get(nearestManifestPath) || {
         publicSchemas: [],
         consumerSchemas: [],
+        diagnostics: [],
       };
 
+      // Process public schemas and check for duplicates
+      const validPublicSchemas = publicSchemas.filter((schema) => {
+        const key = getPublicSchemaKey(schema);
+        const existing = seenPublicSchemas.get(key);
+
+        if (!schema.definitionFile) {
+          throw new Error(`Schema "${schema.name}" is missing definitionFile`);
+        }
+
+        const schemaPath = join(dirname(nearestManifestPath), schema.definitionFile);
+
+        if (existing) {
+          // Add diagnostic for duplicate schema
+          const diagnostic = createDiagnostic(
+            `Duplicate public schema "${schema.name}" v${schema.version.major}.${schema.version.minor} found. First occurrence in ${existing.file}`,
+            "warning",
+            schemaPath,
+          );
+
+          // Add diagnostic to the manifest that contains the duplicate
+          const existingManifest = manifestSchemas.get(nearestManifestPath) || {
+            publicSchemas: [],
+            consumerSchemas: [],
+            diagnostics: [],
+          };
+          existingManifest.diagnostics.push(diagnostic);
+          manifestSchemas.set(nearestManifestPath, existingManifest);
+
+          return false;
+        }
+
+        seenPublicSchemas.set(key, {
+          manifestPath: nearestManifestPath,
+          file: schemaPath,
+        });
+        return true;
+      });
+
+      // Process consumer schemas and check for duplicates
+      const validConsumerSchemas = consumerSchemas.filter((schema) => {
+        const key = `${schema.publicSchema.name}@${schema.publicSchema.majorVersion}`;
+        const existing = seenConsumerSchemas.get(key);
+
+        if (!schema.definitionFile) {
+          throw new Error(
+            `Consumer schema "${schema.publicSchema.name}" is missing definitionFile`,
+          );
+        }
+
+        const schemaPath = join(dirname(nearestManifestPath), schema.definitionFile);
+
+        if (existing) {
+          // Add diagnostic for duplicate schema
+          const diagnostic = createDiagnostic(
+            `Duplicate consumer schema "${schema.publicSchema.name}" found. First occurrence in ${existing.file}`,
+            "warning",
+            schemaPath,
+          );
+
+          // Add diagnostic to the manifest that contains the duplicate
+          const existingManifest = manifestSchemas.get(nearestManifestPath) || {
+            publicSchemas: [],
+            consumerSchemas: [],
+            diagnostics: [],
+          };
+          existingManifest.diagnostics.push(diagnostic);
+          manifestSchemas.set(nearestManifestPath, existingManifest);
+
+          return false;
+        }
+
+        seenConsumerSchemas.set(key, {
+          manifestPath: nearestManifestPath,
+          file: schemaPath,
+        });
+        return true;
+      });
+
       manifestSchemas.set(nearestManifestPath, {
-        publicSchemas: [...existing.publicSchemas, ...publicSchemas],
-        consumerSchemas: [...existing.consumerSchemas, ...consumerSchemas],
+        publicSchemas: [...existing.publicSchemas, ...validPublicSchemas],
+        consumerSchemas: [...existing.consumerSchemas, ...validConsumerSchemas],
+        diagnostics: existing.diagnostics,
       });
     }
 
@@ -205,7 +298,11 @@ export class VibeCollector implements IVibeCollector {
     const output: string[] = [];
 
     for (const [manifestPath, schemas] of results.entries()) {
-      if (schemas.publicSchemas.length === 0 && schemas.consumerSchemas.length === 0) {
+      if (
+        schemas.publicSchemas.length === 0 &&
+        schemas.consumerSchemas.length === 0 &&
+        schemas.diagnostics.length === 0
+      ) {
         continue;
       }
 
@@ -221,6 +318,14 @@ export class VibeCollector implements IVibeCollector {
 
       if (schemas.consumerSchemas.length > 0) {
         output.push(ManifestPrinter.printConsumerSchema(schemas.consumerSchemas).join("\n"));
+      }
+
+      if (schemas.diagnostics.length > 0) {
+        output.push("\nDiagnostics:");
+        for (const diagnostic of schemas.diagnostics) {
+          const prefix = diagnostic.severity === "error" ? "❌" : "⚠️";
+          output.push(`  ${prefix} ${diagnostic.message} (${diagnostic.file})`);
+        }
       }
 
       output.push(""); // Add a blank line between manifests
