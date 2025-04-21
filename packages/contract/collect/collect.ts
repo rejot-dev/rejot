@@ -1,10 +1,9 @@
 import { dirname, relative, resolve } from "node:path";
 
-import type { PublicSchemaData } from "../public-schema/public-schema.ts";
 import type { ConsumerSchemaData } from "../consumer-schema/consumer-schema.ts";
-
 import { getLogger } from "../logger/logger.ts";
-import { PublicSchemaSchema, ConsumerSchemaSchema } from "../manifest/manifest.ts";
+import { ConsumerSchemaSchema, PublicSchemaSchema } from "../manifest/manifest.ts";
+import type { PublicSchemaData } from "../public-schema/public-schema.ts";
 
 const log = getLogger("collect");
 
