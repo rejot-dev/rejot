@@ -11,8 +11,17 @@
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["dist", "**/*.test.ts", "**/*.test.tsx"],
   "references": [
-    { "path": "../../packages/contract" },
-    { "path": "../../packages/contract-tools" },
-    { "path": "../../packages/sync" }
+    {
+      "path": "../../packages/contract"
+    },
+    {
+      "path": "../../packages/contract-tools"
+    },
+    {
+      "path": "../../packages/sync"
+    },
+    {
+      "path": "../../packages/adapter-postgres"
+    }
   ]
 }

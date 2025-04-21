@@ -7,5 +7,12 @@
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["dist", "**/*.test.ts", "**/*.test.tsx"],
-  "references": [{ "path": "../contract" }]
+  "references": [
+    {
+      "path": "../contract"
+    },
+    {
+      "path": "../sqlparser"
+    }
+  ]
 }
