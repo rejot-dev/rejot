@@ -8,24 +8,6 @@ pre-commit:
       run: bunx eslint --fix --no-warn-ignored {staged_files}
     - name: prettier
       run: sh -c 'bunx prettier --ignore-unknown --check {staged_files}; code=$?; bunx prettier --ignore-unknown --write {staged_files}; exit $code'
-    - name: type-check controller
-      run: cd apps/controller && bun check
-      glob: "{*.ts,tsconfig.json}"
-    - name: type-check controller-spa
-      run: cd apps/controller-spa && bun check
-      glob: "{*.ts,tsconfig.json}"
-    - name: type-check rejot-cli
-      run: cd apps/rejot-cli && bun check
-      glob: "{*.ts,tsconfig.json}"
-    - name: type-check adapter-postgres
-      run: cd packages/adapter-postgres && bun check
-      glob: "{*.ts,tsconfig.json}"
-    - name: type-check api-interface-controller
-      run: cd packages/api-interface-controller && bun check
-      glob: "{*.ts,tsconfig.json}"
-    - name: type-check contract
-      run: cd packages/contract && bun check
-      glob: "{*.ts,tsconfig.json}"
-    - name: type-check sync
-      run: cd packages/sync && bun check
+    - name: type-check
+      run: bun run build
       glob: "{*.ts,tsconfig.json}"
