@@ -1,12 +1,15 @@
+import { dirname, join, relative } from "node:path";
+
 import { z } from "zod";
-import { dirname, relative, join } from "node:path";
-import { searchInDirectory } from "./file-finder";
-import { collectGitIgnore } from "./git-ignore";
+
 import { type ISchemaCollector } from "@rejot-dev/contract/collect";
+import { getLogger } from "@rejot-dev/contract/logger";
+import type { ConsumerSchemaSchema, PublicSchemaSchema } from "@rejot-dev/contract/manifest";
+
 import { readManifest, writeManifest } from "../manifest";
 import { ManifestPrinter } from "../manifest/manifest-printer";
-import { getLogger } from "@rejot-dev/contract/logger";
-import type { PublicSchemaSchema, ConsumerSchemaSchema } from "@rejot-dev/contract/manifest";
+import { searchInDirectory } from "./file-finder";
+import { collectGitIgnore } from "./git-ignore";
 
 const log = getLogger(import.meta.url);
 
@@ -62,7 +65,7 @@ export class VibeCollector implements IVibeCollector {
     const publicResults = await searchInDirectory(
       rootPath,
       ["createPublicSchema", "createConsumerSchema"],
-      { ignorePatterns, caseSensitive: true },
+      { ignorePatterns, caseSensitive: true, fileExtensions: ["ts", "js", "tsx", "jsx"] },
     );
 
     // Extract unique file paths

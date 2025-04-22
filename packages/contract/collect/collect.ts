@@ -17,18 +17,11 @@ export interface ISchemaCollector {
 }
 
 function isPublicSchemaData(obj: unknown): obj is PublicSchemaData {
-  const result = PublicSchemaSchema.safeParse(obj);
-  if (!result.success) {
-    log.info("", obj);
-    log.info("");
-    log.warn(`Invalid public schema data: ${JSON.stringify(result.error)}`);
-  }
-  return result.success;
+  return PublicSchemaSchema.safeParse(obj).success;
 }
 
 function isConsumerSchemaData(obj: unknown): obj is ConsumerSchemaData {
-  const result = ConsumerSchemaSchema.safeParse(obj);
-  return result.success;
+  return ConsumerSchemaSchema.safeParse(obj).success;
 }
 
 interface ModuleWithDefault {
@@ -54,9 +47,11 @@ async function importModule(modulePath: string): Promise<ModuleWithDefault> {
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes("test") || error.message.includes("before initialization")) {
-        log.warn(
-          `Skipping ${modulePath} because it couldn't be initialized. This might be because it contains test code.`,
-        );
+        if (!modulePath.includes("test")) {
+          log.warn(
+            `Skipping ${modulePath} because it couldn't be initialized. This might be because it contains test code.`,
+          );
+        }
         return { default: null };
       }
     }
@@ -75,18 +70,26 @@ async function collectSchemasInternal(
 
   const module = await importModule(modulePath);
   if (!module.default) {
-    log.debug(`No default export found in ${modulePath}`);
     return result;
   }
 
   // Helper function to process a single schema
-  const processSchema = (schema: unknown) => {
+  const processSchema = (schema: unknown, depth = 0) => {
+    if (depth > 1) {
+      return;
+    }
+
     if (isPublicSchemaData(schema)) {
       schema.definitionFile = relative(dirname(manifestPath), modulePath);
       result.publicSchemas.push(schema);
     } else if (isConsumerSchemaData(schema)) {
       schema.definitionFile = relative(dirname(manifestPath), modulePath);
       result.consumerSchemas.push(schema);
+    } else if (typeof schema === "object" && schema !== null && !Array.isArray(schema)) {
+      // Recursively check object properties for schemas, but only one level deep
+      for (const value of Object.values(schema)) {
+        processSchema(value, depth + 1);
+      }
     }
   };
 

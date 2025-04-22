@@ -1,10 +1,13 @@
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
+
+import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+
+import { parsePostgresConnectionString } from "@rejot-dev/adapter-postgres/postgres-client";
+
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { parsePostgresConnectionString } from "@rejot-dev/adapter-postgres/postgres-client";
-import { mkdtemp, rm, mkdir, cp } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join, dirname } from "node:path";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 interface ToolResponse {
   content: Array<{
@@ -169,7 +172,10 @@ describe.skipIf(!process.env.REJOT_SYNC_CLI_TEST_CONNECTION)("MCP Integration Te
       const testDir = join(tmpDir, subDir, "_test");
       await mkdir(testDir);
       await cp(
-        join(dirname(new URL(import.meta.url).pathname), "mcp-integration-test-example-schema.ts"),
+        join(
+          dirname(new URL(import.meta.url).pathname),
+          "mcp-integration-test-example-schema.ts.ignore",
+        ),
         join(testDir, "mcp-integration-test-example-schema.ts"),
       );
 

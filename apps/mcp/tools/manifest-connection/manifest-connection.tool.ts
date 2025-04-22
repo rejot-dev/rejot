@@ -1,12 +1,15 @@
+import { join } from "node:path";
+
+import { z } from "zod";
+
+import { PostgresConnectionSchema } from "@rejot-dev/adapter-postgres/schemas";
+import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
+import { writeManifest } from "@rejot-dev/contract-tools/manifest";
+import { mergeAndUpdateManifest } from "@rejot-dev/contract-tools/manifest/manifest.fs";
+import { getManifestBySlug } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
+
 import type { IFactory, IRejotMcp } from "@/rejot-mcp";
 import type { McpState } from "@/state/mcp-state";
-import { PostgresConnectionSchema } from "@rejot-dev/adapter-postgres/schemas";
-import { writeManifest } from "@rejot-dev/contract-tools/manifest";
-import { getManifestBySlug } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
-import { mergeAndUpdateManifest } from "@rejot-dev/contract-tools/manifest/manifest.fs";
-import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
-import { join } from "node:path";
-import { z } from "zod";
 
 export class ManifestConnectionTool implements IFactory {
   #workspaceService: IWorkspaceService;

@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
-import path from "node:path";
 import os from "node:os";
+import path from "node:path";
+
 import type { GitIgnorePattern } from "./git-ignore";
 
 export interface SearchResult {
@@ -12,6 +13,7 @@ export interface SearchResult {
 export interface SearchOptions {
   ignorePatterns?: GitIgnorePattern[];
   caseSensitive?: boolean;
+  fileExtensions?: string[]; // Array of file extensions to search (e.g., ['ts', 'js'])
 }
 
 /**
@@ -22,6 +24,7 @@ export interface SearchOptions {
  * @param options - Optional configuration for the search:
  *                 - ignorePatterns: Patterns to exclude from search (like .gitignore patterns)
  *                 - caseSensitive: Whether the search should be case-sensitive (default: false)
+ *                 - fileExtensions: Array of file extensions to search (e.g., ['ts', 'js'])
  * @returns Promise<SearchResult[]> - Array of results containing:
  *          - file: Absolute path to the file where match was found
  *          - line: Line number of the match
@@ -47,7 +50,15 @@ export async function searchInDirectory(
         args.push("/I");
       }
       args.push(...searchTerms.map((term) => `"${term}"`));
-      args.push("*.*");
+
+      // Handle file extensions for Windows
+      if (options.fileExtensions?.length) {
+        // On Windows, we need to specify each extension pattern separately
+        const patterns = options.fileExtensions.map((ext) => `*.${ext}`);
+        args.push(...patterns);
+      } else {
+        args.push("*.*");
+      }
     } else {
       // -r = recursive, -n = line numbers, -I = skip binary files
       // -e allows multiple patterns
@@ -62,7 +73,7 @@ export async function searchInDirectory(
       if (options.ignorePatterns?.length) {
         for (const { pattern, isNegated } of options.ignorePatterns) {
           if (!isNegated) {
-            // Convert gitignore pattern to grep exclude pattern
+            // Convert gitignore pattern to grep pattern
             const grepPattern = pattern
               .replace(/\*\*/g, "*") // ** is same as * for grep
               .replace(/\?/g, "."); // ? is . in grep
@@ -71,6 +82,14 @@ export async function searchInDirectory(
             args.push("--exclude", grepPattern);
           }
         }
+      }
+
+      // Add file extension pattern for Unix
+      if (options.fileExtensions?.length) {
+        // Add each extension pattern separately for better compatibility
+        options.fileExtensions.forEach((ext) => {
+          args.push("--include", `*.${ext}`);
+        });
       }
 
       // Add each search term with -e for proper pattern handling

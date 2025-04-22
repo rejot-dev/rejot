@@ -1,15 +1,17 @@
 import { z } from "zod";
-import type { IFactory } from "@/rejot-mcp";
-import type { AnyIConnectionAdapter, AnyIIntrospectionAdapter } from "@rejot-dev/contract/adapter";
-import type { IRejotMcp } from "@/rejot-mcp";
-import { ConnectionConfigSchema } from "@rejot-dev/contract/manifest";
-import type { McpState } from "@/state/mcp-state";
+
 import { PostgresConnectionAdapter } from "@rejot-dev/adapter-postgres";
 import { PostgresIntrospectionAdapter } from "@rejot-dev/adapter-postgres";
-import { ReJotMcpError } from "@/state/mcp-error";
+import type { AnyIConnectionAdapter, AnyIIntrospectionAdapter } from "@rejot-dev/contract/adapter";
+import { ConnectionConfigSchema } from "@rejot-dev/contract/manifest";
+import { getConnectionBySlugHelper } from "@rejot-dev/contract/manifest-helpers";
 import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
 import type { WorkspaceDefinition } from "@rejot-dev/contract-tools/manifest";
-import { getConnectionBySlugHelper } from "@rejot-dev/contract/manifest-helpers";
+
+import type { IFactory } from "@/rejot-mcp";
+import type { IRejotMcp } from "@/rejot-mcp";
+import { ReJotMcpError } from "@/state/mcp-error";
+import type { McpState } from "@/state/mcp-state";
 
 type ValidConnectionType = z.infer<typeof ConnectionConfigSchema>["connectionType"];
 
@@ -261,6 +263,44 @@ ${schema.columns
             {
               type: "text",
               text: `Connection health: ${health.status}${health.message ? `\nMessage: ${health.message}` : ""}`,
+            },
+          ],
+        };
+      },
+    );
+
+    mcp.registerTool(
+      "mcp_rejot_db_execute_queries",
+      "Execute one or more SQL queries on a database connection",
+      {
+        connectionSlug: z.string().describe(CONNECTION_SLUG_DESCRIPTION),
+        queries: z.array(z.string()).min(1).describe("Array of SQL queries to execute"),
+      },
+      async ({ connectionSlug, queries }) => {
+        const { workspace } = await this.#workspaceService.resolveWorkspace(
+          mcp.state.workspaceDirectoryPath,
+        );
+
+        const adapter = await this.#ensureConnection(connectionSlug, workspace);
+        const results = await adapter.introspectionAdapter.executeQueries(connectionSlug, queries);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Executed ${queries.length} ${queries.length === 1 ? "query" : "queries"}:
+
+${results
+  .map(
+    (result, index) => `
+Query ${index + 1}:
+${queries[index]}
+
+Results:
+${JSON.stringify(result, null, 2)}
+`,
+  )
+  .join("\n")}`,
             },
           ],
         };

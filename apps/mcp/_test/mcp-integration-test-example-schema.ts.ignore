@@ -4,8 +4,8 @@ import {
   createPostgresConsumerSchemaTransformation,
   createPostgresPublicSchemaTransformation,
 } from "@rejot-dev/adapter-postgres";
-import { createPublicSchema } from "@rejot-dev/contract/public-schema";
 import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
+import { createPublicSchema } from "@rejot-dev/contract/public-schema";
 
 const testPublicSchema = createPublicSchema("public-account", {
   source: { dataStoreSlug: "data-store-1", tables: ["account"] },

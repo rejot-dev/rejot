@@ -1,7 +1,8 @@
 import type { AnyIConnectionAdapter } from "@rejot-dev/contract/adapter";
-import type { IDataSource, Transaction } from "@rejot-dev/contract/sync";
-import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import { getLogger } from "@rejot-dev/contract/logger";
+import type { IDataSource, Transaction } from "@rejot-dev/contract/sync";
+
+import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 
 const log = getLogger("source-reader");
 

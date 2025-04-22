@@ -1,14 +1,16 @@
 import { z } from "zod";
+
+import { JsonSchemaPrinter } from "@rejot-dev/contract/json-schema";
 import {
-  SyncManifestSchema,
   ConnectionSchema,
-  type PublicSchemaSchema,
   type ConsumerSchemaSchema,
   type DataStoreConfigSchema,
+  type PublicSchemaSchema,
+  SyncManifestSchema,
 } from "@rejot-dev/contract/manifest";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
+
 import type { WorkspaceDefinition } from "./manifest-workspace-resolver";
-import { JsonSchemaPrinter } from "@rejot-dev/contract/json-schema";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 type Connection = z.infer<typeof ConnectionSchema>;

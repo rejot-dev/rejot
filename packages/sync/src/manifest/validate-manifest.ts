@@ -1,11 +1,12 @@
+import { z } from "zod";
+
+import { PostgresConsumerSchemaValidationAdapter } from "@rejot-dev/adapter-postgres";
 import type {
   AnyIConsumerSchemaValidationAdapter,
-  ValidationResult,
   ValidationError,
+  ValidationResult,
 } from "@rejot-dev/contract/adapter";
 import type { SyncManifestSchema } from "@rejot-dev/contract/manifest";
-import { PostgresConsumerSchemaValidationAdapter } from "@rejot-dev/adapter-postgres";
-import { z } from "zod";
 
 /**
  * Formats a validation error for display

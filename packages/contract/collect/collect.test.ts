@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -166,16 +167,10 @@ describe("collect", () => {
       ).rejects.toThrow("Cannot find module");
     });
 
-    it("should collect schema from file containing test code", async () => {
+    it("should collect schema from file where default export is an object containing a public schema", async () => {
       const schemaFile = join(tmpDir, "schema-with-test.ts");
       const schemaContent = `
-        import { describe, it, expect, test } from "bun:test";
-
-        test("should validate schema", () => {
-          expect(true).toBe(true);
-        });
-
-        export default {
+        const testPublicSchema = {
           name: "test-schema",
           source: {
             dataStoreSlug: "source-store",
@@ -199,6 +194,10 @@ describe("collect", () => {
             minor: 0
           }
         };
+
+        export default {
+          testPublicSchema
+        }
       `;
       await writeFile(schemaFile, schemaContent);
 
@@ -268,6 +267,47 @@ describe("collect", () => {
       expect(result.consumerSchemas[0].publicSchema.name).toBe("test-schema");
       expect(result.consumerSchemas[0].publicSchema.majorVersion).toBe(1);
       expect(result.consumerSchemas[0].definitionFile).toBe("mixed-schemas.ts");
+    });
+
+    it("should not collect deeply nested schemas", async () => {
+      const schemaFile = join(tmpDir, "deeply-nested.ts");
+      const schemaContent = `
+        export default {
+          level1: {
+            level2: {
+              deeplyNestedSchema: {
+                name: "deeply-nested-schema",
+                source: {
+                  dataStoreSlug: "source-store",
+                  tables: ["table1"]
+                },
+                outputSchema: {
+                  type: "object",
+                  properties: {
+                    test: { type: "string" }
+                  }
+                },
+                transformations: [
+                  {
+                    transformationType: "postgresql",
+                    table: "table1",
+                    sql: "SELECT * FROM table1"
+                  }
+                ],
+                version: {
+                  major: 1,
+                  minor: 0
+                }
+              }
+            }
+          }
+        };
+      `;
+      await writeFile(schemaFile, schemaContent);
+
+      const result = await collector.collectSchemas(manifestPath, schemaFile);
+      expect(result.publicSchemas).toHaveLength(0);
+      expect(result.consumerSchemas).toHaveLength(0);
     });
   });
 });
