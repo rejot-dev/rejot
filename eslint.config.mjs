@@ -9,6 +9,8 @@ import tseslint from "typescript-eslint";
 
 import eslint from "@eslint/js";
 
+import localImportCheck from "./scripts/eslint-plugin-local-import-check.js";
+
 const frontendAppFiles = ["apps/controller-spa/**/*.{ts,tsx}"];
 
 // TODO: We might start using this at a later point. https://github.com/sindresorhus/eslint-plugin-unicorn/tree/main
@@ -30,9 +32,11 @@ export default tseslint.config(
     plugins: {
       "simple-import-sort": eslintPluginSimpleImportSort,
       unicorn: eslintPluginUnicorn,
+      local: localImportCheck,
     },
     rules: {
       // ...unicornFixableRules,
+      "local/require-local-package-deps": "warn", // TODO: make this an error once dependency cycles are resolved
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
