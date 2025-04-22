@@ -1,10 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, dirname } from "node:path";
-import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
-import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
+import { dirname, join } from "node:path";
+
 import type { CollectedSchemas, ISchemaCollector } from "@rejot-dev/contract/collect";
+import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
+import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
 
 import { VibeCollector } from "./vibe-collect";
 

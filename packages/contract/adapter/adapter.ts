@@ -1,22 +1,22 @@
 import { z } from "zod";
 
-import type {
-  IDataSink,
-  IDataSource,
-  TransformedOperation,
-  TableOperation,
-  IConnection,
-} from "../sync/sync.ts";
 import { type Cursor } from "../cursor/cursors";
+import type { IEventStore, TransformedOperationWithSource } from "../event-store/event-store.ts";
 import {
   ConnectionConfigSchema,
-  ConsumerSchemaTransformationSchema,
-  PublicSchemaTransformationSchema,
   type ConsumerSchemaSchema,
+  ConsumerSchemaTransformationSchema,
   type DataStoreConfigSchema,
   type PublicSchemaSchema,
+  PublicSchemaTransformationSchema,
 } from "../manifest/manifest.ts";
-import type { IEventStore, TransformedOperationWithSource } from "../event-store/event-store.ts";
+import type {
+  IConnection,
+  IDataSink,
+  IDataSource,
+  TableOperation,
+  TransformedOperation,
+} from "../sync/sync.ts";
 
 // Define ValidationResult interface at the contract level
 export interface ValidationResult {
@@ -159,6 +159,7 @@ export interface IIntrospectionAdapter<
   getTables(connectionSlug: string): Promise<{ schema: string; name: string }[]>;
   getTableSchema(connectionSlug: string, tableName: string): Promise<Table>;
   getAllTableSchemas(connectionSlug: string): Promise<Map<string, Table>>;
+  executeQueries(connectionSlug: string, queries: string[]): Promise<Record<string, unknown>[][]>;
 }
 
 export type AnyIIntrospectionAdapter = IIntrospectionAdapter<

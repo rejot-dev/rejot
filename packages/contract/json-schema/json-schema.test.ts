@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+
 import { readFile } from "node:fs/promises";
 
 import type { JsonSchema7Type } from "zod-to-json-schema";

@@ -1,7 +1,8 @@
-import { test, expect, beforeEach } from "bun:test";
+import { beforeEach, expect, test } from "bun:test";
+
 import { getTestConnectionConfig, pgRollbackDescribe } from "../util/postgres-test-utils";
-import { PostgresIntrospectionAdapter } from "./pg-introspection-adapter";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter";
+import { PostgresIntrospectionAdapter } from "./pg-introspection-adapter";
 
 pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
   let adapter: PostgresIntrospectionAdapter;
@@ -45,6 +46,48 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
         PRIMARY KEY (post_id, tag_name)
       );
     `);
+  });
+
+  test("should execute a single query successfully", async () => {
+    // Act
+    const result = await adapter.executeQueries(connectionSlug, ["SELECT 1 as num, 'test' as str"]);
+
+    // Assert
+    expect(result).toHaveLength(1);
+    expect(result[0]).toHaveLength(1);
+    expect(result[0][0]).toEqual({ num: 1, str: "test" });
+  });
+
+  test("should execute multiple queries in a transaction", async () => {
+    // Arrange
+    const queries = [
+      "CREATE TEMPORARY TABLE temp_test (id int, name text)",
+      "INSERT INTO temp_test VALUES (1, 'test1'), (2, 'test2')",
+      "SELECT * FROM temp_test ORDER BY id",
+    ];
+
+    // Act
+    const result = await adapter.executeQueries(connectionSlug, queries);
+
+    // Assert
+    expect(result).toHaveLength(3);
+    expect(result[2]).toHaveLength(2); // Last SELECT query should return 2 rows
+    expect(result[2]).toEqual([
+      { id: 1, name: "test1" },
+      { id: 2, name: "test2" },
+    ]);
+  });
+
+  test("should throw error for invalid connection slug", async () => {
+    // Act & Assert
+    await expect(adapter.executeQueries("invalid-connection", ["SELECT 1"])).rejects.toThrow(
+      "Connection with slug invalid-connection not found",
+    );
+  });
+
+  test("should throw error for empty queries array", async () => {
+    // Act & Assert
+    await expect(adapter.executeQueries(connectionSlug, [])).rejects.toThrow("No queries provided");
   });
 
   test("should check health of a database connection", async () => {

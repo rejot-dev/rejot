@@ -1,10 +1,13 @@
-import { z } from "zod";
-import type { IRejotMcp, IFactory } from "@/rejot-mcp";
-import type { McpState } from "@/state/mcp-state";
-import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
-import { getLogger } from "@rejot-dev/contract/logger";
-import { type IVibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
 import { join } from "node:path";
+
+import { z } from "zod";
+
+import { getLogger } from "@rejot-dev/contract/logger";
+import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
+import { type IVibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
+
+import type { IFactory, IRejotMcp } from "@/rejot-mcp";
+import type { McpState } from "@/state/mcp-state";
 
 const log = getLogger(import.meta.url);
 
@@ -67,11 +70,13 @@ export class CollectTool implements IFactory {
         log.info("collection results", Array.from(collectionResults.keys()));
 
         // Write to manifests if requested
-        if (write) {
+        if (write && collectionResults.size > 0) {
           await this.#vibeCollector.writeToManifests(collectionResults);
           outputContent.push({
             type: "text" as const,
-            text: "Successfully wrote all schemas to their respective manifests",
+            text: `Successfully wrote all schemas to their respective manifests: ${Array.from(
+              collectionResults.keys(),
+            ).join(", ")}`,
           });
         } else {
           outputContent.push({

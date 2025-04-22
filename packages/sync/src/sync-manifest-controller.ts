@@ -1,18 +1,19 @@
 import { z } from "zod";
-import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
-import { getLogger } from "@rejot-dev/contract/logger";
+
 import type {
   AnyIConnectionAdapter,
   AnyIPublicSchemaTransformationAdapter,
 } from "@rejot-dev/contract/adapter";
-import type { IDataSink, IDataSource, Transaction } from "@rejot-dev/contract/sync";
 import type { IEventStore, TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-import { SyncManifest } from "../../contract/manifest/sync-manifest";
+import { getLogger } from "@rejot-dev/contract/logger";
+import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
+import { SchemaValidator } from "@rejot-dev/contract/schema-validator";
+import type { IDataSink, IDataSource, Transaction } from "@rejot-dev/contract/sync";
 
+import { SyncManifest } from "../../contract/manifest/sync-manifest";
+import type { ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
 import { type ISyncHTTPController } from "./sync-http-service/sync-http-service";
 import { fetchRead } from "./sync-http-service/sync-http-service-fetch";
-import type { ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
-import { SchemaValidator } from "@rejot-dev/contract/schema-validator";
 
 const log = getLogger("sync-manifest-controller");
 

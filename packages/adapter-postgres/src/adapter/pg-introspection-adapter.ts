@@ -32,6 +32,38 @@ export class PostgresIntrospectionAdapter
     return "postgres";
   }
 
+  async executeQueries(
+    connectionSlug: string,
+    queries: string[],
+  ): Promise<Record<string, unknown>[][]> {
+    const connection = this.#connectionAdapter.getConnection(connectionSlug);
+    if (!connection) {
+      throw new Error(`Connection with slug ${connectionSlug} not found`);
+    }
+
+    if (queries.length === 0) {
+      throw new Error("No queries provided");
+    }
+
+    if (queries.length === 1) {
+      const result = await connection.client.query(queries[0]);
+      return [result.rows];
+    }
+
+    const results = await connection.client.tx(async (client) => {
+      const results: Record<string, unknown>[][] = [];
+
+      for (const query of queries) {
+        const result = await client.query(query);
+        results.push(result.rows);
+      }
+
+      return results;
+    });
+
+    return results;
+  }
+
   async checkHealth(
     connectionSlug: string,
   ): Promise<{ status: "healthy" | "unhealthy"; message?: string }> {

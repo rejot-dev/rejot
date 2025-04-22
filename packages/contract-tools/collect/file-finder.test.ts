@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, writeFile, mkdir, realpath } from "node:fs/promises";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, isAbsolute } from "node:path";
+import { isAbsolute, join } from "node:path";
+
 import { searchInDirectory } from "./file-finder";
 import type { GitIgnorePattern } from "./git-ignore";
 
@@ -179,6 +181,61 @@ describe("file-finder", () => {
         expect(results.map((r) => r.match.trim())).toContain("UPPERCASE");
         expect(results.map((r) => r.match.trim())).toContain("lowercase");
       });
+    });
+  });
+
+  describe("file extension filtering", () => {
+    beforeEach(async () => {
+      // Create test files with different extensions
+      await writeFile(join(tmpDir, "test.ts"), "findMe typescript");
+      await writeFile(join(tmpDir, "test.js"), "findMe javascript");
+      await writeFile(join(tmpDir, "test.json"), "findMe json");
+      await writeFile(join(tmpDir, "test.txt"), "findMe text");
+    });
+
+    it("should only search in files with specified extensions", async () => {
+      const results = await searchInDirectory(tmpDir, ["findMe"], {
+        fileExtensions: ["ts", "js"],
+      });
+
+      expect(results).toHaveLength(2);
+      expect(results.map((r) => r.file)).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/test\.ts$/),
+          expect.stringMatching(/test\.js$/),
+        ]),
+      );
+    });
+
+    it("should search in all files when no extensions specified", async () => {
+      const results = await searchInDirectory(tmpDir, ["findMe"]);
+
+      expect(results).toHaveLength(4);
+      expect(results.map((r) => r.file)).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/test\.ts$/),
+          expect.stringMatching(/test\.js$/),
+          expect.stringMatching(/test\.json$/),
+          expect.stringMatching(/test\.txt$/),
+        ]),
+      );
+    });
+
+    it("should handle single extension filter", async () => {
+      const results = await searchInDirectory(tmpDir, ["findMe"], {
+        fileExtensions: ["json"],
+      });
+
+      expect(results).toHaveLength(1);
+      expect(results[0].file).toMatch(/test\.json$/);
+    });
+
+    it("should return empty array when no files match extension", async () => {
+      const results = await searchInDirectory(tmpDir, ["findMe"], {
+        fileExtensions: ["php"],
+      });
+
+      expect(results).toEqual([]);
     });
   });
 });

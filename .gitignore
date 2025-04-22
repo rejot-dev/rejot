@@ -47,3 +47,5 @@ yarn-error.log*
 .output
 
 *.log
+
+rejot-manifest.json

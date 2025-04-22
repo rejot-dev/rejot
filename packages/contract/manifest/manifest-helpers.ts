@@ -1,8 +1,10 @@
 import { z } from "zod";
-import type { SyncManifestSchema, ConsumerSchemaSchema, PublicSchemaSchema } from "./manifest";
+
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-import type { Connection, SourceDataStore, DestinationDataStore, Operation } from "./sync-manifest";
 import type { WorkspaceDefinition } from "@rejot-dev/contract-tools/manifest";
+
+import type { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest";
+import type { Connection, DestinationDataStore, Operation, SourceDataStore } from "./sync-manifest";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
