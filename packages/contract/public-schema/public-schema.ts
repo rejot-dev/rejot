@@ -1,7 +1,8 @@
-import { zodToJsonSchema } from "zod-to-json-schema";
 import { z } from "zod";
-import { PublicSchemaSchema } from "../manifest/manifest.ts";
+import { zodToJsonSchema } from "zod-to-json-schema";
+
 import { JsonSchemaSchema } from "../json-schema/json-schema.ts";
+import { PublicSchemaSchema } from "../manifest/manifest.ts";
 
 export type PublicSchemaTransformation = {
   transformationType: "postgresql";
@@ -110,4 +111,4 @@ export function deserializePublicSchema(schema: string): PublicSchemaData {
   return data;
 }
 
-export { type IPublicSchemaTransformationRepository } from "./public-schema-transformation.repository";
+export { type IPublicSchemaTransformationRepository } from "./public-schema-transformation.repository.ts";

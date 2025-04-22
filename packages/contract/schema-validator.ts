@@ -1,6 +1,7 @@
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
-import type { JsonSchema } from "./json-schema/json-schema";
+
+import type { JsonSchema } from "./json-schema/json-schema.ts";
 
 type ValidationResult =
   | {

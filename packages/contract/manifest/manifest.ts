@@ -128,4 +128,4 @@ export const SyncManifestSchema = z.object({
   workspaces: z.array(z.string()).optional(),
 });
 
-export { type ManifestError, type VerificationResult, verifyManifests } from "./verify-manifest";
+export { type ManifestError, type VerificationResult, verifyManifests } from "./verify-manifest.ts";

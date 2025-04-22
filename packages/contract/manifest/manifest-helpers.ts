@@ -4,8 +4,13 @@ import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-s
 
 import type { WorkspaceDefinition } from "@rejot-dev/contract/workspace";
 
-import type { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest";
-import type { Connection, DestinationDataStore, Operation, SourceDataStore } from "./sync-manifest";
+import type { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest.ts";
+import type {
+  Connection,
+  DestinationDataStore,
+  Operation,
+  SourceDataStore,
+} from "./sync-manifest.ts";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 

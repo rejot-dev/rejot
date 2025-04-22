@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { SyncManifestSchema } from "./manifest";
+
+import { SyncManifestSchema } from "./manifest.ts";
 
 export type ManifestError = {
   type:

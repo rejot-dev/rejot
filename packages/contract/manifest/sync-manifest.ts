@@ -9,7 +9,7 @@ import {
   type DataStoreConfigSchema,
   type PublicSchemaSchema,
   SyncManifestSchema,
-} from "./manifest";
+} from "./manifest.ts";
 import {
   getConnectionBySlugHelper,
   getConnectionsHelper,
@@ -27,7 +27,7 @@ import {
   type ManifestError,
   type VerificationResult,
   verifyManifests,
-} from "./verify-manifest";
+} from "./verify-manifest.ts";
 
 const log = getLogger("sync-manifest");
 

@@ -1,5 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
+  "emitDeclarationOnly": true,
+  "rewriteRelativeImportExtensions": true,
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": ".",
