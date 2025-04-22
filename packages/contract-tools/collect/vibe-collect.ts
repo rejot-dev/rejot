@@ -96,8 +96,47 @@ export class VibeCollector implements IVibeCollector {
 
     // Create a map to track schemas for each manifest
     const manifestSchemas: ManifestSchemaMap = new Map();
-    const seenPublicSchemas = new Map<string, { manifestPath: string; file: string }>();
-    const seenConsumerSchemas = new Map<string, { manifestPath: string; file: string }>();
+    const seenPublicSchemas = new Map<
+      string,
+      { manifestPath: string; file: string; fromCurrentRun: boolean }
+    >();
+    const seenConsumerSchemas = new Map<
+      string,
+      { manifestPath: string; file: string; fromCurrentRun: boolean }
+    >();
+
+    // First, load existing schemas from manifests
+    for (const manifestPath of manifestPaths) {
+      try {
+        const manifest = await readManifest(manifestPath);
+
+        // Track existing public schemas
+        for (const schema of manifest.publicSchemas || []) {
+          if (!schema.definitionFile) {
+            throw new Error(`Schema "${schema.name}" is missing definitionFile`);
+          }
+          const key = getPublicSchemaKey(schema);
+          const schemaPath = join(dirname(manifestPath), schema.definitionFile);
+          seenPublicSchemas.set(key, { manifestPath, file: schemaPath, fromCurrentRun: false });
+        }
+
+        // Track existing consumer schemas
+        for (const schema of manifest.consumerSchemas || []) {
+          if (!schema.definitionFile) {
+            throw new Error(`Consumer schema "${schema.name}" is missing definitionFile`);
+          }
+          const key = schema.name;
+          const schemaPath = join(dirname(manifestPath), schema.definitionFile);
+          seenConsumerSchemas.set(key, { manifestPath, file: schemaPath, fromCurrentRun: false });
+        }
+      } catch (error) {
+        if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+          // this is fine
+        } else {
+          throw error;
+        }
+      }
+    }
 
     // Process each file
     for (const filePath of filePaths) {
@@ -141,8 +180,8 @@ export class VibeCollector implements IVibeCollector {
 
         const schemaPath = join(dirname(nearestManifestPath), schema.definitionFile);
 
-        if (existing) {
-          // Add diagnostic for duplicate schema
+        if (existing?.fromCurrentRun) {
+          // If we've seen this schema in the current run, treat it as a duplicate
           const diagnostic = createDiagnostic(
             `Duplicate public schema "${schema.name}" v${schema.version.major}.${schema.version.minor} found. First occurrence in ${existing.file}`,
             "warning",
@@ -161,17 +200,18 @@ export class VibeCollector implements IVibeCollector {
           return false;
         }
 
+        // Record this schema as seen in the current run
         seenPublicSchemas.set(key, {
           manifestPath: nearestManifestPath,
           file: schemaPath,
+          fromCurrentRun: true,
         });
         return true;
       });
 
       // Process consumer schemas and check for duplicates
       const validConsumerSchemas = consumerSchemas.filter((schema) => {
-        const key = `${schema.publicSchema.name}@${schema.publicSchema.majorVersion}`;
-        const existing = seenConsumerSchemas.get(key);
+        const existing = seenConsumerSchemas.get(schema.name);
 
         if (!schema.definitionFile) {
           throw new Error(
@@ -181,8 +221,8 @@ export class VibeCollector implements IVibeCollector {
 
         const schemaPath = join(dirname(nearestManifestPath), schema.definitionFile);
 
-        if (existing) {
-          // Add diagnostic for duplicate schema
+        if (existing?.fromCurrentRun) {
+          // If we've seen this schema in the current run, treat it as a duplicate
           const diagnostic = createDiagnostic(
             `Duplicate consumer schema "${schema.publicSchema.name}" found. First occurrence in ${existing.file}`,
             "warning",
@@ -201,9 +241,11 @@ export class VibeCollector implements IVibeCollector {
           return false;
         }
 
-        seenConsumerSchemas.set(key, {
+        // Record this schema as seen in the current run
+        seenConsumerSchemas.set(schema.name, {
           manifestPath: nearestManifestPath,
           file: schemaPath,
+          fromCurrentRun: true,
         });
         return true;
       });

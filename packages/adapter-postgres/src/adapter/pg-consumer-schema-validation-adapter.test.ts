@@ -1,9 +1,12 @@
-import { test, expect, describe, beforeAll } from "bun:test";
-import { PostgresConsumerSchemaValidationAdapter } from "./pg-consumer-schema-validation-adapter";
+import { beforeAll, describe, expect, test } from "bun:test";
+
+import { z } from "zod";
+
 import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
 import { createPublicSchema } from "@rejot-dev/contract/public-schema";
+
 import { initSqlparser } from "../../../sqlparser";
-import { z } from "zod";
+import { PostgresConsumerSchemaValidationAdapter } from "./pg-consumer-schema-validation-adapter";
 
 // Initialize the SQL parser before running tests
 beforeAll(async () => {
@@ -44,7 +47,7 @@ describe("PostgresConsumerSchemaValidationAdapter", () => {
     const sqlArray = Array.isArray(sql) ? sql : [sql];
 
     // Create a consumer schema with the provided SQL transformation(s)
-    const consumerSchema = createConsumerSchema({
+    const consumerSchema = createConsumerSchema("test-consumer-schema", {
       source: publicSchema,
       destinationDataStoreSlug: "test-destination",
       transformations: sqlArray.map((sqlItem) => ({

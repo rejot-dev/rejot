@@ -24,7 +24,7 @@ import {
 } from "./manifest-helpers";
 import {
   type ExternalPublicSchemaReference,
-  type ManifestError,
+  type ManifestDiagnostic,
   type VerificationResult,
   verifyManifests,
 } from "./verify-manifest";
@@ -75,7 +75,7 @@ export class SyncManifest {
     if (verificationResult.errors.length > 0) {
       const errorMessages = verificationResult.errors
         .map(
-          (error: ManifestError) =>
+          (error: ManifestDiagnostic) =>
             `${error.type}: ${error.message} (in ${error.location.manifestSlug}${error.location.context ? `, ${error.location.context}` : ""})`,
         )
         .join("\n");

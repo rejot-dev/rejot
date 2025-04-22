@@ -1,11 +1,12 @@
 import { join } from "node:path";
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SchemaCollector } from "@rejot-dev/contract/collect";
 import { FileLogger, setLogger } from "@rejot-dev/contract/logger";
 import { VibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
 import { ManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest";
 import { WorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
+
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { parseArgs } from "@std/cli/parse-args";
 
 import { CollectTool } from "./collect/collect.tool";
@@ -61,7 +62,7 @@ const vibeCollector = new VibeCollector(new SchemaCollector());
 const rejotMcp = new RejotMcp(args["project"], server, [
   new WorkspaceResources(workspaceService),
   new DbIntrospectionTool(workspaceService),
-  new ManifestInfoTool(workspaceService),
+  new ManifestInfoTool(),
   new WorkspaceTool(workspaceService),
   new ManifestConnectionTool(workspaceService),
   new ManifestInitTool(workspaceService),

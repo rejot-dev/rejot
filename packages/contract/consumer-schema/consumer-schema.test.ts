@@ -1,11 +1,14 @@
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
+
 import { z } from "zod";
-import { createConsumerSchema, deserializeConsumerSchema } from "./consumer-schema.ts";
+
 import { createPostgresConsumerSchemaTransformation } from "@rejot-dev/adapter-postgres";
+
 import { createPublicSchema } from "../public-schema/public-schema.ts";
+import { createConsumerSchema, deserializeConsumerSchema } from "./consumer-schema.ts";
 
 test("createConsumerSchema", () => {
-  const consumerSchema = createConsumerSchema({
+  const consumerSchema = createConsumerSchema("test-consumer-schema", {
     source: {
       manifestSlug: "source-manifest",
       publicSchema: {
@@ -39,7 +42,7 @@ test("createConsumerSchema", () => {
 });
 
 test("consumer schema - serialize & deserialize", () => {
-  const consumerSchema = createConsumerSchema({
+  const consumerSchema = createConsumerSchema("test-consumer-schema", {
     source: {
       manifestSlug: "source-manifest",
       publicSchema: {
@@ -77,7 +80,7 @@ test("consumer schema - serialize & deserialize", () => {
 
 test("consumer schema - validation errors", () => {
   expect(() =>
-    createConsumerSchema({
+    createConsumerSchema("test-consumer-schema", {
       source: {
         manifestSlug: "",
         publicSchema: {
@@ -95,7 +98,7 @@ test("consumer schema - validation errors", () => {
   ).toThrow("Source manifest slug cannot be empty");
 
   expect(() =>
-    createConsumerSchema({
+    createConsumerSchema("test-consumer-schema", {
       source: {
         manifestSlug: "source-manifest",
         publicSchema: {
@@ -113,7 +116,7 @@ test("consumer schema - validation errors", () => {
   ).toThrow("Public schema name cannot be empty");
 
   expect(() =>
-    createConsumerSchema({
+    createConsumerSchema("test-consumer-schema", {
       source: {
         manifestSlug: "source-manifest",
         publicSchema: {
@@ -131,7 +134,7 @@ test("consumer schema - validation errors", () => {
   ).toThrow("Destination data store slug cannot be empty");
 
   expect(() =>
-    createConsumerSchema({
+    createConsumerSchema("test-consumer-schema", {
       source: {
         manifestSlug: "source-manifest",
         publicSchema: {
@@ -168,7 +171,7 @@ test("createConsumerSchema with PublicSchema as direct source", () => {
     },
   });
 
-  const consumerSchema = createConsumerSchema({
+  const consumerSchema = createConsumerSchema("test-consumer-schema", {
     source: publicSchema,
     destinationDataStoreSlug: "destination-store",
     transformations: [

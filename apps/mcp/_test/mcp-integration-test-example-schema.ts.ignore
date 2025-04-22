@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import {
   createPostgresConsumerSchemaTransformation,
   createPostgresPublicSchemaTransformation,
@@ -9,11 +7,15 @@ import { createPublicSchema } from "@rejot-dev/contract/public-schema";
 
 const testPublicSchema = createPublicSchema("public-account", {
   source: { dataStoreSlug: "data-store-1", tables: ["account"] },
-  outputSchema: z.object({
-    id: z.number(),
-    email: z.string(),
-    name: z.string(),
-  }),
+  outputSchema: {
+    type: "object",
+    properties: {
+      id: { type: "number" },
+      email: { type: "string" },
+      name: { type: "string" },
+    },
+    required: ["id", "email", "name"],
+  },
   transformations: [
     createPostgresPublicSchemaTransformation(
       "account",
@@ -30,7 +32,7 @@ const testPublicSchema = createPublicSchema("public-account", {
   },
 });
 
-const testConsumerSchema = createConsumerSchema({
+const testConsumerSchema = createConsumerSchema("consume-public-x-account", {
   source: {
     manifestSlug: "default",
     publicSchema: {

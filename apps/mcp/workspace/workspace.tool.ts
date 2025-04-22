@@ -1,13 +1,17 @@
 import { join } from "node:path";
 
+import { z } from "zod";
+
 import { getLogger } from "@rejot-dev/contract/logger";
+import { verifyManifests } from "@rejot-dev/contract/manifest";
+import { workspaceToManifests } from "@rejot-dev/contract/manifest-helpers";
 import { initManifest } from "@rejot-dev/contract-tools/manifest";
 import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
 import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
-import { z } from "zod";
 
 import type { IFactory, IRejotMcp } from "@/rejot-mcp";
 import type { McpState } from "@/state/mcp-state";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 const log = getLogger(import.meta.url);
 
@@ -76,13 +80,24 @@ export class WorkspaceTool implements IFactory {
         );
         const workspaceInfo = ManifestPrinter.printWorkspace(workspace);
 
+        const content: CallToolResult["content"] = [
+          {
+            type: "text",
+            text: workspaceInfo.join("\n"),
+          },
+        ];
+
+        const diagnostics = verifyManifests(workspaceToManifests(workspace));
+
+        if (diagnostics.errors.length > 0) {
+          content.push({
+            type: "text",
+            text: ManifestPrinter.printManifestDiagnostics(diagnostics.errors).join("\n"),
+          });
+        }
+
         return {
-          content: [
-            {
-              type: "text",
-              text: workspaceInfo.join("\n"),
-            },
-          ],
+          content,
         };
       },
     );
