@@ -46,40 +46,27 @@ export function getConnectionBySlugHelper(
 }
 
 export function getSourceDataStoresHelper(manifests: Manifest[]): SourceDataStore[] {
-  const dataStores = manifests
+  return manifests
     .flatMap((manifest) =>
       (manifest.dataStores ?? []).map((ds) => ({
         ...ds,
         sourceManifestSlug: manifest.slug,
       })),
     )
-    .filter(
-      (
-        ds,
-      ): ds is {
-        connectionSlug: string;
-        publicationName: string;
-        slotName: string;
-        sourceManifestSlug: string;
-        // TODO: Type predicate only checks for publicationName and slotName but asserts a type
-        //       that includes more properties
-      } => Boolean(ds.publicationName && ds.slotName),
-    );
-
-  return dataStores.map((ds) => {
-    const connection = getConnectionBySlugHelper(manifests, ds.connectionSlug);
-    if (!connection) {
-      // This error should ideally be caught during verification, but keep for safety
-      throw new Error(`Connection '${ds.connectionSlug}' not found in manifests`);
-    }
-    return {
-      ...ds,
-      connection: {
-        slug: connection.slug,
-        config: connection.config,
-      },
-    };
-  });
+    .map((ds) => {
+      const connection = getConnectionBySlugHelper(manifests, ds.connectionSlug);
+      if (!connection) {
+        // This error should ideally be caught during verification, but keep for safety
+        throw new Error(`Connection '${ds.connectionSlug}' not found in manifests`);
+      }
+      return {
+        ...ds,
+        connection: {
+          slug: connection.slug,
+          config: connection.config,
+        },
+      };
+    });
 }
 
 export function getDestinationDataStoresHelper(manifests: Manifest[]): DestinationDataStore[] {

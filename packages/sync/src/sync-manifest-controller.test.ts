@@ -1,17 +1,19 @@
-import { test, expect, describe } from "bun:test";
-import { SyncManifestController } from "./sync-manifest-controller";
+import { describe, expect, test } from "bun:test";
+
+import type { Transaction } from "@rejot-dev/contract/sync";
+
 import { InMemoryConnectionAdapter } from "./_test/in-memory-adapter";
 import { InMemoryEventStore } from "./_test/in-memory-event-store";
-import type { Transaction } from "@rejot-dev/contract/sync";
-import type { ISyncHTTPController } from "./sync-http-service/sync-http-service";
 import type { ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
+import type { ISyncHTTPController } from "./sync-http-service/sync-http-service";
+import { SyncManifestController } from "./sync-manifest-controller";
 
 class TestSyncHTTPController implements ISyncHTTPController {
-  async start(): Promise<void> {
+  start(): Promise<void> {
     return Promise.resolve();
   }
 
-  async stop(): Promise<void> {
+  stop(): Promise<void> {
     return Promise.resolve();
   }
 }

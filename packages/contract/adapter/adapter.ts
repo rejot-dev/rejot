@@ -13,6 +13,7 @@ import {
   ConsumerSchemaTransformationSchema,
   PublicSchemaTransformationSchema,
   type ConsumerSchemaSchema,
+  type DataStoreConfigSchema,
   type PublicSchemaSchema,
 } from "../manifest/manifest.ts";
 import type { IEventStore, TransformedOperationWithSource } from "../event-store/event-store.ts";
@@ -49,6 +50,7 @@ export interface OperationTransformationPair<
 
 export interface IConnectionAdapter<
   TConnectionConfig extends z.infer<typeof ConnectionConfigSchema>,
+  TDataStoreConfig extends z.infer<typeof DataStoreConfigSchema>,
   TSource extends IDataSource,
   TSink extends IDataSink,
   TEventStore extends IEventStore,
@@ -58,7 +60,7 @@ export interface IConnectionAdapter<
   createSource(
     connectionSlug: string,
     connectionConfig: TConnectionConfig,
-    options?: CreateSourceOptions,
+    options: TDataStoreConfig,
   ): TSource;
   createSink(connectionSlug: string, connectionConfig: TConnectionConfig): TSink;
   createEventStore(connectionSlug: string, connectionConfig: TConnectionConfig): TEventStore;
@@ -71,6 +73,7 @@ export interface IConnectionAdapter<
 
 export type AnyIConnectionAdapter = IConnectionAdapter<
   z.infer<typeof ConnectionConfigSchema>,
+  z.infer<typeof DataStoreConfigSchema>,
   IDataSource,
   IDataSink,
   IEventStore

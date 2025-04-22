@@ -1,4 +1,5 @@
 import { readManifest } from "@rejot-dev/contract-tools/manifest";
+
 import { Flags } from "@oclif/core";
 
 export const manifestFlags = {

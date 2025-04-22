@@ -1,18 +1,31 @@
 import { z } from "zod";
+
+// TODO: It makes no sense for the contract package to depend on an adapter.
 import {
   PostgresConnectionSchema,
-  PostgresPublicSchemaTransformationSchema,
   PostgresConsumerSchemaTransformationSchema,
+  PostgresDataStoreSchema,
+  PostgresPublicSchemaTransformationSchema,
 } from "@rejot-dev/adapter-postgres/schemas";
+
 import { JsonSchemaSchema } from "../json-schema/json-schema.ts";
 
 export const InMemoryConnectionConfigSchema = z.object({
   connectionType: z.literal("in-memory"),
 });
 
+export const InMemoryDataStoreConfigSchema = z.object({
+  connectionType: z.literal("in-memory"),
+});
+
 export const ConnectionConfigSchema = z.discriminatedUnion("connectionType", [
   PostgresConnectionSchema,
   InMemoryConnectionConfigSchema,
+]);
+
+export const DataStoreConfigSchema = z.discriminatedUnion("connectionType", [
+  PostgresDataStoreSchema,
+  InMemoryDataStoreConfigSchema,
 ]);
 
 export const ConnectionSchema = z.object({
@@ -30,8 +43,7 @@ export const ConsumerSchemaTransformationSchema = z.discriminatedUnion("transfor
 
 export const DataStoreSchema = z.object({
   connectionSlug: z.string().describe("Slug of the connection to use for this data store."),
-  publicationName: z.string().describe("Name of the publication (for Postgres).").optional(),
-  slotName: z.string().describe("Name of the replication slot (for Postgres).").optional(),
+  config: DataStoreConfigSchema.describe("Configuration details specific to the data store type."),
 });
 
 export const EventStoreSchema = z.object({
@@ -116,4 +128,4 @@ export const SyncManifestSchema = z.object({
   workspaces: z.array(z.string()).optional(),
 });
 
-export { verifyManifests, type ManifestError, type VerificationResult } from "./verify-manifest";
+export { type ManifestError, type VerificationResult, verifyManifests } from "./verify-manifest";

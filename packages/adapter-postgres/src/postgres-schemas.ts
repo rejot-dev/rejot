@@ -20,3 +20,9 @@ export const PostgresConsumerSchemaTransformationSchema = z.object({
   sql: z.string(),
   whenOperation: z.enum(["insertOrUpdate", "delete"]).optional(),
 });
+
+export const PostgresDataStoreSchema = z.object({
+  connectionType: z.literal("postgres").describe("Postgres connection type."),
+  publicationName: z.string().describe("Name of the publication (for Postgres)."),
+  slotName: z.string().describe("Name of the replication slot (for Postgres)."),
+});

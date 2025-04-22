@@ -1,5 +1,7 @@
 import { z } from "zod";
-import type { IIntrospectionAdapter, Table, Column } from "@rejot-dev/contract/adapter";
+
+import type { Column, IIntrospectionAdapter, Table } from "@rejot-dev/contract/adapter";
+
 import type { PostgresConnectionSchema } from "../postgres-schemas";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter";
 

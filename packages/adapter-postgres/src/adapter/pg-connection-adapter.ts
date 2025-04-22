@@ -1,13 +1,14 @@
 import { z } from "zod";
 
-import type { IConnectionAdapter, CreateSourceOptions } from "@rejot-dev/contract/adapter";
-import type { PostgresConnectionSchema } from "../postgres-schemas.ts";
-import { PostgresSource } from "../postgres-source.ts";
-import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "../postgres-consts.ts";
-import { PostgresEventStore } from "../event-store/postgres-event-store.ts";
-import { PostgresClient } from "../util/postgres-client.ts";
-import { PostgresSink } from "../postgres-sink.ts";
+import type { IConnectionAdapter } from "@rejot-dev/contract/adapter";
 import type { IConnection } from "@rejot-dev/contract/sync";
+
+import { PostgresEventStore } from "../event-store/postgres-event-store.ts";
+import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "../postgres-consts.ts";
+import type { PostgresConnectionSchema, PostgresDataStoreSchema } from "../postgres-schemas.ts";
+import { PostgresSink } from "../postgres-sink.ts";
+import { PostgresSource } from "../postgres-source.ts";
+import { PostgresClient } from "../util/postgres-client.ts";
 
 export interface PostgresConnection extends IConnection<z.infer<typeof PostgresConnectionSchema>> {
   client: PostgresClient;
@@ -17,6 +18,7 @@ export class PostgresConnectionAdapter
   implements
     IConnectionAdapter<
       z.infer<typeof PostgresConnectionSchema>,
+      z.infer<typeof PostgresDataStoreSchema>,
       PostgresSource,
       PostgresSink,
       PostgresEventStore
@@ -31,15 +33,15 @@ export class PostgresConnectionAdapter
   createSource(
     connectionSlug: string,
     connection: z.infer<typeof PostgresConnectionSchema>,
-    options?: CreateSourceOptions,
+    options: z.infer<typeof PostgresDataStoreSchema>,
   ): PostgresSource {
     return new PostgresSource({
       client: this.getOrCreateConnection(connectionSlug, connection).client,
       publicSchemaSql: "",
       options: {
         createPublication: true,
-        publicationName: options?.publicationName ?? DEFAULT_PUBLICATION_NAME,
-        slotName: options?.slotName ?? DEFAULT_SLOT_NAME,
+        publicationName: options.publicationName ?? DEFAULT_PUBLICATION_NAME,
+        slotName: options.slotName ?? DEFAULT_SLOT_NAME,
       },
     });
   }

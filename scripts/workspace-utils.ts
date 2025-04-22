@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import { readFileSync, existsSync, readdirSync } from "fs";
-import { join, relative, dirname } from "path";
+import { existsSync, readdirSync, readFileSync } from "fs";
+import { dirname, join, relative } from "path";
 
 export type WorkspacePackage = {
   name: string;

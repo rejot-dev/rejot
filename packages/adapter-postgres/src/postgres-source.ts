@@ -1,14 +1,14 @@
-import { PostgresClient } from "./util/postgres-client";
 import { getLogger } from "@rejot-dev/contract/logger";
 import type {
   IDataSource,
+  TableOperation,
   Transaction,
   TransformedOperation,
-  TableOperation,
 } from "@rejot-dev/contract/sync";
-import { DEFAULT_SLOT_NAME } from "./postgres-consts";
+
+import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./postgres-consts";
 import { PostgresReplicationListener } from "./postgres-replication-listener";
-import { DEFAULT_PUBLICATION_NAME } from "./postgres-consts";
+import { PostgresClient } from "./util/postgres-client";
 import { isPostgresError, PG_DUPLICATE_OBJECT } from "./util/postgres-error-codes";
 
 const log = getLogger("pg-source");

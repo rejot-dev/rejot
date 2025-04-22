@@ -1,12 +1,13 @@
 #!/usr/bin/env bun
 
 import { $ } from "bun";
-import { readFileSync, writeFileSync, existsSync } from "fs";
-import { join, relative, dirname } from "path";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { dirname, join, relative } from "path";
+
 import {
-  parseWorkspacePackages,
-  findWorkspaceReferences,
   checkTsConfigReferences,
+  findWorkspaceReferences,
+  parseWorkspacePackages,
   type WorkspacePackage,
 } from "./workspace-utils";
 
@@ -37,7 +38,7 @@ async function main() {
     let hasUpdates = false;
 
     const result = await $`bun pm ls`.quiet();
-    const packages = await parseWorkspacePackages(await result.text());
+    const packages = await parseWorkspacePackages(result.text());
 
     for (const pkg of packages) {
       const packageJsonPath = join(process.cwd(), pkg.path, "package.json");
