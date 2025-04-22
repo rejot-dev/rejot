@@ -1,8 +1,10 @@
-import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { join } from "node:path";
 import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+
+import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getLogger } from "@rejot-dev/contract/logger";
-import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
+import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
+
 import type { IFactory, IRejotMcp } from "../rejot-mcp";
 import type { McpState } from "../state/mcp-state";
 const log = getLogger("mcp.workspace.resources");

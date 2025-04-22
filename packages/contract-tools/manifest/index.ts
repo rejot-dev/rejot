@@ -1,14 +1,13 @@
-export { ManifestPrinter } from "./manifest-printer";
 export {
+  findManifestPath,
+  initManifest,
   readManifestOrGetEmpty as readManifest,
   writeManifest,
-  initManifest,
-  findManifestPath,
 } from "./manifest.fs";
-export { ManifestWorkspaceResolver } from "./manifest-workspace-resolver";
+export { ManifestPrinter } from "./manifest-printer";
 export type {
   IManifestWorkspaceResolver,
-  WorkspaceDefinition,
-  ResolveWorkspaceOptions,
   ManifestInfo,
+  ResolveWorkspaceOptions,
 } from "./manifest-workspace-resolver";
+export { ManifestWorkspaceResolver } from "./manifest-workspace-resolver";

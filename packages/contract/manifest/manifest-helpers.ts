@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-import type { WorkspaceDefinition } from "@rejot-dev/contract-tools/manifest";
+
+import type { WorkspaceDefinition } from "@rejot-dev/contract/workspace";
 
 import type { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest";
 import type { Connection, DestinationDataStore, Operation, SourceDataStore } from "./sync-manifest";
