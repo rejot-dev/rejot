@@ -1,15 +1,21 @@
-import type { CreateSourceOptions, IConnectionAdapter } from "@rejot-dev/contract/adapter";
-import { InMemorySource } from "./in-memory-source";
-import { InMemoryConnectionConfigSchema } from "@rejot-dev/contract/manifest";
 import { z } from "zod";
+
+import type { IConnectionAdapter } from "@rejot-dev/contract/adapter";
+import {
+  InMemoryConnectionConfigSchema,
+  type InMemoryDataStoreConfigSchema,
+} from "@rejot-dev/contract/manifest";
+import type { IConnection } from "@rejot-dev/contract/sync";
+
 import { InMemoryEventStore } from "./in-memory-event-store";
 import { InMemorySink } from "./in-memory-sink";
-import type { IConnection } from "@rejot-dev/contract/sync";
+import { InMemorySource } from "./in-memory-source";
 
 export class InMemoryConnectionAdapter
   implements
     IConnectionAdapter<
       z.infer<typeof InMemoryConnectionConfigSchema>,
+      z.infer<typeof InMemoryDataStoreConfigSchema>,
       InMemorySource,
       InMemorySink,
       InMemoryEventStore
@@ -25,7 +31,7 @@ export class InMemoryConnectionAdapter
   createSource(
     _connectionSlug: string,
     _connection: z.infer<typeof InMemoryConnectionConfigSchema>,
-    _options?: CreateSourceOptions,
+    _options: z.infer<typeof InMemoryDataStoreConfigSchema>,
   ): InMemorySource {
     let source = this.#sources.get(_connectionSlug);
     if (!source) {

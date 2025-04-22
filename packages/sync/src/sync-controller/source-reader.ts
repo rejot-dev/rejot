@@ -45,13 +45,7 @@ export class SourceReader {
   #createSources() {
     const sourceDataStores = this.#syncManifest.getSourceDataStores();
 
-    for (const {
-      sourceManifestSlug,
-      connectionSlug,
-      publicationName,
-      slotName,
-      connection,
-    } of sourceDataStores) {
+    for (const { sourceManifestSlug, connectionSlug, config, connection } of sourceDataStores) {
       const adapter = this.#connectionAdapters.find(
         (adapter) => adapter.connectionType === connection.config.connectionType,
       );
@@ -62,10 +56,7 @@ export class SourceReader {
         );
       }
 
-      const source = adapter.createSource(connectionSlug, connection.config, {
-        publicationName,
-        slotName,
-      });
+      const source = adapter.createSource(connectionSlug, connection.config, config);
 
       this.#sources.set(connectionSlug, {
         manifestSlug: sourceManifestSlug,

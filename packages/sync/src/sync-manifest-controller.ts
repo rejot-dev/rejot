@@ -73,7 +73,7 @@ export class SyncManifestController {
     const sourceDataStores = this.#syncManifest.getSourceDataStores();
     const destinationDataStores = this.#syncManifest.getDestinationDataStores();
 
-    for (const { connectionSlug, publicationName, slotName, connection } of sourceDataStores) {
+    for (const { connectionSlug, config, connection } of sourceDataStores) {
       const adapter = this.#connectionAdapters.find(
         (adapter) => adapter.connectionType === connection.config.connectionType,
       );
@@ -84,10 +84,7 @@ export class SyncManifestController {
         );
       }
 
-      const source = adapter.createSource(connectionSlug, connection.config, {
-        publicationName,
-        slotName,
-      });
+      const source = adapter.createSource(connectionSlug, connection.config, config);
 
       this.#sources.set(connectionSlug, source);
     }

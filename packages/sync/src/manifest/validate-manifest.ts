@@ -50,7 +50,9 @@ function formatValidationResult(result: ValidationResult): string {
   return output;
 }
 
-export async function validateManifest(manifest: z.infer<typeof SyncManifestSchema>) {
+export async function validateManifest(
+  manifest: z.infer<typeof SyncManifestSchema>,
+): Promise<void> {
   const consumerSchemaValidationAdapters: AnyIConsumerSchemaValidationAdapter[] = [
     new PostgresConsumerSchemaValidationAdapter(),
   ];

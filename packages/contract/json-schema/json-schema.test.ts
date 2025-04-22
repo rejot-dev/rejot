@@ -1,9 +1,11 @@
 import { expect, test } from "bun:test";
+import { readFile } from "node:fs/promises";
+
 import type { JsonSchema7Type } from "zod-to-json-schema";
-import { JsonSchemaSchema } from "./json-schema";
-import { extractSchemaKeys } from "./json-schema-utils";
 
 import type { JsonSchema } from "./json-schema";
+import { JsonSchemaSchema } from "./json-schema";
+import { extractSchemaKeys } from "./json-schema-utils";
 
 type JsonSchemaFromLib = JsonSchema7Type & {
   $schema?: string;
@@ -19,10 +21,8 @@ test("Type check", () => {
 });
 
 test("Parse schema", async () => {
-  const exampleSchema = await fetch("https://json.schemastore.org/github-action.json").then((res) =>
-    res.json(),
-  );
-  JsonSchemaSchema.strict().parse(exampleSchema);
+  const exampleSchema = await readFile(new URL("../schema.json", import.meta.url), "utf-8");
+  JsonSchemaSchema.strict().parse(JSON.parse(exampleSchema));
 });
 
 // Tests for extractSchemaKeys function

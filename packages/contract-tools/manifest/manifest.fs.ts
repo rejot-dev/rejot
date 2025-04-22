@@ -1,10 +1,12 @@
-import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
-import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
+import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+
 import { z } from "zod";
 
 import { getLogger } from "@rejot-dev/contract/logger";
+import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
+
 import { mergeManifests } from "../../contract/manifest/manifest-helpers";
 
 const log = getLogger(import.meta.url);

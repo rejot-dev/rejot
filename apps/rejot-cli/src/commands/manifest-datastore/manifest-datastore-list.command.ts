@@ -1,6 +1,9 @@
-import { Command } from "@oclif/core";
 import path from "node:path";
-import { readManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { ManifestPrinter, readManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { Command } from "@oclif/core";
+
 import { manifestFlags } from "./manifest-datastore-config";
 
 export class ManifestDataStoreListCommand extends Command {
@@ -16,15 +19,6 @@ export class ManifestDataStoreListCommand extends Command {
     const manifestPath = path.resolve(flags.manifest);
     const manifest = await readManifest(manifestPath);
 
-    if ((manifest.dataStores ?? []).length === 0) {
-      this.log("No data stores found in manifest");
-      return;
-    }
-
-    this.log("Data Stores:");
-    for (const ds of manifest.dataStores ?? []) {
-      this.log(`  - Connection: ${ds.connectionSlug}`);
-      this.log(`    Publication: ${ds.publicationName}`);
-    }
+    this.log(ManifestPrinter.printDataStores(manifest).join("\n"));
   }
 }

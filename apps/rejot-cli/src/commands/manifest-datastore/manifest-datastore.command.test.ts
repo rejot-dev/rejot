@@ -1,8 +1,10 @@
-import { test, expect, describe, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, rm, readFile } from "node:fs/promises";
+import { runCommand } from "@oclif/test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { runCommand } from "@oclif/test";
+
 import { initManifest } from "@rejot-dev/contract-tools/manifest";
 
 describe("ManifestDataStore commands", () => {
@@ -27,7 +29,7 @@ describe("ManifestDataStore commands", () => {
   describe("add datastore", () => {
     test("add datastore with valid connection", async () => {
       await runCommand(
-        `manifest:datastore:add --manifest ${manifestPath} --connection test-connection --publication test-pub`,
+        `manifest:datastore:add --manifest ${manifestPath} --connection test-connection --publication test-pub --slot test-slot`,
       );
 
       // Read and verify manifest contents
@@ -35,13 +37,17 @@ describe("ManifestDataStore commands", () => {
       expect(manifestContent.dataStores).toHaveLength(1);
       expect(manifestContent.dataStores[0]).toEqual({
         connectionSlug: "test-connection",
-        publicationName: "test-pub",
+        config: {
+          connectionType: "postgres",
+          publicationName: "test-pub",
+          slotName: "test-slot",
+        },
       });
     });
 
     test("error on non-existent connection", async () => {
       const result = await runCommand(
-        `manifest:datastore:add --manifest ${manifestPath} --connection non-existent --publication test-pub`,
+        `manifest:datastore:add --manifest ${manifestPath} --connection non-existent --publication test-pub --slot test-slot`,
       );
 
       expect(result.error?.message).toContain("Connection 'non-existent' not found in manifest");
@@ -93,13 +99,15 @@ describe("ManifestDataStore commands", () => {
       // Restore console.log
       console.log = originalLog;
 
-      expect(logs).toContain("No data stores found in manifest");
+      const logString = logs.join("\n");
+
+      expect(logString).toContain("No data stores configured");
     });
 
     test("list all datastores", async () => {
       // Add some test datastores
       await runCommand(
-        `manifest:datastore:add --manifest ${manifestPath} --connection test-connection --publication test-pub1`,
+        `manifest:datastore:add --manifest ${manifestPath} --connection test-connection --publication test-pub1 --slot test-slot1`,
       );
 
       // Capture console output
@@ -112,9 +120,11 @@ describe("ManifestDataStore commands", () => {
       // Restore console.log
       console.log = originalLog;
 
-      expect(logs).toContain("Data Stores:");
-      expect(logs).toContain("  - Connection: test-connection");
-      expect(logs).toContain("    Publication: test-pub1");
+      const logString = logs.join("\n");
+
+      expect(logString).toContain("Data Stores");
+      expect(logString).toContain("test-connection");
+      expect(logString).toContain("test-pub1");
     });
   });
 });

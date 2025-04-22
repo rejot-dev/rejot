@@ -4,6 +4,7 @@ import {
   ConnectionSchema,
   type PublicSchemaSchema,
   type ConsumerSchemaSchema,
+  type DataStoreConfigSchema,
 } from "@rejot-dev/contract/manifest";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 import type { WorkspaceDefinition } from "./manifest-workspace-resolver";
@@ -82,7 +83,7 @@ export class ManifestPrinter {
     return output;
   }
 
-  private static printDataStores(manifest: Manifest): string[] {
+  static printDataStores(manifest: Manifest): string[] {
     const output: string[] = ["Data Stores (Replication Sources):"];
 
     if ((manifest.dataStores ?? []).length === 0) {
@@ -92,10 +93,19 @@ export class ManifestPrinter {
 
     for (const ds of manifest.dataStores ?? []) {
       output.push(`  - Connection: ${ds.connectionSlug}`);
-      output.push(`    Publication / slot: ${ds.publicationName ?? ""} / ${ds.slotName ?? ""}`);
+      output.push(this.printDataStoreConfig(ds.config));
     }
 
     return output;
+  }
+
+  private static printDataStoreConfig(config: z.infer<typeof DataStoreConfigSchema>): string {
+    switch (config.connectionType) {
+      case "postgres":
+        return `    Publication / slot: ${config.publicationName} / ${config.slotName}`;
+      case "in-memory":
+        return `    In-memory connection`;
+    }
   }
 
   private static printEventStores(manifest: Manifest): string[] {

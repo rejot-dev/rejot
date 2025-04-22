@@ -1,6 +1,9 @@
-import { Command } from "@oclif/core";
 import path from "node:path";
+
 import { readManifest, writeManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { Command } from "@oclif/core";
+
 import {
   manifestFlags,
   validateConnection,
@@ -25,6 +28,14 @@ export class ManifestDataStoreAddCommand extends Command {
       this.error("--connection is required for add");
     }
 
+    if (!flags.publication) {
+      this.error("--publication is required for add");
+    }
+
+    if (!flags.slot) {
+      this.error("--slot is required for add");
+    }
+
     await validateConnection(manifestPath, flags.connection);
     await validateUniqueConnection(manifestPath, flags.connection);
 
@@ -32,8 +43,11 @@ export class ManifestDataStoreAddCommand extends Command {
     manifest.dataStores = manifest.dataStores ?? [];
     manifest.dataStores.push({
       connectionSlug: flags.connection,
-      publicationName: flags.publication,
-      slotName: flags.slot,
+      config: {
+        connectionType: "postgres",
+        publicationName: flags.publication,
+        slotName: flags.slot,
+      },
     });
 
     await writeManifest(manifest, manifestPath);

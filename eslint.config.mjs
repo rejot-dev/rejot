@@ -1,23 +1,38 @@
 // @ts-check
 
-import eslint from "@eslint/js";
 import eslintConfigPrettier from "eslint-config-prettier";
 import eslintPluginReact from "eslint-plugin-react";
 import eslintPluginSimpleImportSort from "eslint-plugin-simple-import-sort";
 import eslintPluginTailwindcss from "eslint-plugin-tailwindcss";
+import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import tseslint from "typescript-eslint";
+
+import eslint from "@eslint/js";
 
 const frontendAppFiles = ["apps/controller-spa/**/*.{ts,tsx}"];
 
+// TODO: We might start using this at a later point. https://github.com/sindresorhus/eslint-plugin-unicorn/tree/main
+const _unicornFixableRules = Object.fromEntries(
+  Object.entries(eslintPluginUnicorn.rules ?? {}).map(([id, rule]) => [
+    `unicorn/${id}`,
+    rule.meta?.fixable ? "error" : "off",
+  ]),
+);
+
 export default tseslint.config(
+  {
+    ignores: ["**/node_modules/**", "**/dist/**"],
+  },
   eslint.configs.recommended,
   tseslint.configs.recommended,
   eslintConfigPrettier,
   {
     plugins: {
       "simple-import-sort": eslintPluginSimpleImportSort,
+      unicorn: eslintPluginUnicorn,
     },
     rules: {
+      // ...unicornFixableRules,
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
@@ -38,18 +53,23 @@ export default tseslint.config(
         {
           groups: [
             // Side effect imports.
-            ["^\\u0000"],
+            [String.raw`^\u0000`],
+            // Stuff related to test.
+            ["test$"],
             // Node.js builtins prefixed with `node:`.
-            ["^node:"],
-            // Packages.
-            // Things that start with a letter (or digit or underscore), or `@` followed by a letter.
-            ["^@?\\w"],
+            ["^(node|bun):"],
+            // Packages. Things that start with a letter (or digit or underscore).
+            [String.raw`^\w`],
+            // Packages with a leading `@rejot-dev`
+            ["^@rejot-dev"],
+            // Packages with a leading `@`
+            ["^@"],
             // Absolute imports and other imports such as Vue-style `@/foo`.
             // Anything not matched in another group.
             ["^"],
             // Relative imports.
             // Anything that starts with a dot.
-            ["^\\."],
+            [String.raw`^\\.`],
           ],
         },
       ],

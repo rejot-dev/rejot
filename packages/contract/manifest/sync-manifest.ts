@@ -1,30 +1,33 @@
 import { z } from "zod";
+
+import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
+import { getLogger } from "@rejot-dev/contract/logger";
+
 import {
-  SyncManifestSchema,
-  ConsumerSchemaSchema,
   type ConnectionConfigSchema,
+  ConsumerSchemaSchema,
+  type DataStoreConfigSchema,
   type PublicSchemaSchema,
+  SyncManifestSchema,
 } from "./manifest";
 import {
-  verifyManifests,
-  type ManifestError,
-  type ExternalPublicSchemaReference,
-  type VerificationResult,
-} from "./verify-manifest";
-import { getLogger } from "@rejot-dev/contract/logger";
-import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-import {
-  getConnectionsHelper,
-  getDataStoresHelper,
-  getEventStoresHelper,
   getConnectionBySlugHelper,
-  getSourceDataStoresHelper,
-  getDestinationDataStoresHelper,
-  getExternalConsumerSchemasHelper,
+  getConnectionsHelper,
   getConsumerSchemasForPublicSchemaHelper,
+  getDataStoresHelper,
+  getDestinationDataStoresHelper,
+  getEventStoresHelper,
+  getExternalConsumerSchemasHelper,
   getPublicSchemasForOperationHelper,
   getPublicSchemasHelper,
+  getSourceDataStoresHelper,
 } from "./manifest-helpers";
+import {
+  type ExternalPublicSchemaReference,
+  type ManifestError,
+  type VerificationResult,
+  verifyManifests,
+} from "./verify-manifest";
 
 const log = getLogger("sync-manifest");
 
@@ -35,11 +38,12 @@ export type Connection = {
   config: z.infer<typeof ConnectionConfigSchema>;
 };
 
+export type DataStoreConfig = z.infer<typeof DataStoreConfigSchema>;
+
 export type SourceDataStore = {
   sourceManifestSlug: string;
   connectionSlug: string;
-  publicationName: string;
-  slotName: string;
+  config: DataStoreConfig;
   connection: Connection;
 };
 
