@@ -1,11 +1,13 @@
-import { z } from "zod";
-import { initManifest } from "@rejot-dev/contract-tools/manifest";
-import type { IRejotMcp, IFactory } from "@/rejot-mcp";
-import type { McpState } from "@/state/mcp-state";
 import { join } from "node:path";
-import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
-import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
+
 import { getLogger } from "@rejot-dev/contract/logger";
+import { initManifest } from "@rejot-dev/contract-tools/manifest";
+import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
+import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
+import { z } from "zod";
+
+import type { IFactory, IRejotMcp } from "@/rejot-mcp";
+import type { McpState } from "@/state/mcp-state";
 
 const log = getLogger(import.meta.url);
 

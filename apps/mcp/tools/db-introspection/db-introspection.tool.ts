@@ -5,8 +5,8 @@ import { PostgresIntrospectionAdapter } from "@rejot-dev/adapter-postgres";
 import type { AnyIConnectionAdapter, AnyIIntrospectionAdapter } from "@rejot-dev/contract/adapter";
 import { ConnectionConfigSchema } from "@rejot-dev/contract/manifest";
 import { getConnectionBySlugHelper } from "@rejot-dev/contract/manifest-helpers";
-import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
-import type { WorkspaceDefinition } from "@rejot-dev/contract-tools/manifest";
+import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
+import type { WorkspaceDefinition } from "@rejot-dev/contract/workspace";
 
 import type { IFactory } from "@/rejot-mcp";
 import type { IRejotMcp } from "@/rejot-mcp";

@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { JsonSchemaPrinter } from "@rejot-dev/contract/json-schema";
 import {
   ConnectionSchema,
@@ -10,7 +8,8 @@ import {
 } from "@rejot-dev/contract/manifest";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
-import type { WorkspaceDefinition } from "./manifest-workspace-resolver";
+import type { WorkspaceDefinition } from "@rejot-dev/contract/workspace";
+import { z } from "zod";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 type Connection = z.infer<typeof ConnectionSchema>;

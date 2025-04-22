@@ -1,13 +1,14 @@
-import { describe, it, expect, mock } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
+
+import { WorkspaceDefinition } from "@rejot-dev/contract/workspace";
+import type { IManifestWorkspaceResolver, ManifestInfo } from "@rejot-dev/contract-tools/manifest";
+import {
+  WorkspaceService,
+  workspaceToSyncManifest,
+} from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
+
 import { MockRejotMcp } from "../_test/mock-mcp-server";
 import { WorkspaceResources } from "./workspace.resources";
-import type {
-  IManifestWorkspaceResolver,
-  WorkspaceDefinition,
-  ManifestInfo,
-} from "@rejot-dev/contract-tools/manifest";
-import { workspaceToSyncManifest } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
-import { WorkspaceService } from "@rejot-dev/contract/workspace";
 
 // Create a sample manifest
 const createBasicManifest = (slug: string) => ({
