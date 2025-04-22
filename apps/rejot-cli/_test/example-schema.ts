@@ -30,7 +30,7 @@ const testPublicSchema = createPublicSchema("public-account", {
   },
 });
 
-const testConsumerSchema = createConsumerSchema({
+const testConsumerSchema = createConsumerSchema("consume-public-account", {
   source: {
     manifestSlug: "default",
     publicSchema: {

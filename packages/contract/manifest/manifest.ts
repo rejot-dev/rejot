@@ -77,6 +77,8 @@ export const PublicSchemaSchema = z.object({
 });
 
 export const ConsumerSchemaSchema = z.object({
+  name: z.string().describe("Unique name for the public schema."),
+
   sourceManifestSlug: z
     .string()
     .min(1)
@@ -128,4 +130,8 @@ export const SyncManifestSchema = z.object({
   workspaces: z.array(z.string()).optional(),
 });
 
-export { type ManifestError, type VerificationResult, verifyManifests } from "./verify-manifest";
+export {
+  type ManifestDiagnostic,
+  type VerificationResult,
+  verifyManifests,
+} from "./verify-manifest";

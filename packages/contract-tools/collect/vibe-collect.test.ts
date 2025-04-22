@@ -8,6 +8,7 @@ import type { CollectedSchemas, ISchemaCollector } from "@rejot-dev/contract/col
 import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
 import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
 
+import { CURRENT_MANIFEST_FILE_VERSION } from "../manifest/manifest.fs";
 import { VibeCollector } from "./vibe-collect";
 
 export class MockSchemaCollector implements ISchemaCollector {
@@ -180,6 +181,7 @@ describe("vibe-collect", () => {
     };
 
     const mockConsumerSchema: ConsumerSchemaData = {
+      name: "test-consumer-schema",
       sourceManifestSlug: "test-manifest",
       publicSchema: {
         name: "TestConsumer",
@@ -260,7 +262,10 @@ describe("vibe-collect", () => {
     it("should collect both public and consumer schemas from a single file", async () => {
       const schemaFile = join(tmpDir, "mixed-schemas.ts");
       const manifestPath = join(tmpDir, "rejot-manifest.json");
-      await writeFile(manifestPath, JSON.stringify({ slug: "@test/" }));
+      await writeFile(
+        manifestPath,
+        JSON.stringify({ slug: "@test/", manifestVersion: CURRENT_MANIFEST_FILE_VERSION }),
+      );
 
       const mixedSchema = {
         testPublicSchema: {
@@ -289,6 +294,7 @@ describe("vibe-collect", () => {
           definitionFile: "mixed-schemas.ts",
         },
         testConsumerSchema: {
+          name: "test-consumer-schema",
           sourceManifestSlug: "source-manifest",
           publicSchema: {
             name: "test-schema",
@@ -529,7 +535,10 @@ describe("vibe-collect", () => {
       it("should handle duplicate public schemas with same name and version", async () => {
         // Create manifest
         const manifestPath = join(tmpDir, "rejot-manifest.json");
-        await writeFile(manifestPath, JSON.stringify({ slug: "@test/" }));
+        await writeFile(
+          manifestPath,
+          JSON.stringify({ slug: "@test/", manifestVersion: CURRENT_MANIFEST_FILE_VERSION }),
+        );
 
         // Create two schema files with the same schema
         const schemaFile1 = join(tmpDir, "schema1.ts");
@@ -592,10 +601,139 @@ describe("vibe-collect", () => {
         });
       });
 
+      it("should properly merge schemas when collecting to the same manifest multiple times", async () => {
+        // Create manifest
+        const manifestPath = join(tmpDir, "rejot-manifest.json");
+        await writeFile(
+          manifestPath,
+          JSON.stringify({
+            slug: "@test/",
+            manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
+            publicSchemas: [
+              {
+                name: "schema-1",
+                source: {
+                  dataStoreSlug: "source-store",
+                  tables: ["table1"],
+                },
+                outputSchema: {
+                  type: "object",
+                  properties: {
+                    test: { type: "string" },
+                  },
+                },
+                transformations: [
+                  {
+                    transformationType: "postgresql",
+                    table: "table1",
+                    sql: "SELECT * FROM table1",
+                  },
+                ],
+                version: {
+                  major: 1,
+                  minor: 0,
+                },
+                definitionFile: "schema1.ts",
+              },
+            ],
+          }),
+        );
+
+        // Create schema files for collection
+        const schemaFile1 = join(tmpDir, "schema1.ts");
+        const schemaFile2 = join(tmpDir, "schema2.ts");
+
+        const schema1 = {
+          name: "schema-1", // Same name as pre-existing schema
+          source: {
+            dataStoreSlug: "source-store-updated", // Updated content
+            tables: ["table1"],
+          },
+          outputSchema: {
+            type: "object" as const,
+            properties: {
+              test: { type: "string" },
+              newField: { type: "number" }, // Updated schema
+            },
+          },
+          transformations: [
+            {
+              transformationType: "postgresql" as const,
+              table: "table1",
+              sql: "SELECT * FROM table1",
+            },
+          ],
+          version: {
+            major: 1,
+            minor: 0,
+          },
+          definitionFile: "schema1.ts",
+        };
+
+        const schema2 = {
+          name: "schema-2",
+          source: {
+            dataStoreSlug: "source-store",
+            tables: ["table2"],
+          },
+          outputSchema: {
+            type: "object" as const,
+            properties: {
+              test: { type: "string" },
+            },
+          },
+          transformations: [
+            {
+              transformationType: "postgresql" as const,
+              table: "table2",
+              sql: "SELECT * FROM table2",
+            },
+          ],
+          version: {
+            major: 1,
+            minor: 0,
+          },
+          definitionFile: "schema2.ts",
+        };
+
+        // Set up mock collector
+        mockCollector.setSchemas(schemaFile1, [schema1], []);
+        mockCollector.setSchemas(schemaFile2, [schema2], []);
+
+        // Collect schemas
+        const results = await collector.collectSchemasFromFiles(
+          [schemaFile1, schemaFile2],
+          [manifestPath],
+        );
+
+        // Get the manifest's schemas
+        const manifestSchemas = results.get(manifestPath);
+        expect(manifestSchemas).toBeDefined();
+        expect(manifestSchemas!.publicSchemas).toHaveLength(2);
+        expect(manifestSchemas!.diagnostics).toHaveLength(0); // No diagnostics for overwriting existing schema
+
+        // Verify the schemas
+        const schema1Result = manifestSchemas!.publicSchemas.find((s) => s.name === "schema-1");
+        const schema2Result = manifestSchemas!.publicSchemas.find((s) => s.name === "schema-2");
+
+        expect(schema1Result).toBeDefined();
+        expect(schema2Result).toBeDefined();
+
+        // Verify schema1 was updated
+        expect(schema1Result!.source.dataStoreSlug).toBe("source-store-updated");
+        expect(schema1Result!.outputSchema.properties).toHaveProperty("newField");
+
+        // Verify schema2 was added
+        expect(schema2Result!.name).toBe("schema-2");
+      });
+
       it("should handle duplicate public and consumer schema pairs", async () => {
         // Create manifest
         const manifestPath = join(tmpDir, "rejot-manifest.json");
-        await writeFile(manifestPath, JSON.stringify({ slug: "@test/" }));
+        await writeFile(
+          manifestPath,
+          JSON.stringify({ slug: "@test/", manifestVersion: CURRENT_MANIFEST_FILE_VERSION }),
+        );
 
         // Create schema content with both public and consumer schemas
         const mixedSchema = {
@@ -625,6 +763,7 @@ describe("vibe-collect", () => {
             definitionFile: "mixed-schema1.ts",
           },
           testConsumerSchema: {
+            name: "test-consumer-schema",
             sourceManifestSlug: "source-manifest",
             publicSchema: {
               name: "test-schema",
@@ -727,6 +866,7 @@ describe("vibe-collect", () => {
     };
 
     const mockConsumerSchema: ConsumerSchemaData = {
+      name: "test-consumer-schema",
       sourceManifestSlug: "test-manifest",
       publicSchema: {
         name: "TestConsumer",

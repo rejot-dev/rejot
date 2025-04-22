@@ -18,7 +18,12 @@ export const PostgresPublicSchemaTransformationSchema = z.object({
 export const PostgresConsumerSchemaTransformationSchema = z.object({
   transformationType: z.literal("postgresql").describe("Postgres transformation type."),
   sql: z.string(),
-  whenOperation: z.enum(["insertOrUpdate", "delete"]).optional(),
+  whenOperation: z
+    .enum(["insertOrUpdate", "delete"])
+    .optional()
+    .describe(
+      "This transformation will be applied for this operation. Will default to insertOrUpdate if not specified.",
+    ),
 });
 
 export const PostgresDataStoreSchema = z.object({

@@ -1,15 +1,18 @@
+import { z } from "zod";
+
 import { JsonSchemaPrinter } from "@rejot-dev/contract/json-schema";
 import {
   ConnectionSchema,
   type ConsumerSchemaSchema,
+  ConsumerSchemaTransformationSchema,
   type DataStoreConfigSchema,
+  type ManifestDiagnostic,
   type PublicSchemaSchema,
+  PublicSchemaTransformationSchema,
   SyncManifestSchema,
 } from "@rejot-dev/contract/manifest";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
-
 import type { WorkspaceDefinition } from "@rejot-dev/contract/workspace";
-import { z } from "zod";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 type Connection = z.infer<typeof ConnectionSchema>;
@@ -199,11 +202,8 @@ export class ManifestPrinter {
       output.push(...JsonSchemaPrinter.printJsonSchema(publicSchema.outputSchema, 3));
 
       output.push("    Transformations:");
-      if (publicSchema.transformations.length === 0) {
-        output.push("      No transformations defined");
-      } else {
-        // TODO: Enhance transformation printing if needed
-        output.push(`      ${publicSchema.transformations.length} transformation(s) configured`);
+      for (const transformation of publicSchema.transformations) {
+        output.push(...this.printPublicSchemaTransformation(transformation, 4));
       }
 
       if (publicSchema.definitionFile) {
@@ -216,9 +216,7 @@ export class ManifestPrinter {
     return output;
   }
 
-  static printConsumerSchema(
-    consumerSchemas: Array<z.infer<typeof ConsumerSchemaSchema>>,
-  ): string[] {
+  static printConsumerSchema(consumerSchemas: z.infer<typeof ConsumerSchemaSchema>[]): string[] {
     const output: string[] = ["Consumer Schemas:"];
 
     if (consumerSchemas.length === 0) {
@@ -227,7 +225,7 @@ export class ManifestPrinter {
     }
 
     for (const consumerSchema of consumerSchemas) {
-      output.push("  - Consumer Schema:"); // Indent each consumer schema
+      output.push(`  - ${consumerSchema.name}`);
       output.push("    Source:");
       if (consumerSchema.sourceManifestSlug) {
         output.push(`      External Manifest: ${consumerSchema.sourceManifestSlug}`);
@@ -239,11 +237,8 @@ export class ManifestPrinter {
       output.push(`    Destination Data Store: ${consumerSchema.destinationDataStoreSlug}`);
 
       output.push("    Transformations:");
-      if (consumerSchema.transformations.length === 0) {
-        output.push("      No transformations defined");
-      } else {
-        // TODO: Enhance transformation printing if needed
-        output.push(`      ${consumerSchema.transformations.length} transformation(s) configured`);
+      for (const transformation of consumerSchema.transformations) {
+        output.push(...this.printConsumerSchemaTransformation(transformation, 4));
       }
 
       if (consumerSchema.definitionFile) {
@@ -251,6 +246,81 @@ export class ManifestPrinter {
       }
 
       output.push(""); // Add a blank line between schemas
+    }
+
+    return output;
+  }
+
+  private static printPublicSchemaTransformation(
+    transform: z.infer<typeof PublicSchemaTransformationSchema>,
+    indentLevel: number,
+  ): string[] {
+    const indent = " ".repeat(indentLevel * 2);
+    const output: string[] = [];
+
+    output.push(`${indent}- Type: ${transform.transformationType}`);
+    if (transform.transformationType === "postgresql") {
+      output.push(`${indent}  Table: ${transform.table}`);
+      output.push(`${indent}  SQL: ${transform.sql}`);
+    }
+
+    return output;
+  }
+
+  private static printConsumerSchemaTransformation(
+    transform: z.infer<typeof ConsumerSchemaTransformationSchema>,
+    indentLevel: number,
+  ): string[] {
+    const indent = " ".repeat(indentLevel * 2);
+    const output: string[] = [];
+
+    output.push(`${indent}- Type: ${transform.transformationType}`);
+    if (transform.transformationType === "postgresql") {
+      if (transform.whenOperation) {
+        output.push(`${indent}  When: ${transform.whenOperation}`);
+      }
+      output.push(`${indent}  SQL: ${transform.sql}`);
+    }
+
+    return output;
+  }
+
+  static printManifestDiagnostic(diagnostic: ManifestDiagnostic): string[] {
+    const output: string[] = [];
+
+    // Print the diagnostic type and message
+    output.push(`${diagnostic.type}:`);
+    output.push(`  Message: ${diagnostic.message}`);
+
+    // Print location information
+    output.push(`  Location:`);
+    output.push(`    Manifest: ${diagnostic.location.manifestSlug}`);
+    if (diagnostic.location.context) {
+      output.push(`    Context: ${diagnostic.location.context}`);
+    }
+
+    // Print hint if available
+    if (diagnostic.hint) {
+      output.push(`  Hint:`);
+      output.push(`    ${diagnostic.hint.message}`);
+      if (diagnostic.hint.suggestions) {
+        output.push(`    Suggestions: ${diagnostic.hint.suggestions}`);
+      }
+    }
+
+    return output;
+  }
+
+  static printManifestDiagnostics(diagnostics: ManifestDiagnostic[]): string[] {
+    if (diagnostics.length === 0) {
+      return ["No diagnostics found"];
+    }
+
+    const output: string[] = ["Manifest Diagnostics:"];
+
+    for (const diagnostic of diagnostics) {
+      output.push(""); // Add spacing between diagnostics
+      output.push(...this.printManifestDiagnostic(diagnostic).map((line) => `  ${line}`));
     }
 
     return output;

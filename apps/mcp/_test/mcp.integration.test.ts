@@ -1,10 +1,15 @@
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
-import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { $ } from "bun";
+import { z } from "zod";
 
 import { parsePostgresConnectionString } from "@rejot-dev/adapter-postgres/postgres-client";
+import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -40,10 +45,23 @@ const expectContentErrorFree = (content: ToolResponse["content"]) => {
   });
 };
 
+const expectPublicSchemaNames = async (manifestPath: string, expectedNames: string[]) => {
+  const content = await readFile(manifestPath, "utf-8");
+  const manifest = JSON.parse(content) as z.infer<typeof SyncManifestSchema>;
+  const actualNames = manifest.publicSchemas?.map((schema) => schema.name) || [];
+  expect(new Set(actualNames)).toEqual(new Set(expectedNames));
+};
+
+const expectConsumerSchemaNames = async (manifestPath: string, expectedNames: string[]) => {
+  const content = await readFile(manifestPath, "utf-8");
+  const manifest = JSON.parse(content) as z.infer<typeof SyncManifestSchema>;
+  const actualNames = manifest.consumerSchemas?.map((schema) => schema.name) || [];
+  expect(new Set(actualNames)).toEqual(new Set(expectedNames));
+};
+
 describe.skipIf(!process.env.REJOT_SYNC_CLI_TEST_CONNECTION)("MCP Integration Tests", () => {
   let client: Client;
   let tmpDir: string;
-  let testSuccess = false;
   let pgConfig: ReturnType<typeof parsePostgresConnectionString>;
 
   const assertToolCall = async (
@@ -68,6 +86,23 @@ describe.skipIf(!process.env.REJOT_SYNC_CLI_TEST_CONNECTION)("MCP Integration Te
     // Create temporary directory
     tmpDir = await mkdtemp(join(tmpdir(), "mcp-integration-test-"));
 
+    // Make the packages we need available by `bun link`ing them
+    const contractPackagePath = fileURLToPath(
+      new URL("../../../packages/contract", import.meta.url),
+    );
+    await $`bun link`.cwd(contractPackagePath).quiet();
+
+    const adapterPackagePath = fileURLToPath(
+      new URL("../../../packages/adapter-postgres", import.meta.url),
+    );
+    await $`bun link`.cwd(adapterPackagePath).quiet();
+
+    // Now we need to init a new project in the tmp dir
+    await $`bun init --yes`.cwd(tmpDir).quiet();
+    // Include the linked packages.
+    await $`bun link @rejot-dev/adapter-postgres`.cwd(tmpDir).quiet();
+    await $`bun link @rejot-dev/contract`.cwd(tmpDir).quiet();
+
     // Initialize client
     const transport = new StdioClientTransport({
       command: "bun",
@@ -91,13 +126,11 @@ describe.skipIf(!process.env.REJOT_SYNC_CLI_TEST_CONNECTION)("MCP Integration Te
   afterAll(async () => {
     await client.close();
 
-    if (testSuccess) {
-      await rm(tmpDir, { recursive: true, force: true });
-    } else {
-      const logFilePath = join(tmpDir, "mcp.log");
-      console.log("Tmp directory used:", tmpDir);
-      console.log("Log file:", logFilePath);
-    }
+    const logFilePath = join(tmpDir, "mcp.log");
+    console.log("Tmp directory used:", tmpDir);
+    console.log("Log file:", logFilePath);
+
+    await rm(tmpDir, { recursive: true, force: true });
   });
 
   describe("Workspace Setup", () => {
@@ -169,21 +202,26 @@ describe.skipIf(!process.env.REJOT_SYNC_CLI_TEST_CONNECTION)("MCP Integration Te
     test("should collect schemas", async () => {
       // Create test directory and copy example schema
       const subDir = "services";
-      const testDir = join(tmpDir, subDir, "_test");
-      await mkdir(testDir);
+      const dir = join(tmpDir, subDir);
       await cp(
         join(
           dirname(new URL(import.meta.url).pathname),
           "mcp-integration-test-example-schema.ts.ignore",
         ),
-        join(testDir, "mcp-integration-test-example-schema.ts"),
+        join(dir, "mcp-integration-test-example-schema.ts"),
       );
 
       const collectResult = await assertToolCall("rejot_collect_schemas", {
         write: true,
       });
       expectContentErrorFree(collectResult.content);
-      expect(collectResult.content[0].type).toBe("text");
+      const allContent = collectResult.content.map((c) => c.text).join("\n");
+      expect(allContent).toContain("public-account");
+      expect(allContent).toContain("consume-public-x-account");
+
+      const subManifestPath = join(tmpDir, subDir, "rejot-manifest.json");
+      await expectConsumerSchemaNames(subManifestPath, ["consume-public-x-account"]);
+      await expectPublicSchemaNames(subManifestPath, ["public-account"]);
     });
   });
 
@@ -202,8 +240,6 @@ describe.skipIf(!process.env.REJOT_SYNC_CLI_TEST_CONNECTION)("MCP Integration Te
       expect(finalInfoResult.content[0].text).toContain("@test-org/"); // Root manifest still there
       expect(finalInfoResult.content[0].text).toContain("@test-org/service1"); // Sub manifest still there
       expect(finalInfoResult.content[0].text).not.toContain("test-postgres"); // Verify connection is no longer listed
-
-      testSuccess = true;
     });
   });
 });

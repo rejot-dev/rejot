@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { ConsumerSchemaSchema } from "../manifest/manifest.ts";
 import type { PublicSchemaData } from "../public-schema/public-schema.ts";
 
@@ -57,10 +58,14 @@ export function validateConsumerSchema(options: CreateConsumerSchemaOptions): vo
   }
 }
 
-export function createConsumerSchema(options: CreateConsumerSchemaOptions): ConsumerSchemaData {
+export function createConsumerSchema(
+  name: string,
+  options: CreateConsumerSchemaOptions,
+): ConsumerSchemaData {
   validateConsumerSchema(options);
 
   return {
+    name,
     sourceManifestSlug: "manifestSlug" in options.source ? options.source.manifestSlug : "",
     publicSchema:
       "manifestSlug" in options.source

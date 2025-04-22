@@ -1,7 +1,8 @@
 import { z } from "zod";
+
 import { SyncManifestSchema } from "./manifest";
 
-export type ManifestError = {
+export type ManifestDiagnostic = {
   type:
     | "CONNECTION_NOT_FOUND"
     | "PUBLIC_SCHEMA_NOT_FOUND"
@@ -33,7 +34,7 @@ export type ExternalPublicSchemaReference = {
 
 export type VerificationResult = {
   isValid: boolean; // isValid remains true if there are only external references, but no errors
-  errors: ManifestError[];
+  errors: ManifestDiagnostic[];
   externalReferences: ExternalPublicSchemaReference[]; // Use the renamed type
 };
 
@@ -42,8 +43,8 @@ export type VerificationResult = {
  */
 export function verifyConnectionReferences(
   manifest: z.infer<typeof SyncManifestSchema>,
-): ManifestError[] {
-  const errors: ManifestError[] = [];
+): ManifestDiagnostic[] {
+  const errors: ManifestDiagnostic[] = [];
 
   // Get all connection slugs
   const connectionSlugs = new Set((manifest.connections ?? []).map((c) => c.slug));
@@ -93,10 +94,10 @@ export function verifyConnectionReferences(
  * Returns both validation errors and identified external references.
  */
 export function verifyPublicSchemaReferences(manifests: z.infer<typeof SyncManifestSchema>[]): {
-  errors: ManifestError[];
+  errors: ManifestDiagnostic[];
   externalReferences: ExternalPublicSchemaReference[];
 } {
-  const errors: ManifestError[] = [];
+  const errors: ManifestDiagnostic[] = [];
   const unresolvedExternalReferences: ExternalPublicSchemaReference[] = [];
 
   // Build a map of all available public schemas across all manifests
@@ -170,8 +171,8 @@ export function verifyPublicSchemaReferences(manifests: z.infer<typeof SyncManif
  */
 export function verifyPublicSchemaUniqueness(
   manifests: z.infer<typeof SyncManifestSchema>[],
-): ManifestError[] {
-  const errors: ManifestError[] = [];
+): ManifestDiagnostic[] {
+  const errors: ManifestDiagnostic[] = [];
 
   // Build a map of public schemas & version to manifest slug
   const publicSchemaMapManifest = new Map<string, string>();
@@ -204,7 +205,7 @@ export function verifyManifests(
   manifests: z.infer<typeof SyncManifestSchema>[],
   checkPublicSchemaReferences = true,
 ): VerificationResult {
-  const errors: ManifestError[] = [];
+  const errors: ManifestDiagnostic[] = [];
 
   // Verify each individual manifest
   manifests.forEach((manifest) => {

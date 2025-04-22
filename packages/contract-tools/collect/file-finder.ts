@@ -78,8 +78,8 @@ export async function searchInDirectory(
               .replace(/\*\*/g, "*") // ** is same as * for grep
               .replace(/\?/g, "."); // ? is . in grep
 
-            args.push("--exclude-dir", grepPattern);
-            args.push("--exclude", grepPattern);
+            args.push("--exclude-dir", `"${grepPattern}"`);
+            args.push("--exclude", `"${grepPattern}"`);
           }
         }
       }
@@ -88,7 +88,7 @@ export async function searchInDirectory(
       if (options.fileExtensions?.length) {
         // Add each extension pattern separately for better compatibility
         options.fileExtensions.forEach((ext) => {
-          args.push("--include", `*.${ext}`);
+          args.push("--include", `"*.${ext}"`);
         });
       }
 

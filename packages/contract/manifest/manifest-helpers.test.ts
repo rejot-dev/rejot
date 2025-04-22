@@ -1,10 +1,10 @@
-import { z } from "zod";
-import { SyncManifestSchema, PublicSchemaSchema, ConsumerSchemaSchema } from "./manifest";
-import { mergeManifests, mergePublicSchemas, mergeConsumerSchemas } from "./manifest-helpers";
-import type { Connection } from "./sync-manifest";
+import { describe, expect, test } from "bun:test";
 
-// Add Jest imports
-import { describe, test, expect } from "@jest/globals";
+import { z } from "zod";
+
+import { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest";
+import { mergeConsumerSchemas, mergeManifests, mergePublicSchemas } from "./manifest-helpers";
+import type { Connection } from "./sync-manifest";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
@@ -73,13 +73,32 @@ describe("mergeManifests", () => {
   test("merges data stores with precedence", () => {
     const manifest1 = {
       ...createBasicManifest("test1"),
-      dataStores: [{ connectionSlug: "conn1", publicationName: "pub1", slotName: "slot1" }],
+      dataStores: [
+        {
+          connectionSlug: "conn1",
+          config: {
+            connectionType: "postgres" as const,
+            publicationName: "pub1",
+            slotName: "slot1",
+          },
+        },
+      ],
     };
 
     const manifest2: Partial<Manifest> = {
       dataStores: [
-        { connectionSlug: "conn1", publicationName: "pub1-alt", slotName: "slot1-alt" },
-        { connectionSlug: "conn2", publicationName: "pub2", slotName: "slot2" },
+        {
+          connectionSlug: "conn1",
+          config: {
+            connectionType: "postgres",
+            publicationName: "pub1-alt",
+            slotName: "slot1-alt",
+          },
+        },
+        {
+          connectionSlug: "conn2",
+          config: { connectionType: "postgres", publicationName: "pub2", slotName: "slot2" },
+        },
       ],
     };
 
@@ -252,6 +271,7 @@ describe("mergeConsumerSchemas", () => {
     name: string,
     majorVersion: number,
   ): z.infer<typeof ConsumerSchemaSchema> => ({
+    name,
     sourceManifestSlug: "external",
     publicSchema: {
       name,
