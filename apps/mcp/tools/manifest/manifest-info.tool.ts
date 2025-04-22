@@ -1,14 +1,16 @@
-import { z } from "zod";
-import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
-import { readManifest } from "@rejot-dev/contract-tools/manifest";
-import { verifyManifests } from "@rejot-dev/contract/manifest";
-import type { IRejotMcp, IFactory } from "@/rejot-mcp";
-import type { McpState } from "@/state/mcp-state";
 import { join } from "node:path";
-import { ensurePathRelative } from "@/util/fs.util";
-import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
-import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
+
+import { verifyManifests } from "@rejot-dev/contract/manifest";
 import { workspaceToManifests } from "@rejot-dev/contract/manifest-helpers";
+import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
+import { readManifest } from "@rejot-dev/contract-tools/manifest";
+import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
+import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
+import { z } from "zod";
+
+import type { IFactory, IRejotMcp } from "@/rejot-mcp";
+import type { McpState } from "@/state/mcp-state";
+import { ensurePathRelative } from "@/util/fs.util";
 export class ManifestInfoTool implements IFactory {
   #workspaceService: IWorkspaceService;
 

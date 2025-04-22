@@ -1,12 +1,12 @@
 import { join } from "node:path";
 
-import { z } from "zod";
-
 import { PostgresConnectionSchema } from "@rejot-dev/adapter-postgres/schemas";
-import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
+import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 import { writeManifest } from "@rejot-dev/contract-tools/manifest";
 import { mergeAndUpdateManifest } from "@rejot-dev/contract-tools/manifest/manifest.fs";
 import { getManifestBySlug } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
+
+import { z } from "zod";
 
 import type { IFactory, IRejotMcp } from "@/rejot-mcp";
 import type { McpState } from "@/state/mcp-state";

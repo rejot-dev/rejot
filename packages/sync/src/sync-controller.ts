@@ -1,11 +1,14 @@
+import crypto from "node:crypto";
+
+import { getLogger } from "@rejot-dev/contract/logger";
 import type {
-  IDataSource,
   IDataSink,
+  IDataSource,
   Transaction,
   TransformedOperation,
 } from "@rejot-dev/contract/sync";
-import { getLogger } from "@rejot-dev/contract/logger";
-import { ResultSetStore, type BackfillSource } from "./result-set-store";
+
+import { type BackfillSource, ResultSetStore } from "./result-set-store";
 import { DEFAULT_BACKFILL_TIMEOUT_MS } from "./sync-consts";
 
 const log = getLogger("sync-controller");

@@ -1,25 +1,16 @@
-import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
-import { z } from "zod";
-import { DEFAULT_MANIFEST_FILENAME, readManifest, readManifestOrGetEmpty } from "./manifest.fs";
 import { dirname, join } from "node:path";
-import { findManifestPath } from "./manifest.fs";
-import { SyncManifest, type SyncManifestOptions } from "@rejot-dev/contract/sync-manifest";
+
+import { ReJotError } from "@rejot-dev/contract/error";
 import { getLogger } from "@rejot-dev/contract/logger";
+import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
+import { SyncManifest, type SyncManifestOptions } from "@rejot-dev/contract/sync-manifest";
+import type { ManifestWithPath, WorkspaceDefinition } from "@rejot-dev/contract/workspace";
+import { z } from "zod";
+
+import { DEFAULT_MANIFEST_FILENAME, readManifest, readManifestOrGetEmpty } from "./manifest.fs";
+import { findManifestPath } from "./manifest.fs";
 
 const log = getLogger(import.meta.url);
-
-export interface ManifestWithPath {
-  /** Path is relative to the rootPath in the workspace. */
-  path: string;
-  manifest: z.infer<typeof SyncManifestSchema>;
-}
-
-export interface WorkspaceDefinition {
-  /** Absolute path */
-  rootPath: string;
-  ancestor: ManifestWithPath;
-  children: ManifestWithPath[];
-}
 
 export interface ResolveWorkspaceOptions {
   startDir?: string;
@@ -36,6 +27,40 @@ export interface IManifestWorkspaceResolver {
   resolveWorkspace(options?: ResolveWorkspaceOptions): Promise<WorkspaceDefinition | null>;
   getManifestInfo(filePath: string): Promise<ManifestInfo>;
   workspaceToSyncManifest(workspace: WorkspaceDefinition): SyncManifest;
+}
+
+export interface IWorkspaceService {
+  resolveWorkspace(projectDir: string): Promise<{ workspace: WorkspaceDefinition }>;
+}
+
+export class WorkspaceInitializationError extends ReJotError {
+  get name(): string {
+    return "WorkspaceInitializationError";
+  }
+}
+
+export class WorkspaceService implements IWorkspaceService {
+  readonly #workspaceResolver: IManifestWorkspaceResolver;
+
+  constructor(workspaceResolver: IManifestWorkspaceResolver) {
+    this.#workspaceResolver = workspaceResolver;
+  }
+
+  async resolveWorkspace(projectDir: string): Promise<{ workspace: WorkspaceDefinition }> {
+    const workspace = await this.#workspaceResolver.resolveWorkspace({
+      startDir: projectDir,
+    });
+
+    if (!workspace) {
+      throw new WorkspaceInitializationError("No workspace found in project directory").withHint(
+        "Create a new manifest if this is a new workspace",
+      );
+    }
+
+    return {
+      workspace,
+    };
+  }
 }
 
 export class ManifestWorkspaceResolver implements IManifestWorkspaceResolver {

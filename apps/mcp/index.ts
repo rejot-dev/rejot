@@ -1,19 +1,21 @@
-import { parseArgs } from "@std/cli/parse-args";
 import { join } from "node:path";
-import { RejotMcp } from "./rejot-mcp";
-import { WorkspaceResources } from "./workspace/workspace.resources";
+
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { SchemaCollector } from "@rejot-dev/contract/collect";
+import { FileLogger, setLogger } from "@rejot-dev/contract/logger";
+import { VibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
 import { ManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest";
+import { WorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
+import { parseArgs } from "@std/cli/parse-args";
+
+import { CollectTool } from "./collect/collect.tool";
+import { RejotMcp } from "./rejot-mcp";
 import { DbIntrospectionTool } from "./tools/db-introspection/db-introspection.tool";
 import { ManifestInfoTool } from "./tools/manifest/manifest-info.tool";
-import { WorkspaceTool } from "./workspace/workspace.tool";
-import { setLogger, FileLogger } from "@rejot-dev/contract/logger";
-import { WorkspaceService } from "../../packages/contract/workspace/workspace";
-import { ManifestConnectionTool } from "./tools/manifest-connection/manifest-connection.tool";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ManifestInitTool } from "./tools/manifest/manifest-init.tool";
-import { CollectTool } from "./collect/collect.tool";
-import { VibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
-import { SchemaCollector } from "@rejot-dev/contract/collect";
+import { ManifestConnectionTool } from "./tools/manifest-connection/manifest-connection.tool";
+import { WorkspaceResources } from "./workspace/workspace.resources";
+import { WorkspaceTool } from "./workspace/workspace.tool";
 
 // Open the log file when starting up
 const args = parseArgs(process.argv.slice(2));

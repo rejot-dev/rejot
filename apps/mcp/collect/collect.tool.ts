@@ -1,10 +1,9 @@
 import { join } from "node:path";
 
-import { z } from "zod";
-
 import { getLogger } from "@rejot-dev/contract/logger";
-import type { IWorkspaceService } from "@rejot-dev/contract/workspace";
 import { type IVibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
+import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
+import { z } from "zod";
 
 import type { IFactory, IRejotMcp } from "@/rejot-mcp";
 import type { McpState } from "@/state/mcp-state";

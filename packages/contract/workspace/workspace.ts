@@ -1,39 +1,16 @@
-import type {
-  IManifestWorkspaceResolver,
-  WorkspaceDefinition,
-} from "@rejot-dev/contract-tools/manifest";
-import { ReJotError } from "@rejot-dev/contract/error";
+import type { z } from "zod";
 
-export interface IWorkspaceService {
-  resolveWorkspace(projectDir: string): Promise<{ workspace: WorkspaceDefinition }>;
+import type { SyncManifestSchema } from "../manifest/manifest";
+
+export interface ManifestWithPath {
+  /** Path is relative to the rootPath in the workspace. */
+  path: string;
+  manifest: z.infer<typeof SyncManifestSchema>;
 }
 
-export class WorkspaceInitializationError extends ReJotError {
-  get name(): string {
-    return "WorkspaceInitializationError";
-  }
-}
-
-export class WorkspaceService implements IWorkspaceService {
-  readonly #workspaceResolver: IManifestWorkspaceResolver;
-
-  constructor(workspaceResolver: IManifestWorkspaceResolver) {
-    this.#workspaceResolver = workspaceResolver;
-  }
-
-  async resolveWorkspace(projectDir: string): Promise<{ workspace: WorkspaceDefinition }> {
-    const workspace = await this.#workspaceResolver.resolveWorkspace({
-      startDir: projectDir,
-    });
-
-    if (!workspace) {
-      throw new WorkspaceInitializationError("No workspace found in project directory").withHint(
-        "Create a new manifest if this is a new workspace",
-      );
-    }
-
-    return {
-      workspace,
-    };
-  }
+export interface WorkspaceDefinition {
+  /** Absolute path */
+  rootPath: string;
+  ancestor: ManifestWithPath;
+  children: ManifestWithPath[];
 }
