@@ -9,7 +9,7 @@
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["dist", "**/*.test.ts", "**/*.test.tsx"],
+  "exclude": ["dist"],
   "references": [
     {
       "path": "../../packages/contract"
