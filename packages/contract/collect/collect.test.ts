@@ -4,8 +4,6 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { CURRENT_MANIFEST_FILE_VERSION } from "@rejot-dev/contract-tools/manifest/manifest.fs";
-
 import { SchemaCollector } from "./collect";
 
 describe("collect", () => {
@@ -16,10 +14,7 @@ describe("collect", () => {
   beforeEach(async () => {
     tmpDir = await mkdtemp(join(tmpdir(), "collect-test-"));
     manifestPath = join(tmpDir, "rejot-manifest.json");
-    await writeFile(
-      manifestPath,
-      JSON.stringify({ slug: "@test/", manifestVersion: CURRENT_MANIFEST_FILE_VERSION }),
-    );
+    await writeFile(manifestPath, JSON.stringify({ slug: "@test/", manifestVersion: 0 }));
     collector = new SchemaCollector();
   });
 

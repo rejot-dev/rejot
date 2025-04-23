@@ -175,6 +175,7 @@
       "dependencies": {
         "@rejot-dev/contract": "*",
         "@rejot-dev/sqlparser": "*",
+        "@rejot-dev/sync": "*",
         "pg": "^8.11.3",
         "pg-logical-replication": "^2.0.7",
       },

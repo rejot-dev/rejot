@@ -36,7 +36,7 @@ export default tseslint.config(
     },
     rules: {
       // ...unicornFixableRules,
-      "local/require-local-package-deps": "warn", // TODO: make this an error once dependency cycles are resolved
+      "local/require-local-package-deps": "error",
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
