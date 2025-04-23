@@ -25,6 +25,7 @@
     "./manifest": "./manifest/manifest.ts",
     "./manifest.fs": "./manifest/manifest.fs.ts",
     "./manifest-helpers": "./manifest/manifest-helpers.ts",
+    "./manifest-merger": "./manifest/manifest-merger.ts",
     "./sync-manifest": "./manifest/sync-manifest.ts",
     "./postgres": "./postgres/postgres.ts",
     "./public-schema": "./public-schema/public-schema.ts",

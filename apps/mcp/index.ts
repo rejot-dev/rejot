@@ -5,6 +5,7 @@ import { FileLogger, setLogger } from "@rejot-dev/contract/logger";
 import { FileFinder } from "@rejot-dev/contract-tools/collect/file-finder";
 import { VibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
 import { ManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest";
+import { ManifestFileManager } from "@rejot-dev/contract-tools/manifest/manifest-file-manager";
 import { WorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -58,7 +59,11 @@ Some tips:
 );
 
 const workspaceService = new WorkspaceService(new ManifestWorkspaceResolver());
-const vibeCollector = new VibeCollector(new SchemaCollector(), new FileFinder());
+const vibeCollector = new VibeCollector(
+  new SchemaCollector(),
+  new FileFinder(),
+  new ManifestFileManager(),
+);
 
 const rejotMcp = new RejotMcp(args["project"], server, [
   new WorkspaceResources(workspaceService),

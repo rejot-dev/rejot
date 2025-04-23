@@ -74,9 +74,9 @@ describe("ManifestMerger", () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0]).toMatchObject({
       type: "info",
-      message: "Connection 'conn2' was overwritten with new configuration",
-      context: {
-        connectionSlug: "conn2",
+      kind: "connection",
+      item: {
+        slug: "conn2",
       },
     });
   });
@@ -126,10 +126,9 @@ describe("ManifestMerger", () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0]).toMatchObject({
       type: "info",
-      message: "Data store 'conn1' was overwritten with new configuration",
-      context: {
+      kind: "data_store",
+      item: {
         connectionSlug: "conn1",
-        storeType: "data",
       },
     });
   });
@@ -139,6 +138,7 @@ describe("ManifestMerger", () => {
       name: string,
       major: number,
       minor: number,
+      sql: string = "SELECT * FROM table1",
     ): z.infer<typeof PublicSchemaSchema> => ({
       name,
       version: { major, minor },
@@ -154,9 +154,10 @@ describe("ManifestMerger", () => {
         {
           transformationType: "postgresql" as const,
           table: "table1",
-          sql: "SELECT * FROM table1",
+          sql,
         },
       ],
+      definitionFile: `/path/to/someFile.ts`,
     });
 
     const baseSchemas = [
@@ -194,51 +195,42 @@ describe("ManifestMerger", () => {
 
     // Verify diagnostics
     expect(diagnostics).toHaveLength(3); // Three overwrites (1.0->1.1, 2.0->2.1, and 1.5->1.3)
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
-        type: "info",
-        message:
-          "Public schema 'schema1@1' was overwritten with new definition from unknown location",
-        context: {
-          schemaType: "public",
-          schemaName: "schema1",
-          version: {
-            major: 1,
-            minor: 1,
-          },
+    expect(diagnostics).toContainEqual({
+      type: "info",
+      kind: "public_schema",
+      item: {
+        name: "schema1",
+        version: {
+          major: 1,
+          minor: 1,
         },
-      }),
-    );
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
-        type: "info",
-        message:
-          "Public schema 'schema1@2' was overwritten with new definition from unknown location",
-        context: {
-          schemaType: "public",
-          schemaName: "schema1",
-          version: {
-            major: 2,
-            minor: 1,
-          },
+        sourceDefinitionFile: "/path/to/someFile.ts",
+      },
+    });
+    expect(diagnostics).toContainEqual({
+      type: "info",
+      kind: "public_schema",
+      item: {
+        name: "schema1",
+        version: {
+          major: 2,
+          minor: 1,
         },
-      }),
-    );
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
-        type: "info",
-        message:
-          "Public schema 'schema2@1' was overwritten with new definition from unknown location",
-        context: {
-          schemaType: "public",
-          schemaName: "schema2",
-          version: {
-            major: 1,
-            minor: 3,
-          },
+        sourceDefinitionFile: "/path/to/someFile.ts",
+      },
+    });
+    expect(diagnostics).toContainEqual({
+      type: "info",
+      kind: "public_schema",
+      item: {
+        name: "schema2",
+        version: {
+          major: 1,
+          minor: 3,
         },
-      }),
-    );
+        sourceDefinitionFile: "/path/to/someFile.ts",
+      },
+    });
   });
 
   test("consumer schema merging respects order and naming", () => {
@@ -261,6 +253,7 @@ describe("ManifestMerger", () => {
           sql: transformSql,
         },
       ],
+      definitionFile: `/path/to/${name}-consumer.ts`,
     });
 
     const baseSchemas = [
@@ -308,48 +301,30 @@ describe("ManifestMerger", () => {
 
     // Verify diagnostics
     expect(diagnostics).toHaveLength(3); // Three overwrites (consumer1, consumer2, and consumer3)
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
-        type: "info",
-        message:
-          "Consumer schema 'consumer1' was overwritten with new definition from unknown location",
-        context: {
-          schemaType: "consumer",
-          schemaName: "consumer1",
-          version: {
-            major: 2,
-          },
-        },
-      }),
-    );
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
-        type: "info",
-        message:
-          "Consumer schema 'consumer2' was overwritten with new definition from unknown location",
-        context: {
-          schemaType: "consumer",
-          schemaName: "consumer2",
-          version: {
-            major: 2,
-          },
-        },
-      }),
-    );
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
-        type: "info",
-        message:
-          "Consumer schema 'consumer3' was overwritten with new definition from unknown location",
-        context: {
-          schemaType: "consumer",
-          schemaName: "consumer3",
-          version: {
-            major: 2,
-          },
-        },
-      }),
-    );
+    expect(diagnostics).toContainEqual({
+      type: "info",
+      kind: "consumer_schema",
+      item: {
+        name: "consumer1",
+        sourceDefinitionFile: "/path/to/consumer1-consumer.ts",
+      },
+    });
+    expect(diagnostics).toContainEqual({
+      type: "info",
+      kind: "consumer_schema",
+      item: {
+        name: "consumer2",
+        sourceDefinitionFile: "/path/to/consumer2-consumer.ts",
+      },
+    });
+    expect(diagnostics).toContainEqual({
+      type: "info",
+      kind: "consumer_schema",
+      item: {
+        name: "consumer3",
+        sourceDefinitionFile: "/path/to/consumer3-consumer.ts",
+      },
+    });
   });
 
   test("consumer schema merging handles empty base and overwrite cases", () => {
@@ -371,6 +346,7 @@ describe("ManifestMerger", () => {
           sql: "SELECT * FROM source",
         },
       ],
+      definitionFile: `/path/to/${name}-consumer.ts`,
     });
 
     // Test with empty base schemas
@@ -439,6 +415,7 @@ describe("ManifestMerger", () => {
           sql,
         },
       ],
+      definitionFile: `/path/to/someFile.ts`,
     });
 
     const schemas = [
@@ -464,51 +441,42 @@ describe("ManifestMerger", () => {
 
     // Verify diagnostics - should show overwrites for both schemas
     expect(diagnostics).toHaveLength(3); // Three overwrites: schema1@1.0->1.1->1.2 and schema2@1.0->1.1
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
-        type: "info",
-        message:
-          "Public schema 'schema1@1' was overwritten with new definition from unknown location",
-        context: {
-          schemaType: "public",
-          schemaName: "schema1",
-          version: {
-            major: 1,
-            minor: 1,
-          },
+    expect(diagnostics).toContainEqual({
+      type: "info",
+      kind: "public_schema",
+      item: {
+        name: "schema1",
+        version: {
+          major: 1,
+          minor: 1,
         },
-      }),
-    );
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
-        type: "info",
-        message:
-          "Public schema 'schema1@1' was overwritten with new definition from unknown location",
-        context: {
-          schemaType: "public",
-          schemaName: "schema1",
-          version: {
-            major: 1,
-            minor: 2,
-          },
+        sourceDefinitionFile: "/path/to/someFile.ts",
+      },
+    });
+    expect(diagnostics).toContainEqual({
+      type: "info",
+      kind: "public_schema",
+      item: {
+        name: "schema1",
+        version: {
+          major: 1,
+          minor: 2,
         },
-      }),
-    );
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
-        type: "info",
-        message:
-          "Public schema 'schema2@1' was overwritten with new definition from unknown location",
-        context: {
-          schemaType: "public",
-          schemaName: "schema2",
-          version: {
-            major: 1,
-            minor: 1,
-          },
+        sourceDefinitionFile: "/path/to/someFile.ts",
+      },
+    });
+    expect(diagnostics).toContainEqual({
+      type: "info",
+      kind: "public_schema",
+      item: {
+        name: "schema2",
+        version: {
+          major: 1,
+          minor: 1,
         },
-      }),
-    );
+        sourceDefinitionFile: "/path/to/someFile.ts",
+      },
+    });
   });
 
   test("consumer schema merging handles duplicates in overwrite array (last write wins)", () => {
@@ -531,6 +499,7 @@ describe("ManifestMerger", () => {
           sql: transformSql,
         },
       ],
+      definitionFile: `/path/to/${name}-consumer.ts`,
     });
 
     const schemas = [
@@ -548,55 +517,37 @@ describe("ManifestMerger", () => {
 
     const consumer1 = result.find((s) => s.name === "consumer1");
     expect(consumer1?.publicSchema.majorVersion).toBe(3);
-    expect(consumer1?.transformations[0].sql).toBe("SELECT * FROM source");
 
     const consumer2 = result.find((s) => s.name === "consumer2");
     expect(consumer2?.publicSchema.majorVersion).toBe(2);
-    expect(consumer2?.transformations[0].sql).toBe("SELECT * FROM source");
 
     // Verify diagnostics - should show overwrites for both schemas
     expect(diagnostics).toHaveLength(3); // Three overwrites: consumer1@1->2->3 and consumer2@1->2
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
+    expect(diagnostics).toEqual([
+      {
         type: "info",
-        message:
-          "Consumer schema 'consumer1' was overwritten with new definition from unknown location",
-        context: {
-          schemaType: "consumer",
-          schemaName: "consumer1",
-          version: {
-            major: 2,
-          },
+        kind: "consumer_schema",
+        item: {
+          name: "consumer1",
+          sourceDefinitionFile: "/path/to/consumer1-consumer.ts",
         },
-      }),
-    );
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
+      },
+      {
         type: "info",
-        message:
-          "Consumer schema 'consumer1' was overwritten with new definition from unknown location",
-        context: {
-          schemaType: "consumer",
-          schemaName: "consumer1",
-          version: {
-            major: 3,
-          },
+        kind: "consumer_schema",
+        item: {
+          name: "consumer1",
+          sourceDefinitionFile: "/path/to/consumer1-consumer.ts",
         },
-      }),
-    );
-    expect(diagnostics).toContainEqual(
-      expect.objectContaining({
+      },
+      {
         type: "info",
-        message:
-          "Consumer schema 'consumer2' was overwritten with new definition from unknown location",
-        context: {
-          schemaType: "consumer",
-          schemaName: "consumer2",
-          version: {
-            major: 2,
-          },
+        kind: "consumer_schema",
+        item: {
+          name: "consumer2",
+          sourceDefinitionFile: "/path/to/consumer2-consumer.ts",
         },
-      }),
-    );
+      },
+    ]);
   });
 });

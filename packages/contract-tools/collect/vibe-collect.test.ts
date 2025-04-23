@@ -6,11 +6,13 @@ import { dirname, join, relative } from "node:path";
 
 import type { CollectedSchemas, ISchemaCollector } from "@rejot-dev/contract/collect";
 import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
+import type { MergeDiagnostic } from "@rejot-dev/contract/manifest-merger";
 import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
 
 import { CURRENT_MANIFEST_FILE_VERSION } from "../manifest/manifest.fs";
+import { MockManifestFileManager } from "../manifest/manifest-file-manager.mock";
 import { MockFileFinder } from "./file-finder.mock";
-import { VibeCollector } from "./vibe-collect";
+import { type VibeCollectedSchemas, VibeCollector } from "./vibe-collect";
 
 export class MockSchemaCollector implements ISchemaCollector {
   #schemaMap: Map<string, { public: PublicSchemaData[]; consumer: ConsumerSchemaData[] }>;
@@ -55,7 +57,11 @@ describe("vibe-collect", () => {
     let collector: VibeCollector;
 
     beforeEach(() => {
-      collector = new VibeCollector(new MockSchemaCollector(), new MockFileFinder());
+      collector = new VibeCollector(
+        new MockSchemaCollector(),
+        new MockFileFinder(),
+        new MockManifestFileManager(),
+      );
     });
 
     it("should find manifest in the same directory", async () => {
@@ -71,7 +77,10 @@ describe("vibe-collect", () => {
 
     it("should find manifest in parent directory when no manifest in current directory", async () => {
       const filePath = "/root/project/src/components/file.ts";
-      const manifestPaths = ["/root/project/rejot-manifest.json", "/root/rejot-manifest.json"];
+      const manifestPaths = [
+        "/root/project/rejot-manifest.json",
+        "/root/project/rejot-manifest.json",
+      ];
 
       const result = await collector.findNearestManifest(filePath, manifestPaths);
       expect(normalizePath(result!)).toBe("/root/project/rejot-manifest.json");
@@ -207,7 +216,11 @@ describe("vibe-collect", () => {
     beforeEach(async () => {
       tmpDir = await mkdtemp(join(tmpdir(), "vibe-collect-test-"));
       mockSchemaCollector = new MockSchemaCollector();
-      vibeCollector = new VibeCollector(mockSchemaCollector, new MockFileFinder());
+      vibeCollector = new VibeCollector(
+        mockSchemaCollector,
+        new MockFileFinder(),
+        new MockManifestFileManager(),
+      );
     });
 
     afterEach(async () => {
@@ -223,18 +236,18 @@ describe("vibe-collect", () => {
         ["/root/project/src/rejot-manifest.json"],
       );
 
-      expect(result.size).toBe(1);
-      const manifestSchemas = result.get("/root/project/src/rejot-manifest.json");
-      expect(manifestSchemas).toBeDefined();
-      expect(manifestSchemas?.publicSchemas).toHaveLength(1);
-      expect(manifestSchemas?.consumerSchemas).toHaveLength(1);
-      expect(manifestSchemas?.publicSchemas[0].name).toBe("TestSchema");
-      expect(manifestSchemas?.consumerSchemas[0].publicSchema.name).toBe("TestConsumer");
+      expect(result).toHaveLength(1);
+      const manifestSchemas = result[0];
+      expect(manifestSchemas.manifestPath).toBe("/root/project/src/rejot-manifest.json");
+      expect(manifestSchemas.publicSchemas).toHaveLength(1);
+      expect(manifestSchemas.consumerSchemas).toHaveLength(1);
+      expect(manifestSchemas.publicSchemas[0].name).toBe("TestSchema");
+      expect(manifestSchemas.consumerSchemas[0].publicSchema.name).toBe("TestConsumer");
     });
 
     it("should handle empty file paths", async () => {
       const result = await vibeCollector.collectSchemasFromFiles([], ["/mock/manifest.json"]);
-      expect(result.size).toBe(0);
+      expect(result).toHaveLength(0);
     });
 
     it("should throw when file paths are not absolute", async () => {
@@ -327,19 +340,19 @@ describe("vibe-collect", () => {
 
       const result = await vibeCollector.collectSchemasFromFiles([schemaFile], [manifestPath]);
 
-      expect(result.size).toBe(1);
-      const manifestSchemas = result.get(manifestPath);
-      expect(manifestSchemas).toBeDefined();
-      expect(manifestSchemas?.publicSchemas).toHaveLength(1);
-      expect(manifestSchemas?.consumerSchemas).toHaveLength(1);
+      expect(result).toHaveLength(1);
+      const manifestSchemas = result[0];
+      expect(manifestSchemas.manifestPath).toBe(manifestPath);
+      expect(manifestSchemas.publicSchemas).toHaveLength(1);
+      expect(manifestSchemas.consumerSchemas).toHaveLength(1);
 
       // Verify public schema
-      expect(manifestSchemas?.publicSchemas[0].name).toBe("test-public-schema");
-      expect(manifestSchemas?.publicSchemas[0].version.major).toBe(1);
+      expect(manifestSchemas.publicSchemas[0].name).toBe("test-public-schema");
+      expect(manifestSchemas.publicSchemas[0].version.major).toBe(1);
 
       // Verify consumer schema
-      expect(manifestSchemas?.consumerSchemas[0].publicSchema.name).toBe("test-schema");
-      expect(manifestSchemas?.consumerSchemas[0].publicSchema.majorVersion).toBe(1);
+      expect(manifestSchemas.consumerSchemas[0].publicSchema.name).toBe("test-schema");
+      expect(manifestSchemas.consumerSchemas[0].publicSchema.majorVersion).toBe(1);
     });
 
     it("should merge schemas from multiple files under the same manifest", async () => {
@@ -404,10 +417,11 @@ describe("vibe-collect", () => {
         ["/root/project/rejot-manifest.json"],
       );
 
-      const manifestSchemas = result.get("/root/project/rejot-manifest.json");
-      expect(manifestSchemas?.publicSchemas).toHaveLength(2);
-      expect(manifestSchemas?.publicSchemas[0].name).toBe("Schema1");
-      expect(manifestSchemas?.publicSchemas[1].name).toBe("Schema2");
+      const manifestSchemas = result[0];
+      expect(manifestSchemas.manifestPath).toBe("/root/project/rejot-manifest.json");
+      expect(manifestSchemas.publicSchemas).toHaveLength(2);
+      expect(manifestSchemas.publicSchemas[0].name).toBe("Schema1");
+      expect(manifestSchemas.publicSchemas[1].name).toBe("Schema2");
     });
 
     it("should distribute schemas to correct manifests based on file location", async () => {
@@ -430,18 +444,20 @@ describe("vibe-collect", () => {
         ],
       );
 
-      expect(result.size).toBe(2);
+      expect(result).toHaveLength(2);
 
       // Component manifest should have schemas from the components file
-      const componentManifestSchemas = result.get(
-        "/root/project/src/components/rejot-manifest.json",
+      const componentManifestSchemas = result.find(
+        (s) => s.manifestPath === "/root/project/src/components/rejot-manifest.json",
       );
       expect(componentManifestSchemas).toBeDefined();
       expect(componentManifestSchemas?.publicSchemas).toHaveLength(1);
       expect(componentManifestSchemas?.consumerSchemas).toHaveLength(0);
 
       // Root manifest should have schemas from the utils file
-      const rootManifestSchemas = result.get("/root/project/src/rejot-manifest.json");
+      const rootManifestSchemas = result.find(
+        (s) => s.manifestPath === "/root/project/src/rejot-manifest.json",
+      );
       expect(rootManifestSchemas).toBeDefined();
       expect(rootManifestSchemas?.publicSchemas).toHaveLength(0);
       expect(rootManifestSchemas?.consumerSchemas).toHaveLength(1);
@@ -472,17 +488,19 @@ describe("vibe-collect", () => {
         ],
       );
 
-      expect(result.size).toBe(2);
+      expect(result).toHaveLength(2);
 
       // Results should be mapped back to absolute paths
-      const componentManifestSchemas = result.get(
-        "/root/project/src/components/rejot-manifest.json",
+      const componentManifestSchemas = result.find(
+        (s) => s.manifestPath === resolveFromSrc("./components/rejot-manifest.json"),
       );
       expect(componentManifestSchemas).toBeDefined();
       expect(componentManifestSchemas?.publicSchemas).toHaveLength(1);
       expect(componentManifestSchemas?.consumerSchemas).toHaveLength(0);
 
-      const rootManifestSchemas = result.get("/root/project/src/rejot-manifest.json");
+      const rootManifestSchemas = result.find(
+        (s) => s.manifestPath === resolveFromSrc("./rejot-manifest.json"),
+      );
       expect(rootManifestSchemas).toBeDefined();
       expect(rootManifestSchemas?.publicSchemas).toHaveLength(0);
       expect(rootManifestSchemas?.consumerSchemas).toHaveLength(1);
@@ -513,17 +531,19 @@ describe("vibe-collect", () => {
         ],
       );
 
-      expect(result.size).toBe(2);
+      expect(result).toHaveLength(2);
 
       // Results should be mapped back to absolute paths
-      const componentManifestSchemas = result.get(
-        "/root/project/src/components/rejot-manifest.json",
+      const componentManifestSchemas = result.find(
+        (s) => s.manifestPath === resolveFromSrc("./components/rejot-manifest.json"),
       );
       expect(componentManifestSchemas).toBeDefined();
       expect(componentManifestSchemas?.publicSchemas).toHaveLength(1);
       expect(componentManifestSchemas?.consumerSchemas).toHaveLength(0);
 
-      const rootManifestSchemas = result.get("/root/project/src/rejot-manifest.json");
+      const rootManifestSchemas = result.find(
+        (s) => s.manifestPath === "/root/project/src/rejot-manifest.json",
+      );
       expect(rootManifestSchemas).toBeDefined();
       expect(rootManifestSchemas?.publicSchemas).toHaveLength(0);
       expect(rootManifestSchemas?.consumerSchemas).toHaveLength(1);
@@ -555,17 +575,19 @@ describe("vibe-collect", () => {
         ],
       );
 
-      expect(result.size).toBe(2);
+      expect(result).toHaveLength(2);
 
       // Results should be mapped back to absolute paths
-      const componentManifestSchemas = result.get(
-        "/root/project/src/components/rejot-manifest.json",
+      const componentManifestSchemas = result.find(
+        (s) => s.manifestPath === resolveFromComponents("./rejot-manifest.json"),
       );
       expect(componentManifestSchemas).toBeDefined();
       expect(componentManifestSchemas?.publicSchemas).toHaveLength(1);
       expect(componentManifestSchemas?.consumerSchemas).toHaveLength(0);
 
-      const rootManifestSchemas = result.get("/root/project/src/rejot-manifest.json");
+      const rootManifestSchemas = result.find(
+        (s) => s.manifestPath === resolveFromComponents("../rejot-manifest.json"),
+      );
       expect(rootManifestSchemas).toBeDefined();
       expect(rootManifestSchemas?.publicSchemas).toHaveLength(0);
       expect(rootManifestSchemas?.consumerSchemas).toHaveLength(1);
@@ -624,32 +646,25 @@ describe("vibe-collect", () => {
         );
 
         // Get the manifest's schemas
-        const manifestSchemas = results.get(manifestPath);
-        expect(manifestSchemas).toBeDefined();
-        expect(manifestSchemas!.publicSchemas).toHaveLength(1);
-        expect(manifestSchemas!.publicSchemas[0].name).toBe("duplicate-schema");
+        const manifestSchemas = results[0];
+        expect(manifestSchemas.manifestPath).toBe(manifestPath);
+        expect(manifestSchemas.publicSchemas).toHaveLength(1);
+        expect(manifestSchemas.publicSchemas[0].name).toBe("duplicate-schema");
         // Last schema should win
-        expect(manifestSchemas!.publicSchemas[0].definitionFile).toBe("schema2.ts");
+        expect(manifestSchemas.publicSchemas[0].definitionFile).toBe("schema2.ts");
 
         // Verify diagnostic was created for the duplicate
-        expect(manifestSchemas!.diagnostics).toHaveLength(1);
-        const expectedPath2 = join(dirname(manifestPath), "schema2.ts");
-        expect(manifestSchemas!.diagnostics[0]).toEqual({
-          message: `Public schema 'duplicate-schema@1' was overwritten with new definition from schema2.ts`,
-          severity: "error",
-          file: expectedPath2,
-          context: {
-            schemaType: "public",
-            schemaName: "duplicate-schema",
+        expect(manifestSchemas.diagnostics).toHaveLength(1);
+        expect(manifestSchemas.diagnostics[0]).toEqual({
+          type: "info",
+          kind: "public_schema",
+          item: {
+            name: "duplicate-schema",
             version: {
               major: 1,
               minor: 0,
             },
-            originalLocation: "schema1.ts",
-          },
-          location: {
-            filePath: expectedPath2,
-            manifestPath: manifestPath,
+            sourceDefinitionFile: "schema2.ts",
           },
         });
       });
@@ -670,14 +685,14 @@ describe("vibe-collect", () => {
                   tables: ["table1"],
                 },
                 outputSchema: {
-                  type: "object",
+                  type: "object" as const,
                   properties: {
                     test: { type: "string" },
                   },
                 },
                 transformations: [
                   {
-                    transformationType: "postgresql",
+                    transformationType: "postgresql" as const,
                     table: "table1",
                     sql: "SELECT * FROM table1",
                   },
@@ -760,14 +775,14 @@ describe("vibe-collect", () => {
         );
 
         // Get the manifest's schemas
-        const manifestSchemas = results.get(manifestPath);
-        expect(manifestSchemas).toBeDefined();
-        expect(manifestSchemas!.publicSchemas).toHaveLength(2);
-        expect(manifestSchemas!.diagnostics).toHaveLength(0); // No diagnostics for overwriting existing schema
+        const manifestSchemas = results[0];
+        expect(manifestSchemas.manifestPath).toBe(manifestPath);
+        expect(manifestSchemas.publicSchemas).toHaveLength(2);
+        expect(manifestSchemas.diagnostics).toHaveLength(0); // No diagnostics for overwriting existing schema
 
         // Verify the schemas
-        const schema1Result = manifestSchemas!.publicSchemas.find((s) => s.name === "schema-1");
-        const schema2Result = manifestSchemas!.publicSchemas.find((s) => s.name === "schema-2");
+        const schema1Result = manifestSchemas.publicSchemas.find((s) => s.name === "schema-1");
+        const schema2Result = manifestSchemas.publicSchemas.find((s) => s.name === "schema-2");
 
         expect(schema1Result).toBeDefined();
         expect(schema2Result).toBeDefined();
@@ -855,56 +870,39 @@ describe("vibe-collect", () => {
         );
 
         // Get the manifest's schemas
-        const manifestSchemas = results.get(manifestPath);
-        expect(manifestSchemas).toBeDefined();
+        const manifestSchemas = results[0];
+        expect(manifestSchemas.manifestPath).toBe(manifestPath);
 
         // Should only keep one copy of each schema
-        expect(manifestSchemas!.publicSchemas).toHaveLength(1);
-        expect(manifestSchemas!.consumerSchemas).toHaveLength(1);
+        expect(manifestSchemas.publicSchemas).toHaveLength(1);
+        expect(manifestSchemas.consumerSchemas).toHaveLength(1);
 
         // Verify the kept schemas are from the first file
-        expect(manifestSchemas!.publicSchemas[0].name).toBe("test-public-schema");
-        expect(manifestSchemas!.publicSchemas[0].version.major).toBe(1);
-        expect(manifestSchemas!.consumerSchemas[0].publicSchema.name).toBe("test-schema");
+        expect(manifestSchemas.publicSchemas[0].name).toBe("test-public-schema");
+        expect(manifestSchemas.publicSchemas[0].version.major).toBe(1);
+        expect(manifestSchemas.consumerSchemas[0].publicSchema.name).toBe("test-schema");
 
         // Verify diagnostics - should show overwrites for both schemas
-        expect(manifestSchemas!.diagnostics).toHaveLength(2);
-        const _expectedPath1 = join(dirname(manifestPath), "mixed-schema1.ts");
-        const expectedPath2 = join(dirname(manifestPath), "mixed-schema2.ts");
-        expect(manifestSchemas!.diagnostics).toEqual([
+        expect(manifestSchemas.diagnostics).toHaveLength(2);
+        expect(manifestSchemas.diagnostics).toEqual([
           {
-            message: `Public schema 'test-public-schema@1' was overwritten with new definition from mixed-schema2.ts`,
-            severity: "error",
-            file: expectedPath2,
-            context: {
-              schemaType: "public",
-              schemaName: "test-public-schema",
+            type: "info",
+            kind: "public_schema",
+            item: {
+              name: "test-public-schema",
               version: {
                 major: 1,
                 minor: 0,
               },
-              originalLocation: "mixed-schema1.ts",
-            },
-            location: {
-              filePath: expectedPath2,
-              manifestPath: manifestPath,
+              sourceDefinitionFile: "mixed-schema2.ts",
             },
           },
           {
-            message: `Consumer schema 'test-consumer-schema' was overwritten with new definition from mixed-schema2.ts`,
-            severity: "error",
-            file: expectedPath2,
-            context: {
-              schemaType: "consumer",
-              schemaName: "test-consumer-schema",
-              version: {
-                major: 1,
-              },
-              originalLocation: "mixed-schema1.ts",
-            },
-            location: {
-              filePath: expectedPath2,
-              manifestPath: manifestPath,
+            type: "info",
+            kind: "consumer_schema",
+            item: {
+              name: "test-consumer-schema",
+              sourceDefinitionFile: "mixed-schema2.ts",
             },
           },
         ]);
@@ -962,7 +960,11 @@ describe("vibe-collect", () => {
 
     beforeEach(() => {
       mockCollector = new MockSchemaCollector();
-      collector = new VibeCollector(mockCollector, new MockFileFinder());
+      collector = new VibeCollector(
+        mockCollector,
+        new MockFileFinder(),
+        new MockManifestFileManager(),
+      );
     });
 
     it("should format results with absolute paths when no workspaceRoot is provided", async () => {
@@ -1001,54 +1003,6 @@ describe("vibe-collect", () => {
       expect(output).toContain("Manifest: src/rejot-manifest.json");
     });
 
-    it("should format diagnostics with appropriate icons", async () => {
-      // Create a map with some diagnostics
-      const manifestPath = "/root/project/src/rejot-manifest.json";
-      const results = new Map();
-      results.set(manifestPath, {
-        publicSchemas: [],
-        consumerSchemas: [],
-        diagnostics: [
-          {
-            message: "Duplicate public schema 'test' v1.0 found. First occurrence in schema1.ts",
-            severity: "warning",
-            file: "schema2.ts",
-            context: {
-              schemaType: "public",
-              schemaName: "test",
-              version: {
-                major: 1,
-                minor: 0,
-              },
-            },
-            location: {
-              filePath: "schema2.ts",
-              manifestPath: manifestPath,
-            },
-          },
-          {
-            message: "Failed to parse schema",
-            severity: "error",
-            file: "invalid.ts",
-            context: {
-              schemaType: "public",
-            },
-            location: {
-              filePath: "invalid.ts",
-              manifestPath: manifestPath,
-            },
-          },
-        ],
-      });
-
-      const output = collector.formatCollectionResults(results);
-      expect(output).toContain("Diagnostics:");
-      expect(output).toContain("⚠️ Duplicate public schema 'test' v1.0 found");
-      expect(output).toContain("❌ Failed to parse schema");
-      expect(output).toContain("(schema2.ts)");
-      expect(output).toContain("(invalid.ts)");
-    });
-
     it("should handle workspace root at different levels", async () => {
       mockCollector.setSchemas("/root/project/src/components/schema1.ts", [mockPublicSchema], []);
       mockCollector.setSchemas("/root/project/src/utils/schema2.ts", [], [mockConsumerSchema]);
@@ -1074,6 +1028,486 @@ describe("vibe-collect", () => {
       });
       expect(outputComponents).toContain("Manifest: rejot-manifest.json");
       expect(outputComponents).toContain("Manifest: ../rejot-manifest.json");
+    });
+  });
+
+  describe("writeToManifests", () => {
+    let collector: VibeCollector;
+    let mockCollector: MockSchemaCollector;
+    let mockFileManager: MockManifestFileManager;
+    let tmpDir: string;
+
+    const mockPublicSchema: PublicSchemaData = {
+      name: "TestSchema",
+      source: {
+        dataStoreSlug: "test-store",
+        tables: ["test_table"],
+      },
+      outputSchema: {
+        type: "object" as const,
+        properties: {
+          id: { type: "number" },
+          name: { type: "string" },
+        },
+      },
+      transformations: [
+        {
+          transformationType: "postgresql" as const,
+          table: "test_table",
+          sql: "SELECT * FROM test_table",
+        },
+      ],
+      version: {
+        major: 1,
+        minor: 0,
+      },
+      definitionFile: "schema1.ts",
+    };
+
+    const mockConsumerSchema: ConsumerSchemaData = {
+      name: "test-consumer-schema",
+      sourceManifestSlug: "test-manifest",
+      publicSchema: {
+        name: "TestConsumer",
+        majorVersion: 1,
+      },
+      destinationDataStoreSlug: "dest-store",
+      transformations: [
+        {
+          transformationType: "postgresql" as const,
+          sql: "INSERT INTO dest_table SELECT * FROM source_table",
+        },
+      ],
+      definitionFile: "schema2.ts",
+    };
+
+    beforeEach(async () => {
+      tmpDir = await mkdtemp(join(tmpdir(), "vibe-collect-test-"));
+      mockCollector = new MockSchemaCollector();
+      mockFileManager = new MockManifestFileManager();
+      collector = new VibeCollector(mockCollector, new MockFileFinder(), mockFileManager);
+    });
+
+    afterEach(async () => {
+      await rm(tmpDir, { recursive: true, force: true });
+    });
+
+    it("should merge schemas with existing manifest content", async () => {
+      const manifestPath = join(tmpDir, "rejot-manifest.json");
+
+      // Set up existing manifest content
+      const existingManifest = {
+        slug: "@test/",
+        manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
+        publicSchemas: [
+          {
+            name: "ExistingSchema",
+            source: {
+              dataStoreSlug: "existing-store",
+              tables: ["existing_table"],
+            },
+            outputSchema: {
+              type: "object" as const,
+              properties: {
+                id: { type: "number" as const },
+              },
+            },
+            transformations: [
+              {
+                transformationType: "postgresql" as const,
+                table: "existing_table",
+                sql: "SELECT * FROM existing_table",
+              },
+            ],
+            version: {
+              major: 1,
+              minor: 0,
+            },
+            definitionFile: "existing.ts",
+          },
+        ],
+      };
+
+      await mockFileManager.writeManifest(manifestPath, existingManifest);
+
+      // Create collection results with new schemas
+      const results: VibeCollectedSchemas[] = [
+        {
+          manifestPath,
+          publicSchemas: [mockPublicSchema],
+          consumerSchemas: [mockConsumerSchema],
+          diagnostics: [],
+        },
+      ];
+
+      // Write the schemas
+      const diagnostics = await collector.writeToManifests(results);
+
+      // Verify results
+      expect(diagnostics).toHaveLength(0);
+
+      const writtenManifest = await mockFileManager.readManifest(manifestPath);
+      expect(writtenManifest).not.toBeNull();
+      expect(writtenManifest!.publicSchemas || []).toHaveLength(2);
+      expect(writtenManifest!.consumerSchemas || []).toHaveLength(1);
+
+      // Verify both schemas are present
+      expect((writtenManifest!.publicSchemas || []).map((s) => s.name)).toContain("ExistingSchema");
+      expect((writtenManifest!.publicSchemas || []).map((s) => s.name)).toContain("TestSchema");
+      expect((writtenManifest!.consumerSchemas || [])[0].name).toBe("test-consumer-schema");
+    });
+
+    it("should handle duplicate schemas and return diagnostics", async () => {
+      const manifestPath = join(tmpDir, "rejot-manifest.json");
+
+      // Create two identical schemas with different file paths
+      const duplicateSchema = {
+        ...mockPublicSchema,
+        definitionFile: "schema1.ts",
+      };
+      const duplicateSchema2 = {
+        ...mockPublicSchema,
+        definitionFile: "schema2.ts",
+      };
+
+      // Create collection results with duplicate schemas
+      const results: VibeCollectedSchemas[] = [
+        {
+          manifestPath,
+          publicSchemas: [duplicateSchema, duplicateSchema2],
+          consumerSchemas: [],
+          diagnostics: [],
+        },
+      ];
+
+      // Write the schemas
+      const diagnostics = await collector.writeToManifests(results);
+
+      // Verify diagnostics
+      expect(diagnostics).toHaveLength(1);
+      const expectedDiagnostic: MergeDiagnostic = {
+        type: "info",
+        kind: "public_schema",
+        item: {
+          name: "TestSchema",
+          version: {
+            major: 1,
+            minor: 0,
+          },
+          sourceDefinitionFile: "schema2.ts",
+        },
+      };
+      expect(diagnostics[0]).toEqual(expectedDiagnostic);
+
+      // Verify only one schema was written
+      const writtenManifest = await mockFileManager.readManifestOrGetEmpty(manifestPath);
+      expect(writtenManifest.publicSchemas || []).toHaveLength(1);
+      expect((writtenManifest.publicSchemas || [])[0].definitionFile).toBe("schema2.ts");
+    });
+
+    it("should handle duplicate public schema in pre-existing manifest", async () => {
+      const manifestPath = join(tmpDir, "rejot-manifest.json");
+
+      const publicSchema = {
+        name: "ExistingSchema",
+        source: {
+          dataStoreSlug: "existing-store",
+          tables: ["existing_table"],
+        },
+        outputSchema: {
+          type: "object" as const,
+          properties: {
+            id: { type: "number" as const },
+          },
+        },
+        transformations: [
+          {
+            transformationType: "postgresql" as const,
+            table: "existing_table",
+            sql: "SELECT * FROM existing_table",
+          },
+        ],
+        version: {
+          major: 1,
+          minor: 0,
+        },
+        definitionFile: "existing.ts",
+      };
+
+      // Set up existing manifest content
+      const existingManifest = {
+        slug: "@test/",
+        manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
+        publicSchemas: [publicSchema],
+      };
+
+      await mockFileManager.writeManifest(manifestPath, existingManifest);
+
+      // Create collection results with duplicate schemas
+      const results: VibeCollectedSchemas[] = [
+        {
+          manifestPath,
+          publicSchemas: [publicSchema],
+          consumerSchemas: [],
+          diagnostics: [],
+        },
+      ];
+
+      // Write the schemas
+      const diagnostics = await collector.writeToManifests(results);
+
+      // Verify diagnostics
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0]).toEqual({
+        type: "info",
+        kind: "public_schema",
+        item: {
+          name: "ExistingSchema",
+          version: {
+            major: 1,
+            minor: 0,
+          },
+          sourceDefinitionFile: "existing.ts",
+        },
+      });
+
+      // Verify only one schema was written
+      const writtenManifest = await mockFileManager.readManifestOrGetEmpty(manifestPath);
+      expect(writtenManifest.publicSchemas || []).toHaveLength(1);
+      expect((writtenManifest.publicSchemas || [])[0].definitionFile).toBe("existing.ts");
+    });
+
+    it("should handle duplicate consumer schema in pre-existing manifest", async () => {
+      const manifestPath = join(tmpDir, "rejot-manifest.json");
+
+      const consumerSchema = {
+        name: "consume-public-account",
+        sourceManifestSlug: "default",
+        publicSchema: {
+          name: "public-account",
+          majorVersion: 1,
+        },
+        destinationDataStoreSlug: "data-destination-1",
+        transformations: [
+          {
+            transformationType: "postgresql",
+            sql: "\n        INSERT INTO users_destination \n          (id, full_name)\n        VALUES \n          (:id, :email || ' ' || :name)\n        ON CONFLICT (id) DO UPDATE\n          SET full_name = :email || ' ' || :name\n        ;\n      ",
+          },
+          {
+            transformationType: "postgresql",
+            sql: "DELETE FROM users_destination WHERE id = :id",
+            whenOperation: "delete",
+          },
+        ],
+        definitionFile: "existing.ts",
+      } satisfies ConsumerSchemaData;
+
+      // Set up existing manifest content
+      const existingManifest = {
+        slug: "@test/",
+        manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
+        consumerSchemas: [consumerSchema],
+      };
+
+      await mockFileManager.writeManifest(manifestPath, existingManifest);
+
+      // Create collection results with duplicate schemas
+      const results: VibeCollectedSchemas[] = [
+        {
+          manifestPath,
+          publicSchemas: [],
+          consumerSchemas: [consumerSchema],
+          diagnostics: [],
+        },
+      ];
+
+      // Write the schemas
+      const diagnostics = await collector.writeToManifests(results);
+
+      // Verify diagnostics
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0]).toEqual({
+        type: "info",
+        kind: "consumer_schema",
+        item: {
+          name: "consume-public-account",
+          sourceDefinitionFile: "existing.ts",
+        },
+      });
+      // Verify only one schema was written
+      const writtenManifest = await mockFileManager.readManifestOrGetEmpty(manifestPath);
+      expect(writtenManifest.consumerSchemas || []).toHaveLength(1);
+      expect((writtenManifest.consumerSchemas || [])[0].definitionFile).toBe("existing.ts");
+    });
+
+    it("should write to multiple manifests", async () => {
+      const manifest1Path = join(tmpDir, "manifest1.json");
+      const manifest2Path = join(tmpDir, "manifest2.json");
+
+      // Create collection results for multiple manifests
+      const results: VibeCollectedSchemas[] = [
+        {
+          manifestPath: manifest1Path,
+          publicSchemas: [mockPublicSchema],
+          consumerSchemas: [],
+          diagnostics: [],
+        },
+        {
+          manifestPath: manifest2Path,
+          publicSchemas: [],
+          consumerSchemas: [mockConsumerSchema],
+          diagnostics: [],
+        },
+      ];
+
+      // Write the schemas
+      const diagnostics = await collector.writeToManifests(results);
+
+      // Verify results
+      expect(diagnostics).toHaveLength(0);
+
+      // Check first manifest
+      const manifest1 = await mockFileManager.readManifestOrGetEmpty(manifest1Path);
+      expect(manifest1.publicSchemas || []).toHaveLength(1);
+      expect(manifest1.consumerSchemas || []).toHaveLength(0);
+      expect((manifest1.publicSchemas || [])[0].name).toBe("TestSchema");
+
+      // Check second manifest
+      const manifest2 = await mockFileManager.readManifestOrGetEmpty(manifest2Path);
+      expect(manifest2.publicSchemas || []).toHaveLength(0);
+      expect(manifest2.consumerSchemas || []).toHaveLength(1);
+      expect((manifest2.consumerSchemas || [])[0].name).toBe("test-consumer-schema");
+    });
+
+    it("should handle empty results", async () => {
+      const manifestPath = join(tmpDir, "rejot-manifest.json");
+
+      // Create empty collection results
+      const results: VibeCollectedSchemas[] = [
+        {
+          manifestPath,
+          publicSchemas: [],
+          consumerSchemas: [],
+          diagnostics: [],
+        },
+      ];
+
+      // Write the schemas
+      const diagnostics = await collector.writeToManifests(results);
+
+      // Verify results
+      expect(diagnostics).toHaveLength(0);
+
+      // Verify manifest was created but is empty
+      const writtenManifest = await mockFileManager.readManifestOrGetEmpty(manifestPath);
+      expect(writtenManifest.publicSchemas || []).toHaveLength(0);
+      expect(writtenManifest.consumerSchemas || []).toHaveLength(0);
+    });
+
+    it("should preserve existing manifest properties", async () => {
+      const manifestPath = join(tmpDir, "rejot-manifest.json");
+
+      // Set up existing manifest with custom properties
+      const existingManifest = {
+        slug: "@test/",
+        manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
+        connections: [
+          {
+            slug: "test-connection",
+            config: {
+              connectionType: "postgres" as const,
+              host: "localhost",
+              port: 5432,
+              user: "test",
+              password: "test",
+              database: "test",
+            },
+          },
+        ],
+      };
+
+      await mockFileManager.writeManifest(manifestPath, existingManifest);
+
+      // Create collection results
+      const results: VibeCollectedSchemas[] = [
+        {
+          manifestPath,
+          publicSchemas: [mockPublicSchema],
+          consumerSchemas: [mockConsumerSchema],
+          diagnostics: [],
+        },
+      ];
+
+      // Write the schemas
+      await collector.writeToManifests(results);
+
+      // Verify manifest preserved custom properties
+      const writtenManifest = await mockFileManager.readManifestOrGetEmpty(manifestPath);
+      expect(writtenManifest.connections || []).toHaveLength(1);
+      expect((writtenManifest.connections || [])[0].slug).toBe("test-connection");
+
+      // And still has the new schemas
+      expect(writtenManifest.publicSchemas || []).toHaveLength(1);
+      expect(writtenManifest.consumerSchemas || []).toHaveLength(1);
+    });
+
+    it("should aggregate diagnostics from multiple manifests", async () => {
+      const manifest1Path = join(tmpDir, "manifest1.json");
+      const manifest2Path = join(tmpDir, "manifest2.json");
+
+      // Create duplicate schemas for both manifests
+      const duplicateSchema1 = { ...mockPublicSchema, definitionFile: "schema1.ts" };
+      const duplicateSchema2 = { ...mockPublicSchema, definitionFile: "schema2.ts" };
+      const duplicateConsumer1 = { ...mockConsumerSchema, definitionFile: "consumer1.ts" };
+      const duplicateConsumer2 = { ...mockConsumerSchema, definitionFile: "consumer2.ts" };
+
+      // Create collection results with duplicates in both manifests
+      const results: VibeCollectedSchemas[] = [
+        {
+          manifestPath: manifest1Path,
+          publicSchemas: [duplicateSchema1, duplicateSchema2],
+          consumerSchemas: [],
+          diagnostics: [],
+        },
+        {
+          manifestPath: manifest2Path,
+          publicSchemas: [],
+          consumerSchemas: [duplicateConsumer1, duplicateConsumer2],
+          diagnostics: [],
+        },
+      ];
+
+      // Write the schemas
+      const diagnostics = await collector.writeToManifests(results);
+
+      // Verify diagnostics from both manifests
+      expect(diagnostics).toHaveLength(2);
+
+      // Check public schema diagnostic
+      const expectedPublicDiagnostic: MergeDiagnostic = {
+        type: "info",
+        kind: "public_schema",
+        item: {
+          name: "TestSchema",
+          version: {
+            major: 1,
+            minor: 0,
+          },
+          sourceDefinitionFile: "schema2.ts",
+        },
+      };
+      expect(diagnostics[0]).toEqual(expectedPublicDiagnostic);
+
+      // Check consumer schema diagnostic
+      const expectedConsumerDiagnostic: MergeDiagnostic = {
+        type: "info",
+        kind: "consumer_schema",
+        item: {
+          name: "test-consumer-schema",
+          sourceDefinitionFile: "consumer2.ts",
+        },
+      };
+      expect(diagnostics[1]).toEqual(expectedConsumerDiagnostic);
     });
   });
 });

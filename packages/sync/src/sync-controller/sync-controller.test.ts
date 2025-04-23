@@ -1,9 +1,11 @@
-import { test, expect, describe } from "bun:test";
-import { SyncController } from "./sync-controller";
-import { InMemoryConnectionAdapter } from "../_test/in-memory-adapter";
-import type { Transaction } from "@rejot-dev/contract/sync";
+import { describe, expect, test } from "bun:test";
+
 import { InMemoryMessageBus } from "@rejot-dev/contract/message-bus";
+import type { Transaction } from "@rejot-dev/contract/sync";
+
 import { SyncManifest } from "../../../contract/manifest/sync-manifest";
+import { InMemoryConnectionAdapter } from "../_test/in-memory-adapter";
+import { SyncController } from "./sync-controller";
 
 describe("SyncController", () => {
   const createTestManifest = () =>
@@ -22,8 +24,9 @@ describe("SyncController", () => {
         dataStores: [
           {
             connectionSlug: "test-connection",
-            publicationName: "test-publication",
-            slotName: "test-slot",
+            config: {
+              connectionType: "in-memory",
+            },
           },
         ],
         eventStores: [],
@@ -51,13 +54,8 @@ describe("SyncController", () => {
     // Get the source from the adapter
     const source = connectionAdapters[0].createSource(
       "test-connection",
-      {
-        connectionType: "in-memory",
-      },
-      {
-        publicationName: "test-publication",
-        slotName: "test-slot",
-      },
+      { connectionType: "in-memory" },
+      { connectionType: "in-memory" },
     );
 
     // Start the controller

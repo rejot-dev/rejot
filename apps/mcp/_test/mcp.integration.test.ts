@@ -221,6 +221,17 @@ describe.skipIf(!process.env.REJOT_SYNC_CLI_TEST_CONNECTION)("MCP Integration Te
       await expectConsumerSchemaNames(subManifestPath, ["consume-public-x-account"]);
       await expectPublicSchemaNames(subManifestPath, ["public-account"]);
     });
+
+    test("collect once again and have no duplicates", async () => {
+      const collectResult = await assertToolCall("rejot_collect_schemas", {
+        write: true,
+      });
+      expectContentErrorFree(collectResult.content);
+
+      const subManifestPath = join(tmpDir, "services", "rejot-manifest.json");
+      await expectConsumerSchemaNames(subManifestPath, ["consume-public-x-account"]);
+      await expectPublicSchemaNames(subManifestPath, ["public-account"]);
+    });
   });
 
   describe("Cleanup", () => {
