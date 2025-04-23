@@ -13,7 +13,7 @@
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["dist", "node_modules", "eslint.config.js", "**/*.test.ts", "**/*.test.tsx"],
+  "exclude": ["dist", "node_modules", "eslint.config.js"],
   "references": [
     { "path": "../../packages/contract" },
     { "path": "../../packages/api-interface-controller" }
