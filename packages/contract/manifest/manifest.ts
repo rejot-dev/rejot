@@ -1,14 +1,40 @@
 import { z } from "zod";
 
-// TODO: It makes no sense for the contract package to depend on an adapter.
-import {
-  PostgresConnectionSchema,
-  PostgresConsumerSchemaTransformationSchema,
-  PostgresDataStoreSchema,
-  PostgresPublicSchemaTransformationSchema,
-} from "@rejot-dev/adapter-postgres/schemas";
-
 import { JsonSchemaSchema } from "../json-schema/json-schema.ts";
+
+export const PostgresConnectionSchema = z.object({
+  connectionType: z.literal("postgres").describe("Postgres connection type."),
+  host: z.string(),
+  port: z.number(),
+  user: z.string(),
+  password: z.string(),
+  database: z.string(),
+});
+
+export const PostgresPublicSchemaTransformationSchema = z.object({
+  transformationType: z.literal("postgresql").describe("Postgres transformation type."),
+  table: z.string(),
+  sql: z.string(),
+});
+
+export const PostgresConsumerSchemaTransformationSchema = z.object({
+  transformationType: z.literal("postgresql").describe("Postgres transformation type."),
+  sql: z.string(),
+  whenOperation: z
+    .enum(["insertOrUpdate", "delete"])
+    .optional()
+    .describe(
+      "This transformation will be applied for this operation. Will default to insertOrUpdate if not specified.",
+    ),
+});
+
+export const PostgresDataStoreSchema = z.object({
+  connectionType: z.literal("postgres").describe("Postgres connection type."),
+  slotName: z.string().describe("Name of the replication slot."),
+  publicationName: z.string().describe("Name of the publication."),
+  tables: z.array(z.string()).describe("Tables to replicate.").optional(),
+  allTables: z.boolean().describe("When true, all tables are replicated.").optional(),
+});
 
 export const InMemoryConnectionConfigSchema = z.object({
   connectionType: z.literal("in-memory"),

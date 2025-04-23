@@ -4,12 +4,11 @@ import type {
   IConsumerSchemaValidationAdapter,
   ValidationResult,
 } from "@rejot-dev/contract/adapter";
-
-import { validateConsumerSchema } from "../sql-transformer/sql-transformer";
 import type { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
 import type { ConsumerSchemaSchema } from "@rejot-dev/contract/manifest";
+import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
 
-import type { PostgresConsumerSchemaTransformationSchema } from "../postgres-schemas";
+import { validateConsumerSchema } from "../sql-transformer/sql-transformer";
 
 export class PostgresConsumerSchemaValidationAdapter
   implements

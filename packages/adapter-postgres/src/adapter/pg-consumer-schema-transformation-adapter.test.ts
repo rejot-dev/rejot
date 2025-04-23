@@ -1,11 +1,14 @@
-import { test, expect, beforeEach } from "bun:test";
+import { beforeEach, expect, test } from "bun:test";
+
+import { z } from "zod";
+
+import type { OperationTransformationPair } from "@rejot-dev/contract/adapter";
+import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
+
+import { PostgresConsumerDataStoreSchemaManager } from "../data-store/pg-consumer-data-store-schema-manager";
 import { getTestConnectionConfig, pgRollbackDescribe } from "../util/postgres-test-utils";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter";
 import { PostgresConsumerSchemaTransformationAdapter } from "./pg-consumer-schema-transformation-adapter";
-import { z } from "zod";
-import type { OperationTransformationPair } from "@rejot-dev/contract/adapter";
-import type { PostgresConsumerSchemaTransformationSchema } from "../postgres-schemas";
-import { PostgresConsumerDataStoreSchemaManager } from "../data-store/pg-consumer-data-store-schema-manager";
 
 pgRollbackDescribe("PostgresConsumerSchemaTransformationAdapter", (ctx) => {
   let connectionAdapter: PostgresConnectionAdapter;
