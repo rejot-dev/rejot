@@ -30,8 +30,6 @@ describe("SinkWriter", () => {
     connectionType: "postgres";
     slotName: string;
     publicationName: string;
-    tables?: string[];
-    allTables?: boolean;
   };
 
   // Mock PostgreSQL sink
@@ -113,9 +111,9 @@ describe("SinkWriter", () => {
           {
             connectionSlug: "test-connection",
             config: {
-              connectionType: "postgres",
-              slotName: "test-slot",
+              connectionType: "postgres" as const,
               publicationName: "test-publication",
+              slotName: "test-slot",
             },
           },
         ],
@@ -150,7 +148,7 @@ describe("SinkWriter", () => {
         ],
         consumerSchemas: [
           {
-            name: "test-consumer",
+            name: "test-consumer-schema",
             sourceManifestSlug: "test-manifest",
             publicSchema: {
               name: "test-schema",

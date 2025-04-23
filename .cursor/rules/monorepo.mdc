@@ -42,6 +42,7 @@ Sort imports in this order (with blank line between categories):
 
 ## Other
 - Prefer to destruct objects in things like for-loops.
+- In Typescript, never use Array<T>, always use T[]
 
 ## API Development
 ### Architecture

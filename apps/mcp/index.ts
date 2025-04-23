@@ -17,6 +17,8 @@ import { DbIntrospectionTool } from "./tools/db-introspection/db-introspection.t
 import { ManifestInfoTool } from "./tools/manifest/manifest-info.tool";
 import { ManifestInitTool } from "./tools/manifest/manifest-init.tool";
 import { ManifestConnectionTool } from "./tools/manifest-connection/manifest-connection.tool";
+import { ManifestPostgresDataStoreTool } from "./tools/manifest-connection/manifest-pg-datastore.tool";
+import { SchemasTool } from "./tools/schemas/schema.tool";
 import { WorkspaceResources } from "./workspace/workspace.resources";
 import { WorkspaceTool } from "./workspace/workspace.tool";
 
@@ -37,32 +39,72 @@ const server = new McpServer(
   },
   {
     instructions: `
+# ReJot MCP
 This is the ReJot MCP server. ReJot provides a set of tools to facilitate micro-service
 communication. As opposed to traditional approaches like REST APIs, ReJot operates on the database
-layer.
+layer. Replication is used to push data from the source to the consumer. We call this process
+'syncing'.
 
-ReJot has the concept of a 'workspace'. A workspace is a collection of manifests. A workspace can
-and will usually contain multiple manifests. One root manifest defines the workspace, which will
+## Definitions:
+- Public Schema: a way to describe how a team wants to share data with other teams. It contains an
+outputSchema which is a versioned contract for the data that will be shared. It also defines the
+source of the underlying data, and a transformation to encapsulate the internal data model.
+- Consumer Schema: a way to describe how a team wants to receive data from other teams. It contains
+a reference to a public schema (versioned) which it directly relates to. It also contains
+the destinationDataStoreSlug which is the data store that the consumer will write to. Again an 
+arbitrary transformation is applied.
+- Connection: a database configuration. Identified by a slug. In this MCP the connectionSlug is 
+commonly used for database operations.
+- Data Store: an instantiation of a connection. Identified by a connectionSlug. Other configuration
+is specific to the underlying database.
+- Manifest: a ReJot configuration file. Identified by a slug. It contains connections, data stores,
+event stores and schemas. A team usually 'owns' a manifest. Teams will refer to each other's 
+manifests using their slugs to be able to sync data. In production, a sync service will use a 
+manifest. 
+- Workspace: a collection of manifests. One root manifest defines the workspace, which will
 contain relative path references to manifests in sub-directories.
 
-In the ReJot manifest, teams define their database connection details, as well as the entities they
-publish to other teams. These are called 'public schemas' and they're strongly tied to a version and
-contract. Other teams can subscribe to these schemas using a consumer schema.
+## Working with Schemas
+- Schemas are defined in code. E.g. in TypeScript files. The collect command will scan the 
+workspace to find these schemas and add them to the manifest. To edit these schemas, you MUST change
+the code directly. If you cannot edit text files, you must tell the user to do it manually.
+- When you are asked to modify a schema, you MUST modify the source which is referenced by the
+'definitionFile' property. After that you can run the collect command to update the manifest.
 
-Some tips:
+## Examples of what you can do:
+- You will help the user set up database connections. Usually connections appear in a codebase or 
+in environment variables/files.
+- You can help validate if certain transformations will work by executing queries to the database
+connections.
+- You can help verify if a public or consumer schema is valid by checking if the tables it's reading
+from and writing to exist.
+- You can help setup the necessary configuration for data stores to work. Like creating replication
+slots and publications in Postgres.
+- Run transformation queries defined in schemas to see if they work properly.
+
+## Some tips
 - ALWAYS use the tools in this MCP to edit the manifest.
 - Obtain the workspace information first.
 - If you do not know a connection's slug. Get the workspace manifest first.
 - You don't have to check health before doing other operations.
+- When the users asks about the ReJot workspace, use the workspace info tool.
+
+## Rules
+- NEVER apply edits to a manifest directly.
+- ALWAYS apply edits to the definitionFiles and use the tools in this MCP.
+- DO NOT use the ReJot CLI. Use the tools in this MCP instead.
+- DO NOT insert data into tables. ONLY do this when the user EXPLICITLY asks you to.
       `,
   },
 );
 
 const workspaceService = new WorkspaceService(new ManifestWorkspaceResolver());
+const manifestFileManager = new ManifestFileManager();
+
 const vibeCollector = new VibeCollector(
   new SchemaCollector(),
   new FileFinder(),
-  new ManifestFileManager(),
+  manifestFileManager,
 );
 
 const rejotMcp = new RejotMcp(args["project"], server, [
@@ -73,6 +115,8 @@ const rejotMcp = new RejotMcp(args["project"], server, [
   new ManifestConnectionTool(workspaceService),
   new ManifestInitTool(workspaceService),
   new CollectTool(workspaceService, vibeCollector),
+  new ManifestPostgresDataStoreTool(workspaceService, manifestFileManager),
+  new SchemasTool(workspaceService),
 ]);
 
 rejotMcp

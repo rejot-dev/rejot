@@ -34,10 +34,6 @@ export interface IVibeCollector {
     options?: { workspaceRoot?: string },
   ): string;
   writeToManifests(results: VibeCollectedSchemas[]): Promise<MergeDiagnostic[]>;
-  formatMergeDiagnostics(
-    diagnostics: MergeDiagnostic[],
-    _options?: { workspaceRoot?: string },
-  ): string;
 }
 
 export class NoMatchingManifestError extends ReJotError {
@@ -276,55 +272,18 @@ export class VibeCollector implements IVibeCollector {
       output.push(`Manifest: ${displayPath}`);
 
       if (schemas.publicSchemas.length > 0) {
-        output.push(ManifestPrinter.printPublicSchema(schemas.publicSchemas).join("\n"));
+        output.push(ManifestPrinter.printPublicSchemasList(schemas.publicSchemas).join("\n"));
       }
 
       if (schemas.consumerSchemas.length > 0) {
-        output.push(ManifestPrinter.printConsumerSchema(schemas.consumerSchemas).join("\n"));
+        output.push(ManifestPrinter.printConsumerSchemasList(schemas.consumerSchemas).join("\n"));
       }
 
       if (schemas.diagnostics.length > 0) {
-        output.push(this.formatMergeDiagnostics(schemas.diagnostics, options));
+        output.push(ManifestMerger.formatMergeDiagnostics(schemas.diagnostics, options));
       }
 
       output.push(""); // Add a blank line between manifests
-    }
-
-    return output.join("\n");
-  }
-
-  /**
-   * Format merge diagnostics as a string
-   * @param diagnostics The diagnostics to format
-   * @param options Optional formatting options
-   * @param options.workspaceRoot If provided, paths will be normalized relative to this root
-   */
-  formatMergeDiagnostics(
-    diagnostics: MergeDiagnostic[],
-    _options?: { workspaceRoot?: string },
-  ): string {
-    if (diagnostics.length === 0) {
-      return "";
-    }
-
-    const output: string[] = ["Diagnostics:"];
-
-    for (const diagnostic of diagnostics) {
-      const prefix =
-        diagnostic.type === "error" ? "❌" : diagnostic.type === "warning" ? "⚠️" : "ℹ️";
-      const message = ManifestMerger.getDiagnosticMessage(diagnostic);
-
-      output.push(`  ${prefix} ${message}`);
-
-      // Add hint if available
-      if (diagnostic.hint?.suggestions?.length) {
-        output.push(`    Suggestions:`);
-        diagnostic.hint.suggestions.forEach((suggestion) => {
-          output.push(`      - ${suggestion}`);
-        });
-      }
-
-      output.push(""); // Add blank line between diagnostics
     }
 
     return output.join("\n");

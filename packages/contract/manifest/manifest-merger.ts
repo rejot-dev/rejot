@@ -345,4 +345,41 @@ export class ManifestMerger {
         return `Event store '${diagnostic.item.connectionSlug}' was overwritten with new configuration`;
     }
   }
+
+  /**
+   * Format merge diagnostics as a string
+   * @param diagnostics The diagnostics to format
+   * @param options Optional formatting options
+   * @param options.workspaceRoot If provided, paths will be normalized relative to this root
+   */
+  static formatMergeDiagnostics(
+    diagnostics: MergeDiagnostic[],
+    _options?: { workspaceRoot?: string },
+  ): string {
+    if (diagnostics.length === 0) {
+      return "";
+    }
+
+    const output: string[] = ["Diagnostics:"];
+
+    for (const diagnostic of diagnostics) {
+      const prefix =
+        diagnostic.type === "error" ? "❌" : diagnostic.type === "warning" ? "⚠️" : "ℹ️";
+      const message = ManifestMerger.getDiagnosticMessage(diagnostic);
+
+      output.push(`  ${prefix} ${message}`);
+
+      // Add hint if available
+      if (diagnostic.hint?.suggestions?.length) {
+        output.push(`    Suggestions:`);
+        diagnostic.hint.suggestions.forEach((suggestion) => {
+          output.push(`      - ${suggestion}`);
+        });
+      }
+
+      output.push(""); // Add blank line between diagnostics
+    }
+
+    return output.join("\n");
+  }
 }

@@ -143,6 +143,18 @@ export class ManifestPrinter {
     output.push(...this.printConnections(connections));
     output.push("");
 
+    // Print all data stores from ancestor and children
+    const dataStores = [
+      ...(workspace.ancestor.manifest.dataStores ?? []),
+      ...workspace.children.flatMap((child) => child.manifest.dataStores ?? []),
+    ];
+    output.push(...this.printDataStores({ dataStores } as Manifest));
+    output.push("");
+
+    // Print schemas summary
+    output.push(...this.printSchemasSummaryFromWorkspace(workspace));
+    output.push("");
+
     // Print child manifests
     output.push("Child Manifests:");
     if (workspace.children.length === 0) {
@@ -151,6 +163,125 @@ export class ManifestPrinter {
       for (const child of workspace.children) {
         output.push(`  - ${child.manifest.slug}`);
         output.push(`    Path: ${child.path}`);
+      }
+    }
+
+    return output;
+  }
+
+  static printSchemasSummaryFromWorkspace(workspace: WorkspaceDefinition): string[] {
+    const output: string[] = ["Schema Summary:"];
+
+    // Collect all schemas from ancestor and children with their manifest slugs
+    const publicSchemas = [
+      ...(workspace.ancestor.manifest.publicSchemas ?? []).map((schema) => ({
+        schema,
+        manifestSlug: workspace.ancestor.manifest.slug,
+      })),
+      ...workspace.children.flatMap((child) =>
+        (child.manifest.publicSchemas ?? []).map((schema) => ({
+          schema,
+          manifestSlug: child.manifest.slug,
+        })),
+      ),
+    ];
+
+    const consumerSchemas = [
+      ...(workspace.ancestor.manifest.consumerSchemas ?? []).map((schema) => ({
+        schema,
+        manifestSlug: workspace.ancestor.manifest.slug,
+      })),
+      ...workspace.children.flatMap((child) =>
+        (child.manifest.consumerSchemas ?? []).map((schema) => ({
+          schema,
+          manifestSlug: child.manifest.slug,
+        })),
+      ),
+    ];
+
+    // Print public schemas summary
+    output.push(...this.printPublicSchemasSummary(publicSchemas));
+
+    // Print consumer schemas summary
+    output.push(...this.printConsumerSchemasSummary(consumerSchemas));
+
+    return output;
+  }
+
+  static printPublicSchemasSummary(
+    publicSchemas: Array<{ schema: z.infer<typeof PublicSchemaSchema>; manifestSlug: string }>,
+  ): string[] {
+    const output: string[] = ["\nPublic Schemas:"];
+
+    if (publicSchemas.length === 0) {
+      output.push("  No public schemas defined");
+    } else {
+      for (const { schema, manifestSlug } of publicSchemas) {
+        const definitionInfo = schema.definitionFile
+          ? ` (defined in ${schema.definitionFile})`
+          : "";
+        output.push(
+          `  - ${schema.name}@v${schema.version.major}.${schema.version.minor} [manifestSlug: ${manifestSlug}]${definitionInfo}`,
+        );
+      }
+    }
+
+    return output;
+  }
+
+  static printConsumerSchemasSummary(
+    consumerSchemas: Array<{ schema: z.infer<typeof ConsumerSchemaSchema>; manifestSlug: string }>,
+  ): string[] {
+    const output: string[] = ["\nConsumer Schemas:"];
+
+    if (consumerSchemas.length === 0) {
+      output.push("  No consumer schemas defined");
+    } else {
+      for (const { schema, manifestSlug } of consumerSchemas) {
+        const definitionInfo = schema.definitionFile
+          ? ` (defined in ${schema.definitionFile})`
+          : "";
+        output.push(`  - ${schema.name} [manifestSlug: ${manifestSlug}]${definitionInfo}`);
+      }
+    }
+
+    return output;
+  }
+
+  static printSchemasSummary(manifest: Manifest): string[] {
+    const output: string[] = [];
+    const manifestSlug = manifest.slug;
+
+    // Print public schemas summary
+    output.push("\nPublic Schemas:");
+    if ((manifest.publicSchemas ?? []).length === 0) {
+      output.push("  No public schemas defined");
+    } else {
+      for (const schema of manifest.publicSchemas ?? []) {
+        const definitionInfo = schema.definitionFile
+          ? ` (defined in ${schema.definitionFile})`
+          : "";
+        output.push(
+          `  - ${schema.name}@v${schema.version.major}.${schema.version.minor} [${manifestSlug}]${definitionInfo}`,
+        );
+      }
+    }
+
+    // Print consumer schemas summary
+    output.push("\nConsumer Schemas:");
+    if ((manifest.consumerSchemas ?? []).length === 0) {
+      output.push("  No consumer schemas defined");
+    } else {
+      for (const schema of manifest.consumerSchemas ?? []) {
+        const definitionInfo = schema.definitionFile
+          ? ` (defined in ${schema.definitionFile})`
+          : "";
+        output.push(
+          `  - ${schema.name}@v${schema.publicSchema.majorVersion} [${manifestSlug}]${definitionInfo}`,
+        );
+        output.push(
+          `    Source: ${schema.publicSchema.name} from ${schema.sourceManifestSlug || "local manifest"}`,
+        );
       }
     }
 
@@ -289,7 +420,7 @@ export class ManifestPrinter {
     const output: string[] = [];
 
     // Print the diagnostic type and message
-    output.push(`${diagnostic.type}:`);
+    output.push(`- ${diagnostic.type}:`);
     output.push(`  Message: ${diagnostic.message}`);
 
     // Print location information
@@ -319,8 +450,46 @@ export class ManifestPrinter {
     const output: string[] = ["Manifest Diagnostics:"];
 
     for (const diagnostic of diagnostics) {
-      output.push(""); // Add spacing between diagnostics
       output.push(...this.printManifestDiagnostic(diagnostic).map((line) => `  ${line}`));
+    }
+
+    return output;
+  }
+
+  // Versions without manifested schema (direct schema arrays)
+  static printPublicSchemasList(publicSchemas: z.infer<typeof PublicSchemaSchema>[]): string[] {
+    const output: string[] = ["\nPublic Schemas:"];
+
+    if (publicSchemas.length === 0) {
+      output.push("  No public schemas defined");
+    } else {
+      for (const schema of publicSchemas) {
+        const definitionInfo = schema.definitionFile
+          ? ` (defined in ${schema.definitionFile})`
+          : "";
+        output.push(
+          `  - ${schema.name}@v${schema.version.major}.${schema.version.minor}${definitionInfo}`,
+        );
+      }
+    }
+
+    return output;
+  }
+
+  static printConsumerSchemasList(
+    consumerSchemas: z.infer<typeof ConsumerSchemaSchema>[],
+  ): string[] {
+    const output: string[] = ["\nConsumer Schemas:"];
+
+    if (consumerSchemas.length === 0) {
+      output.push("  No consumer schemas defined");
+    } else {
+      for (const schema of consumerSchemas) {
+        const definitionInfo = schema.definitionFile
+          ? ` (defined in ${schema.definitionFile})`
+          : "";
+        output.push(`  - ${schema.name}${definitionInfo}`);
+      }
     }
 
     return output;

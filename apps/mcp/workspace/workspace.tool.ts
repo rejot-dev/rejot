@@ -94,6 +94,10 @@ export class WorkspaceTool implements IFactory {
             type: "text",
             text: ManifestPrinter.printManifestDiagnostics(diagnostics.errors).join("\n"),
           });
+          content.push({
+            type: "text",
+            text: "To fix these diagnostics, DO NOT edit the manifest. Update the underlying definition file and run collect.",
+          });
         }
 
         return {

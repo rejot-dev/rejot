@@ -15,7 +15,8 @@
     "./source": "./src/postgres-source.ts",
     "./sink": "./src/postgres-sink.ts",
     "./event-store": "./src/event-store/postgres-event-store.ts",
-    "./postgres-client": "./src/util/postgres-client.ts"
+    "./postgres-client": "./src/util/postgres-client.ts",
+    "./replication-repository": "./src/data-store/pg-replication-repository.ts"
   },
   "scripts": {
     "check": "tsc --noEmit"

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
+import type { MergedManifest } from "@rejot-dev/contract/manifest-merger";
 
 import type { InitManifestOptions } from "./manifest.fs";
 import {
@@ -20,7 +21,7 @@ export interface IManifestFileManager {
   readManifestOrGetEmpty(path: string): Promise<Manifest>;
   readManifest(path: string): Promise<Manifest | null>;
   initManifest(path: string, slug: string, options?: InitManifestOptions): Promise<Manifest>;
-  mergeAndUpdateManifest(path: string, manifests: Partial<Manifest>[]): Promise<Manifest>;
+  mergeAndUpdateManifest(path: string, manifests: Partial<Manifest>[]): Promise<MergedManifest>;
 }
 
 export class ManifestFileManager implements IManifestFileManager {
@@ -52,7 +53,10 @@ export class ManifestFileManager implements IManifestFileManager {
     return initManifest(path, slug, options);
   }
 
-  async mergeAndUpdateManifest(path: string, manifests: Partial<Manifest>[]): Promise<Manifest> {
+  async mergeAndUpdateManifest(
+    path: string,
+    manifests: Partial<Manifest>[],
+  ): Promise<MergedManifest> {
     return mergeAndUpdateManifest(path, manifests);
   }
 }
