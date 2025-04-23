@@ -68,14 +68,20 @@ export class ManifestInfoCommand extends Command {
         (manifest.eventStores ?? []).length === 0
       ) {
         this.log("\nTo configure the manifest, use the following commands:");
-        this.log("1. Add a connection:    rejot manifest connection add --slug my-db ...");
-        this.log("2. Add a data store:    rejot manifest datastore add --connection my-db ...");
-        this.log("3. Add an event store:  rejot manifest eventstore add --connection my-target");
+        this.log(
+          `1. Add a connection:    ${this.config.bin} manifest connection add --slug my-db ...`,
+        );
+        this.log(
+          `2. Add a data store:    ${this.config.bin} manifest datastore add --connection my-db ...`,
+        );
+        this.log(
+          `3. Add an event store:  ${this.config.bin} manifest eventstore add --connection my-target`,
+        );
       }
     } catch (error) {
       if (error instanceof Error && "code" in error && error.code === "ENOENT") {
         this.error(
-          `Manifest file not found at ${manifestPath}. Use 'rejot manifest init' to create one.`,
+          `Manifest file not found at ${manifestPath}. Use 'rejot-cli manifest init' to create one.`,
         );
       }
       throw error;
