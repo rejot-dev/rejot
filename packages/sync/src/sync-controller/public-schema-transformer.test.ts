@@ -1,10 +1,13 @@
-import { test, expect, describe } from "bun:test";
-import { PublicSchemaTransformer } from "./public-schema-transformer";
-import type { IPublicSchemaTransformationAdapter } from "@rejot-dev/contract/adapter";
-import type { Transaction, TableOperation, TransformedOperation } from "@rejot-dev/contract/sync";
-import { SyncManifest } from "../../../contract/manifest/sync-manifest";
-import type { PostgresPublicSchemaTransformationSchema } from "@rejot-dev/adapter-postgres/schemas";
+import { describe, expect, test } from "bun:test";
+
 import { z } from "zod";
+
+import type { IPublicSchemaTransformationAdapter } from "@rejot-dev/contract/adapter";
+import type { PostgresPublicSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
+import type { TableOperation, Transaction, TransformedOperation } from "@rejot-dev/contract/sync";
+
+import { SyncManifest } from "../../../contract/manifest/sync-manifest";
+import { PublicSchemaTransformer } from "./public-schema-transformer";
 
 describe("PublicSchemaTransformer", () => {
   // Mock PostgreSQL transformation adapter
@@ -55,8 +58,11 @@ describe("PublicSchemaTransformer", () => {
         dataStores: [
           {
             connectionSlug: "test-connection",
-            publicationName: "test-publication",
-            slotName: "test-slot",
+            config: {
+              connectionType: "postgres" as const,
+              slotName: "test-slot",
+              publicationName: "test-publication",
+            },
           },
         ],
         eventStores: [],

@@ -1,8 +1,10 @@
-import { test, expect, describe } from "bun:test";
-import { SourceReader } from "./source-reader";
-import { InMemoryConnectionAdapter } from "../_test/in-memory-adapter";
-import { SyncManifest } from "../../../contract/manifest/sync-manifest";
+import { describe, expect, test } from "bun:test";
+
 import type { Transaction } from "@rejot-dev/contract/sync";
+
+import { SyncManifest } from "../../../contract/manifest/sync-manifest";
+import { InMemoryConnectionAdapter } from "../_test/in-memory-adapter";
+import { SourceReader } from "./source-reader";
 
 describe("SourceReader", () => {
   const createTestManifest = () =>
@@ -21,8 +23,9 @@ describe("SourceReader", () => {
         dataStores: [
           {
             connectionSlug: "test-connection",
-            publicationName: "test-publication",
-            slotName: "test-slot",
+            config: {
+              connectionType: "in-memory" as const,
+            },
           },
         ],
         eventStores: [],
@@ -58,8 +61,11 @@ describe("SourceReader", () => {
         dataStores: [
           {
             connectionSlug: "test-connection",
-            publicationName: "test-publication",
-            slotName: "test-slot",
+            config: {
+              connectionType: "postgres" as const,
+              slotName: "test-slot",
+              publicationName: "test-publication",
+            },
           },
         ],
         eventStores: [],
@@ -84,8 +90,7 @@ describe("SourceReader", () => {
         connectionType: "in-memory",
       },
       {
-        publicationName: "test-publication",
-        slotName: "test-slot",
+        connectionType: "in-memory",
       },
     );
 
