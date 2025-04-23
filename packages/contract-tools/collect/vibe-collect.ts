@@ -1,14 +1,16 @@
-import { dirname, join, relative } from "node:path";
+import { dirname, relative } from "node:path";
 
 import { z } from "zod";
 
 import { type ISchemaCollector } from "@rejot-dev/contract/collect";
+import { ReJotError } from "@rejot-dev/contract/error";
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { ConsumerSchemaSchema, PublicSchemaSchema } from "@rejot-dev/contract/manifest";
 
-import { readManifest, writeManifest } from "../manifest";
+import { ManifestMerger, type MergeDiagnostic } from "../../contract/manifest/manifest-merger";
+import { readManifestOrGetEmpty, writeManifest } from "../manifest";
 import { ManifestPrinter } from "../manifest/manifest-printer";
-import { searchInDirectory } from "./file-finder";
+import { type IFileFinder } from "./file-finder";
 import { collectGitIgnore } from "./git-ignore";
 
 const log = getLogger(import.meta.url);
@@ -19,6 +21,25 @@ export interface Diagnostic {
   message: string;
   severity: DiagnosticSeverity;
   file: string;
+  context?: {
+    schemaType?: "public" | "consumer";
+    schemaName?: string;
+    version?: {
+      major: number;
+      minor?: number;
+    };
+    connectionSlug?: string;
+    storeType?: "data" | "event";
+    originalLocation?: string;
+  };
+  location: {
+    filePath: string;
+    manifestPath: string;
+  };
+  hint?: {
+    message?: string;
+    suggestions?: string[];
+  };
 }
 
 export type CollectedSchemas = {
@@ -29,27 +50,38 @@ export type CollectedSchemas = {
 
 export type ManifestSchemaMap = Map<string, CollectedSchemas>;
 
-function getPublicSchemaKey(schema: z.infer<typeof PublicSchemaSchema>): string {
-  return `${schema.name}@${schema.version.major}.${schema.version.minor}`;
-}
-
-function createDiagnostic(message: string, severity: DiagnosticSeverity, file: string): Diagnostic {
-  return { message, severity, file };
-}
-
 export interface IVibeCollector {
   findSchemaFiles(rootPath: string): Promise<string[]>;
   collectSchemasFromFiles(filePaths: string[], manifestPaths: string[]): Promise<ManifestSchemaMap>;
-  findNearestManifest(filePath: string, manifestPaths: string[]): Promise<string | null>;
+  findNearestManifest(filePath: string, manifestPaths: string[]): string | null;
   formatCollectionResults(results: ManifestSchemaMap, options?: { workspaceRoot?: string }): string;
   writeToManifests(results: ManifestSchemaMap): Promise<void>;
 }
 
+export class NoMatchingManifestError extends ReJotError {
+  #filePath: string;
+
+  constructor(filePath: string) {
+    super(`Could not find a manifest for file: ${filePath}`);
+    this.#filePath = filePath;
+  }
+
+  get filePath() {
+    return this.#filePath;
+  }
+
+  get name() {
+    return "NoMatchingManifestError";
+  }
+}
+
 export class VibeCollector implements IVibeCollector {
   readonly #schemaCollector: ISchemaCollector;
+  readonly #fileFinder: IFileFinder;
 
-  constructor(schemaCollector: ISchemaCollector) {
+  constructor(schemaCollector: ISchemaCollector, fileFinder: IFileFinder) {
     this.#schemaCollector = schemaCollector;
+    this.#fileFinder = fileFinder;
   }
 
   /**
@@ -62,7 +94,7 @@ export class VibeCollector implements IVibeCollector {
     log.debug(`Ignore patterns: ${ignorePatterns.map((pattern) => pattern.pattern).join(", ")}`);
 
     // Search for files with schema creation calls
-    const publicResults = await searchInDirectory(
+    const publicResults = await this.#fileFinder.searchInDirectory(
       rootPath,
       ["createPublicSchema", "createConsumerSchema"],
       { ignorePatterns, caseSensitive: true, fileExtensions: ["ts", "js", "tsx", "jsx"] },
@@ -96,56 +128,14 @@ export class VibeCollector implements IVibeCollector {
 
     // Create a map to track schemas for each manifest
     const manifestSchemas: ManifestSchemaMap = new Map();
-    const seenPublicSchemas = new Map<
-      string,
-      { manifestPath: string; file: string; fromCurrentRun: boolean }
-    >();
-    const seenConsumerSchemas = new Map<
-      string,
-      { manifestPath: string; file: string; fromCurrentRun: boolean }
-    >();
-
-    // First, load existing schemas from manifests
-    for (const manifestPath of manifestPaths) {
-      try {
-        const manifest = await readManifest(manifestPath);
-
-        // Track existing public schemas
-        for (const schema of manifest.publicSchemas || []) {
-          if (!schema.definitionFile) {
-            throw new Error(`Schema "${schema.name}" is missing definitionFile`);
-          }
-          const key = getPublicSchemaKey(schema);
-          const schemaPath = join(dirname(manifestPath), schema.definitionFile);
-          seenPublicSchemas.set(key, { manifestPath, file: schemaPath, fromCurrentRun: false });
-        }
-
-        // Track existing consumer schemas
-        for (const schema of manifest.consumerSchemas || []) {
-          if (!schema.definitionFile) {
-            throw new Error(`Consumer schema "${schema.name}" is missing definitionFile`);
-          }
-          const key = schema.name;
-          const schemaPath = join(dirname(manifestPath), schema.definitionFile);
-          seenConsumerSchemas.set(key, { manifestPath, file: schemaPath, fromCurrentRun: false });
-        }
-      } catch (error) {
-        if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-          // this is fine
-        } else {
-          throw error;
-        }
-      }
-    }
 
     // Process each file
     for (const filePath of filePaths) {
       // Find the nearest manifest for this file
-      const nearestManifestPath = await this.findNearestManifest(filePath, manifestPaths);
+      const nearestManifestPath = this.findNearestManifest(filePath, manifestPaths);
 
       if (!nearestManifestPath) {
-        log.warn(`Could not find a manifest for file: ${filePath}`);
-        continue;
+        throw new NoMatchingManifestError(filePath);
       }
 
       const { publicSchemas, consumerSchemas } = await this.#schemaCollector.collectSchemas(
@@ -162,98 +152,57 @@ export class VibeCollector implements IVibeCollector {
         continue;
       }
 
-      // Add to or update the manifest collection
+      // Get or create the manifest collection
       const existing = manifestSchemas.get(nearestManifestPath) || {
         publicSchemas: [],
         consumerSchemas: [],
         diagnostics: [],
       };
 
-      // Process public schemas and check for duplicates
-      const validPublicSchemas = publicSchemas.filter((schema) => {
-        const key = getPublicSchemaKey(schema);
-        const existing = seenPublicSchemas.get(key);
+      // Use ManifestMerger to merge the schemas
+      const { result: mergedPublicSchemas, diagnostics: publicDiagnostics } =
+        ManifestMerger.mergePublicSchemas([...existing.publicSchemas, ...publicSchemas]);
 
-        if (!schema.definitionFile) {
-          throw new Error(`Schema "${schema.name}" is missing definitionFile`);
-        }
+      const { result: mergedConsumerSchemas, diagnostics: consumerDiagnostics } =
+        ManifestMerger.mergeConsumerSchemas([...existing.consumerSchemas, ...consumerSchemas]);
 
-        const schemaPath = join(dirname(nearestManifestPath), schema.definitionFile);
-
-        if (existing?.fromCurrentRun) {
-          // If we've seen this schema in the current run, treat it as a duplicate
-          const diagnostic = createDiagnostic(
-            `Duplicate public schema "${schema.name}" v${schema.version.major}.${schema.version.minor} found. First occurrence in ${existing.file}`,
-            "warning",
-            schemaPath,
-          );
-
-          // Add diagnostic to the manifest that contains the duplicate
-          const existingManifest = manifestSchemas.get(nearestManifestPath) || {
-            publicSchemas: [],
-            consumerSchemas: [],
-            diagnostics: [],
-          };
-          existingManifest.diagnostics.push(diagnostic);
-          manifestSchemas.set(nearestManifestPath, existingManifest);
-
-          return false;
-        }
-
-        // Record this schema as seen in the current run
-        seenPublicSchemas.set(key, {
-          manifestPath: nearestManifestPath,
-          file: schemaPath,
-          fromCurrentRun: true,
-        });
-        return true;
-      });
-
-      // Process consumer schemas and check for duplicates
-      const validConsumerSchemas = consumerSchemas.filter((schema) => {
-        const existing = seenConsumerSchemas.get(schema.name);
-
-        if (!schema.definitionFile) {
-          throw new Error(
-            `Consumer schema "${schema.publicSchema.name}" is missing definitionFile`,
-          );
-        }
-
-        const schemaPath = join(dirname(nearestManifestPath), schema.definitionFile);
-
-        if (existing?.fromCurrentRun) {
-          // If we've seen this schema in the current run, treat it as a duplicate
-          const diagnostic = createDiagnostic(
-            `Duplicate consumer schema "${schema.publicSchema.name}" found. First occurrence in ${existing.file}`,
-            "warning",
-            schemaPath,
-          );
-
-          // Add diagnostic to the manifest that contains the duplicate
-          const existingManifest = manifestSchemas.get(nearestManifestPath) || {
-            publicSchemas: [],
-            consumerSchemas: [],
-            diagnostics: [],
-          };
-          existingManifest.diagnostics.push(diagnostic);
-          manifestSchemas.set(nearestManifestPath, existingManifest);
-
-          return false;
-        }
-
-        // Record this schema as seen in the current run
-        seenConsumerSchemas.set(schema.name, {
-          manifestPath: nearestManifestPath,
-          file: schemaPath,
-          fromCurrentRun: true,
-        });
-        return true;
-      });
+      // Convert merger diagnostics to collector diagnostics and add file information
+      const allDiagnostics = [
+        ...existing.diagnostics,
+        ...publicDiagnostics.map(
+          (d: MergeDiagnostic): Diagnostic => ({
+            message: d.message,
+            severity: d.type === "warning" ? "warning" : "error",
+            file: filePath,
+            context: d.context,
+            location: {
+              ...d.location,
+              filePath: filePath,
+              manifestPath: nearestManifestPath,
+            },
+            hint: d.hint,
+          }),
+        ),
+        ...consumerDiagnostics.map(
+          (d: MergeDiagnostic): Diagnostic => ({
+            message: d.message,
+            severity: d.type === "warning" ? "warning" : "error",
+            file: filePath,
+            context: d.context,
+            location: {
+              ...d.location,
+              filePath: filePath,
+              manifestPath: nearestManifestPath,
+            },
+            hint: d.hint,
+          }),
+        ),
+      ];
 
       manifestSchemas.set(nearestManifestPath, {
-        publicSchemas: [...existing.publicSchemas, ...validPublicSchemas],
-        consumerSchemas: [...existing.consumerSchemas, ...validConsumerSchemas],
-        diagnostics: existing.diagnostics,
+        publicSchemas: mergedPublicSchemas,
+        consumerSchemas: mergedConsumerSchemas,
+        diagnostics: allDiagnostics,
       });
     }
 
@@ -263,7 +212,7 @@ export class VibeCollector implements IVibeCollector {
   /**
    * Find the nearest manifest path for a given file
    */
-  async findNearestManifest(filePath: string, manifestPaths: string[]): Promise<string | null> {
+  findNearestManifest(filePath: string, manifestPaths: string[]): string | null {
     // Get directory of the file
     const fileDir = dirname(filePath);
 
@@ -389,7 +338,7 @@ export class VibeCollector implements IVibeCollector {
       }
 
       // Read current manifest
-      const currentManifest = await readManifest(manifestPath);
+      const currentManifest = await readManifestOrGetEmpty(manifestPath);
       log.debug("read manifest at", manifestPath);
 
       // Merge schemas (keeping existing ones and adding new ones)

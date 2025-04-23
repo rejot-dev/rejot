@@ -8,8 +8,8 @@ import type { PublicSchemaData } from "../public-schema/public-schema.ts";
 const log = getLogger("collect");
 
 export interface CollectedSchemas {
-  publicSchemas: PublicSchemaData[];
-  consumerSchemas: ConsumerSchemaData[];
+  publicSchemas: (PublicSchemaData & { definitionFile: string })[];
+  consumerSchemas: (ConsumerSchemaData & { definitionFile: string })[];
 }
 
 export interface ISchemaCollector {
@@ -80,11 +80,11 @@ async function collectSchemasInternal(
     }
 
     if (isPublicSchemaData(schema)) {
-      schema.definitionFile = relative(dirname(manifestPath), modulePath);
-      result.publicSchemas.push(schema);
+      const definitionFile = relative(dirname(manifestPath), modulePath);
+      result.publicSchemas.push({ ...schema, definitionFile });
     } else if (isConsumerSchemaData(schema)) {
-      schema.definitionFile = relative(dirname(manifestPath), modulePath);
-      result.consumerSchemas.push(schema);
+      const definitionFile = relative(dirname(manifestPath), modulePath);
+      result.consumerSchemas.push({ ...schema, definitionFile });
     } else if (typeof schema === "object" && schema !== null && !Array.isArray(schema)) {
       // Recursively check object properties for schemas, but only one level deep
       for (const value of Object.values(schema)) {
@@ -114,6 +114,7 @@ async function collectSchemasInternal(
   log.info(
     `Collected ${result.publicSchemas.length} public and ${result.consumerSchemas.length} consumer schemas`,
   );
+
   return result;
 }
 
@@ -121,23 +122,4 @@ export class SchemaCollector implements ISchemaCollector {
   async collectSchemas(manifestPath: string, modulePath: string): Promise<CollectedSchemas> {
     return collectSchemasInternal(manifestPath, modulePath);
   }
-}
-
-// Keep these for backward compatibility but mark as deprecated
-/** @deprecated Use SchemaCollector.collectSchemas instead */
-export async function collectPublicSchemas(
-  manifestPath: string,
-  modulePath: string,
-): Promise<PublicSchemaData[]> {
-  const result = await collectSchemasInternal(manifestPath, modulePath);
-  return result.publicSchemas;
-}
-
-/** @deprecated Use SchemaCollector.collectSchemas instead */
-export async function collectConsumerSchemas(
-  manifestPath: string,
-  modulePath: string,
-): Promise<ConsumerSchemaData[]> {
-  const result = await collectSchemasInternal(manifestPath, modulePath);
-  return result.consumerSchemas;
 }

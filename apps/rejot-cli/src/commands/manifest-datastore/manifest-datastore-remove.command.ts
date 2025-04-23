@@ -1,9 +1,13 @@
-import { Args, Command } from "@oclif/core";
 import path from "node:path";
-import { readManifest, writeManifest } from "@rejot-dev/contract-tools/manifest";
-import { manifestFlags, validateDataStoreExists } from "./manifest-datastore-config";
+
 import type { z } from "zod";
+
 import type { DataStoreSchema } from "@rejot-dev/contract/manifest";
+import { readManifestOrGetEmpty, writeManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { Args, Command } from "@oclif/core";
+
+import { manifestFlags, validateDataStoreExists } from "./manifest-datastore-config";
 
 export class ManifestDataStoreRemoveCommand extends Command {
   static override id = "manifest:datastore:remove";
@@ -26,7 +30,7 @@ export class ManifestDataStoreRemoveCommand extends Command {
 
     await validateDataStoreExists(manifestPath, args.connectionSlug);
 
-    const manifest = await readManifest(manifestPath);
+    const manifest = await readManifestOrGetEmpty(manifestPath);
     const initialLength = (manifest.dataStores ?? []).length;
     manifest.dataStores = (manifest.dataStores ?? []).filter(
       (ds: z.infer<typeof DataStoreSchema>) => ds.connectionSlug !== args.connectionSlug,

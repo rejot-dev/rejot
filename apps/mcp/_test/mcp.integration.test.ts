@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
-import { cp, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -129,8 +129,6 @@ describe.skipIf(!process.env.REJOT_SYNC_CLI_TEST_CONNECTION)("MCP Integration Te
     const logFilePath = join(tmpDir, "mcp.log");
     console.log("Tmp directory used:", tmpDir);
     console.log("Log file:", logFilePath);
-
-    await rm(tmpDir, { recursive: true, force: true });
   });
 
   describe("Workspace Setup", () => {

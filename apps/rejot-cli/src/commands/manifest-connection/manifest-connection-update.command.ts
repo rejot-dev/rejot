@@ -1,6 +1,9 @@
-import { Args, Command } from "@oclif/core";
 import path from "node:path";
-import { readManifest, writeManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { readManifestOrGetEmpty, writeManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { Args, Command } from "@oclif/core";
+
 import { connectionFlags, parseConnectionFlags } from "./manifest-connection-config.ts";
 
 export class ManifestConnectionUpdateCommand extends Command {
@@ -31,7 +34,7 @@ export class ManifestConnectionUpdateCommand extends Command {
 
     try {
       const connectionConfig = parseConnectionFlags(flags);
-      const manifest = await readManifest(manifestPath);
+      const manifest = await readManifestOrGetEmpty(manifestPath);
 
       // Find the connection to update
       const connectionIndex = (manifest.connections ?? []).findIndex(

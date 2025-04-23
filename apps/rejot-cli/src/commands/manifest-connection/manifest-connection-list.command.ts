@@ -1,6 +1,8 @@
-import { Command, Flags } from "@oclif/core";
 import path from "node:path";
-import { readManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { readManifestOrGetEmpty } from "@rejot-dev/contract-tools/manifest";
+
+import { Command, Flags } from "@oclif/core";
 
 export class ManifestConnectionListCommand extends Command {
   static override id = "manifest connection list";
@@ -19,7 +21,7 @@ export class ManifestConnectionListCommand extends Command {
     const { flags } = await this.parse(ManifestConnectionListCommand);
     const manifestPath = path.resolve(flags.manifest);
 
-    const manifest = await readManifest(manifestPath);
+    const manifest = await readManifestOrGetEmpty(manifestPath);
 
     if ((manifest.connections ?? []).length === 0) {
       this.log("No connections defined");

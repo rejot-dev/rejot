@@ -1,7 +1,7 @@
 export {
   findManifestPath,
   initManifest,
-  readManifestOrGetEmpty as readManifest,
+  readManifestOrGetEmpty,
   writeManifest,
 } from "./manifest.fs";
 export { ManifestPrinter } from "./manifest-printer";

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { z } from "zod";
 
 import { verifyManifests } from "@rejot-dev/contract/manifest";
-import { readManifest } from "@rejot-dev/contract-tools/manifest";
+import { readManifestOrGetEmpty } from "@rejot-dev/contract-tools/manifest";
 import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
 
 import type { IFactory, IRejotMcp } from "@/rejot-mcp";
@@ -31,7 +31,7 @@ export class ManifestInfoTool implements IFactory {
         );
 
         try {
-          const manifest = await readManifest(manifestAbsoluteFilePath);
+          const manifest = await readManifestOrGetEmpty(manifestAbsoluteFilePath);
           const errors = verifyManifests([manifest]);
 
           if (!errors.isValid) {

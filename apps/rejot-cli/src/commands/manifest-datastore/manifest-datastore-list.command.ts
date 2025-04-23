@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { ManifestPrinter, readManifest } from "@rejot-dev/contract-tools/manifest";
+import { ManifestPrinter, readManifestOrGetEmpty } from "@rejot-dev/contract-tools/manifest";
 
 import { Command } from "@oclif/core";
 
@@ -17,7 +17,7 @@ export class ManifestDataStoreListCommand extends Command {
   public async run(): Promise<void> {
     const { flags } = await this.parse(ManifestDataStoreListCommand);
     const manifestPath = path.resolve(flags.manifest);
-    const manifest = await readManifest(manifestPath);
+    const manifest = await readManifestOrGetEmpty(manifestPath);
 
     this.log(ManifestPrinter.printDataStores(manifest).join("\n"));
   }

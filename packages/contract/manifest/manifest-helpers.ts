@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-
 import type { WorkspaceDefinition } from "@rejot-dev/contract/workspace";
 
 import type { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest";
@@ -289,7 +288,7 @@ export function mergePublicSchemas(
 
 /**
  * Merges consumer schemas from multiple manifests.
- * For schemas with the same name and major version, the one with the highest minor version wins.
+ * For schemas with the same name, the first occurrence is kept (maintaining precedence order).
  */
 export function mergeConsumerSchemas(
   schemasArrays: z.infer<typeof ConsumerSchemaSchema>[][],
@@ -298,8 +297,8 @@ export function mergeConsumerSchemas(
 
   for (const schemas of schemasArrays) {
     for (const schema of schemas) {
-      // For consumer schemas, we only care about the name and major version from the public schema reference
-      const key = `${schema.publicSchema.name}@${schema.publicSchema.majorVersion}`;
+      // For consumer schemas, we only care about the top-level name
+      const key = schema.name;
 
       const existing = schemaMap.get(key);
       if (!existing) {
@@ -307,8 +306,7 @@ export function mergeConsumerSchemas(
         continue;
       }
 
-      // For consumer schemas, we take the first one since they don't have minor versions
-      // This maintains the precedence order of the input manifests
+      // For consumer schemas, we take the first one to maintain precedence order
     }
   }
 

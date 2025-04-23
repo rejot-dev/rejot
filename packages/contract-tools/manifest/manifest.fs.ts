@@ -177,6 +177,7 @@ export async function readManifest(path: string): Promise<Manifest | null> {
     });
   }
 }
+
 export interface InitManifestOptions {
   workspace?: boolean;
 }

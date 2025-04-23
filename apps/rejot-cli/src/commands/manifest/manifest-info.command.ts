@@ -1,8 +1,10 @@
-import { Command, Flags } from "@oclif/core";
 import path from "node:path";
-import { readManifest } from "@rejot-dev/contract-tools/manifest";
+
 import { verifyManifests } from "@rejot-dev/contract/manifest";
+import { readManifestOrGetEmpty } from "@rejot-dev/contract-tools/manifest";
 import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
+
+import { Command, Flags } from "@oclif/core";
 
 export class ManifestInfoCommand extends Command {
   static override id = "manifest";
@@ -42,7 +44,7 @@ export class ManifestInfoCommand extends Command {
     const manifestPath = path.resolve(flags.manifest);
 
     try {
-      const manifest = await readManifest(manifestPath);
+      const manifest = await readManifestOrGetEmpty(manifestPath);
 
       const errors = verifyManifests([manifest]);
 
