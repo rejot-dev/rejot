@@ -2,60 +2,42 @@ import { dirname, relative } from "node:path";
 
 import { z } from "zod";
 
-import { type ISchemaCollector } from "@rejot-dev/contract/collect";
+import type { CollectedSchemas, ISchemaCollector } from "@rejot-dev/contract/collect";
 import { ReJotError } from "@rejot-dev/contract/error";
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { ConsumerSchemaSchema, PublicSchemaSchema } from "@rejot-dev/contract/manifest";
+import { ManifestMerger, type MergeDiagnostic } from "@rejot-dev/contract/manifest-merger";
 
-import { ManifestMerger, type MergeDiagnostic } from "../../contract/manifest/manifest-merger";
-import { readManifestOrGetEmpty, writeManifest } from "../manifest";
+import type { IManifestFileManager } from "../manifest/manifest-file-manager";
 import { ManifestPrinter } from "../manifest/manifest-printer";
 import { type IFileFinder } from "./file-finder";
 import { collectGitIgnore } from "./git-ignore";
 
 const log = getLogger(import.meta.url);
 
-export type DiagnosticSeverity = "warning" | "error";
-
-export interface Diagnostic {
-  message: string;
-  severity: DiagnosticSeverity;
-  file: string;
-  context?: {
-    schemaType?: "public" | "consumer";
-    schemaName?: string;
-    version?: {
-      major: number;
-      minor?: number;
-    };
-    connectionSlug?: string;
-    storeType?: "data" | "event";
-    originalLocation?: string;
-  };
-  location: {
-    filePath: string;
-    manifestPath: string;
-  };
-  hint?: {
-    message?: string;
-    suggestions?: string[];
-  };
-}
-
-export type CollectedSchemas = {
+export type VibeCollectedSchemas = {
+  manifestPath: string;
   publicSchemas: z.infer<typeof PublicSchemaSchema>[];
   consumerSchemas: z.infer<typeof ConsumerSchemaSchema>[];
-  diagnostics: Diagnostic[];
+  diagnostics: MergeDiagnostic[];
 };
-
-export type ManifestSchemaMap = Map<string, CollectedSchemas>;
 
 export interface IVibeCollector {
   findSchemaFiles(rootPath: string): Promise<string[]>;
-  collectSchemasFromFiles(filePaths: string[], manifestPaths: string[]): Promise<ManifestSchemaMap>;
+  collectSchemasFromFiles(
+    filePaths: string[],
+    manifestPaths: string[],
+  ): Promise<VibeCollectedSchemas[]>;
   findNearestManifest(filePath: string, manifestPaths: string[]): string | null;
-  formatCollectionResults(results: ManifestSchemaMap, options?: { workspaceRoot?: string }): string;
-  writeToManifests(results: ManifestSchemaMap): Promise<void>;
+  formatCollectionResults(
+    results: VibeCollectedSchemas[],
+    options?: { workspaceRoot?: string },
+  ): string;
+  writeToManifests(results: VibeCollectedSchemas[]): Promise<MergeDiagnostic[]>;
+  formatMergeDiagnostics(
+    diagnostics: MergeDiagnostic[],
+    _options?: { workspaceRoot?: string },
+  ): string;
 }
 
 export class NoMatchingManifestError extends ReJotError {
@@ -78,10 +60,16 @@ export class NoMatchingManifestError extends ReJotError {
 export class VibeCollector implements IVibeCollector {
   readonly #schemaCollector: ISchemaCollector;
   readonly #fileFinder: IFileFinder;
+  readonly #manifestFileManager: IManifestFileManager;
 
-  constructor(schemaCollector: ISchemaCollector, fileFinder: IFileFinder) {
+  constructor(
+    schemaCollector: ISchemaCollector,
+    fileFinder: IFileFinder,
+    manifestFileManager: IManifestFileManager,
+  ) {
     this.#schemaCollector = schemaCollector;
     this.#fileFinder = fileFinder;
+    this.#manifestFileManager = manifestFileManager;
   }
 
   /**
@@ -110,12 +98,12 @@ export class VibeCollector implements IVibeCollector {
    * @param filePaths - The absolute paths.
    * @param manifests - Used to determine closest manifest. Should be absolute paths.
    *
-   * @returns A map of manifest paths to their schemas. Absolute paths.
+   * @returns A list of collected schemas with their manifest paths. Absolute paths.
    */
   async collectSchemasFromFiles(
     filePaths: string[],
     manifestPaths: string[],
-  ): Promise<ManifestSchemaMap> {
+  ): Promise<VibeCollectedSchemas[]> {
     // Validate that all paths are absolute
     const nonAbsolutePaths = [...filePaths, ...manifestPaths].filter(
       (path) => !path.startsWith("/"),
@@ -127,7 +115,7 @@ export class VibeCollector implements IVibeCollector {
     }
 
     // Create a map to track schemas for each manifest
-    const manifestSchemas: ManifestSchemaMap = new Map();
+    const manifestSchemas = new Map<string, VibeCollectedSchemas>();
 
     // Process each file
     for (const filePath of filePaths) {
@@ -138,22 +126,26 @@ export class VibeCollector implements IVibeCollector {
         throw new NoMatchingManifestError(filePath);
       }
 
-      const { publicSchemas, consumerSchemas } = await this.#schemaCollector.collectSchemas(
+      const collectedSchemas: CollectedSchemas = await this.#schemaCollector.collectSchemas(
         nearestManifestPath,
         filePath,
       );
 
       log.debug(
-        `Collected ${publicSchemas.length} public and ${consumerSchemas.length} consumer schemas from '${filePath}'.`,
+        `Collected ${collectedSchemas.publicSchemas.length} public and ${collectedSchemas.consumerSchemas.length} consumer schemas from '${filePath}'.`,
       );
 
       // Skip if no schemas were found
-      if (publicSchemas.length === 0 && consumerSchemas.length === 0) {
+      if (
+        collectedSchemas.publicSchemas.length === 0 &&
+        collectedSchemas.consumerSchemas.length === 0
+      ) {
         continue;
       }
 
       // Get or create the manifest collection
       const existing = manifestSchemas.get(nearestManifestPath) || {
+        manifestPath: nearestManifestPath,
         publicSchemas: [],
         consumerSchemas: [],
         diagnostics: [],
@@ -161,52 +153,33 @@ export class VibeCollector implements IVibeCollector {
 
       // Use ManifestMerger to merge the schemas
       const { result: mergedPublicSchemas, diagnostics: publicDiagnostics } =
-        ManifestMerger.mergePublicSchemas([...existing.publicSchemas, ...publicSchemas]);
+        ManifestMerger.mergePublicSchemas([
+          ...existing.publicSchemas,
+          ...collectedSchemas.publicSchemas,
+        ]);
 
       const { result: mergedConsumerSchemas, diagnostics: consumerDiagnostics } =
-        ManifestMerger.mergeConsumerSchemas([...existing.consumerSchemas, ...consumerSchemas]);
+        ManifestMerger.mergeConsumerSchemas([
+          ...existing.consumerSchemas,
+          ...collectedSchemas.consumerSchemas,
+        ]);
 
-      // Convert merger diagnostics to collector diagnostics and add file information
+      // Directly add MergeDiagnostics
       const allDiagnostics = [
         ...existing.diagnostics,
-        ...publicDiagnostics.map(
-          (d: MergeDiagnostic): Diagnostic => ({
-            message: d.message,
-            severity: d.type === "warning" ? "warning" : "error",
-            file: filePath,
-            context: d.context,
-            location: {
-              ...d.location,
-              filePath: filePath,
-              manifestPath: nearestManifestPath,
-            },
-            hint: d.hint,
-          }),
-        ),
-        ...consumerDiagnostics.map(
-          (d: MergeDiagnostic): Diagnostic => ({
-            message: d.message,
-            severity: d.type === "warning" ? "warning" : "error",
-            file: filePath,
-            context: d.context,
-            location: {
-              ...d.location,
-              filePath: filePath,
-              manifestPath: nearestManifestPath,
-            },
-            hint: d.hint,
-          }),
-        ),
+        ...publicDiagnostics,
+        ...consumerDiagnostics,
       ];
 
       manifestSchemas.set(nearestManifestPath, {
+        manifestPath: nearestManifestPath,
         publicSchemas: mergedPublicSchemas,
         consumerSchemas: mergedConsumerSchemas,
         diagnostics: allDiagnostics,
       });
     }
 
-    return manifestSchemas;
+    return Array.from(manifestSchemas.values());
   }
 
   /**
@@ -286,23 +259,19 @@ export class VibeCollector implements IVibeCollector {
    * @param options.workspaceRoot If provided, paths will be normalized relative to this root
    */
   formatCollectionResults(
-    results: ManifestSchemaMap,
+    results: VibeCollectedSchemas[],
     options?: { workspaceRoot?: string },
   ): string {
     const output: string[] = [];
 
-    for (const [manifestPath, schemas] of results.entries()) {
-      if (
-        schemas.publicSchemas.length === 0 &&
-        schemas.consumerSchemas.length === 0 &&
-        schemas.diagnostics.length === 0
-      ) {
+    for (const schemas of results) {
+      if (schemas.publicSchemas.length === 0 && schemas.consumerSchemas.length === 0) {
         continue;
       }
 
       const displayPath = options?.workspaceRoot
-        ? relative(options.workspaceRoot, manifestPath)
-        : manifestPath;
+        ? relative(options.workspaceRoot, schemas.manifestPath)
+        : schemas.manifestPath;
 
       output.push(`Manifest: ${displayPath}`);
 
@@ -315,11 +284,7 @@ export class VibeCollector implements IVibeCollector {
       }
 
       if (schemas.diagnostics.length > 0) {
-        output.push("\nDiagnostics:");
-        for (const diagnostic of schemas.diagnostics) {
-          const prefix = diagnostic.severity === "error" ? "❌" : "⚠️";
-          output.push(`  ${prefix} ${diagnostic.message} (${diagnostic.file})`);
-        }
+        output.push(this.formatMergeDiagnostics(schemas.diagnostics, options));
       }
 
       output.push(""); // Add a blank line between manifests
@@ -329,38 +294,71 @@ export class VibeCollector implements IVibeCollector {
   }
 
   /**
+   * Format merge diagnostics as a string
+   * @param diagnostics The diagnostics to format
+   * @param options Optional formatting options
+   * @param options.workspaceRoot If provided, paths will be normalized relative to this root
+   */
+  formatMergeDiagnostics(
+    diagnostics: MergeDiagnostic[],
+    _options?: { workspaceRoot?: string },
+  ): string {
+    if (diagnostics.length === 0) {
+      return "";
+    }
+
+    const output: string[] = ["Diagnostics:"];
+
+    for (const diagnostic of diagnostics) {
+      const prefix =
+        diagnostic.type === "error" ? "❌" : diagnostic.type === "warning" ? "⚠️" : "ℹ️";
+      const message = ManifestMerger.getDiagnosticMessage(diagnostic);
+
+      output.push(`  ${prefix} ${message}`);
+
+      // Add hint if available
+      if (diagnostic.hint?.suggestions?.length) {
+        output.push(`    Suggestions:`);
+        diagnostic.hint.suggestions.forEach((suggestion) => {
+          output.push(`      - ${suggestion}`);
+        });
+      }
+
+      output.push(""); // Add blank line between diagnostics
+    }
+
+    return output.join("\n");
+  }
+
+  /**
    * Write collected schemas to their respective manifests
    */
-  async writeToManifests(results: ManifestSchemaMap): Promise<void> {
-    for (const [manifestPath, schemas] of results.entries()) {
+  async writeToManifests(results: VibeCollectedSchemas[]): Promise<MergeDiagnostic[]> {
+    const allDiagnostics: MergeDiagnostic[] = [];
+
+    for (const schemas of results) {
       if (schemas.publicSchemas.length === 0 && schemas.consumerSchemas.length === 0) {
         continue;
       }
 
-      // Read current manifest
-      const currentManifest = await readManifestOrGetEmpty(manifestPath);
-      log.debug("read manifest at", manifestPath);
+      const currentManifest = await this.#manifestFileManager.readManifestOrGetEmpty(
+        schemas.manifestPath,
+      );
 
-      // Merge schemas (keeping existing ones and adding new ones)
-      const publicSchemas = [...(currentManifest.publicSchemas || []), ...schemas.publicSchemas];
+      const { manifest, diagnostics } = ManifestMerger.mergeManifests(currentManifest, [
+        {
+          publicSchemas: schemas.publicSchemas,
+          consumerSchemas: schemas.consumerSchemas,
+        },
+      ]);
 
-      const consumerSchemas = [
-        ...(currentManifest.consumerSchemas || []),
-        ...schemas.consumerSchemas,
-      ];
+      // Directly push MergeDiagnostics, enhanceDiagnostic call removed
+      allDiagnostics.push(...diagnostics);
 
-      // Create new manifest with updated schemas
-      const newManifest = {
-        ...currentManifest,
-        publicSchemas,
-        consumerSchemas,
-      };
-
-      log.debug("writing to", manifestPath);
-
-      // Write updated manifest
-      await writeManifest(newManifest, manifestPath);
-      log.info(`Updated manifest at ${manifestPath}`);
+      await this.#manifestFileManager.writeManifest(schemas.manifestPath, manifest);
+      log.info(`Updated manifest at ${schemas.manifestPath}`);
     }
+
+    return allDiagnostics;
   }
 }

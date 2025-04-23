@@ -37,7 +37,7 @@ export default tseslint.config(
         "error",
         {
           argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
+          varsIgnorePattern: "^(_|log$)",
           caughtErrorsIgnorePattern: "^_",
           ignoreRestSiblings: true,
         },

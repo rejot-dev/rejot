@@ -1,15 +1,19 @@
-import { test, expect, beforeAll, afterAll } from "bun:test";
+import { afterAll, beforeAll, expect, test } from "bun:test";
+
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import { z } from "zod";
+
+import type { SyncManifestSchema } from "@rejot-dev/contract/manifest";
+
 import {
   initManifest,
+  mergeAndUpdateManifest,
   readManifestOrGetEmpty,
   writeManifest,
-  mergeAndUpdateManifest,
 } from "./manifest.fs";
-import { mkdtemp, rm } from "node:fs/promises";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
-import type { SyncManifestSchema } from "@rejot-dev/contract/manifest";
-import { z } from "zod";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
@@ -141,6 +145,7 @@ test("updateManifest - newer versions take precedence", async () => {
         type: "object",
         properties: {},
       },
+      definitionFile: "test.json",
     },
   ];
   await writeManifest(baseManifest, manifestPath);
@@ -173,6 +178,7 @@ test("updateManifest - newer versions take precedence", async () => {
             field: { type: "string" },
           },
         },
+        definitionFile: "test.json",
       },
     ],
     consumerSchemas: [],

@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+import { CURRENT_MANIFEST_FILE_VERSION, DEFAULT_MANIFEST_FILENAME } from "./manifest.fs";
 import { ManifestWorkspaceResolver } from "./manifest-workspace-resolver";
-import { DEFAULT_MANIFEST_FILENAME, CURRENT_MANIFEST_FILE_VERSION } from "./manifest.fs";
 
 // Helper function to create manifest files
 const createManifestFile = async (

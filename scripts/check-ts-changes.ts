@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 
 import { $ } from "bun";
+import { appendFileSync, readFileSync, writeFileSync } from "fs";
 import { glob } from "glob";
-import { readFileSync, writeFileSync, appendFileSync } from "fs";
 import { join, relative } from "path";
 
 const LOG_FILE_PATH = join(process.cwd(), "check-ts-changes.log");
@@ -101,6 +101,11 @@ function parseTestOutput(output: string, packagePath: string): TestFailure[] {
     // Look for stack trace with file location
     else if (line.includes(".test.ts:")) {
       const locationMatch = line.match(/\s*(?:at\s+)?([^(]+\.test\.ts):(\d+):(\d+)/);
+
+      if (currentTest !== "") {
+        log(`xxxxx found '${!!locationMatch}', '${line}'`);
+      }
+
       if (locationMatch) {
         const [_, filePath, lineNum, colNum] = locationMatch;
         const normalizedPath = relative(
@@ -117,6 +122,16 @@ function parseTestOutput(output: string, packagePath: string): TestFailure[] {
         });
 
         // Reset for next failure
+        currentError = "";
+      } else if (currentTest) {
+        // test failed but somehow we don't know the location
+        failures.push({
+          file: "(unknown file)",
+          line: "?",
+          column: "?",
+          testName: currentTest,
+          error: currentError,
+        });
         currentError = "";
       }
     }

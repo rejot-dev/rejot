@@ -1,26 +1,28 @@
-import { Args, Command, Flags } from "@oclif/core";
 import fs from "node:fs/promises";
+
 import { z } from "zod";
-import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
-import { setLogLevel, getLogger } from "@rejot-dev/contract/logger";
+
 import {
   PostgresConnectionAdapter,
-  PostgresPublicSchemaTransformationAdapter,
   PostgresConsumerSchemaTransformationAdapter,
+  PostgresPublicSchemaTransformationAdapter,
 } from "@rejot-dev/adapter-postgres";
-import { SyncController } from "@rejot-dev/sync/sync-controller-new";
-import { ExternalSyncMessageBus } from "@rejot-dev/sync/external-sync-message-bus";
 import type {
   AnyIConnectionAdapter,
   AnyIConsumerSchemaTransformationAdapter,
   AnyIPublicSchemaTransformationAdapter,
 } from "@rejot-dev/contract/adapter";
-
-import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 import { EventStoreMessageBus } from "@rejot-dev/contract/event-store-message-bus";
-import { SyncHTTPController } from "@rejot-dev/sync/sync-http-service";
+import { ConsoleLogger, getLogger, setLogger } from "@rejot-dev/contract/logger";
+import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
 import type { ISubscribeMessageBus } from "@rejot-dev/contract/message-bus";
+import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
+import { ExternalSyncMessageBus } from "@rejot-dev/sync/external-sync-message-bus";
+import { SyncController } from "@rejot-dev/sync/sync-controller-new";
 import { createResolver, type ISyncServiceResolver } from "@rejot-dev/sync/sync-http-resolver";
+import { SyncHTTPController } from "@rejot-dev/sync/sync-http-service";
+
+import { Args, Command, Flags } from "@oclif/core";
 
 const log = getLogger("manifest:sync");
 
@@ -72,7 +74,7 @@ export class ManifestSyncCommand extends Command {
 
     const manifestPaths = z.array(z.string()).parse(argv);
 
-    setLogLevel(logLevel.toUpperCase());
+    setLogger(new ConsoleLogger(logLevel.toUpperCase()));
 
     try {
       // Read and parse manifest files

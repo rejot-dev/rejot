@@ -2,33 +2,93 @@ import { z } from "zod";
 
 import { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest";
 
-export interface MergedManifest {
-  manifest: z.infer<typeof SyncManifestSchema>;
-  diagnostics: MergeDiagnostic[];
+/** Represents the location context for a merge operation */
+export interface MergeLocation {
+  filePath: string;
+  manifestSlug: string;
 }
 
-export interface MergeDiagnostic {
+/** Base diagnostic information common to all merge diagnostics */
+interface BaseMergeDiagnostic {
+  /** The type/severity of the diagnostic */
   type: "info" | "warning" | "error";
-  message: string;
-  context: {
-    schemaType?: "public" | "consumer";
-    schemaName?: string;
-    version?: {
+  /** Optional hint information to help resolve the diagnostic */
+  hint?: {
+    /** Suggested actions to resolve the diagnostic */
+    suggestions: string[];
+  };
+}
+
+/** Diagnostic for when a public schema is overwritten */
+interface PublicSchemaMergeDiagnostic extends BaseMergeDiagnostic {
+  kind: "public_schema";
+  /** Information about the new schema that is overwriting the old one */
+  item: {
+    /** Name of the schema */
+    name: string;
+    /** Version information */
+    version: {
       major: number;
       minor?: number;
     };
-    connectionSlug?: string;
-    storeType?: "data" | "event";
-    originalLocation?: string;
+    /** Path to the schema definition file */
+    sourceDefinitionFile: string;
   };
-  location?: {
-    filePath?: string;
-    manifestSlug?: string;
+}
+
+/** Diagnostic for when a consumer schema is overwritten */
+interface ConsumerSchemaMergeDiagnostic extends BaseMergeDiagnostic {
+  kind: "consumer_schema";
+  /** Information about the new schema that is overwriting the old one */
+  item: {
+    /** Name of the schema */
+    name: string;
+    /** Path to the schema definition file */
+    sourceDefinitionFile: string;
   };
-  hint?: {
-    message?: string;
-    suggestions?: string[];
+}
+
+/** Diagnostic for when a connection is overwritten */
+interface ConnectionMergeDiagnostic extends BaseMergeDiagnostic {
+  kind: "connection";
+  /** Information about the new connection that is overwriting the old one */
+  item: {
+    /** Slug of the connection */
+    slug: string;
   };
+}
+
+/** Diagnostic for when a data store is overwritten */
+interface DataStoreMergeDiagnostic extends BaseMergeDiagnostic {
+  kind: "data_store";
+  /** Information about the new data store that is overwriting the old one */
+  item: {
+    /** Slug of the connection this store uses */
+    connectionSlug: string;
+  };
+}
+
+/** Diagnostic for when an event store is overwritten */
+interface EventStoreMergeDiagnostic extends BaseMergeDiagnostic {
+  kind: "event_store";
+  /** Information about the new event store that is overwriting the old one */
+  item: {
+    /** Slug of the connection this store uses */
+    connectionSlug: string;
+  };
+}
+
+/** Union type of all possible merge diagnostics */
+export type MergeDiagnostic =
+  | PublicSchemaMergeDiagnostic
+  | ConsumerSchemaMergeDiagnostic
+  | ConnectionMergeDiagnostic
+  | DataStoreMergeDiagnostic
+  | EventStoreMergeDiagnostic;
+
+export interface MergedManifest {
+  manifest: z.infer<typeof SyncManifestSchema>;
+  diagnostics: MergeDiagnostic[];
 }
 
 export class ManifestMerger {
@@ -38,7 +98,7 @@ export class ManifestMerger {
    */
   static mergeManifests(
     baseManifest: z.infer<typeof SyncManifestSchema>,
-    overwriteManifests: z.infer<typeof SyncManifestSchema>[],
+    overwriteManifests: Partial<z.infer<typeof SyncManifestSchema>>[],
   ): MergedManifest {
     let allDiagnostics: MergeDiagnostic[] = [];
     const hasConnections = overwriteManifests.some(
@@ -133,9 +193,9 @@ export class ManifestMerger {
       if (seen.has(connection.slug)) {
         diagnostics.push({
           type: "info",
-          message: `Connection '${connection.slug}' was overwritten with new configuration`,
-          context: {
-            connectionSlug: connection.slug,
+          kind: "connection",
+          item: {
+            slug: connection.slug,
           },
         });
         // Replace the existing connection
@@ -162,10 +222,9 @@ export class ManifestMerger {
       if (seen.has(store.connectionSlug)) {
         diagnostics.push({
           type: "info",
-          message: `Data store '${store.connectionSlug}' was overwritten with new configuration`,
-          context: {
+          kind: "data_store",
+          item: {
             connectionSlug: store.connectionSlug,
-            storeType: "data",
           },
         });
         // Replace the existing store
@@ -180,7 +239,10 @@ export class ManifestMerger {
     return { result, diagnostics };
   }
 
-  static mergeEventStores(eventStores: z.infer<typeof SyncManifestSchema>["eventStores"]): {
+  static mergeEventStores(
+    eventStores: z.infer<typeof SyncManifestSchema>["eventStores"],
+    _location?: MergeLocation,
+  ): {
     result: z.infer<typeof SyncManifestSchema>["eventStores"];
     diagnostics: MergeDiagnostic[];
   } {
@@ -190,14 +252,8 @@ export class ManifestMerger {
 
     for (const store of eventStores ?? []) {
       if (seen.has(store.connectionSlug)) {
-        diagnostics.push({
-          type: "info",
-          message: `Event store '${store.connectionSlug}' was overwritten with new configuration`,
-          context: {
-            connectionSlug: store.connectionSlug,
-            storeType: "event",
-          },
-        });
+        // Right now, event stores don't have any additional information so replacing it is a no-op.
+        // This means it's unnecessary to add a diagnostic.
         // Replace the existing store
         const index = result.findIndex((es) => es.connectionSlug === store.connectionSlug);
         result[index] = store;
@@ -218,21 +274,24 @@ export class ManifestMerger {
     const schemaMap = new Map<string, z.infer<typeof PublicSchemaSchema>>();
 
     for (const schema of schemas ?? []) {
+      if (!schema.definitionFile) {
+        throw new Error(`Public schema '${schema.name}' is missing definitionFile`);
+      }
+
       const key = `${schema.name}@${schema.version.major}`;
       const existing = schemaMap.get(key);
 
       if (existing) {
         diagnostics.push({
           type: "info",
-          message: `Public schema '${schema.name}@${schema.version.major}' was overwritten with new definition from ${schema.definitionFile ?? "unknown location"}`,
-          context: {
-            schemaType: "public",
-            schemaName: schema.name,
+          kind: "public_schema",
+          item: {
+            name: schema.name,
             version: {
               major: schema.version.major,
               minor: schema.version.minor,
             },
-            originalLocation: existing.definitionFile,
+            sourceDefinitionFile: schema.definitionFile,
           },
         });
       }
@@ -250,19 +309,19 @@ export class ManifestMerger {
     const schemaMap = new Map<string, z.infer<typeof ConsumerSchemaSchema>>();
 
     for (const schema of schemas ?? []) {
+      if (!schema.definitionFile) {
+        throw new Error(`Consumer schema '${schema.name}' is missing definitionFile`);
+      }
+
       const existing = schemaMap.get(schema.name);
 
       if (existing) {
         diagnostics.push({
           type: "info",
-          message: `Consumer schema '${schema.name}' was overwritten with new definition from ${schema.definitionFile ?? "unknown location"}`,
-          context: {
-            schemaType: "consumer",
-            schemaName: schema.name,
-            version: {
-              major: schema.publicSchema.majorVersion,
-            },
-            originalLocation: existing.definitionFile,
+          kind: "consumer_schema",
+          item: {
+            name: schema.name,
+            sourceDefinitionFile: schema.definitionFile,
           },
         });
       }
@@ -270,5 +329,20 @@ export class ManifestMerger {
     }
 
     return { result: Array.from(schemaMap.values()), diagnostics };
+  }
+
+  static getDiagnosticMessage(diagnostic: MergeDiagnostic): string {
+    switch (diagnostic.kind) {
+      case "public_schema":
+        return `Public schema '${diagnostic.item.name}@${diagnostic.item.version.major}' was overwritten with new definition from ${diagnostic.item.sourceDefinitionFile}`;
+      case "consumer_schema":
+        return `Consumer schema '${diagnostic.item.name}' was overwritten with new definition from ${diagnostic.item.sourceDefinitionFile}`;
+      case "connection":
+        return `Connection '${diagnostic.item.slug}' was overwritten with new configuration`;
+      case "data_store":
+        return `Data store '${diagnostic.item.connectionSlug}' was overwritten with new configuration`;
+      case "event_store":
+        return `Event store '${diagnostic.item.connectionSlug}' was overwritten with new configuration`;
+    }
   }
 }

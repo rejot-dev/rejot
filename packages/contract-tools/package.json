@@ -16,6 +16,7 @@
     "./manifest/manifest-printer": "./manifest/manifest-printer.ts",
     "./manifest/manifest-workspace-resolver": "./manifest/manifest-workspace-resolver.ts",
     "./manifest/manifest.fs": "./manifest/manifest.fs.ts",
+    "./manifest/manifest-file-manager": "./manifest/manifest-file-manager.ts",
     "./collect/file-finder": "./collect/file-finder.ts",
     "./collect/git-ignore": "./collect/git-ignore.ts",
     "./collect/vibe-collect": "./collect/vibe-collect.ts"
