@@ -1,13 +1,13 @@
 import { z } from "zod";
 
 import type { IConnectionAdapter } from "@rejot-dev/contract/adapter";
+import { InMemoryEventStore } from "@rejot-dev/contract/event-store";
 import {
   InMemoryConnectionConfigSchema,
   type InMemoryDataStoreConfigSchema,
 } from "@rejot-dev/contract/manifest";
 import type { IConnection } from "@rejot-dev/contract/sync";
 
-import { InMemoryEventStore } from "./in-memory-event-store";
 import { InMemorySink } from "./in-memory-sink";
 import { InMemorySource } from "./in-memory-source";
 

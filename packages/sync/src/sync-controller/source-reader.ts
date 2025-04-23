@@ -4,7 +4,7 @@ import type { IDataSource, Transaction } from "@rejot-dev/contract/sync";
 
 import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 
-const log = getLogger("source-reader");
+const log = getLogger(import.meta.url);
 
 export type SourceReaderState = "initial" | "prepared" | "running" | "stopped" | "closed";
 
@@ -125,16 +125,17 @@ export class SourceReader {
       }
     }
 
-    log.trace("start completed");
+    log.debug("SourceReader iteration completed.");
   }
 
   async stop() {
     this.#abortController.abort();
     this.#state = "stopped";
+    log.debug("SourceReader stopped");
   }
 
   async close() {
-    log.debug("Closing SourceReader");
+    log.debug("Closing SourceReader", { sourcesN: this.#sources.size });
     await Promise.all([...Array.from(this.#sources.values()).map(({ source }) => source.close())]);
 
     this.#state = "closed";

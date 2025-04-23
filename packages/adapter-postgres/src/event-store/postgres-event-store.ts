@@ -1,12 +1,13 @@
+import type { Cursor, PublicSchemaReference } from "@rejot-dev/contract/cursor";
 import type { IEventStore, TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 import { getLogger } from "@rejot-dev/contract/logger";
-import { PostgresClient } from "../util/postgres-client";
-import { EventStoreSchemaManager } from "./pg-event-store-schema-manager";
-import { PostgresEventStoreRepository } from "./pg-event-store-repository";
-import type { Cursor, PublicSchemaReference } from "@rejot-dev/contract/cursor";
 import type { OperationMessage } from "@rejot-dev/contract/message-bus";
 
-const log = getLogger("postgres-event-store");
+import { PostgresClient } from "../util/postgres-client";
+import { PostgresEventStoreRepository } from "./pg-event-store-repository";
+import { EventStoreSchemaManager } from "./pg-event-store-schema-manager";
+
+const log = getLogger(import.meta.url);
 
 export class PostgresEventStore implements IEventStore {
   #client: PostgresClient;

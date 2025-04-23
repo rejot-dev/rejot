@@ -5,7 +5,7 @@ import { getLogger } from "../logger/logger.ts";
 import { ConsumerSchemaSchema, PublicSchemaSchema } from "../manifest/manifest.ts";
 import type { PublicSchemaData } from "../public-schema/public-schema.ts";
 
-const log = getLogger("collect");
+const log = getLogger(import.meta.url);
 
 export interface CollectedSchemas {
   publicSchemas: (PublicSchemaData & { definitionFile: string })[];

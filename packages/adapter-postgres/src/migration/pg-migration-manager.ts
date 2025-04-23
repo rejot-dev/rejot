@@ -1,7 +1,8 @@
-import type { PostgresClient } from "../util/postgres-client";
 import { getLogger } from "@rejot-dev/contract/logger";
 
-const log = getLogger("postgres-migration-manager");
+import type { PostgresClient } from "../util/postgres-client";
+
+const log = getLogger(import.meta.url);
 
 export interface Migration {
   version: number;

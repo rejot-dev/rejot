@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Cursor } from "@rejot-dev/contract/cursor";
 import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
-import { InMemoryEventStore } from "../_test/in-memory-event-store";
+import { InMemoryEventStore } from "../../../contract/event-store/in-memory-event-store";
 import { MockSyncController } from "../_test/mock-sync-controller";
 import type { ISyncServiceResolver } from "../sync-http-service/sync-http-resolver";
 import { SyncHTTPController } from "../sync-http-service/sync-http-service";

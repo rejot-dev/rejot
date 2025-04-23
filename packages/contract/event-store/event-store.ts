@@ -1,5 +1,5 @@
-import type { OperationMessage } from "../message-bus/message-bus";
 import type { Cursor, PublicSchemaReference } from "../cursor/cursors";
+import type { OperationMessage } from "../message-bus/message-bus";
 
 interface TransformedOperationWithSourceBase {
   type: "insert" | "update" | "delete";
@@ -60,3 +60,5 @@ export interface IEventStore {
    */
   read(cursors: Cursor[], limit?: number): Promise<OperationMessage[]>;
 }
+
+export { InMemoryEventStore } from "./in-memory-event-store";

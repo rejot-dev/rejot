@@ -5,14 +5,15 @@ import type {
   AnyIConsumerSchemaTransformationAdapter,
   OperationTransformationPair,
 } from "@rejot-dev/contract/adapter";
-import type { IDataSink } from "@rejot-dev/contract/sync";
 import { type Cursor } from "@rejot-dev/contract/cursor";
-import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-import type { ConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
 import { getLogger } from "@rejot-dev/contract/logger";
+import type { ConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
+import type { IDataSink } from "@rejot-dev/contract/sync";
 
-const log = getLogger("sink-writer");
+import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
+
+const log = getLogger(import.meta.url);
 
 export class SinkWriter {
   readonly #syncManifest: SyncManifest;

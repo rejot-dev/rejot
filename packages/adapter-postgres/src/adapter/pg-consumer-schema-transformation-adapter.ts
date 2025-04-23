@@ -17,7 +17,7 @@ import {
 import { convertNamedToPositionalPlaceholders } from "../sql-transformer/sql-transformer.ts";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
 
-const log = getLogger("pg-consumer-schema-transformation-adapter");
+const log = getLogger(import.meta.url);
 
 export class PostgresConsumerSchemaTransformationAdapter
   implements
