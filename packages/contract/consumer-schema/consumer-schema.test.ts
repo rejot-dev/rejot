@@ -2,8 +2,6 @@ import { expect, test } from "bun:test";
 
 import { z } from "zod";
 
-import { createPostgresConsumerSchemaTransformation } from "@rejot-dev/adapter-postgres";
-
 import { createPublicSchema } from "../public-schema/public-schema.ts";
 import { createConsumerSchema, deserializeConsumerSchema } from "./consumer-schema.ts";
 
@@ -18,9 +16,11 @@ test("createConsumerSchema", () => {
     },
     destinationDataStoreSlug: "destination-store",
     transformations: [
-      createPostgresConsumerSchemaTransformation(
-        "INSERT INTO test_table (id, name) VALUES ($1, $2);",
-      ),
+      {
+        transformationType: "postgresql",
+        sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);",
+        whenOperation: "insertOrUpdate",
+      },
     ],
   });
 
@@ -37,6 +37,7 @@ test("createConsumerSchema", () => {
     {
       transformationType: "postgresql",
       sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);",
+      whenOperation: "insertOrUpdate",
     },
   ]);
 });
@@ -52,9 +53,11 @@ test("consumer schema - serialize & deserialize", () => {
     },
     destinationDataStoreSlug: "destination-store",
     transformations: [
-      createPostgresConsumerSchemaTransformation(
-        "INSERT INTO test_table (id, name) VALUES ($1, $2);",
-      ),
+      {
+        transformationType: "postgresql",
+        sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);",
+        whenOperation: "insertOrUpdate",
+      },
     ],
   });
 
@@ -74,6 +77,7 @@ test("consumer schema - serialize & deserialize", () => {
     {
       transformationType: "postgresql",
       sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);",
+      whenOperation: "insertOrUpdate",
     },
   ]);
 });
@@ -90,9 +94,10 @@ test("consumer schema - validation errors", () => {
       },
       destinationDataStoreSlug: "destination-store",
       transformations: [
-        createPostgresConsumerSchemaTransformation(
-          "INSERT INTO test_table (id, name) VALUES ($1, $2);",
-        ),
+        {
+          transformationType: "postgresql",
+          sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);",
+        },
       ],
     }),
   ).toThrow("Source manifest slug cannot be empty");
@@ -108,9 +113,10 @@ test("consumer schema - validation errors", () => {
       },
       destinationDataStoreSlug: "destination-store",
       transformations: [
-        createPostgresConsumerSchemaTransformation(
-          "INSERT INTO test_table (id, name) VALUES ($1, $2);",
-        ),
+        {
+          transformationType: "postgresql",
+          sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);",
+        },
       ],
     }),
   ).toThrow("Public schema name cannot be empty");
@@ -126,9 +132,10 @@ test("consumer schema - validation errors", () => {
       },
       destinationDataStoreSlug: "",
       transformations: [
-        createPostgresConsumerSchemaTransformation(
-          "INSERT INTO test_table (id, name) VALUES ($1, $2);",
-        ),
+        {
+          transformationType: "postgresql",
+          sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);",
+        },
       ],
     }),
   ).toThrow("Destination data store slug cannot be empty");
@@ -175,9 +182,10 @@ test("createConsumerSchema with PublicSchema as direct source", () => {
     source: publicSchema,
     destinationDataStoreSlug: "destination-store",
     transformations: [
-      createPostgresConsumerSchemaTransformation(
-        "INSERT INTO test_table (id, name) VALUES ($1, $2);",
-      ),
+      {
+        transformationType: "postgresql",
+        sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);",
+      },
     ],
   });
 

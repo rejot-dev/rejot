@@ -1,8 +1,8 @@
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
+
 import { z } from "zod";
 
 import { createPublicSchema, deserializePublicSchema } from "./public-schema.ts";
-import { createPostgresPublicSchemaTransformation } from "@rejot-dev/adapter-postgres";
 
 test("createPublicSchema", () => {
   const publication = createPublicSchema("test", {
@@ -12,7 +12,11 @@ test("createPublicSchema", () => {
       name: z.string(),
     }),
     transformations: [
-      createPostgresPublicSchemaTransformation("test", "SELECT id, name FROM test WHERE id = $1;"),
+      {
+        table: "test",
+        sql: "SELECT id, name FROM test WHERE id = $1;",
+        transformationType: "postgresql",
+      },
     ],
     version: {
       major: 1,
@@ -44,7 +48,11 @@ test("public schema - serialize & deserialize", () => {
       name: z.string(),
     }),
     transformations: [
-      createPostgresPublicSchemaTransformation("test", "SELECT id, name FROM test WHERE id = $1;"),
+      {
+        table: "test",
+        sql: "SELECT id, name FROM test WHERE id = $1;",
+        transformationType: "postgresql",
+      },
     ],
     version: {
       major: 1,
@@ -116,7 +124,11 @@ test("createPublicSchema - with JSON Schema input", () => {
       additionalProperties: false,
     },
     transformations: [
-      createPostgresPublicSchemaTransformation("test", "SELECT id, name FROM test WHERE id = $1;"),
+      {
+        table: "test",
+        sql: "SELECT id, name FROM test WHERE id = $1;",
+        transformationType: "postgresql",
+      },
     ],
     version: {
       major: 1,
@@ -157,7 +169,11 @@ test("createPublicSchema - both input types produce equivalent output", () => {
       name: z.string(),
     }),
     transformations: [
-      createPostgresPublicSchemaTransformation("test", "SELECT id, name FROM test WHERE id = $1;"),
+      {
+        table: "test",
+        sql: "SELECT id, name FROM test WHERE id = $1;",
+        transformationType: "postgresql",
+      },
     ],
     version: {
       major: 1,
@@ -178,7 +194,11 @@ test("createPublicSchema - both input types produce equivalent output", () => {
       additionalProperties: false,
     },
     transformations: [
-      createPostgresPublicSchemaTransformation("test", "SELECT id, name FROM test WHERE id = $1;"),
+      {
+        table: "test",
+        sql: "SELECT id, name FROM test WHERE id = $1;",
+        transformationType: "postgresql",
+      },
     ],
     version: {
       major: 1,
