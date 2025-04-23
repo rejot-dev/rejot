@@ -7,7 +7,7 @@ export interface ManifestWithPath {
   path: string;
   manifest: z.infer<typeof SyncManifestSchema>;
 }
-/**/
+
 export interface WorkspaceDefinition {
   /** Absolute path */
   rootPath: string;
