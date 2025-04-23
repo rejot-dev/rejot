@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 
-import { WorkspaceDefinition } from "@rejot-dev/contract/workspace";
+import type { WorkspaceDefinition } from "@rejot-dev/contract/workspace";
 import type { IManifestWorkspaceResolver, ManifestInfo } from "@rejot-dev/contract-tools/manifest";
 import {
   WorkspaceService,

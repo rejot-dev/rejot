@@ -1,7 +1,9 @@
-import { test, expect } from "bun:test";
-import { SyncManifest } from "./sync-manifest";
+import { expect, test } from "bun:test";
+
 import { z } from "zod";
+
 import { SyncManifestSchema } from "./manifest";
+import { SyncManifest } from "./sync-manifest";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
@@ -35,6 +37,7 @@ const addConsumerSchemaWithExternalReference = (
   consumerSchemas: [
     ...(manifest.consumerSchemas ?? []),
     {
+      name: `${schemaName}_consumer`,
       sourceManifestSlug: externalManifestSlug,
       publicSchema: {
         name: schemaName,

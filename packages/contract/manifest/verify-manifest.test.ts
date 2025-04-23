@@ -1,7 +1,9 @@
-import { test, expect } from "bun:test";
-import { verifyManifests } from "./verify-manifest";
+import { expect, test } from "bun:test";
+
 import { z } from "zod";
+
 import { PublicSchemaSchema, SyncManifestSchema } from "./manifest";
+import { verifyManifests } from "./verify-manifest";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
@@ -39,8 +41,22 @@ test("verifyManifests - connection reference validation", () => {
       },
     ],
     dataStores: [
-      { connectionSlug: "conn1", publicationName: "pub1" },
-      { connectionSlug: "conn2", publicationName: "pub2" }, // Invalid connection
+      {
+        connectionSlug: "conn1",
+        config: {
+          connectionType: "postgres",
+          slotName: "slot1",
+          publicationName: "pub1",
+        },
+      },
+      {
+        connectionSlug: "conn2",
+        config: {
+          connectionType: "postgres",
+          slotName: "slot2",
+          publicationName: "pub2",
+        },
+      },
     ],
     eventStores: [
       { connectionSlug: "conn3" }, // Invalid connection
@@ -87,6 +103,7 @@ test("verifyManifests - public schema reference validation", () => {
     ...createBasicManifest("manifest2"),
     consumerSchemas: [
       {
+        name: "users_consumer",
         sourceManifestSlug: "manifest1",
         publicSchema: {
           name: "users",
@@ -101,6 +118,7 @@ test("verifyManifests - public schema reference validation", () => {
         ],
       },
       {
+        name: "products_consumer",
         sourceManifestSlug: "manifest1",
         publicSchema: {
           name: "products", // Non-existent schema
@@ -138,6 +156,7 @@ test("verifyManifests - non-existent source manifest", () => {
     ...createBasicManifest("test-manifest"),
     consumerSchemas: [
       {
+        name: "test_consumer",
         sourceManifestSlug: "non-existent",
         publicSchema: {
           name: "test",
@@ -206,6 +225,7 @@ test("verifyManifests - identifies multiple external references", () => {
     ...createBasicManifest("local-manifest"),
     consumerSchemas: [
       {
+        name: "schema1_consumer",
         sourceManifestSlug: "external-manifest-1",
         publicSchema: {
           name: "schema1",
@@ -215,6 +235,7 @@ test("verifyManifests - identifies multiple external references", () => {
         transformations: [],
       },
       {
+        name: "schema2_consumer",
         sourceManifestSlug: "external-manifest-1",
         publicSchema: {
           name: "schema2",
@@ -224,6 +245,7 @@ test("verifyManifests - identifies multiple external references", () => {
         transformations: [],
       },
       {
+        name: "schema3_consumer",
         sourceManifestSlug: "external-manifest-2",
         publicSchema: {
           name: "schema3",
@@ -273,10 +295,14 @@ test("verifyManifests - handles both errors and external references", () => {
       },
     ],
     dataStores: [
-      { connectionSlug: "conn2", publicationName: "pub" }, // Invalid connection
+      {
+        connectionSlug: "conn2",
+        config: { connectionType: "postgres", slotName: "slot2", publicationName: "pub2" },
+      }, // Invalid connection
     ],
     consumerSchemas: [
       {
+        name: "external_consumer",
         sourceManifestSlug: "external-manifest", // External reference
         publicSchema: {
           name: "external-schema",
