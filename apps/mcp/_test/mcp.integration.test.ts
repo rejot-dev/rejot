@@ -26,22 +26,22 @@ const isToolResponse = (obj: unknown): obj is ToolResponse => {
   if (typeof obj !== "object" || obj === null) return false;
 
   const response = obj as Record<string, unknown>;
-  if (!Array.isArray(response.content)) return false;
+  if (!Array.isArray(response["content"])) return false;
 
-  return response.content.every((item) => {
+  return response["content"].every((item) => {
     if (typeof item !== "object" || item === null) return false;
     const content = item as Record<string, unknown>;
     return (
-      typeof content.type === "string" &&
-      typeof content.text === "string" &&
-      (content.isError === undefined || typeof content.isError === "boolean")
+      typeof content["type"] === "string" &&
+      typeof content["text"] === "string" &&
+      (content["isError"] === undefined || typeof content["isError"] === "boolean")
     );
   });
 };
 
 const expectContentErrorFree = (content: ToolResponse["content"]) => {
   content.forEach((item, index) => {
-    expect(item.isError, `Error in response content[${index}]: ${item.text}`).toBeFalsy();
+    expect(item["isError"], `Error in response content[${index}]: ${item["text"]}`).toBeFalsy();
   });
 };
 
@@ -59,7 +59,7 @@ const expectConsumerSchemaNames = async (manifestPath: string, expectedNames: st
   expect(new Set(actualNames)).toEqual(new Set(expectedNames));
 };
 
-describe.skipIf(!process.env.REJOT_SYNC_CLI_TEST_CONNECTION)("MCP Integration Tests", () => {
+describe.skipIf(!process.env["REJOT_SYNC_CLI_TEST_CONNECTION"])("MCP Integration Tests", () => {
   let client: Client;
   let tmpDir: string;
   let pgConfig: ReturnType<typeof parsePostgresConnectionString>;
@@ -117,7 +117,7 @@ describe.skipIf(!process.env.REJOT_SYNC_CLI_TEST_CONNECTION)("MCP Integration Te
     await client.connect(transport);
 
     // Parse connection string if available
-    const connectionString = process.env.REJOT_SYNC_CLI_TEST_CONNECTION;
+    const connectionString = process.env["REJOT_SYNC_CLI_TEST_CONNECTION"];
     if (connectionString) {
       pgConfig = parsePostgresConnectionString(connectionString);
     }
