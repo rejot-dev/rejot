@@ -8,7 +8,7 @@ import type { TableOperation, TransformedOperation } from "@rejot-dev/contract/s
 import { isPostgresError, PG_PROTOCOL_VIOLATION } from "../util/postgres-error-codes.ts";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
 
-const log = getLogger("pg-public-schema-transformation-adapter");
+const log = getLogger(import.meta.url);
 
 export class PostgresPublicSchemaTransformationAdapter
   implements

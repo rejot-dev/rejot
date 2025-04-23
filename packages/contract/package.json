@@ -21,6 +21,7 @@
     "./cursor": "./cursor/cursors.ts",
     "./event-store": "./event-store/event-store.ts",
     "./event-store-message-bus": "./event-store/event-store-message-bus.ts",
+    "./event-store/in-memory-event-store": "./event-store/in-memory-event-store.ts",
     "./logger": "./logger/logger.ts",
     "./manifest": "./manifest/manifest.ts",
     "./manifest.fs": "./manifest/manifest.fs.ts",

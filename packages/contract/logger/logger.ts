@@ -21,7 +21,8 @@ function serializeArg(arg: unknown): unknown {
 
 export function formatLogMessage(type: LogLevel, message: string, ...args: unknown[]): string {
   const levelName = Object.entries(LogLevel).find(([_, value]) => value === type)?.[0] ?? "UNKNOWN";
-  let logMessage = `[${levelName}] ${new Date().toISOString()} - ${message}`;
+  const padding = " ".repeat(Math.max(0, 5 - levelName.length));
+  let logMessage = `[${padding}${levelName}] ${new Date().toISOString()} - ${message}`;
 
   if (args.length > 0) {
     const serializedArgs = args.map(serializeArg);

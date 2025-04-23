@@ -1,13 +1,15 @@
-import { Command, Flags } from "@oclif/core";
 import fs from "node:fs/promises";
 
-import { SUPPORTED_SINK_SCHEMES, SUPPORTED_SOURCE_SCHEMES } from "../rejot-cli-consts.ts";
-import { getLogger, setLogLevel } from "@rejot-dev/contract/logger";
-import { createSourceAndSink, parseConnectionString } from "../factory.ts";
 import { DEFAULT_PUBLICATION_NAME } from "@rejot-dev/adapter-postgres/consts";
+import { getLogger, setLogLevel } from "@rejot-dev/contract/logger";
 import { SyncController } from "@rejot-dev/sync/sync-controller";
 
-const log = getLogger("cli:sync-command");
+import { Command, Flags } from "@oclif/core";
+
+import { createSourceAndSink, parseConnectionString } from "../factory.ts";
+import { SUPPORTED_SINK_SCHEMES, SUPPORTED_SOURCE_SCHEMES } from "../rejot-cli-consts.ts";
+
+const log = getLogger(import.meta.url);
 
 export default class SyncCommand extends Command {
   static override id = "sync";

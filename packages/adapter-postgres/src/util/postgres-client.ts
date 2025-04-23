@@ -1,5 +1,5 @@
-import { DatabaseError, Pool } from "pg";
 import type { ClientBase, QueryResult, QueryResultRow } from "pg";
+import { DatabaseError, Pool } from "pg";
 
 export interface PostgresConfig {
   host: string;
@@ -104,7 +104,14 @@ export class PostgresClient {
 
   async end(): Promise<void> {
     if (this.#poolOrClient.type === "pool") {
-      await this.#poolOrClient.pool.end();
+      if (
+        this.#poolOrClient.pool.totalCount > 0 &&
+        !this.#poolOrClient.pool.ended &&
+        !this.#poolOrClient.pool.ending
+      ) {
+        await this.#poolOrClient.pool.end();
+      }
+
       return;
     }
 

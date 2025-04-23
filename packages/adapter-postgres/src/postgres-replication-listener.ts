@@ -1,15 +1,17 @@
 import { LogicalReplicationService } from "pg-logical-replication";
 import type {
   Message,
+  MessageDelete,
   MessageInsert,
   MessageUpdate,
-  MessageDelete,
 } from "pg-logical-replication/dist/output-plugins/pgoutput/pgoutput.types";
+
+import { getLogger } from "@rejot-dev/contract/logger";
+import type { Transaction } from "@rejot-dev/contract/sync";
+
+import { AsyncQueue, AsyncQueueAbortedError } from "./async-queue.ts";
 import { RejotPgOutputPlugin } from "./pgoutput-plugin.ts";
 import { assertUnreachable } from "./util/asserts.ts";
-import type { Transaction } from "@rejot-dev/contract/sync";
-import { AsyncQueue } from "./async-queue.ts";
-import { getLogger } from "@rejot-dev/contract/logger";
 
 type ConnectionConfig = {
   host?: string;
@@ -77,7 +79,7 @@ type TransactionBufferState = "empty" | "begin";
 
 type OnCommitCallback = (buffer: TransactionBuffer) => Promise<boolean>;
 
-const log = getLogger("postgres-replication-listener");
+const log = getLogger(import.meta.url);
 
 export class PostgresReplicationListener {
   #logicalReplicationService: LogicalReplicationService;
@@ -127,6 +129,7 @@ export class PostgresReplicationListener {
 
     return true;
   }
+
   async *startIteration(
     publicationName: string,
     slotName: string,
@@ -140,7 +143,7 @@ export class PostgresReplicationListener {
       buffer: TransactionBuffer;
       ackResolver: (value: boolean) => void;
       ackPromise: Promise<boolean>;
-    }>();
+    }>(abortSignal);
 
     this.#onCommit = async (buffer) => {
       const { resolve: ackResolver, promise: ackPromise } = Promise.withResolvers<boolean>();
@@ -184,11 +187,13 @@ export class PostgresReplicationListener {
         };
       }
     } catch (error) {
-      if (error instanceof Error && error.message === "pg-aborted") {
+      if (error instanceof AsyncQueueAbortedError) {
         return;
       }
       throw error;
     }
+
+    log.debug("PostgresReplicationListener iteration completed.");
   }
 
   async stop(): Promise<void> {

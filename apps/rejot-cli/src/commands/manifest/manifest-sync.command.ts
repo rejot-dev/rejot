@@ -12,6 +12,8 @@ import type {
   AnyIConsumerSchemaTransformationAdapter,
   AnyIPublicSchemaTransformationAdapter,
 } from "@rejot-dev/contract/adapter";
+import type { IEventStore } from "@rejot-dev/contract/event-store";
+import { InMemoryEventStore } from "@rejot-dev/contract/event-store";
 import { EventStoreMessageBus } from "@rejot-dev/contract/event-store-message-bus";
 import { ConsoleLogger, getLogger, setLogger } from "@rejot-dev/contract/logger";
 import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
@@ -24,7 +26,7 @@ import { SyncHTTPController } from "@rejot-dev/sync/sync-http-service";
 
 import { Args, Command, Flags } from "@oclif/core";
 
-const log = getLogger("manifest:sync");
+const log = getLogger(import.meta.url);
 
 export class ManifestSyncCommand extends Command {
   static override id = "manifest:sync";
@@ -68,6 +70,54 @@ export class ManifestSyncCommand extends Command {
     }),
   };
 
+  #getAdapters() {
+    const postgresAdapter = new PostgresConnectionAdapter();
+    const publicSchemaAdapter = new PostgresPublicSchemaTransformationAdapter(postgresAdapter);
+    const consumerSchemaAdapter = new PostgresConsumerSchemaTransformationAdapter(postgresAdapter);
+
+    return {
+      connectionAdapters: [postgresAdapter] as AnyIConnectionAdapter[],
+      publicSchemaAdapters: [publicSchemaAdapter] as AnyIPublicSchemaTransformationAdapter[],
+      consumerSchemaAdapters: [consumerSchemaAdapter] as AnyIConsumerSchemaTransformationAdapter[],
+    };
+  }
+
+  #createEventStore(
+    manifests: z.infer<typeof SyncManifestSchema>[],
+    connectionAdapters: AnyIConnectionAdapter[],
+  ): IEventStore {
+    const [eventStoreConfig] = manifests.flatMap((manifest) => manifest.eventStores ?? []);
+    if (!eventStoreConfig) {
+      log.warn(
+        "No event store configuration found in manifest, falling back to in-memory event store.",
+      );
+      return new InMemoryEventStore();
+    }
+
+    const connections = manifests.flatMap((manifest) => manifest.connections ?? []);
+    const eventStoreConnection = connections.find(
+      (conn) => conn.slug === eventStoreConfig.connectionSlug,
+    );
+
+    if (!eventStoreConnection) {
+      throw new Error(
+        `Event store connection '${eventStoreConfig.connectionSlug}' not found in manifest`,
+      );
+    }
+
+    const eventStore = connectionAdapters
+      .find((adapter) => adapter.connectionType === eventStoreConnection.config.connectionType)
+      ?.createEventStore(eventStoreConnection.slug, eventStoreConnection.config);
+
+    if (!eventStore) {
+      throw new Error(
+        `Event store connection '${eventStoreConfig.connectionSlug}' with connection type '${eventStoreConnection.config.connectionType}' not supported`,
+      );
+    }
+
+    return eventStore;
+  }
+
   public async run(): Promise<void> {
     const { flags, argv } = await this.parse(ManifestSyncCommand);
     const { "log-level": logLevel, hostname: hostname, "api-port": apiPort, resolver } = flags;
@@ -91,47 +141,11 @@ export class ManifestSyncCommand extends Command {
       const syncManifest = new SyncManifest(manifests);
 
       // Create adapters
-      const postgresAdapter = new PostgresConnectionAdapter();
-      const transformationAdapter = new PostgresPublicSchemaTransformationAdapter(postgresAdapter);
-      const consumerTransformationAdapter = new PostgresConsumerSchemaTransformationAdapter(
-        postgresAdapter,
-      );
-
-      const connectionAdapters: AnyIConnectionAdapter[] = [postgresAdapter];
-      const publicSchemaTransformationAdapters: AnyIPublicSchemaTransformationAdapter[] = [
-        transformationAdapter,
-      ];
-      const consumerSchemaTransformationAdapters: AnyIConsumerSchemaTransformationAdapter[] = [
-        consumerTransformationAdapter,
-      ];
+      const { connectionAdapters, publicSchemaAdapters, consumerSchemaAdapters } =
+        this.#getAdapters();
 
       // Create event store from the first manifest's event store config
-      // TODO: Support multiple event stores or validate they are the same
-      const manifest = manifests[0];
-      if (!(manifest.eventStores ?? [])[0]) {
-        throw new Error("No event store configuration found in manifest");
-      }
-
-      const eventStoreConfig = (manifest.eventStores ?? [])[0];
-      const eventStoreConnection = (manifest.connections ?? []).find(
-        (conn) => conn.slug === eventStoreConfig.connectionSlug,
-      );
-
-      if (!eventStoreConnection) {
-        throw new Error(
-          `Event store connection '${eventStoreConfig.connectionSlug}' not found in manifest`,
-        );
-      }
-
-      const eventStore = connectionAdapters
-        .find((adapter) => adapter.connectionType === eventStoreConnection.config.connectionType)
-        ?.createEventStore(eventStoreConnection.slug, eventStoreConnection.config);
-
-      if (!eventStore) {
-        throw new Error(
-          `Event store connection '${eventStoreConfig.connectionSlug}' with connection type '${eventStoreConnection.config.connectionType}' not supported`,
-        );
-      }
+      const eventStore = this.#createEventStore(manifests, connectionAdapters);
 
       // There are four things we need to be doing:
       // 1. Listen for changes on source data stores and write them to an event store.
@@ -179,8 +193,8 @@ export class ManifestSyncCommand extends Command {
       const syncController = new SyncController(
         syncManifest,
         connectionAdapters,
-        publicSchemaTransformationAdapters,
-        consumerSchemaTransformationAdapters,
+        publicSchemaAdapters,
+        consumerSchemaAdapters,
         eventStoreMessageBus,
         subscribeMessageBuses,
       );
@@ -194,18 +208,19 @@ export class ManifestSyncCommand extends Command {
         syncController.startServingHTTPEndpoints(httpController);
       }
 
-      let shouldStop = false;
+      let shouldKill = false;
       // Set up signal handlers for graceful shutdown
       process.on("SIGINT", async () => {
-        log.info("\nReceived SIGINT, shutting down...");
-        await syncController.stop();
-        await syncController.close();
-
-        if (!shouldStop) {
-          shouldStop = true;
+        if (!shouldKill) {
+          shouldKill = true;
         } else {
           process.exit(0);
         }
+
+        log.info("\nReceived SIGINT, shutting down...");
+        await syncController.stop();
+        await syncController.close();
+        log.info("SIGINT Handled.");
       });
 
       process.on("SIGTERM", async () => {
@@ -228,7 +243,7 @@ export class ManifestSyncCommand extends Command {
       if (error instanceof z.ZodError) {
         log.error("(ZodError) Invalid manifest file:", error.errors);
       } else {
-        log.error("Unknown error:", error);
+        throw error;
       }
       this.exit(1);
     }

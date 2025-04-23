@@ -1,5 +1,5 @@
+import type { Cursor, PublicSchemaReference } from "@rejot-dev/contract/cursor";
 import type { IEventStore, TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-import type { PublicSchemaReference, Cursor } from "@rejot-dev/contract/cursor";
 import type { OperationMessage } from "@rejot-dev/contract/message-bus";
 
 export class InMemoryEventStore implements IEventStore {

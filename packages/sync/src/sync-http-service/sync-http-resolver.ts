@@ -1,6 +1,6 @@
 import { getLogger } from "@rejot-dev/contract/logger";
 
-const log = getLogger("sync-service-resolver");
+const log = getLogger(import.meta.url);
 
 type LocalhostResolverOptions = {
   type: "localhost";

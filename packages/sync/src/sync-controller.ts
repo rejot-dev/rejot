@@ -11,7 +11,7 @@ import type {
 import { type BackfillSource, ResultSetStore } from "./result-set-store";
 import { DEFAULT_BACKFILL_TIMEOUT_MS } from "./sync-consts";
 
-const log = getLogger("sync-controller");
+const log = getLogger(import.meta.url);
 
 type SyncControllerConfig = {
   source: IDataSource;

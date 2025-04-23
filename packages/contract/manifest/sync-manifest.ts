@@ -29,7 +29,7 @@ import {
   verifyManifests,
 } from "./verify-manifest";
 
-const log = getLogger("sync-manifest");
+const log = getLogger(import.meta.url);
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 

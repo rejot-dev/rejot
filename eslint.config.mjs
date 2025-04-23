@@ -9,7 +9,7 @@ import tseslint from "typescript-eslint";
 
 import eslint from "@eslint/js";
 
-import localImportCheck from "./scripts/eslint-plugin-local-import-check.js";
+import localImportCheck from "./scripts/eslint-plugin-local-import-check.mjs";
 
 const frontendAppFiles = ["apps/controller-spa/**/*.{ts,tsx}"];
 

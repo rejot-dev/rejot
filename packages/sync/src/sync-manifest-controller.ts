@@ -15,7 +15,7 @@ import type { ISyncServiceResolver } from "./sync-http-service/sync-http-resolve
 import { type ISyncHTTPController } from "./sync-http-service/sync-http-service";
 import { fetchRead } from "./sync-http-service/sync-http-service-fetch";
 
-const log = getLogger("sync-manifest-controller");
+const log = getLogger(import.meta.url);
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 

@@ -1,13 +1,14 @@
 import { z } from "zod";
 
 import type { AnyIPublicSchemaTransformationAdapter } from "@rejot-dev/contract/adapter";
-import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
-import type { PublicSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-import type { Transaction } from "@rejot-dev/contract/sync";
 import { getLogger } from "@rejot-dev/contract/logger";
+import type { PublicSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
+import type { Transaction } from "@rejot-dev/contract/sync";
 
-const log = getLogger("public-schema-transformer");
+import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
+
+const log = getLogger(import.meta.url);
 
 export class PublicSchemaTransformer {
   readonly #syncManifest: SyncManifest;

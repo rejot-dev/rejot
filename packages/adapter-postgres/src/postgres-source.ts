@@ -15,7 +15,7 @@ import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./postgres-consts";
 import { PostgresReplicationListener } from "./postgres-replication-listener";
 import { PostgresClient } from "./util/postgres-client";
 
-const log = getLogger("pg-source");
+const log = getLogger(import.meta.url);
 
 type PostgresOptions = {
   publicationName?: string;
