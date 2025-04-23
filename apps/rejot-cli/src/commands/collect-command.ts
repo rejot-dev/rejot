@@ -1,6 +1,7 @@
 import { exists } from "node:fs/promises";
 import { resolve } from "node:path";
 
+import { PostgresConsumerSchemaValidationAdapter } from "@rejot-dev/adapter-postgres";
 import { SchemaCollector } from "@rejot-dev/contract/collect";
 import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
 import { NoopLogger, setLogger } from "@rejot-dev/contract/logger";
@@ -108,7 +109,7 @@ export default class Collect extends Command {
     }
 
     if (check) {
-      await validateManifest(newManifest);
+      await validateManifest(newManifest, [new PostgresConsumerSchemaValidationAdapter()]);
     }
 
     if (write) {

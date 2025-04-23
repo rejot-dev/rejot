@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { PostgresConsumerSchemaValidationAdapter } from "@rejot-dev/adapter-postgres";
 import type {
   AnyIConsumerSchemaValidationAdapter,
   ValidationError,
@@ -53,11 +52,8 @@ function formatValidationResult(result: ValidationResult): string {
 
 export async function validateManifest(
   manifest: z.infer<typeof SyncManifestSchema>,
+  consumerSchemaValidationAdapters: AnyIConsumerSchemaValidationAdapter[],
 ): Promise<void> {
-  const consumerSchemaValidationAdapters: AnyIConsumerSchemaValidationAdapter[] = [
-    new PostgresConsumerSchemaValidationAdapter(),
-  ];
-
   // Get all consumer schemas from the manifest
   const consumerSchemas = manifest.consumerSchemas ?? [];
   const publicSchemas = manifest.publicSchemas ?? [];
