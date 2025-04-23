@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --ignore-unknown --write .",
+    "format:check": "prettier --ignore-unknown --check .",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "pre-commit": "bunx lefthook run pre-commit",

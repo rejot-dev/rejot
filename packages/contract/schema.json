@@ -44,7 +44,14 @@
                     "type": "string"
                   }
                 },
-                "required": ["connectionType", "host", "port", "user", "password", "database"],
+                "required": [
+                  "connectionType",
+                  "host",
+                  "port",
+                  "user",
+                  "password",
+                  "database"
+                ],
                 "additionalProperties": false
               },
               {
@@ -55,14 +62,19 @@
                     "const": "in-memory"
                   }
                 },
-                "required": ["connectionType"],
+                "required": [
+                  "connectionType"
+                ],
                 "additionalProperties": false
               }
             ],
             "description": "Configuration details specific to the connection type."
           }
         },
-        "required": ["slug", "config"],
+        "required": [
+          "slug",
+          "config"
+        ],
         "additionalProperties": false
       }
     },
@@ -75,16 +87,64 @@
             "type": "string",
             "description": "Slug of the connection to use for this data store."
           },
-          "publicationName": {
-            "type": "string",
-            "description": "Name of the publication (for Postgres)."
-          },
-          "slotName": {
-            "type": "string",
-            "description": "Name of the replication slot (for Postgres)."
+          "config": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "connectionType": {
+                    "type": "string",
+                    "const": "postgres",
+                    "description": "Postgres connection type."
+                  },
+                  "slotName": {
+                    "type": "string",
+                    "description": "Name of the replication slot."
+                  },
+                  "publicationName": {
+                    "type": "string",
+                    "description": "Name of the publication."
+                  },
+                  "tables": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Tables to replicate."
+                  },
+                  "allTables": {
+                    "type": "boolean",
+                    "description": "When true, all tables are replicated."
+                  }
+                },
+                "required": [
+                  "connectionType",
+                  "slotName",
+                  "publicationName"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "connectionType": {
+                    "type": "string",
+                    "const": "in-memory"
+                  }
+                },
+                "required": [
+                  "connectionType"
+                ],
+                "additionalProperties": false
+              }
+            ],
+            "description": "Configuration details specific to the data store type."
           }
         },
-        "required": ["connectionSlug"],
+        "required": [
+          "connectionSlug",
+          "config"
+        ],
         "additionalProperties": false
       }
     },
@@ -98,7 +158,9 @@
             "description": "Slug of the connection to use for this event store."
           }
         },
-        "required": ["connectionSlug"],
+        "required": [
+          "connectionSlug"
+        ],
         "additionalProperties": false
       }
     },
@@ -128,7 +190,10 @@
                 "description": "List of tables from the source data store that are required to produce the public schema data."
               }
             },
-            "required": ["dataStoreSlug", "tables"],
+            "required": [
+              "dataStoreSlug",
+              "tables"
+            ],
             "additionalProperties": false
           },
           "outputSchema": {
@@ -153,7 +218,11 @@
                       "type": "string"
                     }
                   },
-                  "required": ["transformationType", "table", "sql"],
+                  "required": [
+                    "transformationType",
+                    "table",
+                    "sql"
+                  ],
                   "additionalProperties": false
                 }
               ]
@@ -171,7 +240,10 @@
                 "type": "number"
               }
             },
-            "required": ["major", "minor"],
+            "required": [
+              "major",
+              "minor"
+            ],
             "additionalProperties": false
           },
           "definitionFile": {
@@ -179,7 +251,13 @@
             "description": "Path to the source file defining this schema."
           }
         },
-        "required": ["name", "source", "outputSchema", "transformations", "version"],
+        "required": [
+          "name",
+          "source",
+          "outputSchema",
+          "transformations",
+          "version"
+        ],
         "additionalProperties": false
       },
       "description": "Public Schemas governed by this manifest."
@@ -189,6 +267,10 @@
       "items": {
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name for the consumer schema."
+          },
           "sourceManifestSlug": {
             "type": "string",
             "minLength": 1,
@@ -205,7 +287,10 @@
                 "type": "number"
               }
             },
-            "required": ["name", "majorVersion"],
+            "required": [
+              "name",
+              "majorVersion"
+            ],
             "additionalProperties": false,
             "description": "Reference to a specific version of a public schema."
           },
@@ -231,10 +316,17 @@
                     },
                     "whenOperation": {
                       "type": "string",
-                      "enum": ["insertOrUpdate", "delete"]
+                      "enum": [
+                        "insertOrUpdate",
+                        "delete"
+                      ],
+                      "description": "This transformation will be applied for this operation. Will default to insertOrUpdate if not specified."
                     }
                   },
-                  "required": ["transformationType", "sql"],
+                  "required": [
+                    "transformationType",
+                    "sql"
+                  ],
                   "additionalProperties": false
                 }
               ]
@@ -248,6 +340,7 @@
           }
         },
         "required": [
+          "name",
           "sourceManifestSlug",
           "publicSchema",
           "destinationDataStoreSlug",
@@ -264,7 +357,10 @@
       }
     }
   },
-  "required": ["slug", "manifestVersion"],
+  "required": [
+    "slug",
+    "manifestVersion"
+  ],
   "additionalProperties": false,
   "$schema": "http://json-schema.org/draft-07/schema#"
 }

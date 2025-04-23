@@ -4,3 +4,4 @@ coverage
 
 # Ignore generated files:
 **/drizzle/**
+packages/contract/schema.json

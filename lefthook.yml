@@ -17,3 +17,11 @@ pre-commit:
     - name: check-dockerfile-packages
       run: bun scripts/check-dockerfile-packages.ts
       glob: "{**/package.json,Dockerfile}"
+    - name: build-manifest-schemas
+      run: |
+        cd packages/contract && bun run prepack
+        if ! git diff --quiet; then
+          echo "Error: Running 'bun run prepack' in packages/contract produced changes. Please stage these changes and try committing again."
+          exit 1
+        fi
+      glob: "packages/contract/*.ts"
