@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import type { Column, IIntrospectionAdapter, Table } from "@rejot-dev/contract/adapter";
+import type { PostgresConnectionSchema } from "@rejot-dev/contract/manifest";
 
-import type { PostgresConnectionSchema } from "../postgres-schemas";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter";
 
 // SQL tag helper function to use tagged template literals with Postgres

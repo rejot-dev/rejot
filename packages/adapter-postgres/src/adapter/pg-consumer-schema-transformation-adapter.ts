@@ -4,17 +4,18 @@ import type {
   IConsumerSchemaTransformationAdapter,
   OperationTransformationPair,
 } from "@rejot-dev/contract/adapter";
-import type { PostgresConsumerSchemaTransformationSchema } from "../postgres-schemas.ts";
+import type { ConsumerSchemaTransformation } from "@rejot-dev/contract/consumer-schema";
 import type { Cursor } from "@rejot-dev/contract/cursor";
-import { getLogger } from "@rejot-dev/contract/logger";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
+import { getLogger } from "@rejot-dev/contract/logger";
+import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
+
 import {
-  updatePublicSchemaState,
   getPublicSchemaStates,
+  updatePublicSchemaState,
 } from "../data-store/pg-data-store-repository.ts";
 import { convertNamedToPositionalPlaceholders } from "../sql-transformer/sql-transformer.ts";
-import type { ConsumerSchemaTransformation } from "@rejot-dev/contract/consumer-schema";
+import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
 
 const log = getLogger("pg-consumer-schema-transformation-adapter");
 

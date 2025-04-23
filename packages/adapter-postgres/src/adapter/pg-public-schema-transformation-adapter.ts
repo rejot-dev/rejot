@@ -1,9 +1,10 @@
 import { z } from "zod";
 
 import type { IPublicSchemaTransformationAdapter } from "@rejot-dev/contract/adapter";
-import type { PostgresPublicSchemaTransformationSchema } from "../postgres-schemas.ts";
-import type { TransformedOperation, TableOperation } from "@rejot-dev/contract/sync";
 import { getLogger } from "@rejot-dev/contract/logger";
+import type { PostgresPublicSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
+import type { TableOperation, TransformedOperation } from "@rejot-dev/contract/sync";
+
 import { isPostgresError, PG_PROTOCOL_VIOLATION } from "../util/postgres-error-codes.ts";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
 

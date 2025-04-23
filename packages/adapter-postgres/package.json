@@ -10,7 +10,6 @@
   },
   "exports": {
     ".": "./src/adapter/index.ts",
-    "./schemas": "./src/postgres-schemas.ts",
     "./replication-listener": "./src/postgres-replication-listener.ts",
     "./consts": "./src/postgres-consts.ts",
     "./source": "./src/postgres-source.ts",
