@@ -8,7 +8,7 @@ import { SyncManifest } from "./sync-manifest";
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
 // Helper to create a basic manifest with minimal required fields
-const createBasicManifest = (slug: string): Manifest => ({
+const createEmptyManifest = (slug: string): Manifest => ({
   slug,
   manifestVersion: 1,
   connections: [],
@@ -37,7 +37,7 @@ const addConsumerSchemaWithExternalReference = (
   consumerSchemas: [
     ...(manifest.consumerSchemas ?? []),
     {
-      name: `${schemaName}_consumer`,
+      name: "consume-public-account",
       sourceManifestSlug: externalManifestSlug,
       publicSchema: {
         name: schemaName,
@@ -51,8 +51,8 @@ const addConsumerSchemaWithExternalReference = (
 
 test("SyncManifest - getExternalConsumerSchemas with no external references", () => {
   // When there are no external references (all manifests in one set)
-  const manifestA = createBasicManifest("manifest-a");
-  const manifestB = createBasicManifest("manifest-b");
+  const manifestA = createEmptyManifest("manifest-a");
+  const manifestB = createEmptyManifest("manifest-b");
 
   // Add a consumer schema that references another manifest within the same set
   const manifestBWithConsumer = addConsumerSchemaWithExternalReference(manifestB, {
@@ -64,6 +64,22 @@ test("SyncManifest - getExternalConsumerSchemas with no external references", ()
   // Add a public schema to match the consumer schema
   const manifestAWithPublicSchema = {
     ...manifestA,
+    connections: [
+      {
+        slug: "ds1",
+        config: {
+          connectionType: "in-memory",
+        },
+      },
+    ],
+    dataStores: [
+      {
+        connectionSlug: "ds1",
+        config: {
+          connectionType: "in-memory",
+        },
+      },
+    ],
     publicSchemas: [
       {
         name: "internal-schema",
@@ -82,7 +98,7 @@ test("SyncManifest - getExternalConsumerSchemas with no external references", ()
         },
       },
     ],
-  };
+  } satisfies Manifest;
 
   // Initialize SyncManifest with both manifests
   const syncManifest = new SyncManifest([manifestAWithPublicSchema, manifestBWithConsumer]);
@@ -94,7 +110,7 @@ test("SyncManifest - getExternalConsumerSchemas with no external references", ()
 
 test("SyncManifest - getExternalConsumerSchemas with multiple external references", () => {
   // Create a manifest that references two external manifests
-  const manifest = createBasicManifest("local-manifest");
+  const manifest = createEmptyManifest("local-manifest");
 
   // Add consumer schemas referencing two different external manifests
   const manifestWithExternalReferences = addConsumerSchemaWithExternalReference(
@@ -111,7 +127,9 @@ test("SyncManifest - getExternalConsumerSchemas with multiple external reference
   );
 
   // Initialize SyncManifest with just our local manifest
-  const syncManifest = new SyncManifest([manifestWithExternalReferences]);
+  const syncManifest = new SyncManifest([manifestWithExternalReferences], {
+    checkPublicSchemaReferences: false,
+  });
 
   // Get external consumer schemas
   const externalSchemas = syncManifest.getExternalConsumerSchemas();
@@ -134,7 +152,7 @@ test("SyncManifest - getExternalConsumerSchemas with multiple external reference
 
 test("SyncManifest - getExternalConsumerSchemas with multiple references to same external manifest", () => {
   // Create a manifest with multiple consumer schemas referencing the same external manifest
-  const manifest = createBasicManifest("local-manifest");
+  const manifest = createEmptyManifest("local-manifest");
 
   // Add two consumer schemas that reference the same external manifest but different schemas
   const manifestWithExternalReferences = addConsumerSchemaWithExternalReference(
@@ -151,7 +169,9 @@ test("SyncManifest - getExternalConsumerSchemas with multiple references to same
   );
 
   // Initialize SyncManifest with our local manifest
-  const syncManifest = new SyncManifest([manifestWithExternalReferences]);
+  const syncManifest = new SyncManifest([manifestWithExternalReferences], {
+    checkPublicSchemaReferences: false,
+  });
 
   // Get external consumer schemas
   const externalSchemas = syncManifest.getExternalConsumerSchemas();

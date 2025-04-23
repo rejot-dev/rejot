@@ -60,8 +60,8 @@ describe("PublicSchemaTransformer", () => {
             connectionSlug: "test-connection",
             config: {
               connectionType: "postgres" as const,
-              slotName: "test-slot",
               publicationName: "test-publication",
+              slotName: "test-slot",
             },
           },
         ],

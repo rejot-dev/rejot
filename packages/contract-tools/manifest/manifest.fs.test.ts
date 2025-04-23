@@ -99,7 +99,7 @@ test("updateManifest - merges manifests correctly", async () => {
   };
 
   // Update manifest by merging
-  const result = await mergeAndUpdateManifest(manifestPath, [additionalManifest]);
+  const { manifest: result } = await mergeAndUpdateManifest(manifestPath, [additionalManifest]);
 
   // Verify the result has both connections
   expect(result.connections).toHaveLength(2);
@@ -120,7 +120,7 @@ test("updateManifest - handles empty additional manifests", async () => {
   const baseManifest = await readManifestOrGetEmpty(manifestPath);
   const result = await mergeAndUpdateManifest(manifestPath, []);
 
-  expect(result).toEqual(baseManifest);
+  expect(result.manifest).toEqual(baseManifest);
 });
 
 test("updateManifest - newer versions take precedence", async () => {
@@ -186,7 +186,7 @@ test("updateManifest - newer versions take precedence", async () => {
   };
 
   // Update manifest
-  const result = await mergeAndUpdateManifest(manifestPath, [additionalManifest]);
+  const { manifest: result } = await mergeAndUpdateManifest(manifestPath, [additionalManifest]);
 
   // Verify the newer version was kept
   expect(result.publicSchemas).toHaveLength(1);

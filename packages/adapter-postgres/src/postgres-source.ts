@@ -6,10 +6,14 @@ import type {
   TransformedOperation,
 } from "@rejot-dev/contract/sync";
 
+import {
+  checkLogicalReplication,
+  ensurePublication,
+  ensureReplicationSlot,
+} from "./data-store/pg-replication-repository";
 import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./postgres-consts";
 import { PostgresReplicationListener } from "./postgres-replication-listener";
 import { PostgresClient } from "./util/postgres-client";
-import { isPostgresError, PG_DUPLICATE_OBJECT } from "./util/postgres-error-codes";
 
 const log = getLogger("pg-source");
 
@@ -61,7 +65,7 @@ export class PostgresSource implements IDataSource {
     }
 
     // Check if logical replication is enabled
-    const hasLogicalReplication = await this.#checkLogicalReplication();
+    const hasLogicalReplication = await checkLogicalReplication(this.#client);
     if (!hasLogicalReplication) {
       throw new Error(
         "Logical replication is not enabled on the source database. Please set wal_level=logical",
@@ -71,10 +75,10 @@ export class PostgresSource implements IDataSource {
     await this.#ensureWatermarkTable();
 
     // Create replication slot if it doesn't exist
-    await this.#ensureReplicationSlot();
+    await ensureReplicationSlot(this.#client, this.#slotName);
 
     // Create publication if it doesn't exist
-    await this.#ensurePublication();
+    await ensurePublication(this.#client, this.#publicationName, this.#createPublication);
 
     log.info("PostgresSource prepared");
   }
@@ -127,61 +131,9 @@ export class PostgresSource implements IDataSource {
     );
   }
 
-  async #checkLogicalReplication(): Promise<boolean> {
-    const result = await this.#client.query(`
-      SELECT name, setting FROM pg_settings WHERE name = 'wal_level'
-    `);
-
-    return result.rows.length > 0 && result.rows[0]["setting"] === "logical";
-  }
-
   async getBackfillRecords(sql: string, values?: unknown[]): Promise<Record<string, unknown>[]> {
     const result = await this.#client.query(sql, values);
     return result.rows;
-  }
-
-  async #ensureReplicationSlot(): Promise<void> {
-    // Check if slot exists
-    const slotResult = await this.#client.query(
-      `
-      SELECT slot_name, plugin, database FROM pg_replication_slots WHERE slot_name = $1
-    `,
-      [this.#slotName],
-    );
-
-    log.debug(`Slot result: ${JSON.stringify(slotResult.rows)}`);
-
-    if (slotResult.rows.length === 1) {
-      const { plugin, database } = slotResult.rows[0];
-
-      if (this.#client.config.database !== database) {
-        throw new Error(
-          `Replication slot '${this.#slotName}' exists but is for a different database: '${database}'. ` +
-            `Expected database: '${this.#client.config.database}'. Please pick a different slot.`,
-        );
-      }
-
-      if (plugin !== "pgoutput") {
-        throw new Error(
-          `Replication slot '${this.#slotName}' exists but is using a different plugin: ${plugin}. Expected plugin: pgoutput`,
-        );
-      }
-    }
-
-    if (slotResult.rows.length === 0) {
-      log.debug(`Creating replication slot '${this.#slotName}'...`);
-      try {
-        await this.#client.query(
-          `
-          SELECT pg_create_logical_replication_slot($1, 'pgoutput')
-        `,
-          [this.#slotName],
-        );
-        log.debug(`Replication slot '${this.#slotName}' created successfully`);
-      } catch (error) {
-        throw new Error(`Failed to create replication slot: ${error}`);
-      }
-    }
   }
 
   async #ensureWatermarkTable(): Promise<void> {
@@ -202,50 +154,6 @@ export class PostgresSource implements IDataSource {
     `,
       [type, backfillId],
     );
-  }
-
-  async #ensurePublication(): Promise<void> {
-    // Check if publication exists
-    const pubResult = await this.#client.query(
-      `
-      SELECT pubname, puballtables FROM pg_publication WHERE pubname = $1
-    `,
-      [this.#publicationName],
-    );
-
-    log.debug(`Publication result: ${JSON.stringify(pubResult.rows)}`);
-
-    if (pubResult.rows.length === 1 && pubResult.rows[0]["puballtables"]) {
-      log.debug(`Publication '${this.#publicationName}' exists FOR ALL TABLES.`);
-    } else if (pubResult.rows.length === 0) {
-      if (!this.#createPublication) {
-        throw new Error(
-          `Publication '${this.#publicationName}' does not exist and create-publication is set to false`,
-        );
-      }
-
-      log.debug(`Creating publication '${this.#publicationName}'...`);
-
-      await this.#client.query(`
-          CREATE PUBLICATION ${this.#publicationName} FOR ALL TABLES
-        `);
-      log.debug(`Publication '${this.#publicationName}' created successfully`);
-    } else {
-      // Ensure watermarks table is in publication
-      try {
-        await this.#client.query(`
-          ALTER PUBLICATION ${this.#publicationName} ADD TABLE rejot.watermarks
-        `);
-        log.debug(`Added rejot.watermarks table to publication '${this.#publicationName}'`);
-      } catch (error) {
-        if (isPostgresError(error, PG_DUPLICATE_OBJECT)) {
-          log.debug(`ReJot watermark table already in '${this.#publicationName}' publication`);
-        } else {
-          throw error;
-        }
-      }
-      log.debug(`Publication '${this.#publicationName}' already exists`);
-    }
   }
 
   /**

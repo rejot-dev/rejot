@@ -2,6 +2,7 @@ import { join } from "node:path";
 
 import { z } from "zod";
 
+import { ManifestMerger } from "@rejot-dev/contract/manifest-merger";
 import { type IVibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
 import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 
@@ -79,7 +80,7 @@ export class CollectTool implements IFactory {
           if (writeDiagnostics.length > 0) {
             outputContent.push({
               type: "text" as const,
-              text: this.#vibeCollector.formatMergeDiagnostics(writeDiagnostics, {
+              text: ManifestMerger.formatMergeDiagnostics(writeDiagnostics, {
                 workspaceRoot: workspace.rootPath,
               }),
             });

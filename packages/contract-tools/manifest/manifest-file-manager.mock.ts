@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
+import type { MergedManifest } from "@rejot-dev/contract/manifest-merger";
 
 import type { InitManifestOptions } from "./manifest.fs";
 import type { IManifestFileManager } from "./manifest-file-manager";
@@ -65,7 +66,10 @@ export class MockManifestFileManager implements IManifestFileManager {
     return manifest;
   }
 
-  async mergeAndUpdateManifest(path: string, manifests: Partial<Manifest>[]): Promise<Manifest> {
+  async mergeAndUpdateManifest(
+    path: string,
+    manifests: Partial<Manifest>[],
+  ): Promise<MergedManifest> {
     const currentManifest = await this.readManifestOrGetEmpty(path);
     const mergedManifest = manifests.reduce((acc, manifest) => {
       const definedProperties = Object.fromEntries(
@@ -74,7 +78,10 @@ export class MockManifestFileManager implements IManifestFileManager {
       return { ...acc, ...definedProperties };
     }, currentManifest) as Manifest;
     await this.writeManifest(path, mergedManifest);
-    return mergedManifest;
+    return {
+      manifest: mergedManifest,
+      diagnostics: [],
+    };
   }
 
   // Helper methods for testing

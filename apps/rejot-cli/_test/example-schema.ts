@@ -8,7 +8,7 @@ import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
 import { createPublicSchema } from "@rejot-dev/contract/public-schema";
 
 const testPublicSchema = createPublicSchema("public-account", {
-  source: { dataStoreSlug: "data-store-1", tables: ["account"] },
+  source: { dataStoreSlug: "default-postgres", tables: ["account"] },
   outputSchema: z.object({
     id: z.number(),
     email: z.string(),
@@ -19,10 +19,6 @@ const testPublicSchema = createPublicSchema("public-account", {
       "account",
       "SELECT id, email, username as name FROM account WHERE id = $1",
     ),
-    createPostgresPublicSchemaTransformation(
-      "account_details",
-      "SELECT id, details FROM account_details WHERE account_id = $1",
-    ),
   ],
   version: {
     major: 1,
@@ -32,7 +28,7 @@ const testPublicSchema = createPublicSchema("public-account", {
 
 const testConsumerSchema = createConsumerSchema("consume-public-account", {
   source: {
-    manifestSlug: "default",
+    manifestSlug: "@rejot/",
     publicSchema: {
       name: "public-account",
       majorVersion: 1,
