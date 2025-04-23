@@ -103,7 +103,7 @@ export const PublicSchemaSchema = z.object({
 });
 
 export const ConsumerSchemaSchema = z.object({
-  name: z.string().describe("Unique name for the public schema."),
+  name: z.string().describe("Unique name for the consumer schema."),
 
   sourceManifestSlug: z
     .string()

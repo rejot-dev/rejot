@@ -39,8 +39,9 @@ describe("SyncManifestController", () => {
     dataStores: [
       {
         connectionSlug: "test-connection",
-        publicationName: "test-publication",
-        slotName: "test-slot",
+        config: {
+          connectionType: "in-memory" as const,
+        },
       },
     ],
     eventStores: [],
@@ -74,8 +75,7 @@ describe("SyncManifestController", () => {
         connectionType: "in-memory",
       },
       {
-        publicationName: "test-publication",
-        slotName: "test-slot",
+        connectionType: "in-memory",
       },
     );
 
@@ -164,8 +164,7 @@ describe("SyncManifestController", () => {
         connectionType: "in-memory",
       },
       {
-        publicationName: "test-publication",
-        slotName: "test-slot",
+        connectionType: "in-memory",
       },
     );
 

@@ -1,17 +1,20 @@
-import { test, expect, describe, mock } from "bun:test";
-import { SinkWriter } from "./sink-writer";
+import { describe, expect, mock, test } from "bun:test";
+
+import { z } from "zod";
+
 import type {
   IConnectionAdapter,
   IConsumerSchemaTransformationAdapter,
   OperationTransformationPair,
 } from "@rejot-dev/contract/adapter";
-import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-import { SyncManifest } from "../../../contract/manifest/sync-manifest";
-import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/adapter-postgres/schemas";
 import type { IEventStore } from "@rejot-dev/contract/event-store";
+import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
+import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
 import type { IDataSource } from "@rejot-dev/contract/sync";
-import { z } from "zod";
+
+import { SyncManifest } from "../../../contract/manifest/sync-manifest";
+import { SinkWriter } from "./sink-writer";
 
 describe("SinkWriter", () => {
   type PostgresConfig = {
@@ -21,6 +24,14 @@ describe("SinkWriter", () => {
     database: string;
     user: string;
     password: string;
+  };
+
+  type PostgresDataStoreConfig = {
+    connectionType: "postgres";
+    slotName: string;
+    publicationName: string;
+    tables?: string[];
+    allTables?: boolean;
   };
 
   // Mock PostgreSQL sink
@@ -33,7 +44,14 @@ describe("SinkWriter", () => {
 
   // Mock PostgreSQL connection adapter
   class MockPostgresConnectionAdapter
-    implements IConnectionAdapter<PostgresConfig, IDataSource, MockPostgresSink, IEventStore>
+    implements
+      IConnectionAdapter<
+        PostgresConfig,
+        PostgresDataStoreConfig,
+        IDataSource,
+        MockPostgresSink,
+        IEventStore
+      >
   {
     connectionType = "postgres" as const;
     createSink = mock((_connectionSlug: string, _config: PostgresConfig) => new MockPostgresSink());
@@ -94,8 +112,11 @@ describe("SinkWriter", () => {
         dataStores: [
           {
             connectionSlug: "test-connection",
-            publicationName: "test-publication",
-            slotName: "test-slot",
+            config: {
+              connectionType: "postgres",
+              slotName: "test-slot",
+              publicationName: "test-publication",
+            },
           },
         ],
         eventStores: [],
@@ -129,6 +150,7 @@ describe("SinkWriter", () => {
         ],
         consumerSchemas: [
           {
+            name: "test-consumer",
             sourceManifestSlug: "test-manifest",
             publicSchema: {
               name: "test-schema",
