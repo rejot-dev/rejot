@@ -1,6 +1,9 @@
-import { Command, Flags } from "@oclif/core";
 import path from "node:path";
-import { readManifest, writeManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { readManifestOrGetEmpty, writeManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { Command, Flags } from "@oclif/core";
+
 import { connectionFlags, parseConnectionFlags } from "./manifest-connection-config.ts";
 
 export class ManifestConnectionAddCommand extends Command {
@@ -28,7 +31,7 @@ export class ManifestConnectionAddCommand extends Command {
 
     try {
       const connectionConfig = parseConnectionFlags(flags);
-      const manifest = await readManifest(manifestPath);
+      const manifest = await readManifestOrGetEmpty(manifestPath);
 
       // Check if connection with same slug already exists
       if ((manifest.connections ?? []).some((conn) => conn.slug === flags.slug)) {

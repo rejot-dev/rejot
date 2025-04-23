@@ -1,17 +1,19 @@
-import { Args, Command, Flags } from "@oclif/core";
-import { collectPublicSchemas, collectConsumerSchemas } from "@rejot-dev/contract/collect";
-import {
-  readManifest,
-  writeManifest,
-  findManifestPath,
-  ManifestPrinter,
-} from "@rejot-dev/contract-tools/manifest";
-import { validateManifest } from "@rejot-dev/sync/validate-manifest";
+import { exists } from "node:fs/promises";
 import { resolve } from "node:path";
+
+import { SchemaCollector } from "@rejot-dev/contract/collect";
+import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
 import { NoopLogger, setLogger } from "@rejot-dev/contract/logger";
 import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
-import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
-import { exists } from "node:fs/promises";
+import {
+  findManifestPath,
+  ManifestPrinter,
+  readManifestOrGetEmpty,
+  writeManifest,
+} from "@rejot-dev/contract-tools/manifest";
+import { validateManifest } from "@rejot-dev/sync/validate-manifest";
+
+import { Args, Command, Flags } from "@oclif/core";
 
 export default class Collect extends Command {
   static override args = {
@@ -64,7 +66,7 @@ export default class Collect extends Command {
 
     let currentManifest;
     try {
-      currentManifest = await readManifest(manifestPath);
+      currentManifest = await readManifestOrGetEmpty(manifestPath);
     } catch (error) {
       console.warn(`Pre-existing manifest file '${manifestPath}' has invalid format.`);
       throw error;
@@ -85,8 +87,10 @@ export default class Collect extends Command {
       }
 
       const resolvedPath = resolve(schemaPath);
-      const publicSchemas = await collectPublicSchemas(manifestPath, resolvedPath);
-      const consumerSchemas = await collectConsumerSchemas(manifestPath, resolvedPath);
+      const { publicSchemas, consumerSchemas } = await new SchemaCollector().collectSchemas(
+        manifestPath,
+        resolvedPath,
+      );
 
       allPublicSchemas.push(...publicSchemas);
       allConsumerSchemas.push(...consumerSchemas);

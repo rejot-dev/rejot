@@ -2,6 +2,7 @@ import { join } from "node:path";
 
 import { SchemaCollector } from "@rejot-dev/contract/collect";
 import { FileLogger, setLogger } from "@rejot-dev/contract/logger";
+import { FileFinder } from "@rejot-dev/contract-tools/collect/file-finder";
 import { VibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
 import { ManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest";
 import { WorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
@@ -57,7 +58,7 @@ Some tips:
 );
 
 const workspaceService = new WorkspaceService(new ManifestWorkspaceResolver());
-const vibeCollector = new VibeCollector(new SchemaCollector());
+const vibeCollector = new VibeCollector(new SchemaCollector(), new FileFinder());
 
 const rejotMcp = new RejotMcp(args["project"], server, [
   new WorkspaceResources(workspaceService),

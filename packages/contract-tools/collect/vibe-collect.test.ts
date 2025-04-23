@@ -2,13 +2,14 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 
 import type { CollectedSchemas, ISchemaCollector } from "@rejot-dev/contract/collect";
 import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
 import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
 
 import { CURRENT_MANIFEST_FILE_VERSION } from "../manifest/manifest.fs";
+import { MockFileFinder } from "./file-finder.mock";
 import { VibeCollector } from "./vibe-collect";
 
 export class MockSchemaCollector implements ISchemaCollector {
@@ -32,11 +33,17 @@ export class MockSchemaCollector implements ISchemaCollector {
     this.#schemaMap.set(filePath, { public: publicSchemas, consumer: consumerSchemas });
   }
 
-  collectSchemas(_manifestPath: string, modulePath: string): Promise<CollectedSchemas> {
+  collectSchemas(manifestPath: string, modulePath: string): Promise<CollectedSchemas> {
     const schemas = this.#schemaMap.get(modulePath) || this.#schemaMap.get("*");
     return Promise.resolve({
-      publicSchemas: schemas?.public || [],
-      consumerSchemas: schemas?.consumer || [],
+      publicSchemas: (schemas?.public || []).map((schema) => ({
+        ...schema,
+        definitionFile: relative(dirname(manifestPath), modulePath),
+      })),
+      consumerSchemas: (schemas?.consumer || []).map((schema) => ({
+        ...schema,
+        definitionFile: relative(dirname(manifestPath), modulePath),
+      })),
     });
   }
 }
@@ -48,7 +55,7 @@ describe("vibe-collect", () => {
     let collector: VibeCollector;
 
     beforeEach(() => {
-      collector = new VibeCollector(new MockSchemaCollector());
+      collector = new VibeCollector(new MockSchemaCollector(), new MockFileFinder());
     });
 
     it("should find manifest in the same directory", async () => {
@@ -149,8 +156,8 @@ describe("vibe-collect", () => {
   });
 
   describe("collectSchemasFromFiles", () => {
-    let collector: VibeCollector;
-    let mockCollector: MockSchemaCollector;
+    let vibeCollector: VibeCollector;
+    let mockSchemaCollector: MockSchemaCollector;
     let tmpDir: string;
 
     const mockPublicSchema: PublicSchemaData = {
@@ -199,8 +206,8 @@ describe("vibe-collect", () => {
 
     beforeEach(async () => {
       tmpDir = await mkdtemp(join(tmpdir(), "vibe-collect-test-"));
-      mockCollector = new MockSchemaCollector();
-      collector = new VibeCollector(mockCollector);
+      mockSchemaCollector = new MockSchemaCollector();
+      vibeCollector = new VibeCollector(mockSchemaCollector, new MockFileFinder());
     });
 
     afterEach(async () => {
@@ -208,10 +215,10 @@ describe("vibe-collect", () => {
     });
 
     it("should collect and group schemas by manifest", async () => {
-      mockCollector.setSchemas("/mock/file1.ts", [mockPublicSchema], []);
-      mockCollector.setSchemas("/mock/file2.ts", [], [mockConsumerSchema]);
+      mockSchemaCollector.setSchemas("/mock/file1.ts", [mockPublicSchema], []);
+      mockSchemaCollector.setSchemas("/mock/file2.ts", [], [mockConsumerSchema]);
 
-      const result = await collector.collectSchemasFromFiles(
+      const result = await vibeCollector.collectSchemasFromFiles(
         ["/mock/file1.ts", "/mock/file2.ts"],
         ["/root/project/src/rejot-manifest.json"],
       );
@@ -226,13 +233,13 @@ describe("vibe-collect", () => {
     });
 
     it("should handle empty file paths", async () => {
-      const result = await collector.collectSchemasFromFiles([], ["/mock/manifest.json"]);
+      const result = await vibeCollector.collectSchemasFromFiles([], ["/mock/manifest.json"]);
       expect(result.size).toBe(0);
     });
 
     it("should throw when file paths are not absolute", async () => {
       await expect(
-        collector.collectSchemasFromFiles(
+        vibeCollector.collectSchemasFromFiles(
           ["./src/file.ts", "../other/file.ts"],
           ["/mock/manifest.json"],
         ),
@@ -241,7 +248,7 @@ describe("vibe-collect", () => {
 
     it("should throw when manifest paths are not absolute", async () => {
       await expect(
-        collector.collectSchemasFromFiles(
+        vibeCollector.collectSchemasFromFiles(
           ["/mock/file.ts"],
           ["./manifest.json", "../other/manifest.json"],
         ),
@@ -250,13 +257,14 @@ describe("vibe-collect", () => {
 
     it("should throw when both file and manifest paths are not absolute", async () => {
       await expect(
-        collector.collectSchemasFromFiles(["./src/file.ts"], ["./manifest.json"]),
+        vibeCollector.collectSchemasFromFiles(["./src/file.ts"], ["./manifest.json"]),
       ).rejects.toThrow("All paths must be absolute");
     });
 
     it("should handle files with no matching manifest", async () => {
-      const result = await collector.collectSchemasFromFiles(["/mock/file.ts"], []);
-      expect(result.size).toBe(0);
+      await expect(vibeCollector.collectSchemasFromFiles(["/mock/file.ts"], [])).rejects.toThrow(
+        "Could not find a manifest for file: /mock/file.ts",
+      );
     });
 
     it("should collect both public and consumer schemas from a single file", async () => {
@@ -311,13 +319,13 @@ describe("vibe-collect", () => {
         },
       };
 
-      mockCollector.setSchemas(
+      mockSchemaCollector.setSchemas(
         schemaFile,
         [mixedSchema.testPublicSchema],
         [mixedSchema.testConsumerSchema],
       );
 
-      const result = await collector.collectSchemasFromFiles([schemaFile], [manifestPath]);
+      const result = await vibeCollector.collectSchemasFromFiles([schemaFile], [manifestPath]);
 
       expect(result.size).toBe(1);
       const manifestSchemas = result.get(manifestPath);
@@ -388,10 +396,10 @@ describe("vibe-collect", () => {
         },
       ];
 
-      mockCollector.setSchemas("/mock/file1.ts", [mockPublicSchemas[0]], []);
-      mockCollector.setSchemas("/mock/file2.ts", [mockPublicSchemas[1]], []);
+      mockSchemaCollector.setSchemas("/mock/file1.ts", [mockPublicSchemas[0]], []);
+      mockSchemaCollector.setSchemas("/mock/file2.ts", [mockPublicSchemas[1]], []);
 
-      const result = await collector.collectSchemasFromFiles(
+      const result = await vibeCollector.collectSchemasFromFiles(
         ["/mock/file1.ts", "/mock/file2.ts"],
         ["/root/project/rejot-manifest.json"],
       );
@@ -403,10 +411,18 @@ describe("vibe-collect", () => {
     });
 
     it("should distribute schemas to correct manifests based on file location", async () => {
-      mockCollector.setSchemas("/root/project/src/components/schema1.ts", [mockPublicSchema], []);
-      mockCollector.setSchemas("/root/project/src/utils/schema2.ts", [], [mockConsumerSchema]);
+      mockSchemaCollector.setSchemas(
+        "/root/project/src/components/schema1.ts",
+        [mockPublicSchema],
+        [],
+      );
+      mockSchemaCollector.setSchemas(
+        "/root/project/src/utils/schema2.ts",
+        [],
+        [mockConsumerSchema],
+      );
 
-      const result = await collector.collectSchemasFromFiles(
+      const result = await vibeCollector.collectSchemasFromFiles(
         ["/root/project/src/components/schema1.ts", "/root/project/src/utils/schema2.ts"],
         [
           "/root/project/src/components/rejot-manifest.json",
@@ -432,13 +448,21 @@ describe("vibe-collect", () => {
     });
 
     it("should handle absolute file paths with relative manifest paths", async () => {
-      mockCollector.setSchemas("/root/project/src/components/schema1.ts", [mockPublicSchema], []);
-      mockCollector.setSchemas("/root/project/src/utils/schema2.ts", [], [mockConsumerSchema]);
+      mockSchemaCollector.setSchemas(
+        "/root/project/src/components/schema1.ts",
+        [mockPublicSchema],
+        [],
+      );
+      mockSchemaCollector.setSchemas(
+        "/root/project/src/utils/schema2.ts",
+        [],
+        [mockConsumerSchema],
+      );
 
       // Simulate running from /root/project/src by resolving relative paths
       const resolveFromSrc = (relativePath: string) => join("/root/project/src", relativePath);
 
-      const result = await collector.collectSchemasFromFiles(
+      const result = await vibeCollector.collectSchemasFromFiles(
         // Absolute file paths
         ["/root/project/src/components/schema1.ts", "/root/project/src/utils/schema2.ts"],
         // Relative manifest paths (relative to /root/project/src)
@@ -465,13 +489,21 @@ describe("vibe-collect", () => {
     });
 
     it("should handle absolute file paths with mixed relative/absolute manifest paths", async () => {
-      mockCollector.setSchemas("/root/project/src/components/schema1.ts", [mockPublicSchema], []);
-      mockCollector.setSchemas("/root/project/src/utils/schema2.ts", [], [mockConsumerSchema]);
+      mockSchemaCollector.setSchemas(
+        "/root/project/src/components/schema1.ts",
+        [mockPublicSchema],
+        [],
+      );
+      mockSchemaCollector.setSchemas(
+        "/root/project/src/utils/schema2.ts",
+        [],
+        [mockConsumerSchema],
+      );
 
       // Simulate running from /root/project/src by resolving relative paths
       const resolveFromSrc = (relativePath: string) => join("/root/project/src", relativePath);
 
-      const result = await collector.collectSchemasFromFiles(
+      const result = await vibeCollector.collectSchemasFromFiles(
         // Absolute file paths
         ["/root/project/src/components/schema1.ts", "/root/project/src/utils/schema2.ts"],
         // Mix of relative and absolute manifest paths
@@ -498,14 +530,22 @@ describe("vibe-collect", () => {
     });
 
     it("should handle absolute file paths with manifest paths relative to different locations", async () => {
-      mockCollector.setSchemas("/root/project/src/components/schema1.ts", [mockPublicSchema], []);
-      mockCollector.setSchemas("/root/project/src/utils/schema2.ts", [], [mockConsumerSchema]);
+      mockSchemaCollector.setSchemas(
+        "/root/project/src/components/schema1.ts",
+        [mockPublicSchema],
+        [],
+      );
+      mockSchemaCollector.setSchemas(
+        "/root/project/src/utils/schema2.ts",
+        [],
+        [mockConsumerSchema],
+      );
 
       // Simulate running from /root/project/src/components by resolving relative paths
       const resolveFromComponents = (relativePath: string) =>
         join("/root/project/src/components", relativePath);
 
-      const result = await collector.collectSchemasFromFiles(
+      const result = await vibeCollector.collectSchemasFromFiles(
         // Absolute file paths
         ["/root/project/src/components/schema1.ts", "/root/project/src/utils/schema2.ts"],
         // Manifest paths relative to /root/project/src/components
@@ -571,14 +611,14 @@ describe("vibe-collect", () => {
         };
 
         // Set up mock collector to return the same schema for both files
-        mockCollector.setSchemas(schemaFile1, [duplicateSchema], []);
-        mockCollector.setSchemas(
+        mockSchemaCollector.setSchemas(schemaFile1, [duplicateSchema], []);
+        mockSchemaCollector.setSchemas(
           schemaFile2,
           [{ ...duplicateSchema, definitionFile: "schema2.ts" }],
           [],
         );
 
-        const results = await collector.collectSchemasFromFiles(
+        const results = await vibeCollector.collectSchemasFromFiles(
           [schemaFile1, schemaFile2],
           [manifestPath],
         );
@@ -588,16 +628,29 @@ describe("vibe-collect", () => {
         expect(manifestSchemas).toBeDefined();
         expect(manifestSchemas!.publicSchemas).toHaveLength(1);
         expect(manifestSchemas!.publicSchemas[0].name).toBe("duplicate-schema");
-        expect(manifestSchemas!.publicSchemas[0].definitionFile).toBe("schema1.ts");
+        // Last schema should win
+        expect(manifestSchemas!.publicSchemas[0].definitionFile).toBe("schema2.ts");
 
         // Verify diagnostic was created for the duplicate
         expect(manifestSchemas!.diagnostics).toHaveLength(1);
-        const expectedPath1 = join(dirname(manifestPath), "schema1.ts");
         const expectedPath2 = join(dirname(manifestPath), "schema2.ts");
         expect(manifestSchemas!.diagnostics[0]).toEqual({
-          message: `Duplicate public schema "duplicate-schema" v1.0 found. First occurrence in ${expectedPath1}`,
-          severity: "warning",
+          message: `Public schema 'duplicate-schema@1' was overwritten with new definition from schema2.ts`,
+          severity: "error",
           file: expectedPath2,
+          context: {
+            schemaType: "public",
+            schemaName: "duplicate-schema",
+            version: {
+              major: 1,
+              minor: 0,
+            },
+            originalLocation: "schema1.ts",
+          },
+          location: {
+            filePath: expectedPath2,
+            manifestPath: manifestPath,
+          },
         });
       });
 
@@ -697,11 +750,11 @@ describe("vibe-collect", () => {
         };
 
         // Set up mock collector
-        mockCollector.setSchemas(schemaFile1, [schema1], []);
-        mockCollector.setSchemas(schemaFile2, [schema2], []);
+        mockSchemaCollector.setSchemas(schemaFile1, [schema1], []);
+        mockSchemaCollector.setSchemas(schemaFile2, [schema2], []);
 
         // Collect schemas
-        const results = await collector.collectSchemasFromFiles(
+        const results = await vibeCollector.collectSchemasFromFiles(
           [schemaFile1, schemaFile2],
           [manifestPath],
         );
@@ -785,18 +838,18 @@ describe("vibe-collect", () => {
         const schemaFile2 = join(tmpDir, "mixed-schema2.ts");
 
         // Set up mock collector to return the same schemas for both files
-        mockCollector.setSchemas(
+        mockSchemaCollector.setSchemas(
           schemaFile1,
           [mixedSchema.testPublicSchema],
           [mixedSchema.testConsumerSchema],
         );
-        mockCollector.setSchemas(
+        mockSchemaCollector.setSchemas(
           schemaFile2,
           [{ ...mixedSchema.testPublicSchema, definitionFile: "mixed-schema2.ts" }],
           [{ ...mixedSchema.testConsumerSchema, definitionFile: "mixed-schema2.ts" }],
         );
 
-        const results = await collector.collectSchemasFromFiles(
+        const results = await vibeCollector.collectSchemasFromFiles(
           [schemaFile1, schemaFile2],
           [manifestPath],
         );
@@ -814,20 +867,45 @@ describe("vibe-collect", () => {
         expect(manifestSchemas!.publicSchemas[0].version.major).toBe(1);
         expect(manifestSchemas!.consumerSchemas[0].publicSchema.name).toBe("test-schema");
 
-        // Verify diagnostics were created for both duplicates
+        // Verify diagnostics - should show overwrites for both schemas
         expect(manifestSchemas!.diagnostics).toHaveLength(2);
-        const expectedPath1 = join(dirname(manifestPath), "mixed-schema1.ts");
+        const _expectedPath1 = join(dirname(manifestPath), "mixed-schema1.ts");
         const expectedPath2 = join(dirname(manifestPath), "mixed-schema2.ts");
         expect(manifestSchemas!.diagnostics).toEqual([
           {
-            message: `Duplicate public schema "test-public-schema" v1.0 found. First occurrence in ${expectedPath1}`,
-            severity: "warning",
+            message: `Public schema 'test-public-schema@1' was overwritten with new definition from mixed-schema2.ts`,
+            severity: "error",
             file: expectedPath2,
+            context: {
+              schemaType: "public",
+              schemaName: "test-public-schema",
+              version: {
+                major: 1,
+                minor: 0,
+              },
+              originalLocation: "mixed-schema1.ts",
+            },
+            location: {
+              filePath: expectedPath2,
+              manifestPath: manifestPath,
+            },
           },
           {
-            message: `Duplicate consumer schema "test-schema" found. First occurrence in ${expectedPath1}`,
-            severity: "warning",
+            message: `Consumer schema 'test-consumer-schema' was overwritten with new definition from mixed-schema2.ts`,
+            severity: "error",
             file: expectedPath2,
+            context: {
+              schemaType: "consumer",
+              schemaName: "test-consumer-schema",
+              version: {
+                major: 1,
+              },
+              originalLocation: "mixed-schema1.ts",
+            },
+            location: {
+              filePath: expectedPath2,
+              manifestPath: manifestPath,
+            },
           },
         ]);
       });
@@ -884,7 +962,7 @@ describe("vibe-collect", () => {
 
     beforeEach(() => {
       mockCollector = new MockSchemaCollector();
-      collector = new VibeCollector(mockCollector);
+      collector = new VibeCollector(mockCollector, new MockFileFinder());
     });
 
     it("should format results with absolute paths when no workspaceRoot is provided", async () => {
@@ -935,11 +1013,30 @@ describe("vibe-collect", () => {
             message: "Duplicate public schema 'test' v1.0 found. First occurrence in schema1.ts",
             severity: "warning",
             file: "schema2.ts",
+            context: {
+              schemaType: "public",
+              schemaName: "test",
+              version: {
+                major: 1,
+                minor: 0,
+              },
+            },
+            location: {
+              filePath: "schema2.ts",
+              manifestPath: manifestPath,
+            },
           },
           {
             message: "Failed to parse schema",
             severity: "error",
             file: "invalid.ts",
+            context: {
+              schemaType: "public",
+            },
+            location: {
+              filePath: "invalid.ts",
+              manifestPath: manifestPath,
+            },
           },
         ],
       });

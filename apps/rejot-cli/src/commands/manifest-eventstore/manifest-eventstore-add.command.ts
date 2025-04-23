@@ -1,6 +1,8 @@
-import { Command, Flags } from "@oclif/core";
 import path from "node:path";
-import { readManifest, writeManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { readManifestOrGetEmpty, writeManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { Command, Flags } from "@oclif/core";
 
 export class ManifestEventStoreAddCommand extends Command {
   static override id = "manifest:eventstore:add";
@@ -23,7 +25,7 @@ export class ManifestEventStoreAddCommand extends Command {
     const { flags } = await this.parse(ManifestEventStoreAddCommand);
     const manifestPath = path.resolve(flags.manifest);
 
-    const manifest = await readManifest(manifestPath);
+    const manifest = await readManifestOrGetEmpty(manifestPath);
 
     // Check if connection exists
     if (!(manifest.connections ?? []).some((conn) => conn.slug === flags.connection)) {

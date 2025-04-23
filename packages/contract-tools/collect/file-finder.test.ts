@@ -4,14 +4,16 @@ import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
 
-import { searchInDirectory } from "./file-finder";
+import { FileFinder } from "./file-finder";
 import type { GitIgnorePattern } from "./git-ignore";
 
 describe("file-finder", () => {
   let tmpDir: string;
+  let fileFinder: FileFinder;
 
   beforeEach(async () => {
     tmpDir = await mkdtemp(join(tmpdir(), "file-finder-test-"));
+    fileFinder = new FileFinder();
   });
 
   afterEach(async () => {
@@ -24,7 +26,7 @@ describe("file-finder", () => {
       await writeFile(join(tmpDir, "src", "file1.ts"), "console.log('hello');");
       await writeFile(join(tmpDir, "src", "file2.ts"), "console.error('world');");
 
-      const results = await searchInDirectory(tmpDir, ["console"]);
+      const results = await fileFinder.searchInDirectory(tmpDir, ["console"]);
       expect(results).toHaveLength(2);
       expect(results.map((r) => r.match.trim())).toEqual([
         "console.log('hello');",
@@ -43,14 +45,14 @@ describe("file-finder", () => {
       `,
       );
 
-      const results = await searchInDirectory(tmpDir, ["const", "="]);
+      const results = await fileFinder.searchInDirectory(tmpDir, ["const", "="]);
       expect(results).toHaveLength(2);
       expect(results.every((r) => r.file.endsWith("test.ts"))).toBe(true);
     });
 
     it("should return empty array when no matches found", async () => {
       await writeFile(join(tmpDir, "empty.ts"), "// Empty file");
-      const results = await searchInDirectory(tmpDir, ["nonexistent"]);
+      const results = await fileFinder.searchInDirectory(tmpDir, ["nonexistent"]);
       expect(results).toEqual([]);
     });
 
@@ -58,7 +60,7 @@ describe("file-finder", () => {
       await mkdir(join(tmpDir, "deep", "nested", "dir"), { recursive: true });
       await writeFile(join(tmpDir, "deep", "nested", "dir", "file.ts"), "findMe();");
 
-      const results = await searchInDirectory(tmpDir, ["findMe"]);
+      const results = await fileFinder.searchInDirectory(tmpDir, ["findMe"]);
       expect(results).toHaveLength(1);
       expect(results[0].match.trim()).toBe("findMe();");
     });
@@ -79,7 +81,7 @@ describe("file-finder", () => {
         { pattern: "node_modules", isNegated: false, isDirectory: true },
       ];
 
-      const results = await searchInDirectory(tmpDir, ["findMe"], { ignorePatterns });
+      const results = await fileFinder.searchInDirectory(tmpDir, ["findMe"], { ignorePatterns });
       expect(results).toHaveLength(1);
       expect(results[0].file).toMatch(/src[/\\]file\.ts$/);
     });
@@ -90,7 +92,7 @@ describe("file-finder", () => {
       await writeFile(join(tmpDir, "binary.bin"), buffer);
       await writeFile(join(tmpDir, "text.txt"), "findMe");
 
-      const results = await searchInDirectory(tmpDir, ["findMe"]);
+      const results = await fileFinder.searchInDirectory(tmpDir, ["findMe"]);
       expect(results).toHaveLength(1);
       expect(results[0].file).toMatch(/text\.txt$/);
     });
@@ -103,7 +105,7 @@ describe("file-finder", () => {
         line5`;
       await writeFile(join(tmpDir, "test.txt"), content);
 
-      const results = await searchInDirectory(tmpDir, ["findMe"]);
+      const results = await fileFinder.searchInDirectory(tmpDir, ["findMe"]);
       expect(results).toHaveLength(2);
       expect(results[0].line).toBe(2);
       expect(results[1].line).toBe(4);
@@ -114,7 +116,7 @@ describe("file-finder", () => {
       await mkdir(specialDir, { recursive: true });
       await writeFile(join(specialDir, "test.txt"), "findMe");
 
-      const results = await searchInDirectory(tmpDir, ["findMe"]);
+      const results = await fileFinder.searchInDirectory(tmpDir, ["findMe"]);
       expect(results).toHaveLength(1);
       expect(results[0].match.trim()).toBe("findMe");
     });
@@ -129,10 +131,10 @@ describe("file-finder", () => {
       try {
         // Test with relative path by changing into tmpDir first
         process.chdir(tmpDir);
-        const resultsFromRelative = await searchInDirectory(".", ["findMe"]);
+        const resultsFromRelative = await fileFinder.searchInDirectory(".", ["findMe"]);
 
         // Test with absolute path input
-        const resultsFromAbsolute = await searchInDirectory(tmpDir, ["findMe"]);
+        const resultsFromAbsolute = await fileFinder.searchInDirectory(tmpDir, ["findMe"]);
 
         // Both results should be absolute paths
         expect(isAbsolute(resultsFromRelative[0].file)).toBe(true);
@@ -161,20 +163,22 @@ describe("file-finder", () => {
       });
 
       it("should be case-insensitive by default", async () => {
-        const results = await searchInDirectory(tmpDir, ["mixedcase"]);
+        const results = await fileFinder.searchInDirectory(tmpDir, ["mixedcase"]);
         expect(results).toHaveLength(2);
         expect(results.map((r) => r.match.trim())).toContain("MixedCase");
         expect(results.map((r) => r.match.trim())).toContain("mixedcase");
       });
 
       it("should respect case sensitivity when enabled", async () => {
-        const results = await searchInDirectory(tmpDir, ["mixedcase"], { caseSensitive: true });
+        const results = await fileFinder.searchInDirectory(tmpDir, ["mixedcase"], {
+          caseSensitive: true,
+        });
         expect(results).toHaveLength(1);
         expect(results[0].match.trim()).toBe("mixedcase");
       });
 
       it("should handle multiple case-sensitive patterns", async () => {
-        const results = await searchInDirectory(tmpDir, ["UPPERCASE", "lowercase"], {
+        const results = await fileFinder.searchInDirectory(tmpDir, ["UPPERCASE", "lowercase"], {
           caseSensitive: true,
         });
         expect(results).toHaveLength(2);
@@ -194,7 +198,7 @@ describe("file-finder", () => {
     });
 
     it("should only search in files with specified extensions", async () => {
-      const results = await searchInDirectory(tmpDir, ["findMe"], {
+      const results = await fileFinder.searchInDirectory(tmpDir, ["findMe"], {
         fileExtensions: ["ts", "js"],
       });
 
@@ -208,7 +212,7 @@ describe("file-finder", () => {
     });
 
     it("should search in all files when no extensions specified", async () => {
-      const results = await searchInDirectory(tmpDir, ["findMe"]);
+      const results = await fileFinder.searchInDirectory(tmpDir, ["findMe"]);
 
       expect(results).toHaveLength(4);
       expect(results.map((r) => r.file)).toEqual(
@@ -222,7 +226,7 @@ describe("file-finder", () => {
     });
 
     it("should handle single extension filter", async () => {
-      const results = await searchInDirectory(tmpDir, ["findMe"], {
+      const results = await fileFinder.searchInDirectory(tmpDir, ["findMe"], {
         fileExtensions: ["json"],
       });
 
@@ -231,7 +235,7 @@ describe("file-finder", () => {
     });
 
     it("should return empty array when no files match extension", async () => {
-      const results = await searchInDirectory(tmpDir, ["findMe"], {
+      const results = await fileFinder.searchInDirectory(tmpDir, ["findMe"], {
         fileExtensions: ["php"],
       });
 

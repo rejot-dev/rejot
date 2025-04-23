@@ -1,6 +1,8 @@
-import { Args, Command, Flags } from "@oclif/core";
 import path from "node:path";
-import { readManifest, writeManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { readManifestOrGetEmpty, writeManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { Args, Command, Flags } from "@oclif/core";
 
 export class ManifestEventStoreRemoveCommand extends Command {
   static override id = "manifest:eventstore:remove";
@@ -26,7 +28,7 @@ export class ManifestEventStoreRemoveCommand extends Command {
     const { args, flags } = await this.parse(ManifestEventStoreRemoveCommand);
     const manifestPath = path.resolve(flags.manifest);
 
-    const manifest = await readManifest(manifestPath);
+    const manifest = await readManifestOrGetEmpty(manifestPath);
     const initialLength = (manifest.eventStores ?? []).length;
 
     manifest.eventStores = (manifest.eventStores ?? []).filter(

@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { readManifest, writeManifest } from "@rejot-dev/contract-tools/manifest";
+import { readManifestOrGetEmpty, writeManifest } from "@rejot-dev/contract-tools/manifest";
 
 import { Command } from "@oclif/core";
 
@@ -39,7 +39,7 @@ export class ManifestDataStoreAddCommand extends Command {
     await validateConnection(manifestPath, flags.connection);
     await validateUniqueConnection(manifestPath, flags.connection);
 
-    const manifest = await readManifest(manifestPath);
+    const manifest = await readManifestOrGetEmpty(manifestPath);
     manifest.dataStores = manifest.dataStores ?? [];
     manifest.dataStores.push({
       connectionSlug: flags.connection,

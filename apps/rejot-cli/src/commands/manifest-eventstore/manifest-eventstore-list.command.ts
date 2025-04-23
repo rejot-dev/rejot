@@ -1,6 +1,8 @@
-import { Command, Flags } from "@oclif/core";
 import path from "node:path";
-import { readManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { readManifestOrGetEmpty } from "@rejot-dev/contract-tools/manifest";
+
+import { Command, Flags } from "@oclif/core";
 
 export class ManifestEventStoreListCommand extends Command {
   static override id = "manifest:eventstore:list";
@@ -19,7 +21,7 @@ export class ManifestEventStoreListCommand extends Command {
     const { flags } = await this.parse(ManifestEventStoreListCommand);
     const manifestPath = path.resolve(flags.manifest);
 
-    const manifest = await readManifest(manifestPath);
+    const manifest = await readManifestOrGetEmpty(manifestPath);
 
     if ((manifest.eventStores ?? []).length === 0) {
       this.log("No event stores found in manifest");
