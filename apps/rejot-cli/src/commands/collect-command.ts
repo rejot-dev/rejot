@@ -2,16 +2,17 @@ import { exists } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { PostgresConsumerSchemaValidationAdapter } from "@rejot-dev/adapter-postgres";
-import { SchemaCollector } from "@rejot-dev/contract/collect";
 import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
 import { NoopLogger, setLogger } from "@rejot-dev/contract/logger";
 import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
+import { SchemaCollector } from "@rejot-dev/contract-tools/collect/schema-collector";
 import {
   findManifestPath,
   ManifestPrinter,
   readManifestOrGetEmpty,
   writeManifest,
 } from "@rejot-dev/contract-tools/manifest";
+import { TypeStripper } from "@rejot-dev/contract-tools/type-stripper";
 import { validateManifest } from "@rejot-dev/sync/validate-manifest";
 
 import { Args, Command, Flags } from "@oclif/core";
@@ -88,10 +89,9 @@ export default class Collect extends Command {
       }
 
       const resolvedPath = resolve(schemaPath);
-      const { publicSchemas, consumerSchemas } = await new SchemaCollector().collectSchemas(
-        manifestPath,
-        resolvedPath,
-      );
+      const { publicSchemas, consumerSchemas } = await new SchemaCollector(
+        new TypeStripper(),
+      ).collectSchemas(manifestPath, resolvedPath);
 
       allPublicSchemas.push(...publicSchemas);
       allConsumerSchemas.push(...consumerSchemas);

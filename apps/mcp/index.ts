@@ -1,12 +1,13 @@
 import { join } from "node:path";
 
-import { SchemaCollector } from "@rejot-dev/contract/collect";
 import { FileLogger, setLogger } from "@rejot-dev/contract/logger";
 import { FileFinder } from "@rejot-dev/contract-tools/collect/file-finder";
+import { SchemaCollector } from "@rejot-dev/contract-tools/collect/schema-collector";
 import { VibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
 import { ManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest";
 import { ManifestFileManager } from "@rejot-dev/contract-tools/manifest/manifest-file-manager";
 import { WorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
+import { TypeStripper } from "@rejot-dev/contract-tools/type-stripper";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { parseArgs } from "@std/cli/parse-args";
@@ -142,7 +143,7 @@ const workspaceService = new WorkspaceService(new ManifestWorkspaceResolver());
 const manifestFileManager = new ManifestFileManager();
 
 const vibeCollector = new VibeCollector(
-  new SchemaCollector(),
+  new SchemaCollector(new TypeStripper()),
   new FileFinder(),
   manifestFileManager,
 );

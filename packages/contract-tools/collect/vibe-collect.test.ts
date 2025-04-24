@@ -4,7 +4,6 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 
-import type { CollectedSchemas, ISchemaCollector } from "@rejot-dev/contract/collect";
 import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
 import type { MergeDiagnostic } from "@rejot-dev/contract/manifest-merger";
 import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
@@ -12,6 +11,7 @@ import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
 import { CURRENT_MANIFEST_FILE_VERSION } from "../manifest/manifest.fs";
 import { MockManifestFileManager } from "../manifest/manifest-file-manager.mock";
 import { MockFileFinder } from "./file-finder.mock";
+import type { CollectedSchemas, ISchemaCollector } from "./schema-collector.ts";
 import { type VibeCollectedSchemas, VibeCollector } from "./vibe-collect.ts";
 
 export class MockSchemaCollector implements ISchemaCollector {
