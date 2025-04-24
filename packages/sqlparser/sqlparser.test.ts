@@ -1,5 +1,6 @@
-import { test, describe, expect, beforeAll } from "bun:test";
-import { initSqlparser, parseSql, statementsToSql } from "./index";
+import { beforeAll, describe, expect, test } from "bun:test";
+
+import { initSqlparser, parseSql, statementsToSql } from "./index.ts";
 
 describe("sqlparser", () => {
   beforeAll(async () => {

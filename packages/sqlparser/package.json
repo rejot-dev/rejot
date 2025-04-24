@@ -2,7 +2,11 @@
   "name": "@rejot-dev/sqlparser",
   "version": "0.0.10",
   "exports": {
-    ".": "./index.ts"
+    ".": {
+      "bun": "./index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "private": false,
   "scripts": {
