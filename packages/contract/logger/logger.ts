@@ -2,7 +2,9 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 
 export const LogLevel = {
-  ERROR: 0,
+  /** Meant to be seen by the user in CLI scenarios. */
+  USER: 0,
+  ERROR: 5,
   WARN: 10,
   INFO: 20,
   DEBUG: 30,
@@ -10,6 +12,8 @@ export const LogLevel = {
 } as const;
 
 const LOG_LEVEL_MAX_LENGTH = Math.max(...Object.keys(LogLevel).map((level) => level.length));
+
+let longestNamespaceLengthSeen = 0;
 
 export type LogLevelName = keyof typeof LogLevel;
 export type LogLevel = (typeof LogLevel)[LogLevelName];
@@ -37,6 +41,13 @@ export function logLevelToStringPadded(level: LogLevel): string {
   return logLevelToString(level).padEnd(LOG_LEVEL_MAX_LENGTH, " ");
 }
 
+export interface LogLine {
+  type: LogLevel;
+  message: string;
+  namespace?: string;
+  args?: unknown[];
+}
+
 export abstract class ILogger {
   #logLevel: LogLevel;
 
@@ -61,18 +72,19 @@ export abstract class ILogger {
   }
 
   abstract init(): void;
-  abstract log(type: LogLevel, message: string, ...args: unknown[]): void;
+  abstract log(logLine: LogLine): void;
 
-  protected _log(type: LogLevel, message: string, ...args: unknown[]): void {
+  protected _log({ type, message, namespace, args }: LogLine): void {
     if (shouldLog(type, this.logLevel)) {
-      this.log(type, message, ...args);
+      this.log({ type, message, namespace, args });
     }
   }
 
-  formatLogMessage(type: LogLevel, message: string, ...args: unknown[]): string {
-    let logMessage = `[${logLevelToStringPadded(type)}] ${new Date().toISOString()} - ${message}`;
+  formatLogMessage({ type, message, namespace, args }: LogLine): string {
+    const namespaceString = namespace ? ` [${namespace}] ` : " ";
+    let logMessage = `[${logLevelToStringPadded(type)}]${namespaceString}${new Date().toISOString()} - ${message}`;
 
-    if (args.length > 0) {
+    if (args && args.length > 0) {
       const serializedArgs = args.map(serializeArg);
       logMessage += ` ${JSON.stringify(serializedArgs)}`;
     }
@@ -82,41 +94,104 @@ export abstract class ILogger {
     return logMessage;
   }
 
-  logErrorInstance(error: unknown, logLevel: LogLevel = LogLevel.ERROR): void {
-    if (error instanceof Error) {
-      const stack = error.stack?.split("\n") ?? [];
+  logErrorInstance(error: unknown, logLevel: LogLevel = LogLevel.ERROR, namespace?: string): void {
+    if (!(error instanceof Error)) {
+      this._log({
+        type: logLevel,
+        message: "Not an error object:",
+        namespace,
+        args: [error],
+      });
+      return;
+    }
 
-      this._log(logLevel, "Error: " + error.message + (!stack.length ? " (no stack trace)" : ""));
+    const stack = error.stack?.split("\n") ?? [];
 
-      for (const line of stack) {
-        this._log(logLevel, line);
+    this._log({
+      type: logLevel,
+      message: "Error: " + error.message + (!stack.length ? " (no stack trace)" : ""),
+      namespace,
+    });
+
+    for (const line of stack) {
+      this._log({
+        type: logLevel,
+        message: line,
+        namespace,
+      });
+    }
+
+    if (error.cause instanceof Error) {
+      this._log({
+        type: logLevel,
+        message: `Caused by: ${error.cause.message}`,
+        namespace,
+      });
+      for (const stack of error.cause.stack?.split("\n") ?? []) {
+        this._log({
+          type: logLevel,
+          message: stack,
+          namespace,
+        });
       }
-
-      if (error.cause instanceof Error) {
-        this._log(logLevel, `Caused by: ${error.cause.message}`);
-        for (const stack of error.cause.stack?.split("\n") ?? []) {
-          this._log(logLevel, stack);
-        }
-      }
-    } else {
-      this._log(logLevel, "Not an error object:", error);
+    } else if (error) {
+      this._log({
+        type: logLevel,
+        message: "Cause not an error object:",
+        namespace,
+        args: [error],
+      });
     }
   }
 
+  user(message: string, ...args: unknown[]): void {
+    this._log({
+      type: LogLevel.USER,
+      message,
+      namespace: undefined,
+      args,
+    });
+  }
+
   info(message: string, ...args: unknown[]): void {
-    this._log(LogLevel.INFO, message, ...args);
+    this._log({
+      type: LogLevel.INFO,
+      message,
+      namespace: undefined,
+      args,
+    });
   }
   warn(message: string, ...args: unknown[]): void {
-    this._log(LogLevel.WARN, message, ...args);
+    this._log({
+      type: LogLevel.WARN,
+      message,
+      namespace: undefined,
+      args,
+    });
   }
   error(message: string, ...args: unknown[]): void {
-    this._log(LogLevel.ERROR, message, ...args);
+    this._log({
+      type: LogLevel.ERROR,
+      message,
+      namespace: undefined,
+      args,
+    });
   }
   debug(message: string, ...args: unknown[]): void {
-    this._log(LogLevel.DEBUG, message, ...args);
+    this._log({
+      type: LogLevel.DEBUG,
+      message,
+      namespace: undefined,
+      args,
+    });
   }
   trace(message: string, ...args: unknown[]): void {
-    this._log(LogLevel.TRACE, message, ...args);
+    this._log({
+      type: LogLevel.TRACE,
+      message,
+      namespace: undefined,
+      args,
+    });
   }
 }
 
@@ -150,18 +225,23 @@ export class ConsoleLogger extends ILogger {
     return ("+" + formattedElapsedTime).padStart(5, " ");
   }
 
-  log(type: LogLevel, message: string, ...args: unknown[]): void {
-    // Override the timestamp part with elapsed time
-    let logMessage = `[${logLevelToStringPadded(type)}] ${this.formatElapsedTime()} ${message}`;
+  log({ type, message, namespace, args }: LogLine): void {
+    if (type === LogLevel.USER) {
+      console.log(message, ...(args ?? []));
+      return;
+    }
 
-    if (args.length > 0) {
+    // Override the timestamp part with elapsed time
+    let logMessage = `[${logLevelToStringPadded(type)}] ${this.formatElapsedTime()} [${(namespace ?? "").padEnd(longestNamespaceLengthSeen)}] ${message}`;
+
+    if (args && args.length > 0) {
       const serializedArgs = args.map(serializeArg);
       logMessage += ` ${JSON.stringify(serializedArgs)}`;
     }
 
     switch (type) {
       case LogLevel.INFO:
-        console.log(logMessage);
+        console.info(logMessage);
         break;
       case LogLevel.WARN:
         console.warn(logMessage);
@@ -173,7 +253,7 @@ export class ConsoleLogger extends ILogger {
         console.debug(logMessage);
         break;
       case LogLevel.TRACE:
-        console.trace(logMessage);
+        console.log(logMessage);
         break;
     }
   }
@@ -188,13 +268,22 @@ export class FileLogger extends ILogger {
   }
 
   init(): void {
-    fs.writeFileSync(this.#logFilePath, this.formatLogMessage(LogLevel.ERROR, "Log Initialized."), {
-      flag: "w",
-    });
+    fs.writeFileSync(
+      this.#logFilePath,
+      this.formatLogMessage({
+        type: LogLevel.ERROR,
+        message: "Log Initialized.",
+        namespace: undefined,
+        args: [],
+      }),
+      {
+        flag: "w",
+      },
+    );
   }
 
-  log(type: LogLevel, message: string, ...args: unknown[]): void {
-    const logMessage = this.formatLogMessage(type, message, ...args);
+  log(logLine: LogLine): void {
+    const logMessage = this.formatLogMessage(logLine);
     fs.appendFileSync(this.#logFilePath, logMessage);
   }
 }
@@ -204,7 +293,7 @@ export class NoopLogger extends ILogger {
     //
   }
 
-  log(_type: LogLevel, _message: string, ..._args: unknown[]): void {
+  log(_logLine: LogLine): void {
     //
   }
 }
@@ -217,6 +306,9 @@ export class NamespacedLogger extends ILogger {
     super();
     this.#logger = logger;
     this.#namespace = namespace;
+    if (namespace && namespace.length > longestNamespaceLengthSeen) {
+      longestNamespaceLengthSeen = namespace.length;
+    }
   }
 
   swapLogger(logger: ILogger): void {
@@ -235,12 +327,11 @@ export class NamespacedLogger extends ILogger {
     this.#logger.init();
   }
 
-  log(type: LogLevel, message: string, ...args: unknown[]): void {
-    if (this.#namespace) {
-      this.#logger.log(type, `[${this.#namespace}] ${message}`, ...args);
-    } else {
-      this.#logger.log(type, message, ...args);
-    }
+  log(logLine: LogLine): void {
+    this.#logger.log({
+      ...logLine,
+      namespace: this.#namespace,
+    });
   }
 }
 
