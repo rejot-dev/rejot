@@ -1,5 +1,6 @@
-import { test, expect } from "bun:test";
-import { ILogger, LogLevel, formatLogMessage, shouldLog, NamespacedLogger } from "./logger";
+import { expect, test } from "bun:test";
+
+import { ILogger, LogLevel, NamespacedLogger, shouldLog } from "./logger";
 
 class MockLogger extends ILogger {
   public messages: { type: LogLevel; message: string; args: unknown[] }[] = [];
@@ -32,7 +33,10 @@ test("MockLogger respects log levels", () => {
 });
 
 test("formatLogMessage formats messages correctly", () => {
-  const message = formatLogMessage(LogLevel.ERROR, "test message", { detail: "some detail" });
+  const logger = new MockLogger(LogLevel.ERROR);
+  const message = logger.formatLogMessage(LogLevel.ERROR, "test message", {
+    detail: "some detail",
+  });
 
   expect(message).toMatch(/^\[ERROR\] \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/); // Check timestamp format
   expect(message).toContain("test message");

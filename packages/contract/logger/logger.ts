@@ -9,6 +9,8 @@ export const LogLevel = {
   TRACE: 40,
 } as const;
 
+const LOG_LEVEL_MAX_LENGTH = Math.max(...Object.keys(LogLevel).map((level) => level.length));
+
 export type LogLevelName = keyof typeof LogLevel;
 export type LogLevel = (typeof LogLevel)[LogLevelName];
 
@@ -19,23 +21,20 @@ function serializeArg(arg: unknown): unknown {
   return arg;
 }
 
-export function formatLogMessage(type: LogLevel, message: string, ...args: unknown[]): string {
-  const levelName = Object.entries(LogLevel).find(([_, value]) => value === type)?.[0] ?? "UNKNOWN";
-  const padding = " ".repeat(Math.max(0, 5 - levelName.length));
-  let logMessage = `[${padding}${levelName}] ${new Date().toISOString()} - ${message}`;
-
-  if (args.length > 0) {
-    const serializedArgs = args.map(serializeArg);
-    logMessage += ` ${JSON.stringify(serializedArgs)}`;
-  }
-
-  logMessage += "\n";
-
-  return logMessage;
-}
-
 export function shouldLog(type: LogLevel, currentLogLevel: LogLevel): boolean {
   return type <= currentLogLevel;
+}
+
+export function logLevelToString(level: LogLevel): string {
+  const logLevel = Object.entries(LogLevel).find(([_, value]) => value === level)?.[0];
+  if (!logLevel) {
+    throw new Error(`Invalid log level: ${level}`);
+  }
+  return logLevel;
+}
+
+export function logLevelToStringPadded(level: LogLevel): string {
+  return logLevelToString(level).padEnd(LOG_LEVEL_MAX_LENGTH, " ");
 }
 
 export abstract class ILogger {
@@ -68,6 +67,19 @@ export abstract class ILogger {
     if (shouldLog(type, this.logLevel)) {
       this.log(type, message, ...args);
     }
+  }
+
+  formatLogMessage(type: LogLevel, message: string, ...args: unknown[]): string {
+    let logMessage = `[${logLevelToStringPadded(type)}] ${new Date().toISOString()} - ${message}`;
+
+    if (args.length > 0) {
+      const serializedArgs = args.map(serializeArg);
+      logMessage += ` ${JSON.stringify(serializedArgs)}`;
+    }
+
+    logMessage += "\n";
+
+    return logMessage;
   }
 
   logErrorInstance(error: unknown, logLevel: LogLevel = LogLevel.ERROR): void {
@@ -109,12 +121,61 @@ export abstract class ILogger {
 }
 
 export class ConsoleLogger extends ILogger {
+  #lastLogTime: number;
+
+  constructor(logLevel: LogLevel | string = LogLevel.INFO) {
+    super(logLevel);
+    this.#lastLogTime = Date.now();
+  }
+
   init(): void {
-    //
+    this.#lastLogTime = Date.now();
+  }
+
+  formatElapsedTime(): string {
+    const now = Date.now();
+    const elapsed = now - this.#lastLogTime;
+    this.#lastLogTime = now;
+
+    let formattedElapsedTime = "";
+    // Format as ms/s/m depending on duration
+    if (elapsed < 1000) {
+      formattedElapsedTime = `${elapsed}ms`;
+    } else if (elapsed < 60000) {
+      formattedElapsedTime = `${(elapsed / 1000).toFixed(0)}s`;
+    } else {
+      formattedElapsedTime = `${(elapsed / 60000).toFixed(0)}m`;
+    }
+
+    return ("+" + formattedElapsedTime).padStart(5, " ");
   }
 
   log(type: LogLevel, message: string, ...args: unknown[]): void {
-    console.log(formatLogMessage(type, message, ...args));
+    // Override the timestamp part with elapsed time
+    let logMessage = `[${logLevelToStringPadded(type)}] ${this.formatElapsedTime()} ${message}`;
+
+    if (args.length > 0) {
+      const serializedArgs = args.map(serializeArg);
+      logMessage += ` ${JSON.stringify(serializedArgs)}`;
+    }
+
+    switch (type) {
+      case LogLevel.INFO:
+        console.log(logMessage);
+        break;
+      case LogLevel.WARN:
+        console.warn(logMessage);
+        break;
+      case LogLevel.ERROR:
+        console.error(logMessage);
+        break;
+      case LogLevel.DEBUG:
+        console.debug(logMessage);
+        break;
+      case LogLevel.TRACE:
+        console.trace(logMessage);
+        break;
+    }
   }
 }
 
@@ -127,13 +188,13 @@ export class FileLogger extends ILogger {
   }
 
   init(): void {
-    fs.writeFileSync(this.#logFilePath, formatLogMessage(LogLevel.ERROR, "Log Initialized."), {
+    fs.writeFileSync(this.#logFilePath, this.formatLogMessage(LogLevel.ERROR, "Log Initialized."), {
       flag: "w",
     });
   }
 
   log(type: LogLevel, message: string, ...args: unknown[]): void {
-    const logMessage = formatLogMessage(type, message, ...args);
+    const logMessage = this.formatLogMessage(type, message, ...args);
     fs.appendFileSync(this.#logFilePath, logMessage);
   }
 }

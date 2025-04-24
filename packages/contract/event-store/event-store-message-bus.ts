@@ -1,4 +1,4 @@
-import { Cursors, type Cursor } from "../cursor/cursors";
+import { type Cursor, Cursors } from "../cursor/cursors";
 import { getLogger } from "../logger/logger";
 import type { IMessageBus, OperationMessage } from "../message-bus/message-bus";
 import type { IEventStore } from "./event-store";
@@ -15,7 +15,7 @@ type State = (typeof State)[keyof typeof State];
 
 const INTERVAL_MS = 100;
 
-const log = getLogger();
+const log = getLogger(import.meta.url);
 
 export class EventStoreMessageBus implements IMessageBus {
   readonly #eventStore: IEventStore;
@@ -40,7 +40,7 @@ export class EventStoreMessageBus implements IMessageBus {
       throw new Error("Message bus no longer running.");
     }
 
-    log.debug("publish", { message });
+    log.trace("publish", { message });
     await this.#eventStore.write(message.transactionId, message.operations);
   }
 
@@ -75,9 +75,11 @@ export class EventStoreMessageBus implements IMessageBus {
     while (this.#state === State.RUNNING) {
       const messages = await this.#eventStore.read(this.#cursors.toArray());
 
-      yield* messages;
-
-      this.#cursors.advanceWithMessages(messages);
+      if (messages.length > 0) {
+        log.trace("subscribe yielding", { messages: messages.length });
+        yield* messages;
+        this.#cursors.advanceWithMessages(messages);
+      }
 
       // TODO: This delays shutdown by INTERVAL_MS
       await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));

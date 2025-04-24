@@ -75,6 +75,7 @@ export class SinkWriter {
     }
 
     await Promise.all(allPromises);
+    log.trace("written", { operations: operations.length });
   }
 
   #groupOperationsByDestinationAndType(operations: TransformedOperationWithSource[]): Map<

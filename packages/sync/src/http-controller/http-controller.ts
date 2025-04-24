@@ -1,7 +1,11 @@
 import { serve, type Server } from "bun";
 import { type z, ZodError, ZodType } from "zod";
 
+import { getLogger } from "@rejot-dev/contract/logger";
+
 import { HTTPBadRequestError, HTTPBaseError } from "./http-service-errors";
+
+const log = getLogger(import.meta.url);
 
 interface ServerConfig {
   hostname: string;
@@ -148,7 +152,7 @@ export class HttpController {
   }
 
   async start(): Promise<void> {
-    console.info(`Http controller starting on ${this.#hostname}:${this.#port}`);
+    log.info(`Http controller starting on ${this.#hostname}:${this.#port}`);
 
     this.#server = serve({
       port: this.#port,
