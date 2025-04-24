@@ -1,5 +1,6 @@
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
+
+import { SyncManifestSchema } from "./manifest/manifest.ts";
 
 const SyncManifestJsonSchema = zodToJsonSchema(SyncManifestSchema);
 

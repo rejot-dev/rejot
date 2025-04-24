@@ -160,4 +160,4 @@ export {
   type ManifestDiagnostic,
   type VerificationResult,
   verifyManifests,
-} from "./verify-manifest";
+} from "./verify-manifest.ts";

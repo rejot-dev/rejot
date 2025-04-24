@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { ILogger, LogLevel, NamespacedLogger, shouldLog } from "./logger";
+import { ILogger, LogLevel, NamespacedLogger, shouldLog } from "./logger.ts";
 
 class MockLogger extends ILogger {
   public messages: { type: LogLevel; message: string; args: unknown[] }[] = [];

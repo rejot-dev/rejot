@@ -1,4 +1,4 @@
-import type { OperationMessage } from "../message-bus/message-bus";
+import type { OperationMessage } from "../message-bus/message-bus.ts";
 
 export interface PublicSchemaReference {
   manifest: {

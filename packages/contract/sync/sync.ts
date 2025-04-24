@@ -1,5 +1,6 @@
 import type { z } from "zod";
-import type { ConnectionConfigSchema } from "../manifest/manifest";
+
+import type { ConnectionConfigSchema } from "../manifest/manifest.ts";
 
 type OperationType = "insert" | "update" | "delete";
 

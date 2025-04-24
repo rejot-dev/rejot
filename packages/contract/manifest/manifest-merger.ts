@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest";
+import { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest.ts";
 
 /** Represents the location context for a merge operation */
 export interface MergeLocation {

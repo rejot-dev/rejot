@@ -1,7 +1,7 @@
 import type { z } from "zod";
 
-import type { SyncManifestSchema } from "../manifest/manifest";
-import { type VerificationResult, verifyManifestsWithPaths } from "../manifest/verify-manifest";
+import type { SyncManifestSchema } from "../manifest/manifest.ts";
+import { type VerificationResult, verifyManifestsWithPaths } from "../manifest/verify-manifest.ts";
 
 export interface ManifestWithPath {
   /** Path is relative to the rootPath in the workspace. */

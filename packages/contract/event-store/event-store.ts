@@ -1,5 +1,5 @@
-import type { Cursor, PublicSchemaReference } from "../cursor/cursors";
-import type { OperationMessage } from "../message-bus/message-bus";
+import type { Cursor, PublicSchemaReference } from "../cursor/cursors.ts";
+import type { OperationMessage } from "../message-bus/message-bus.ts";
 
 interface TransformedOperationWithSourceBase {
   type: "insert" | "update" | "delete";

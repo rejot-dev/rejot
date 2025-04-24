@@ -1,7 +1,7 @@
-import { type Cursor, Cursors } from "../cursor/cursors";
-import { getLogger } from "../logger/logger";
-import type { IMessageBus, OperationMessage } from "../message-bus/message-bus";
-import type { IEventStore } from "./event-store";
+import { type Cursor, Cursors } from "../cursor/cursors.ts";
+import { getLogger } from "../logger/logger.ts";
+import type { IMessageBus, OperationMessage } from "../message-bus/message-bus.ts";
+import type { IEventStore } from "./event-store.ts";
 
 const State = {
   INITIAL: 1,

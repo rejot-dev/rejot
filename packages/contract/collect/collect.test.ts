@@ -4,7 +4,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { SchemaCollector } from "./collect";
+import { SchemaCollector } from "./collect.ts";
 
 describe("collect", () => {
   let tmpDir: string;
