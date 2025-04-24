@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
 
-import type { GitIgnorePattern } from "./git-ignore";
+import type { GitIgnorePattern } from "./git-ignore.ts";
 
 export interface SearchResult {
   file: string;

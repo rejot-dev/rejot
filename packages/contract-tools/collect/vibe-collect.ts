@@ -8,8 +8,8 @@ import { getLogger } from "@rejot-dev/contract/logger";
 import type { ConsumerSchemaSchema, PublicSchemaSchema } from "@rejot-dev/contract/manifest";
 import { ManifestMerger, type MergeDiagnostic } from "@rejot-dev/contract/manifest-merger";
 
-import type { IManifestFileManager } from "../manifest/manifest-file-manager";
-import { ManifestPrinter } from "../manifest/manifest-printer";
+import type { IManifestFileManager } from "../manifest/manifest-file-manager.ts";
+import { ManifestPrinter } from "../manifest/manifest-printer.ts";
 import { type IFileFinder } from "./file-finder.ts";
 import { collectGitIgnore } from "./git-ignore.ts";
 

@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
 
 import { FileFinder } from "./file-finder.ts";
-import type { GitIgnorePattern } from "./git-ignore";
+import type { GitIgnorePattern } from "./git-ignore.ts";
 
 describe("file-finder", () => {
   let tmpDir: string;
