@@ -51,11 +51,22 @@
       "bun": "./collect/vibe-collect.ts",
       "types": "./dist/collect/vibe-collect.d.ts",
       "default": "./dist/collect/vibe-collect.js"
+    },
+    "./collect/schema-collector": {
+      "bun": "./collect/schema-collector.ts",
+      "types": "./dist/collect/schema-collector.d.ts",
+      "default": "./dist/collect/schema-collector.js"
+    },
+    "./type-stripper": {
+      "bun": "./type-stripper/type-stripper.ts",
+      "types": "./dist/type-stripper/type-stripper.d.ts",
+      "default": "./dist/type-stripper/type-stripper.js"
     }
   },
   "type": "module",
   "dependencies": {
     "@rejot-dev/contract": "*",
+    "esbuild": "^0.25.3",
     "glob": "^11.0.1"
   }
 }

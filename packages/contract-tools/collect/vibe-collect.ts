@@ -2,7 +2,6 @@ import { dirname, relative } from "node:path";
 
 import { z } from "zod";
 
-import type { CollectedSchemas, ISchemaCollector } from "@rejot-dev/contract/collect";
 import { ReJotError } from "@rejot-dev/contract/error";
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { ConsumerSchemaSchema, PublicSchemaSchema } from "@rejot-dev/contract/manifest";
@@ -12,6 +11,7 @@ import type { IManifestFileManager } from "../manifest/manifest-file-manager.ts"
 import { ManifestPrinter } from "../manifest/manifest-printer.ts";
 import { type IFileFinder } from "./file-finder.ts";
 import { collectGitIgnore } from "./git-ignore.ts";
+import type { CollectedSchemas, ISchemaCollector } from "./schema-collector.ts";
 
 const log = getLogger(import.meta.url);
 

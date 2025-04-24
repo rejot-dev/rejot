@@ -4,7 +4,10 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { SchemaCollector } from "./collect.ts";
+import { ConsoleLogger, setLogger } from "@rejot-dev/contract/logger";
+
+import { TypeStripper } from "../type-stripper/type-stripper.ts";
+import { SchemaCollector } from "./schema-collector.ts";
 
 describe("collect", () => {
   let tmpDir: string;
@@ -15,14 +18,14 @@ describe("collect", () => {
     tmpDir = await mkdtemp(join(tmpdir(), "collect-test-"));
     manifestPath = join(tmpDir, "rejot-manifest.json");
     await writeFile(manifestPath, JSON.stringify({ slug: "@test/", manifestVersion: 0 }));
-    collector = new SchemaCollector();
+    collector = new SchemaCollector(new TypeStripper());
   });
 
   afterEach(async () => {
     await rm(tmpDir, { recursive: true, force: true });
   });
 
-  describe("collectSchemas", () => {
+  describe("collectSchemas without type stripping", () => {
     it("should collect a single public schema", async () => {
       const schemaFile = join(tmpDir, "schema.ts");
       const schemaContent = `
@@ -310,6 +313,64 @@ describe("collect", () => {
       const result = await collector.collectSchemas(manifestPath, schemaFile);
       expect(result.publicSchemas).toHaveLength(0);
       expect(result.consumerSchemas).toHaveLength(0);
+    });
+  });
+
+  describe("collectSchemas with type stripping (esbuild)", () => {
+    beforeEach(async () => {
+      class TypeStripperAlways extends TypeStripper {
+        override processSupportsTypeStripping(): boolean {
+          return false;
+        }
+      }
+
+      collector = new SchemaCollector(new TypeStripperAlways());
+    });
+
+    it("should collect a single public schema", async () => {
+      const schemaFile = join(tmpDir, "schema.ts");
+
+      setLogger(new ConsoleLogger("DEBUG"));
+
+      // Add an interface so it has to be stripped to be valid js.
+      const schemaContent = `
+        interface Bla {
+          name: string;
+        }
+
+        export default {
+          name: "test-schema",
+          source: {
+            dataStoreSlug: "source-store",
+            tables: ["table1"]
+          },
+          outputSchema: {
+            type: "object",
+            properties: {
+              test: { type: "string" }
+            }
+          },
+          transformations: [
+            {
+              transformationType: "postgresql",
+              table: "table1",
+              sql: "SELECT * FROM table1"
+            }
+          ],
+          version: {
+            major: 1,
+            minor: 0
+          }
+        };
+      `;
+      await writeFile(schemaFile, schemaContent);
+
+      const result = await collector.collectSchemas(manifestPath, schemaFile);
+      expect(result.publicSchemas).toHaveLength(1);
+      expect(result.consumerSchemas).toHaveLength(0);
+      expect(result.publicSchemas[0].name).toBe("test-schema");
+      expect(result.publicSchemas[0].version.major).toBe(1);
+      expect(result.publicSchemas[0].definitionFile).toBe("schema.ts");
     });
   });
 });
