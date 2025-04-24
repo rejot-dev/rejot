@@ -1,7 +1,9 @@
-import { test, expect, describe, beforeAll, afterAll } from "bun:test";
-import { getTestClient, pgRollbackDescribe } from "./postgres-test-utils.ts";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { DatabaseError } from "pg";
+
 import { PG_INVALID_TEXT_REPRESENTATION } from "./postgres-error-codes.ts";
+import { getTestClient, pgRollbackDescribe } from "./postgres-test-utils.ts";
 
 describe("PostgresClient", () => {
   const randomTableName = `test_${Math.random().toString(36).substring(2, 15)}`;

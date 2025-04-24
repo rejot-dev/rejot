@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 
-import { initSqlparser } from "../../../sqlparser";
+import { initSqlparser } from "@rejot-dev/sqlparser";
+
 import {
   convertNamedToPositionalPlaceholders,
   validateSqlPlaceholders,

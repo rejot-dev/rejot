@@ -4,8 +4,8 @@ import { z } from "zod";
 
 import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
 import { createPublicSchema } from "@rejot-dev/contract/public-schema";
+import { initSqlparser } from "@rejot-dev/sqlparser";
 
-import { initSqlparser } from "../../../sqlparser";
 import { PostgresConsumerSchemaValidationAdapter } from "./pg-consumer-schema-validation-adapter.ts";
 
 // Initialize the SQL parser before running tests

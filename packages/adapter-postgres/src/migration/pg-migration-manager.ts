@@ -1,6 +1,6 @@
 import { getLogger } from "@rejot-dev/contract/logger";
 
-import type { PostgresClient } from "../util/postgres-client";
+import type { PostgresClient } from "../util/postgres-client.ts";
 
 const log = getLogger(import.meta.url);
 

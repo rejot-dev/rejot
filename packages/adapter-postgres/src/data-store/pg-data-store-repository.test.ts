@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from "bun:test";
 
-import { PostgresClient } from "../util/postgres-client";
-import { pgRollbackDescribe } from "../util/postgres-test-utils";
+import { PostgresClient } from "../util/postgres-client.ts";
+import { pgRollbackDescribe } from "../util/postgres-test-utils.ts";
 import { PostgresConsumerDataStoreSchemaManager } from "./pg-consumer-data-store-schema-manager.ts";
 import { getPublicSchemaStates, updatePublicSchemaState } from "./pg-data-store-repository.ts";
 

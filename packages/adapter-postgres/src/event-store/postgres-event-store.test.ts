@@ -8,7 +8,7 @@ import type {
   TransformedOperationWithSourceUpdate,
 } from "@rejot-dev/contract/event-store";
 
-import { pgRollbackDescribe } from "../util/postgres-test-utils";
+import { pgRollbackDescribe } from "../util/postgres-test-utils.ts";
 import { PostgresEventStore } from "./postgres-event-store.ts";
 
 const TEST_SCHEMA_NAME = "rejot_events";

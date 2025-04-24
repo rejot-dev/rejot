@@ -3,7 +3,7 @@ import type { IEventStore, TransformedOperationWithSource } from "@rejot-dev/con
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { OperationMessage } from "@rejot-dev/contract/message-bus";
 
-import { PostgresClient } from "../util/postgres-client";
+import { PostgresClient } from "../util/postgres-client.ts";
 import { PostgresEventStoreRepository } from "./pg-event-store-repository.ts";
 import { EventStoreSchemaManager } from "./pg-event-store-schema-manager.ts";
 

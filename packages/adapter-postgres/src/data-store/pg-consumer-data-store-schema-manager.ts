@@ -1,5 +1,5 @@
-import type { PostgresClient } from "../util/postgres-client";
-import { PgMigrationManager, type Migration } from "../migration/pg-migration-manager";
+import { type Migration, PgMigrationManager } from "../migration/pg-migration-manager.ts";
+import type { PostgresClient } from "../util/postgres-client.ts";
 
 export const SCHEMA_NAME = "rejot_data_store";
 export const PUBLIC_SCHEMA_STATE_TABLE = "public_schema_state";

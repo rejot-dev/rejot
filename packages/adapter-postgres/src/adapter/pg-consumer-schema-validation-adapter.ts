@@ -8,7 +8,7 @@ import type { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
 import type { ConsumerSchemaSchema } from "@rejot-dev/contract/manifest";
 import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
 
-import { validateConsumerSchema } from "../sql-transformer/sql-transformer";
+import { validateConsumerSchema } from "../sql-transformer/sql-transformer.ts";
 
 export class PostgresConsumerSchemaValidationAdapter
   implements

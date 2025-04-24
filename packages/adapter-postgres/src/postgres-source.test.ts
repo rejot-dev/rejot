@@ -1,8 +1,10 @@
-import { test, expect, beforeEach, afterEach, describe } from "bun:test";
-import { PostgresSource } from "./postgres-source.ts";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+
 import { watermarkFromTransaction } from "@rejot-dev/sync/sync-controller";
-import { getTestClient } from "./util/postgres-test-utils.ts";
+
+import { PostgresSource } from "./postgres-source.ts";
 import type { PostgresClient } from "./util/postgres-client.ts";
+import { getTestClient } from "./util/postgres-test-utils.ts";
 
 const TEST_TABLE_NAME = "test_pg_source";
 const TEST_PUBLICATION_NAME = "test_publication";

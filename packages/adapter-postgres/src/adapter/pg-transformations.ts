@@ -1,5 +1,5 @@
-import type { PublicSchemaTransformation } from "@rejot-dev/contract/public-schema";
 import type { ConsumerSchemaTransformation } from "@rejot-dev/contract/consumer-schema";
+import type { PublicSchemaTransformation } from "@rejot-dev/contract/public-schema";
 
 export function createPostgresPublicSchemaTransformation(
   table: string,

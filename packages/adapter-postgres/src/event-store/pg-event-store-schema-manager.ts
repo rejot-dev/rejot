@@ -1,5 +1,5 @@
-import type { PostgresClient } from "../util/postgres-client";
-import { PgMigrationManager, type Migration } from "../migration/pg-migration-manager";
+import { type Migration, PgMigrationManager } from "../migration/pg-migration-manager.ts";
+import type { PostgresClient } from "../util/postgres-client.ts";
 
 export const EVENT_STORE_MIGRATIONS: Migration[] = [
   {

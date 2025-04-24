@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from "bun:test";
 
-import { getTestConnectionConfig, pgRollbackDescribe } from "../util/postgres-test-utils";
+import { getTestConnectionConfig, pgRollbackDescribe } from "../util/postgres-test-utils.ts";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
 import { PostgresIntrospectionAdapter } from "./pg-introspection-adapter.ts";
 

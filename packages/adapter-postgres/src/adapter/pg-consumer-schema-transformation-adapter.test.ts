@@ -5,8 +5,8 @@ import { z } from "zod";
 import type { OperationTransformationPair } from "@rejot-dev/contract/adapter";
 import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
 
-import { PostgresConsumerDataStoreSchemaManager } from "../data-store/pg-consumer-data-store-schema-manager";
-import { getTestConnectionConfig, pgRollbackDescribe } from "../util/postgres-test-utils";
+import { PostgresConsumerDataStoreSchemaManager } from "../data-store/pg-consumer-data-store-schema-manager.ts";
+import { getTestConnectionConfig, pgRollbackDescribe } from "../util/postgres-test-utils.ts";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
 import { PostgresConsumerSchemaTransformationAdapter } from "./pg-consumer-schema-transformation-adapter.ts";
 

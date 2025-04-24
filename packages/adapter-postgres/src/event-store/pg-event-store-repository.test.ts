@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from "bun:test";
 
-import { PostgresClient } from "../util/postgres-client";
-import { pgRollbackDescribe } from "../util/postgres-test-utils";
+import { PostgresClient } from "../util/postgres-client.ts";
+import { pgRollbackDescribe } from "../util/postgres-test-utils.ts";
 import { PostgresEventStoreRepository } from "./pg-event-store-repository.ts";
 import { EventStoreSchemaManager } from "./pg-event-store-schema-manager.ts";
 
