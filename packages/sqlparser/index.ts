@@ -1,10 +1,11 @@
 import init, {
+  find_placeholders_wasm,
   parse_sql,
   statements_to_sql,
-  find_placeholders_wasm,
   // Note this package lives in a different repo.
 } from "@rejot-dev/sqlparser-wasm";
-import type { Query } from "./types";
+
+import type { Query } from "./types.ts";
 
 let initialized = false;
 export async function initSqlparser(): Promise<void> {
