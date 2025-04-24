@@ -1,0 +1,40 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"figure"> & {
+  src: string;
+  srcDark?: string;
+  caption?: string;
+};
+
+const { class: className = "", src, srcDark, caption, ...props } = Astro.props;
+---
+
+<figure {...props}>
+  <div class="flex items-center justify-center">
+    <object
+      class:list={["size-full", className, { "dark:hidden": srcDark }]}
+      data={src}
+      type="image/svg+xml"
+    >
+    </object>
+    {
+      srcDark && (
+        <object
+          class:list={["hidden size-full dark:block", className]}
+          data={srcDark}
+          type="image/svg+xml"
+        >
+          {" "}
+        </object>
+      )
+    }
+  </div>
+  {
+    caption && (
+      <figcaption class="mx-auto max-w-prose text-center text-sm text-gray-600 dark:text-gray-400">
+        {caption}
+      </figcaption>
+    )
+  }
+</figure>

@@ -1,0 +1,41 @@
+---
+import { getEntry, render } from "astro:content";
+import Prose from "../components/Prose.astro";
+import TableOfContents from "../components/TableOfContents.astro";
+import FormattedDate from "../components/FormattedDate.astro";
+
+import { pageTitle } from "../consts";
+import Base from "../layouts/Base.astro";
+
+const title = "Terms of Use";
+const post = await getEntry("legalDocs", "terms-of-use");
+if (!post) throw new Error("ToS not found");
+const { Content, headings } = await render(post);
+---
+
+<Base title={pageTitle(title)} description="ReJot's Terms of Use">
+  <div class="w-full max-w-6xl">
+    <div class="flex w-full flex-col space-y-6 py-4 text-center leading-none">
+      <h1 class="mx-auto max-w-4xl text-4xl font-bold text-gray-800 dark:text-gray-200">
+        {title}
+      </h1>
+      <div class="flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
+        <span><FormattedDate date={post.data.publicationDate} /></span>
+      </div>
+      <div class="mx-auto w-full max-w-2xl">
+        <hr />
+      </div>
+    </div>
+
+    <div class="mt-10 flex flex-row justify-center gap-8">
+      <div class="max-w-prose flex-1">
+        <Prose>
+          <Content />
+        </Prose>
+      </div>
+      <aside class="hidden max-w-sm lg:block">
+        <TableOfContents headings={headings} />
+      </aside>
+    </div>
+  </div>
+</Base>

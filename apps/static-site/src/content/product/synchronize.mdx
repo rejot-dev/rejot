@@ -1,0 +1,38 @@
+---
+title: Synchronize
+description:
+  Automatically synchronize data from one datastore to another. This helps you answer analytical
+  questions while staying in the business logic layer of your system.
+---
+
+# Synchronize
+
+When building applications and dealing with data, we discern two distinct stages in the lifecycle of
+data: the write and the read path. When using a typical client/server model the client requests data
+fetches and mutations on demand. In the synchronization paradigm, we turn this model on its head.
+Instead of requesting the data from the server when needed, we already synchronize the data from the
+server to the client. This happens during the write path, meaning the data is already available
+before it's even requested.
+
+This has a number of tangible benefits:
+
+- Performance is improved. Instead of fetching on-demand and waiting for several hundred
+  milliseconds, the data is already available.
+- The development process is simplified, as the developer can focus on the business logic rather
+  than the data synchronization. This in turn reduces the turn-around time for new features.
+- Product teams can more easily integrate data from other teams. This increases platform cohesion.
+
+ReJot helps you to merge the write and read paths. By setting up connections between multiple
+databases, or databases and apps, you get to reap the benefits of synchronization without the hassle
+of setting up complex integrations. Our synchronization engine is built to scale and help you
+achieve your goals quickly.
+
+import CardHolder from "../../components/card/CardHolder.astro";
+import UseCaseCard from "../../components/use-cases/UseCaseCard.astro";
+
+## Use Cases
+
+<CardHolder>
+  <UseCaseCard slug="local-first" />
+  <UseCaseCard slug="backend-for-frontend" />
+</CardHolder>

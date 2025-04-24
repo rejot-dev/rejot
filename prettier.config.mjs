@@ -6,7 +6,28 @@ const prettierConfig = {
   useTabs: false,
   printWidth: 100,
   trailingComma: "all",
-  plugins: ["prettier-plugin-embed", "prettier-plugin-sql", "prettier-plugin-tailwindcss"],
+  plugins: [
+    "prettier-plugin-embed",
+    "prettier-plugin-sql",
+    "prettier-plugin-tailwindcss",
+    "prettier-plugin-astro",
+  ],
+  // static-site
+  proseWrap: "always",
+  overrides: [
+    {
+      files: "*.astro",
+      options: {
+        parser: "astro",
+      },
+    },
+    {
+      files: "*.mdx",
+      options: {
+        parser: "mdx",
+      },
+    },
+  ],
 };
 
 /** @type {import('prettier-plugin-embed').PrettierPluginEmbedOptions} */

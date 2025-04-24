@@ -1,0 +1,39 @@
+---
+title: "Resolvers"
+---
+
+Resolvers are components that determine how to connect to sync services based on manifest slugs.
+
+## Localhost Resolver
+
+A resolver for local development that always returns `localhost:port`. This is intended for
+development purposes only and works with a single sync service.
+
+```bash
+rejot-cli manifest sync --resolver localhost
+```
+
+## Environment Resolver
+
+Resolves hosts using environment variables. The format for environment variables is:
+
+```
+REJOT_SYNC_SERVICE_<slug>=<host>:<port>
+```
+
+Example:
+
+```bash
+REJOT_SYNC_SERVICE_MY_MANIFEST=my-service:3000
+REJOT_SYNC_SERVICE_ANOTHER=another-service:4000
+```
+
+```bash
+rejot-cli manifest sync --resolver env
+```
+
+### Kubernetes Resolver
+
+A resolver for Kubernetes environments that constructs service DNS names following the Kubernetes
+service naming convention. The hostname format is: <br/>
+`rejot-manifest-<slug>.<namespace>.svc.cluster.local`

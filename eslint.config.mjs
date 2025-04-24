@@ -23,7 +23,7 @@ const _unicornFixableRules = Object.fromEntries(
 
 export default tseslint.config(
   {
-    ignores: ["**/node_modules/**", "**/dist/**"],
+    ignores: ["**/node_modules/**", "**/dist/**", "apps/docs/.astro/**"],
   },
   eslint.configs.recommended,
   tseslint.configs.recommended,
@@ -114,6 +114,12 @@ export default tseslint.config(
       ...eslintPluginTailwindcss.configs["recommended"].rules,
       // Fixed by prettier tailwind
       "tailwindcss/classnames-order": "off",
+      "tailwindcss/no-custom-classname": [
+        "warn",
+        {
+          whitelist: ["cf-turnstile"],
+        },
+      ],
     },
     settings: {
       tailwindcss: {

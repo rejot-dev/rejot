@@ -1,0 +1,51 @@
+---
+import Base from "../../layouts/Base.astro";
+import { pageTitle, REJOT_TAG_LINE } from "../../consts";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog")).sort(
+  (a, b) => b.data.publicationDate.valueOf() - a.data.publicationDate.valueOf(),
+);
+---
+
+<Base title={pageTitle("Blog")} description={REJOT_TAG_LINE}>
+  <div class="w-full max-w-5xl">
+    <div class="mb-16 text-center">
+      <h1 class="mb-4 text-4xl font-bold">ReJot Blog</h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Updates and thoughts from the ReJot team.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+      {
+        posts.map((post) => (
+          <a
+            href={`/blog/${post.id}/`}
+            class="group block overflow-hidden rounded-xl bg-white p-4 shadow-sm transition-all hover:shadow-lg dark:bg-gray-800"
+          >
+            <img
+              width={720}
+              height={360}
+              src={post.data.heroImage}
+              alt=""
+              class="mb-4 h-48 w-full rounded-lg object-cover"
+            />
+            <h2 class="mb-2 text-xl font-semibold text-gray-900 group-hover:text-[rgb(var(--accent))] dark:text-white">
+              {post.data.title}
+            </h2>
+            <div class="flex items-center">
+              <span class="text-sm text-gray-600 dark:text-gray-400">
+                {new Date(post.data.publicationDate).toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</Base>

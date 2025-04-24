@@ -1,0 +1,22 @@
+---
+title: "Manifest"
+---
+
+The manifest is a JSON file that describes all of ReJot's configuration.
+
+Manifests are used by Sync Services to understand what data needs to be synced where. Manifests may
+be distributed over multiple files and usually follow organizational structure.
+
+See our [guide](/docs/guides/managing-manifests) on how to set up your own manifests.
+
+import ApiSchema from "@/components/schema/ApiSchema.astro";
+import manifestSchema from "@/content/manifests/manifest_v0.json";
+
+{/* TODO: actually generate this from the manifest jsonschema, and make sure its versioned, for now I ask the LLM to generate the structure below */}
+
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/"
+  externalKeys={["connections", "dataStores", "eventStores", "publicSchemas", "consumerSchemas"]}
+/>

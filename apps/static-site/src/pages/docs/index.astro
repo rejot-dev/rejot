@@ -1,0 +1,12 @@
+---
+import { getCollection } from "astro:content";
+import DocsEntry from "./[...slug].astro";
+
+const indexPage = (await getCollection("docs")).find((entry) => entry.id === "index");
+
+if (!indexPage) {
+  throw new Error("Index page not found");
+}
+---
+
+<DocsEntry {...indexPage} />

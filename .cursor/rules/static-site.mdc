@@ -1,0 +1,44 @@
+---
+description: 
+globs: apps/static-site/*
+alwaysApply: false
+---
+# https://rejot.dev
+
+Static landing page and documentation for ReJot, a database sync engine.
+
+## Technology
+
+- Astro: we use astro components extensively.
+- Tailwind: ALWAYS use Tailwind css as opposed to vanilla CSS.
+
+## Project Structure
+
+This is an Astro-based website with the following structure:
+
+- `apps/static-site/src/pages/` - Contains Astro pages that define routes
+- `apps/static-site/src/components/` - Contains reusable Astro, React, or other UI components
+- `apps/static-site/src/layouts/` - Contains layout templates for pages
+- `apps/static-site/src/content/` - Contains blog posts and other content collections
+- `apps/static-site/src/styles/` - Contains global CSS styles
+- `apps/static-site/src/pixi/` - Contains PixiJS-related code for interactive graphics
+- `apps/static-site/src/util/` - Contains utility functions
+- `apps/static-site/public/` - Contains static assets like images and fonts
+- `apps/static-site/functions/` - Contains Cloudflare Pages Functions for server-side functionality
+
+## Content Management
+
+How content is organized and managed:
+
+- Blog posts are stored in `apps/static-site/src/content/blog/` as MDX files
+- Content collections are configured in `apps/static-site/src/content.config.ts`
+- Static assets for content are stored in `apps/static-site/public/content/`
+
+## Special Features
+
+Notable features of this project:
+
+- Chess visualization using PixiJS (`apps/static-site/src/chess.ts`, `apps/static-site/src/chessPieces.ts`)
+- Cloudflare Pages Functions for server-side functionality (`apps/static-site/functions/`)
+- Excalidraw SVG processing (`apps/static-site/scripts/process-excalidraw-svgs.ts`)
+- Form handling with Cloudflare Pages plugin (`apps/static-site/functions/resend.ts`)

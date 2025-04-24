@@ -1,0 +1,28 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
+<form class:list={["w-full", className]} data-static-form-name="newsletter-form">
+  <div class="flex items-center border-b border-rejot-red-500 py-2">
+    <input
+      class="w-full border-none bg-transparent px-2 py-1 leading-tight text-gray-700 focus:outline-none"
+      id="email"
+      name="email"
+      type="email"
+      placeholder="you@example.com"
+      required
+    />
+    <button
+      class="shrink-0 rounded-lg bg-rejot-red-600 px-6 py-2 text-white hover:bg-rejot-red-700 focus:outline-none"
+      type="submit"
+    >
+      Sign Up
+    </button>
+  </div>
+  <div class="cf-turnstile" data-sitekey="0x4AAAAAAA4FaYb93O-Sw1Y9"></div>
+</form>

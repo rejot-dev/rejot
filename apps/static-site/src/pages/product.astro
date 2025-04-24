@@ -1,0 +1,47 @@
+---
+import { getCollection, render } from "astro:content";
+import { pageTitle, REJOT_TAG_LINE } from "../consts";
+import Base from "../layouts/Base.astro";
+import Prose from "../components/Prose.astro";
+
+const collection = await getCollection("product");
+
+const { Content: ContentSynchronize } = await render(
+  collection.find((item) => item.id === "synchronize")!,
+);
+const { Content: ContentTransform } = await render(
+  collection.find((item) => item.id === "transform")!,
+);
+const { Content: ContentEvolve } = await render(collection.find((item) => item.id === "control")!);
+const { Content: ContentOwn } = await render(collection.find((item) => item.id === "own")!);
+---
+
+<Base title={pageTitle("Product")} description={REJOT_TAG_LINE}>
+  <article class="w-full max-w-prose space-y-12">
+    <div class="mb-16 text-center">
+      <h1 class="mb-4 text-4xl font-bold">Explore our Product</h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Get to know the ins and outs of <span class="font-bold text-rejot-red-500">ReJot</span>
+      </p>
+    </div>
+    <Prose>
+      <div
+        class="mx-0 mb-12 border border-gray-200 p-4 drop-shadow-sm md:mx-4 md:p-8 dark:border-gray-700"
+      >
+        <span class="mb-8 text-2xl font-bold">Abstract</span>
+        <p class="mb-0 text-gray-600 dark:text-gray-400">
+          By combining transformation rules with synchronization and access control, ReJot allows
+          you to create a coherent data system that is graspable and maintainable. The flow and
+          transformation of data is made explicit, giving enterprises ultimate control over their
+          data. Emergent complexity is the biggest factor in slowing down development. We provide
+          the tools to tame this complexity.
+        </p>
+      </div>
+
+      <ContentSynchronize />
+      <ContentTransform />
+      <ContentEvolve />
+      <ContentOwn />
+    </Prose>
+  </article>
+</Base>

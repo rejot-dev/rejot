@@ -1,0 +1,27 @@
+---
+import { type CollectionEntry, getCollection } from "astro:content";
+import { render } from "astro:content";
+import Prose from "../../components/Prose.astro";
+import Base from "@/layouts/Base.astro";
+import { pageTitle } from "@/consts";
+
+export async function getStaticPaths() {
+  const caseStudyEntries = await getCollection("caseStudies");
+  return caseStudyEntries.map((entry) => ({
+    params: { slug: entry.id },
+    props: entry,
+  }));
+}
+type Props = CollectionEntry<"caseStudies">;
+
+const post = Astro.props;
+const { Content } = await render(post);
+---
+
+<Base title={pageTitle(post.data.title)} description={post.data.description}>
+  <article class="w-full max-w-prose space-y-12">
+    <Prose>
+      <Content />
+    </Prose>
+  </article>
+</Base>

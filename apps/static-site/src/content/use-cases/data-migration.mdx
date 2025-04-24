@@ -1,0 +1,84 @@
+---
+title: "Data Migration"
+description:
+  "Seamlessly migrate your data between different database systems or schemas while maintaining data
+  integrity and minimizing downtime. ReJot's sync engine ensures your data transitions smoothly with
+  minimal risk."
+---
+
+# Data Migration
+
+Data evolution is one of the hardest problems in software engineering. ReJot makes moving data
+between databases or clusters easy while also enabling smoother data migrations. Using our sync
+engine, we can effortlessly create a read-copy of the new model while keeping writes on the old
+version until fully verified.
+
+In this use case, we will outline migrating data from a legacy database to a new database. The same
+steps can be applied to migrating data to a new cluster, or a different schema in the same database.
+
+## Background
+
+There are some terms you'll need to understand before we get started:
+
+- **Data Store**: A database. The canonical owner of the data you want to migrate. Typically has
+  some sort of schema.
+- **Data Server**: The service that interacts with the data store. We see this as the logical
+  "owner" of the data within the data store. Typically this service is stateless and is running in
+  multiple (load balanced) instances. Contains authentication routines and other business logic.
+- **Data Client**: An application that interacts with the server. This is usually (but not in this
+  use case) a frontend or user-facing application. The client also has a backing data store, but
+  this is usually ephemeral. It can be reconstructed from the data in the server/store.
+
+## Context
+
+We'll be using the "Strangler Pattern" to migrate data from a legacy database to a new database.
+This pattern involves creating a new data server that interacts with the new database. We'll then
+slowly migrate data from the old database to the new one while keeping the old data server running
+and serving requests. Once the data has been migrated, we'll switch over to the new data server.
+
+The synchronization engine at the core of ReJot is designed to move data from a _data server_ to a
+_data client_. If there are no transformations or access rules in place, this is a 1:1 mapping. Once
+the client is up-to-date, the client contains a full copy of the data.
+
+Business logic that is part of the data server can choose to atomically change data in the store. A
+data client does not have this ability. It can only interact with the server through issuing
+commands. The server then decides to honor the command or not.
+
+## Method
+
+The steps to take are (roughly) the following:
+
+1. Create a new data client that follows the data server we want to migrate.
+2. (Optional) Setup transformation rules to transform data from the old schema to the new one.
+3. Wait for the data client to (almost)catch up to the data server.
+4. Switch reads from the data server to the data client.
+5. Promote the data client to be the new data server.
+6. Get rid of the old data server.
+
+There are some caveats to this method:
+
+- If there are transformation rules in place, the business logic contained in the data server will
+  need to be able to handle the old schema as well as the new schema.
+- Since synchronization is an eventually consistent process, there is a small window where the data
+  client may seem to have fully caught up, but there is still some data in transition. Thus, when
+  promoting the client, we need to buffer any modifications that are currently being applied to the
+  original server.
+- In the case where the data store does not use commands, and instead writes directly to the store,
+  it will not be trivial to promote the data client. Commands can be buffered, while direct writes
+  can have arbitrary mutations that cannot be buffered. In that case it might be necessary to
+  migrate some business logic first to use the more ReJot-friendly command pattern.
+
+## Key Benefits
+
+- **Zero Downtime**: Keep your system running while migrating data
+- **Data Integrity**: Ensure no data is lost during the migration process
+- **Verification**: Compare old and new data stores before switching
+- **Rollback Safety**: Easily revert to the original system if needed
+
+## Common Use Cases
+
+- Database upgrades
+- Schema changes
+- Storage system migrations
+- Cloud migrations
+- Database replication setup

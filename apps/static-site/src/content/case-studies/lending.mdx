@@ -1,0 +1,115 @@
+---
+title: "Lending Case Study"
+description: "Lending"
+---
+
+# Financial Technology Firm Lending Case Study
+
+{/* "What project was this person trying to accomplish?" */}
+
+In this study, we look at a financial technology firm that had been working on a business financing
+product, this product would offer access to fast and flexible financing for small and medium-sized
+businesses. At the same time, a team in a different division worked on extending their existing card
+issuing product to include credit options. A problem materialized: The two products have a mutual
+data dependency on the total lending position of a customer. ReJot was able to help unravel the
+dependencies by providing deep data integration between teams through its synchronization engine.
+
+## Key Results
+
+- ReJot significantly reduced the time to market for the capital loan product. Development cycles
+  were saved for both product managers and engineers.
+- A single source of truth for the total lending position of a customer was created, reducing the
+  risk of inconsistencies and errors. Minimal technical debt was created in the process.
+- Product teams are empowered by staying in charge of their data, instead of becoming implicitly
+  dependent on ETL pipelines. Any future product enhancements are not hindered.
+
+## Project
+
+{/* Context: "Why was this project on their critical path?" */}
+
+For the FinTech firm, it is crucial to determine the total lending position of a customer before
+approving a loan or any other financial product. For either of the two products to be able to go
+live successfully, data from both teams needs to be integrated:
+
+- Before setting a credit limit, any currently open capital loan must be taken into account.
+- Before approving a capital loan, the customer's total credit limit and open credit must be known.
+
+One key requirement is that this information needs to be considered in real-time, when the customer
+requests a loan or a credit limit increase. This request is usually made through a REST API.
+
+In this case, the firm decided to go live with the credit card product first, as it is an addition
+to an existing product. Thus, the capital product had to be delayed. A decision had to be made on
+how data would be shared between the two teams. To still be first to market with the financing
+product, the teams had to improvise.
+
+## Options
+
+In an alignment meeting, the teams discussed a number of options available to them. The main goals
+were to reduce time-to-market and minimize technical debt created, as both teams had their planning
+to consider. The following options were discussed before the introduction of ReJot.
+
+### Option 1: ETL - Reverse ETL
+
+The company has an internal data platform capable of combining data from multiple sources. It seemed
+like a decent choice for the problem at hand. Yet, there were some clear downsides:
+
+- Data Analysts own the ETL pipelines at the company, alignment between product and data teams would
+  delay the go-to-market date.
+- ETL pipelines are batched, rather than real-time. Either one of the teams would have stale data
+  (by a day for a nightly batch job) from the other team.
+- Reverse ETL was not a typical use case for the data team, there was no clear path forward without
+  involving infrastructure teams.
+
+### Option 2: Event Streaming
+
+An alternative considered was the event queuing/streaming platform for asynchronous communication
+between teams. Again, a number of downsides would cause problems:
+
+- Integrating events from another team would mean setting up bespoke consumers, something that would
+  require additional development time. Both teams would need to integrate events from the other
+  team, meaning they would both have to implement similar, yet different, logic.
+- New topic-partitions would have to be created, something that was not self-service available to
+  product teams at this company.
+
+### Option 3: Intermediary Service
+
+The last option would have both teams integrate with a to-be-created intermediary service. This
+service would become the source of truth for any credit given out to a single customer. Although the
+idea of having a single source of truth for credit limits is appealing, there would be several
+downsides:
+
+- The new service would require a significant amount of development time.
+- Ownership of the new service would be unclear, as it would be used by multiple teams.
+- The new service would have to be maintained, which would add to the _ongoing_ costs of the
+  project(s).
+
+## Using ReJot
+
+{/* HOW exactly did they complete the project? (e.g., with help from your product) */}
+
+ReJot's **integration through synchronization** approach changes the way the teams look at the
+problem.
+
+To solve the problem at hand, both teams defined a ReJot contract which represents the data used by
+their respective products. This contract is automatically entered into the catalog of the company.
+From this data, a "total lending position" is derived. ReJot's synchronization engine keeps the data
+up-to-date. Both teams then use this data in their products, and make decisions based on it. This
+elementary level of data modelling and integration is the simple strength of ReJot.
+
+This solution is conceptually similar to the "Intermediary Service" option, but the downsides do not
+apply because of the automatic synchronization.
+
+### Insights
+
+Jump back to key insights.
+
+import ArrowRight from "astro-heroicons/solid/ArrowRight.astro";
+
+<a href="#key-results" class="no-underline">
+  <div class="text-rejot-red-600 flex items-center gap-2">
+    <span class="font-medium">Key Insights</span>
+    <ArrowRight class="size-5" />
+  </div>
+</a>
+
+{/* WHAT did they buy? (AKA: Your packaging, positioning, pricing, offer, etc.) */}

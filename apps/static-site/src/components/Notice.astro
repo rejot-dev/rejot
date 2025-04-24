@@ -1,0 +1,69 @@
+---
+interface Props {
+  type: "NOTE" | "TIP" | "IMPORTANT" | "WARNING" | "CAUTION";
+  title?: string;
+}
+
+import InformationCircle from "astro-heroicons/outline/InformationCircle.astro";
+import LightBulb from "astro-heroicons/outline/LightBulb.astro";
+import ExclamationCircle from "astro-heroicons/outline/ExclamationCircle.astro";
+import ExclamationTriangle from "astro-heroicons/outline/ExclamationTriangle.astro";
+import XCircle from "astro-heroicons/outline/XCircle.astro";
+
+const { type, title = type } = Astro.props;
+
+// Define colors for each notice type
+const colors = {
+  NOTE: {
+    bg: "bg-blue-50 dark:bg-blue-900/30",
+    border: "border-blue-300 dark:border-blue-700",
+    title: "text-blue-800 dark:text-blue-200",
+    icon: "text-blue-500 dark:text-blue-400",
+  },
+  TIP: {
+    bg: "bg-green-50 dark:bg-green-900/30",
+    border: "border-green-300 dark:border-green-700",
+    title: "text-green-800 dark:text-green-200",
+    icon: "text-green-500 dark:text-green-400",
+  },
+  IMPORTANT: {
+    bg: "bg-purple-50 dark:bg-purple-900/30",
+    border: "border-purple-300 dark:border-purple-700",
+    title: "text-purple-800 dark:text-purple-200",
+    icon: "text-purple-500 dark:text-purple-400",
+  },
+  WARNING: {
+    bg: "bg-yellow-50 dark:bg-yellow-900/30",
+    border: "border-yellow-300 dark:border-yellow-700",
+    title: "text-yellow-800 dark:text-yellow-200",
+    icon: "text-yellow-500 dark:text-yellow-400",
+  },
+  CAUTION: {
+    bg: "bg-red-50 dark:bg-red-900/30",
+    border: "border-red-300 dark:border-red-700",
+    title: "text-red-800 dark:text-red-200",
+    icon: "text-red-500 dark:text-red-400",
+  },
+};
+
+// Get the color scheme for the current notice type
+const color = colors[type];
+---
+
+<div class={`${color.bg} ${color.border} my-2 rounded-r-md border-l-4 p-2`}>
+  <div class="flex flex-col">
+    <div class="flex items-center">
+      <div class={`${color.icon} mr-2`}>
+        {type === "NOTE" && <InformationCircle class="size-5" />}
+        {type === "TIP" && <LightBulb class="size-5" />}
+        {type === "IMPORTANT" && <ExclamationCircle class="size-5" />}
+        {type === "WARNING" && <ExclamationTriangle class="size-5" />}
+        {type === "CAUTION" && <XCircle class="size-5" />}
+      </div>
+      <div class={`font-bold ${color.title}`}>{title}</div>
+    </div>
+    <div>
+      <slot />
+    </div>
+  </div>
+</div>

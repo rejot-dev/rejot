@@ -1,0 +1,20 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"a"> & {
+  secondary?: boolean;
+};
+
+const { secondary, class: className = "", ...rest } = Astro.props;
+
+const baseClasses = "inline-flex items-center gap-2 rounded-lg px-6 py-2";
+const secondaryClasses =
+  "border-2 border-rejot-red-600 text-rejot-red-600 hover:text-rejot-red-700 hover:border-rejot-red-700";
+const primaryClasses = "bg-rejot-red-600 text-white drop-shadow-md hover:bg-rejot-red-700";
+
+const classes = [baseClasses, secondary ? secondaryClasses : primaryClasses, className].join(" ");
+---
+
+<a class={classes} {...rest}>
+  <slot />
+</a>

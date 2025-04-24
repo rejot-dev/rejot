@@ -1,0 +1,71 @@
+---
+title: "Setup Source Postgres"
+---
+
+import Notice from "@/components/Notice.astro";
+
+This guide explains how to prepare your PostgreSQL database for use with ReJot. ReJot leverages
+PostgreSQL's logical replication stream using the `pgoutput` native plugin to capture database
+changes.
+
+## Enabling Logical Replication
+
+Logical replication is not enabled by default in PostgreSQL. The configuration that manages logical
+replication is called the [`wal_level`][pg-wal-level], which must be set to `logical`. Note that
+changing this config requires a database restart.
+
+There are two methods to enable this config, either through the `postgresql.conf` config file:
+
+```
+wal_level = 'logical'
+```
+
+Or you can set it through SQL directly:
+
+```sql
+SHOW wal_level;
+
+-- inspect current setting
+ALTER SYSTEM
+SET
+  wal_level = 'logical';
+```
+
+<Notice type="NOTE">
+  Hosted PostgreSQL providers like Supabase, Neon, or Google Cloud SQL manage this setting via their
+  own dashboards.
+</Notice>
+
+## Creating a ReJot Database Role
+
+We recommend creating a separate role for ReJot and giving read only access to that user. If you
+want to get started quickly locally you can continue with the default `postgres` superuser.
+
+```sql
+CREATE ROLE rejot_role
+WITH
+  REPLICATION LOGIN PASSWORD '<some secure password>';
+
+GRANT
+SELECT
+,
+  INSERT,
+UPDATE,
+DELETE ON ALL TABLES IN SCHEMA public TO rejot_role;
+```
+
+## Creating a PostgreSQL Publication
+
+Any table that needs to be available for sync must be included in a postgres publication.
+
+```sql
+CREATE PUBLICATION rejot_publication FOR TABLE some_table,
+another_table;
+```
+
+<Notice type="WARNING">
+  Be sure not to create a publication for all tables using `FOR ALL TABLES` as this can cause sync
+  loop if your datastore is used as both a source and destination data store.
+</Notice>
+
+[pg-wal-level]: https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-WAL-LEVEL

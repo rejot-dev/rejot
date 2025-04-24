@@ -1,0 +1,52 @@
+---
+import type { CollectionEntry } from "astro:content";
+import FormattedDate from "../components/FormattedDate.astro";
+import Base from "./Base.astro";
+
+type Props = CollectionEntry<"blog">["data"];
+
+const {
+  title,
+  description,
+  publicationDate,
+  updatedDate,
+  heroImage,
+  author,
+  useHeroImageAsHeadImage,
+} = Astro.props;
+---
+
+<Base
+  title={title}
+  description={description}
+  image={useHeroImageAsHeadImage ? heroImage : undefined}
+>
+  <div class="w-full max-w-6xl">
+    <div class="flex w-full flex-col space-y-6 py-4 text-center leading-none">
+      {heroImage && <img src={heroImage} alt="" class="mx-auto block w-96 rounded-xl shadow-md" />}
+      <h1 class="mx-auto max-w-4xl text-4xl font-bold text-gray-800 dark:text-gray-200">
+        {title}
+      </h1>
+      <div class="flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
+        <img
+          src={author.toLowerCase().includes("jan") ? "/jan.webp" : "/wilco.webp"}
+          alt=""
+          class="size-8 rounded-full"
+        />
+        <span>By {author} on <FormattedDate date={publicationDate} /></span>
+        {
+          updatedDate && (
+            <div class="italic">
+              Last updated on <FormattedDate date={updatedDate} />
+            </div>
+          )
+        }
+      </div>
+      <div class="mx-auto w-full max-w-2xl">
+        <hr />
+      </div>
+    </div>
+
+    <slot />
+  </div>
+</Base>

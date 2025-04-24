@@ -1,0 +1,14 @@
+---
+title: "Event Stores"
+---
+
+import ApiSchema from "@/components/schema/ApiSchema.astro";
+import manifestSchema from "@/content/manifests/manifest_v0.json";
+
+## Event Store
+
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/eventStores/items"
+/>

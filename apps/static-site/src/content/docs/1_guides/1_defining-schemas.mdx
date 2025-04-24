@@ -1,0 +1,129 @@
+---
+title: "Defining Schemas"
+---
+
+import { Code } from "astro:components";
+
+ReJot allows you to define Public and Consumer Schemas using TypeScript code, which offers several
+benefits:
+
+- Type safety and validation
+- Better code organization and reusability
+- Version control and change management
+- Integration with your existing development workflow
+
+## Setting Up
+
+First, add the required dependencies to your project:
+
+```bash
+bun add @rejot-dev/contract @rejot-dev/adapter-postgres
+```
+
+## Creating Public and Consumer Schema Definitions
+
+Create a new file called `schemas.ts` that will contain your public and consumer schemas:
+
+```typescript
+import { z } from "zod";
+
+import {
+  createPostgresPublicSchemaTransformation,
+  createPostgresConsumerSchemaTransformation,
+} from "@rejot-dev/adapter-postgres";
+import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
+import { createPublicSchema } from "@rejot-dev/contract/public-schema";
+
+const myPublicSchema = createPublicSchema("my-public-schema", {
+  source: { dataStoreSlug: "my-source-datastore", tables: ["my_table"] },
+  outputSchema: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+  transformations: [], // See next step
+  version: {
+    major: 1,
+    minor: 0,
+  },
+});
+
+const myConsumerSchema = createConsumerSchema({
+  source: {
+    manifestSlug: "my-manifest",
+    publicSchema: {
+      name: "my-public-schema",
+      majorVersion: 1,
+    },
+  },
+  destinationDataStoreSlug: "my-destination-datastore",
+  transformations: [], // See next step
+});
+
+export default {
+  myPublicSchema,
+  myConsumerSchema,
+};
+```
+
+### Transformations
+
+Transformations are a crucial part of schema definitions that specify how data is transformed
+between different stages of the sync process.
+
+#### Public Schema Transformations
+
+For public schemas, you need to create a SQL transformation for each table referenced in the schema.
+These transformations:
+
+- Take a primary key as input parameter (`$1`)
+- Return exactly one row that matches the public schema's output structure
+
+Here's an example of a public schema transformation:
+
+```typescript
+transformations: [
+  createPostgresPublicSchemaTransformation(
+    "my_table",
+    `SELECT id, name FROM my_table WHERE id = $1`,
+  ),
+];
+```
+
+#### Consumer Schema Transformations
+
+For consumer schemas, transformations handle the insertion of public schema data into the
+destination data store. These transformations:
+
+- Use named parameters (e.g., `:name`, `:country`) to reference fields from the public schema
+- Must handle conflicts appropriately since ReJot doesn't guarantee exactly-once delivery
+
+Here's an example of a consumer schema transformation:
+
+```typescript
+transformations: [
+  createPostgresConsumerSchemaTransformation(
+    "INSERT INTO destination_table (id, name) VALUES (:id, :name) ON CONFLICT (id) DO UPDATE SET name = :name",
+  ),
+];
+```
+
+## Materializing Schemas
+
+Code-based schemas need to be materialized into your manifest file to be usable by sync services.
+This is done using the `collect` command:
+
+```bash
+rejot-cli collect schemas.ts --write
+```
+
+This command will:
+
+1. Read your schema definitions from `schemas.ts`
+2. Generate the corresponding manifest entries
+3. Update your manifest file (if `--write` is specified)
+
+## Next Steps
+
+Now that you know how to define schemas, you can
+[run sync services](/docs/guides/running-sync-services) to start and manage sync services using
+manifests.

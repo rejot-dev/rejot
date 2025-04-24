@@ -1,0 +1,27 @@
+---
+title: "Data Contracts"
+---
+
+Data dependencies in ReJot are explicitly modeled, allowing engineering teams to maintain control
+over how their data is exposed within the organization. By decoupling data producers from consumers,
+data owners gain the flexibility to modify internal data models without impacting downstream
+consumers.
+
+Data producers can publish their data through a [Public Schema](/docs/spec/public-schema), while
+consumers can subscribe to datasets through a [Consumer Schema](/docs/spec/consumer-schema).
+
+## One-to-Many Relations
+
+ReJot is designed to support one-to-many relationships between data producers and consumers. Each
+public and consumer schema is versioned to accommodate changes in these data models. Note that this
+requires an [Event Store](/docs/spec/event-store) in your setup.
+
+import DarkImage from "@/components/DarkImage.astro";
+
+<DarkImage
+  src="/content/docs/data-contracts-diagram.svg"
+  srcDark="/content/docs/data-contracts-diagram-dark.svg"
+  caption="Data flow between producers and consumers"
+  alt="Data flow between producers and consumers"
+  class="max-w-lg"
+/>

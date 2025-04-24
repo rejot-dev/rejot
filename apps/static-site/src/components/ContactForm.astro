@@ -1,0 +1,50 @@
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
+<form
+  data-static-form-name="contact-form"
+  class="block space-y-4 rounded-xl border border-gray-200 p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+>
+  <div>
+    <label class="mb-2 block text-sm font-bold text-gray-700 dark:text-gray-200" for="name"
+      >Name</label
+    >
+    <input
+      class="w-full rounded border px-3 py-2 leading-tight text-gray-700 dark:border-gray-600 dark:bg-rejot-black-950 dark:text-gray-200"
+      id="name"
+      name="name"
+      type="text"
+      required
+    />
+  </div>
+  <div>
+    <label class="mb-2 block text-sm font-bold text-gray-700 dark:text-gray-200" for="email"
+      >Email</label
+    >
+    <input
+      class="w-full rounded border px-3 py-2 leading-tight dark:border-gray-600 dark:bg-rejot-black-950 dark:text-gray-300"
+      id="email"
+      name="email"
+      type="email"
+      required
+    />
+  </div>
+  <div>
+    <label class="mb-2 block text-sm font-bold text-gray-700 dark:text-gray-200" for="message"
+      >Message</label
+    >
+    <textarea
+      class="w-full rounded border px-3 py-2 leading-tight dark:border-gray-600 dark:bg-rejot-black-950 dark:text-gray-300"
+      id="message"
+      name="message"
+      rows="5"
+      required></textarea>
+  </div>
+  <div class="cf-turnstile" data-sitekey="0x4AAAAAAA4FaYb93O-Sw1Y9"></div>
+  <div class="flex items-center justify-between">
+    <button
+      class="rounded bg-rejot-red-600 px-4 py-2 font-bold text-white hover:bg-rejot-red-700 focus:outline-none"
+      type="submit"
+    >
+      Send
+    </button>
+  </div>
+</form>

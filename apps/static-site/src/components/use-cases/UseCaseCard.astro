@@ -1,0 +1,32 @@
+---
+import { getCollection, render } from "astro:content";
+import SimpleCard from "../card/SimpleCard.astro";
+
+type Props = {
+  slug: string;
+};
+
+const { slug } = Astro.props;
+
+const collection = await getCollection("useCases");
+
+const item = collection.find((item) => item.id === slug);
+
+if (!item) {
+  throw new Error(
+    `Use case with slug '${slug}' not found. Available slugs: ${collection.map((item) => item.id).join(", ")}`,
+  );
+}
+
+const { headings } = await render(item);
+
+if (headings.length === 0) {
+  throw new Error(`No headings found for use case with slug '${slug}'`);
+}
+---
+
+<SimpleCard
+  header={item.data.title}
+  description={item.data.description}
+  href={`/use-cases#${headings[0].slug}`}
+/>

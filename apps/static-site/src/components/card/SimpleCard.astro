@@ -1,0 +1,20 @@
+---
+import Card from "./Card.astro";
+
+interface Props {
+  href?: string;
+  header: string;
+  description: string;
+}
+
+const { href, header, description } = Astro.props;
+---
+
+<Card href={href}>
+  <Fragment slot="header">
+    <h3 class="font-bold">{header}</h3>
+  </Fragment>
+  <Fragment slot="description">
+    {description}
+  </Fragment>
+</Card>
