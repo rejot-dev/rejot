@@ -1,9 +1,10 @@
-import type { Cursor } from "@rejot-dev/contract/cursor";
-import type { ISyncController, SyncControllerState } from "../sync-controller/sync-controller";
-
-import type { ISyncHTTPController } from "../sync-http-service/sync-http-service";
 import { z } from "zod";
+
+import { type Cursor, Cursors } from "@rejot-dev/contract/cursor";
 import type { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
+
+import type { ISyncController, SyncControllerState } from "../sync-controller/sync-controller";
+import type { ISyncHTTPController } from "../sync-http-service/sync-http-service";
 
 export class MockSyncController implements ISyncController {
   #cursors: Cursor[] = [];
@@ -23,8 +24,8 @@ export class MockSyncController implements ISyncController {
     this.#cursors = initialCursors;
   }
 
-  async getCursors(): Promise<Cursor[]> {
-    return this.#cursors;
+  async getCursors(): Promise<Cursors> {
+    return new Cursors(this.#cursors);
   }
 
   async getPublicSchemas(): Promise<

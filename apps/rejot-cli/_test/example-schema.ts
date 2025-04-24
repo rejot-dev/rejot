@@ -34,7 +34,7 @@ const testConsumerSchema = createConsumerSchema("consume-public-account", {
       majorVersion: 1,
     },
   },
-  destinationDataStoreSlug: "data-destination-1",
+  destinationDataStoreSlug: "default-postgres",
   transformations: [
     createPostgresConsumerSchemaTransformation(
       `

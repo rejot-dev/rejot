@@ -16,13 +16,13 @@ export class AsyncQueue<T> {
     this.#abortSignal = abortSignal;
 
     if (this.#abortSignal?.aborted) {
-      this.#handleAbort();
+      this.abort();
     } else {
-      this.#abortSignal?.addEventListener("abort", () => this.#handleAbort());
+      this.#abortSignal?.addEventListener("abort", () => this.abort());
     }
   }
 
-  #handleAbort() {
+  abort() {
     this.#isAborted = true;
 
     const waitingPromises = this.#waitingPromises;

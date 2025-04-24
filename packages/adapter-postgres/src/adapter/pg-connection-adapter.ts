@@ -8,7 +8,6 @@ import type {
 import type { IConnection } from "@rejot-dev/contract/sync";
 
 import { PostgresEventStore } from "../event-store/postgres-event-store.ts";
-import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "../postgres-consts.ts";
 import { PostgresSink } from "../postgres-sink.ts";
 import { PostgresSource } from "../postgres-source.ts";
 import { PostgresClient } from "../util/postgres-client.ts";
@@ -36,15 +35,15 @@ export class PostgresConnectionAdapter
   createSource(
     connectionSlug: string,
     connection: z.infer<typeof PostgresConnectionSchema>,
-    options: z.infer<typeof PostgresDataStoreSchema>,
+    { publicationName, slotName }: z.infer<typeof PostgresDataStoreSchema>,
   ): PostgresSource {
     return new PostgresSource({
       client: this.getOrCreateConnection(connectionSlug, connection).client,
       publicSchemaSql: "",
       options: {
         createPublication: true,
-        publicationName: options.publicationName ?? DEFAULT_PUBLICATION_NAME,
-        slotName: options.slotName ?? DEFAULT_SLOT_NAME,
+        publicationName: publicationName,
+        slotName: slotName,
       },
     });
   }

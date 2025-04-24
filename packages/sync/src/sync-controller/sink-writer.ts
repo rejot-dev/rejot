@@ -5,7 +5,7 @@ import type {
   AnyIConsumerSchemaTransformationAdapter,
   OperationTransformationPair,
 } from "@rejot-dev/contract/adapter";
-import { type Cursor } from "@rejot-dev/contract/cursor";
+import { Cursors } from "@rejot-dev/contract/cursor";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { ConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
@@ -38,9 +38,9 @@ export class SinkWriter {
     return this.#sinks.size > 0;
   }
 
-  async getCursors(): Promise<Cursor[]> {
+  async getCursors(): Promise<Cursors> {
     const cursorsArrays = await Promise.all(
-      Array.from(this.#sinks.entries()).map(([slug, sink]) => {
+      Array.from(this.#sinks.entries()).flatMap(([slug, sink]) => {
         const adapter = this.#consumerSchemaTransformationAdapters.find(
           (adapter) => adapter.connectionType === sink.connectionType,
         );
@@ -48,7 +48,7 @@ export class SinkWriter {
         return adapter?.getCursors(slug) ?? [];
       }),
     );
-    return cursorsArrays.flat();
+    return new Cursors(cursorsArrays.flat());
   }
 
   async write({

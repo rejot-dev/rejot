@@ -79,6 +79,12 @@ type TransactionBufferState = "empty" | "begin";
 
 type OnCommitCallback = (buffer: TransactionBuffer) => Promise<boolean>;
 
+type QueueItem = {
+  buffer: TransactionBuffer;
+  ackResolver: (value: boolean) => void;
+  ackPromise: Promise<boolean>;
+};
+
 const log = getLogger(import.meta.url);
 
 export class PostgresReplicationListener {
@@ -89,6 +95,8 @@ export class PostgresReplicationListener {
   #isRunning = false;
 
   #config: ConnectionConfig;
+
+  #asyncQueue?: AsyncQueue<QueueItem>;
 
   constructor(config: ConnectionConfig, onCommit?: OnCommitCallback) {
     this.#config = config;
@@ -139,16 +147,12 @@ export class PostgresReplicationListener {
       throw new Error("PostgresReplicationListener is already running.");
     }
 
-    const queue = new AsyncQueue<{
-      buffer: TransactionBuffer;
-      ackResolver: (value: boolean) => void;
-      ackPromise: Promise<boolean>;
-    }>(abortSignal);
+    this.#asyncQueue = new AsyncQueue<QueueItem>(abortSignal);
 
     this.#onCommit = async (buffer) => {
       const { resolve: ackResolver, promise: ackPromise } = Promise.withResolvers<boolean>();
 
-      queue.enqueue({
+      this.#asyncQueue!.enqueue({
         buffer,
         ackResolver,
         ackPromise,
@@ -174,7 +178,7 @@ export class PostgresReplicationListener {
 
     try {
       while (!abortSignal.aborted) {
-        const { buffer, ackResolver } = await queue.dequeue();
+        const { buffer, ackResolver } = await this.#asyncQueue!.dequeue();
         const { commitEndLsn, operations } = buffer;
 
         // Process operations to handle primary key changes
@@ -199,6 +203,7 @@ export class PostgresReplicationListener {
   async stop(): Promise<void> {
     this.#isRunning = false;
     await this.#logicalReplicationService.stop();
+    this.#asyncQueue?.abort();
   }
 
   async #onData(lsn: string, message: Message) {
@@ -333,14 +338,18 @@ export class PostgresReplicationListener {
   }
 
   #onError(error: Error) {
-    if (error.message === "Connection terminated unexpectedly") {
-      log.error("Database connection terminated unexpectedly", {
+    if (error.message.includes("Connection terminated unexpectedly")) {
+      log.error("Database server closed the connection", {
         database: this.#config.database,
-        error,
       });
     } else {
-      log.error("Replication error occurred", { error });
+      log.error("Database connection error", {
+        database: this.#config.database,
+      });
+      log.logErrorInstance(error);
     }
+
+    this.stop();
   }
 
   /**

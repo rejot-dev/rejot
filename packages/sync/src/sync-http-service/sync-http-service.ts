@@ -41,7 +41,7 @@ export class SyncHTTPController implements ISyncHTTPController {
       return eventStore.read(queryParams.cursors || [], queryParams.limit ?? 100);
     });
     this.#httpController.createRequest(dataStoreCursorsRoute, async () => {
-      return this.#syncController.getCursors();
+      return (await this.#syncController.getCursors()).toArray();
     });
     this.#httpController.createRequest(publicSchemasRoute, async () => {
       return this.#syncController.getPublicSchemas();

@@ -5,7 +5,7 @@ import {
   type AnyIConsumerSchemaTransformationAdapter,
   type AnyIPublicSchemaTransformationAdapter,
 } from "@rejot-dev/contract/adapter";
-import { type Cursor, cursorToString } from "@rejot-dev/contract/cursor";
+import { Cursors, cursorToString } from "@rejot-dev/contract/cursor";
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
 import type { IPublishMessageBus, ISubscribeMessageBus } from "@rejot-dev/contract/message-bus";
@@ -15,11 +15,12 @@ import type { ISyncHTTPController } from "../sync-http-service/sync-http-service
 import { PublicSchemaTransformer } from "./public-schema-transformer.ts";
 import { SinkWriter } from "./sink-writer.ts";
 import { SourceReader } from "./source-reader.ts";
+import { getNullCursorsForConsumingPublicSchemas } from "@rejot-dev/contract/manifest-helpers";
 
 const log = getLogger(import.meta.url);
 
 export interface ISyncController {
-  getCursors(): Promise<Cursor[]>;
+  getCursors(): Promise<Cursors>;
   start(): Promise<void>;
   prepare(): Promise<void>;
   stop(): Promise<void>;
@@ -74,8 +75,11 @@ export class SyncController implements ISyncController {
     this.#state = newState;
   }
 
-  async getCursors(): Promise<Cursor[]> {
-    return this.#sinkWriter.getCursors();
+  async getCursors(): Promise<Cursors> {
+    return new Cursors([
+      ...(await this.#sinkWriter.getCursors()).toArray(),
+      ...getNullCursorsForConsumingPublicSchemas(this.#syncManifest.manifests),
+    ]);
   }
 
   async getPublicSchemas() {
@@ -84,14 +88,17 @@ export class SyncController implements ISyncController {
 
   async start() {
     this.state = "started";
-    await Promise.all([
-      this.startIterateSourceReader(),
-      ...this.#subscribeMessageBuses.map((bus) => this.startIterateSubscribeMessageBus(bus)),
+    await Promise.race([
+      this.#startIterateSourceReader(),
+      ...this.#subscribeMessageBuses.map((bus) => this.#startIterateSubscribeMessageBus(bus)),
       this.#httpController?.start(),
     ]);
+    log.debug("SyncController start race finished, stopping.");
+    await this.stop();
+    await this.close();
   }
 
-  async startIterateSourceReader() {
+  async #startIterateSourceReader() {
     if (!this.#sourceReader.hasSources) {
       log.info("No sources found, skipping source reader");
       return;
@@ -120,12 +127,12 @@ export class SyncController implements ISyncController {
     log.debug("startIterateSourceReader completed");
   }
 
-  async startIterateSubscribeMessageBus(messageBus: ISubscribeMessageBus) {
-    const cursors = await this.#sinkWriter.getCursors();
+  async #startIterateSubscribeMessageBus(messageBus: ISubscribeMessageBus) {
+    const cursors = await this.getCursors();
 
-    log.debug("Cursors", cursors.map(cursorToString));
+    log.debug("Cursors", cursors.toArray().map(cursorToString));
 
-    messageBus.setInitialCursors(cursors);
+    messageBus.setInitialCursors(cursors.toArray());
 
     for await (const message of messageBus.subscribe()) {
       await this.#sinkWriter.write(message);
@@ -134,7 +141,7 @@ export class SyncController implements ISyncController {
     log.debug("startIterateMessageBus completed");
   }
 
-  async startServingHTTPEndpoints(controller: ISyncHTTPController) {
+  async startServingHTTPEndpoints(controller: ISyncHTTPController): Promise<void> {
     if (this.#httpController) {
       throw new Error("HTTP controller already started");
     }

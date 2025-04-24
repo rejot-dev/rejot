@@ -35,7 +35,7 @@ describe("HttpController", () => {
         return { message: "Success" };
       });
 
-      await controller.start();
+      controller.start();
 
       const response = await fetch(`http://${TEST_HOST}${testRoute.path}`, {
         method: "POST",
@@ -54,7 +54,7 @@ describe("HttpController", () => {
       const controller = new HttpController({ hostname: "localhost", port: TEST_PORT });
       controller.createRequest(testRoute, async () => ({ message: "Should not reach here" }));
 
-      await controller.start();
+      controller.start();
 
       const response = await fetch(`http://${TEST_HOST}${testRoute.path}`, {
         method: "POST",
@@ -71,7 +71,7 @@ describe("HttpController", () => {
       const controller = new HttpController({ hostname: "localhost", port: TEST_PORT });
       controller.createRequest(testRoute, async () => ({ message: "Should not reach here" }));
 
-      await controller.start();
+      controller.start();
 
       const response = await fetch(`http://${TEST_HOST}${testRoute.path}`, {
         method: "POST",
@@ -105,7 +105,7 @@ describe("HttpController", () => {
         return { results: ["test"] };
       });
 
-      await controller.start();
+      controller.start();
 
       const response = await fetch(`http://${TEST_HOST}${testRoute.path}?search=test&limit=5`);
 
@@ -120,7 +120,7 @@ describe("HttpController", () => {
       const controller = new HttpController({ hostname: "localhost", port: TEST_PORT });
       controller.createRequest(testRoute, async () => ({ results: [] }));
 
-      await controller.start();
+      controller.start();
 
       const response = await fetch(`http://${TEST_HOST}${testRoute.path}?search=test`); // missing limit
 
@@ -133,7 +133,7 @@ describe("HttpController", () => {
       const controller = new HttpController({ hostname: "localhost", port: TEST_PORT });
       controller.createRequest(testRoute, async () => ({ results: [] }));
 
-      await controller.start();
+      controller.start();
 
       const response = await fetch(
         `http://${TEST_HOST}${testRoute.path}?search=test&limit=invalid`,
@@ -181,7 +181,7 @@ describe("HttpController", () => {
         };
       });
 
-      await controller.start();
+      controller.start();
 
       const queryObject: z.infer<typeof complexQueryRoute.queryParams>["data"] = {
         filters: [
@@ -226,7 +226,7 @@ describe("HttpController", () => {
         message: 123 as unknown as string,
       }));
 
-      await controller.start();
+      controller.start();
 
       const response = await fetch(`http://${TEST_HOST}${testRoute.path}`);
 
@@ -256,7 +256,7 @@ describe("HttpController", () => {
         .createRequest(route1, async () => ({ message: "route1" }))
         .createRequest(route2, async () => ({ message: "route2" }));
 
-      await controller.start();
+      controller.start();
 
       const response1 = await fetch(`http://${TEST_HOST}${route1.path}`);
       expect(response1.status).toBe(200);
@@ -277,7 +277,7 @@ describe("HttpController", () => {
 
     test("returns 404 for unknown route", async () => {
       const controller = new HttpController({ hostname: "localhost", port: TEST_PORT });
-      await controller.start();
+      controller.start();
 
       const response = await fetch(`http://${TEST_HOST}/unknown`);
       expect(response.status).toBe(404);
@@ -299,7 +299,7 @@ describe("HttpController", () => {
         return { message: "simple response" };
       });
 
-      await controller.start();
+      controller.start();
 
       const response = await fetch(`http://${TEST_HOST}${simpleRoute.path}`);
       expect(response.status).toBe(200);
@@ -323,7 +323,7 @@ describe("HttpController", () => {
         return { filtered: `filtered by ${queryParams!.filter}` };
       });
 
-      await controller.start();
+      controller.start();
 
       const response = await fetch(`http://${TEST_HOST}${queryOnlyRoute.path}?filter=test`);
       expect(response.status).toBe(200);
@@ -347,7 +347,7 @@ describe("HttpController", () => {
         return { processed: `processed ${jsonBody!.data}` };
       });
 
-      await controller.start();
+      controller.start();
 
       const response = await fetch(`http://${TEST_HOST}${jsonOnlyRoute.path}`, {
         method: "POST",
@@ -373,7 +373,7 @@ describe("HttpController", () => {
         return { message: "ok" };
       });
 
-      await controller.start();
+      controller.start();
 
       // Should work even with query params present
       const response = await fetch(`http://${TEST_HOST}${noQueryParamsRoute.path}?unused=param`);
@@ -396,7 +396,7 @@ describe("HttpController", () => {
         return { message: "ok" };
       });
 
-      await controller.start();
+      controller.start();
 
       const response = await fetch(`http://${TEST_HOST}${noJsonBodyRoute.path}`, {
         method: "POST",
