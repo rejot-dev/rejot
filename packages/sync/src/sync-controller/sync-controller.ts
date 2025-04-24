@@ -8,14 +8,14 @@ import {
 import { Cursors, cursorToString } from "@rejot-dev/contract/cursor";
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
+import { getNullCursorsForConsumingPublicSchemas } from "@rejot-dev/contract/manifest-helpers";
 import type { IPublishMessageBus, ISubscribeMessageBus } from "@rejot-dev/contract/message-bus";
+import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
-import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
-import type { ISyncHTTPController } from "../sync-http-service/sync-http-service";
+import type { ISyncHTTPController } from "../sync-http-service/sync-http-service.ts";
 import { PublicSchemaTransformer } from "./public-schema-transformer.ts";
 import { SinkWriter } from "./sink-writer.ts";
 import { SourceReader } from "./source-reader.ts";
-import { getNullCursorsForConsumingPublicSchemas } from "@rejot-dev/contract/manifest-helpers";
 
 const log = getLogger(import.meta.url);
 

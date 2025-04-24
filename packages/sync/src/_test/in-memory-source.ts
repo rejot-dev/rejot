@@ -1,8 +1,8 @@
 import type {
   IDataSource,
-  TransformedOperation,
   TableOperation,
   Transaction,
+  TransformedOperation,
 } from "@rejot-dev/contract/sync";
 
 export class InMemorySource implements IDataSource {

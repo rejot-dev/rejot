@@ -1,7 +1,7 @@
 import type { IEventStore } from "@rejot-dev/contract/event-store";
 
-import { HttpController } from "../http-controller/http-controller";
-import type { ISyncController } from "../sync-controller/sync-controller";
+import { HttpController } from "../http-controller/http-controller.ts";
+import type { ISyncController } from "../sync-controller/sync-controller.ts";
 import {
   dataStoreCursorsRoute,
   indexRoute,

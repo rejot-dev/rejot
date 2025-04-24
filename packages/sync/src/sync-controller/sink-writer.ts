@@ -10,8 +10,7 @@ import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-s
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { ConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
 import type { IDataSink } from "@rejot-dev/contract/sync";
-
-import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
+import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
 const log = getLogger(import.meta.url);
 

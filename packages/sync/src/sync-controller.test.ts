@@ -1,12 +1,14 @@
+import { describe, expect, test } from "bun:test";
+
 import type {
   IDataSink,
   IDataSource,
-  Transaction,
   TableOperation,
+  Transaction,
   TransformedOperation,
 } from "@rejot-dev/contract/sync";
+
 import { SyncController } from "./sync-controller.ts";
-import { describe, test, expect } from "bun:test";
 
 function createWatermarkTransaction(type: "low" | "high", backfillId: string): Transaction {
   return {

@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 import { z } from "zod";
 
-import { fetchPublicSchemas, fetchRead } from "../src/sync-http-service/sync-http-service-fetch";
-import { CursorSchema } from "../src/sync-http-service/sync-http-service-routes";
+import { fetchPublicSchemas, fetchRead } from "../src/sync-http-service/sync-http-service-fetch.ts";
+import { CursorSchema } from "../src/sync-http-service/sync-http-service-routes.ts";
 
 async function main() {
   const port = process.argv[2] ? parseInt(process.argv[2], 10) : 3000;

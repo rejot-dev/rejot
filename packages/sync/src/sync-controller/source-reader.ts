@@ -1,8 +1,7 @@
 import type { AnyIConnectionAdapter } from "@rejot-dev/contract/adapter";
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { IDataSource, Transaction } from "@rejot-dev/contract/sync";
-
-import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
+import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
 const log = getLogger(import.meta.url);
 
