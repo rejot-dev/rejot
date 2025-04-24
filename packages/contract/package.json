@@ -17,90 +17,112 @@
   },
   "exports": {
     "./adapter": {
+      "bun": "./adapter/adapter.ts",
       "types": "./dist/adapter/adapter.d.ts",
       "default": "./dist/adapter/adapter.js"
     },
     "./collect": {
+      "bun": "./collect/collect.ts",
       "types": "./dist/collect/collect.d.ts",
       "default": "./dist/collect/collect.js"
     },
     "./collect/mock": {
+      "bun": "./collect/mock-schema-collector.ts",
       "types": "./dist/collect/mock-schema-collector.d.ts",
       "default": "./dist/collect/mock-schema-collector.js"
     },
     "./consumer-schema": {
+      "bun": "./consumer-schema/consumer-schema.ts",
       "types": "./dist/consumer-schema/consumer-schema.d.ts",
       "default": "./dist/consumer-schema/consumer-schema.js"
     },
     "./cursor": {
+      "bun": "./cursor/cursors.ts",
       "types": "./dist/cursor/cursors.d.ts",
       "default": "./dist/cursor/cursors.js"
     },
     "./event-store": {
+      "bun": "./event-store/event-store.ts",
       "types": "./dist/event-store/event-store.d.ts",
       "default": "./dist/event-store/event-store.js"
     },
     "./event-store-message-bus": {
+      "bun": "./event-store/event-store-message-bus.ts",
       "types": "./dist/event-store/event-store-message-bus.d.ts",
       "default": "./dist/event-store/event-store-message-bus.js"
     },
     "./event-store/in-memory-event-store": {
+      "bun": "./event-store/in-memory-event-store.ts",
       "types": "./dist/event-store/in-memory-event-store.d.ts",
       "default": "./dist/event-store/in-memory-event-store.js"
     },
     "./logger": {
+      "bun": "./logger/logger.ts",
       "types": "./dist/logger/logger.d.ts",
       "default": "./dist/logger/logger.js"
     },
     "./manifest": {
+      "bun": "./manifest/manifest.ts",
       "types": "./dist/manifest/manifest.d.ts",
       "default": "./dist/manifest/manifest.js"
     },
     "./manifest.fs": {
+      "bun": "./manifest/manifest.fs.ts",
       "types": "./dist/manifest/manifest.fs.d.ts",
       "default": "./dist/manifest/manifest.fs.js"
     },
     "./manifest-helpers": {
+      "bun": "./manifest/manifest-helpers.ts",
       "types": "./dist/manifest/manifest-helpers.d.ts",
       "default": "./dist/manifest/manifest-helpers.js"
     },
     "./manifest-merger": {
+      "bun": "./manifest/manifest-merger.ts",
       "types": "./dist/manifest/manifest-merger.d.ts",
       "default": "./dist/manifest/manifest-merger.js"
     },
     "./sync-manifest": {
+      "bun": "./manifest/sync-manifest.ts",
       "types": "./dist/manifest/sync-manifest.d.ts",
       "default": "./dist/manifest/sync-manifest.js"
     },
     "./postgres": {
+      "bun": "./postgres/postgres.ts",
       "types": "./dist/postgres/postgres.d.ts",
       "default": "./dist/postgres/postgres.js"
     },
     "./public-schema": {
+      "bun": "./public-schema/public-schema.ts",
       "types": "./dist/public-schema/public-schema.d.ts",
       "default": "./dist/public-schema/public-schema.js"
     },
     "./workspace": {
+      "bun": "./workspace/workspace.ts",
       "types": "./dist/workspace/workspace.d.ts",
       "default": "./dist/workspace/workspace.js"
     },
     "./error": {
+      "bun": "./error/error.ts",
       "types": "./dist/error/error.d.ts",
       "default": "./dist/error/error.js"
     },
     "./sync": {
+      "bun": "./sync/sync.ts",
       "types": "./dist/sync/sync.d.ts",
       "default": "./dist/sync/sync.js"
     },
     "./schema-validator": {
+      "bun": "./schema-validator.ts",
       "types": "./dist/schema-validator.d.ts",
       "default": "./dist/schema-validator.js"
     },
     "./message-bus": {
+      "bun": "./message-bus/message-bus.ts",
       "types": "./dist/message-bus/message-bus.d.ts",
       "default": "./dist/message-bus/message-bus.js"
     },
     "./json-schema": {
+      "bun": "./json-schema/json-schema.ts",
       "types": "./dist/json-schema/json-schema.d.ts",
       "default": "./dist/json-schema/json-schema.js"
     }
