@@ -15,7 +15,8 @@ export type ManifestDiagnostic = {
     | "DATA_STORE_NOT_FOUND"
     | "DUPLICATE_MANIFEST_SLUG"
     | "CONNECTION_TYPE_MISMATCH"
-    | "MANIFEST_NOT_FOUND";
+    | "MANIFEST_NOT_FOUND"
+    | "DATA_STORE_MISSING_CONFIG";
 
   severity: ManifestDiagnosticSeverity;
   message: string;
@@ -45,7 +46,7 @@ export type ExternalPublicSchemaReference = {
 
 export type VerificationResult = {
   isValid: boolean; // isValid remains true if there are only external references, but no errors
-  errors: ManifestDiagnostic[];
+  diagnostics: ManifestDiagnostic[];
   externalReferences: ExternalPublicSchemaReference[]; // Use the renamed type
 };
 
@@ -113,25 +114,29 @@ function verifyConnectionReferences(
         },
       });
     } else {
-      // Check if the connection type matches the data store config's connection type
-      const connectionType = connectionTypeMap.get(ds.connectionSlug);
-      const dataStoreConnectionType = ds.config.connectionType;
+      if (ds.config) {
+        // Check if the connection type matches the data store config's connection type
+        const connectionType = connectionTypeMap.get(ds.connectionSlug);
+        const dataStoreConnectionType = ds.config.connectionType;
 
-      if (connectionType !== dataStoreConnectionType) {
-        errors.push({
-          type: "CONNECTION_TYPE_MISMATCH",
-          severity: "error",
-          message: `Data store config has connection type '${dataStoreConnectionType}' but references connection '${ds.connectionSlug}' with type '${connectionType}'`,
-          location: {
-            manifestSlug: manifest.slug,
-            context: `dataStore.connectionSlug: ${ds.connectionSlug}`,
-          },
-          hint: {
-            message:
-              "Ensure the data store config connection type matches the referenced connection type",
-            suggestions: `Change the data store config connection type to '${connectionType}' or use a connection with matching type`,
-          },
-        });
+        if (connectionType !== dataStoreConnectionType) {
+          errors.push({
+            type: "CONNECTION_TYPE_MISMATCH",
+            severity: "error",
+            message: `Data store config has connection type '${dataStoreConnectionType}' but references connection '${ds.connectionSlug}' with type '${connectionType}'`,
+            location: {
+              manifestSlug: manifest.slug,
+              context: `dataStore.connectionSlug: ${ds.connectionSlug}`,
+            },
+            hint: {
+              message:
+                "Ensure the data store config connection type matches the referenced connection type",
+              suggestions: `Change the data store config connection type to '${connectionType}' or use a connection with matching type`,
+            },
+          });
+        }
+      } else {
+        // This is fine. We only need a data store config when the store is being used a source.
       }
     }
   });
@@ -223,6 +228,18 @@ export function verifyPublicSchemaReferences(
     dataStoreMap.set(manifest.slug, storeNames);
   });
 
+  // Build a map of data stores with configs
+  const dataStoreConfigMap = new Map<string, Map<string, boolean>>();
+  manifests.forEach(({ manifest }) => {
+    if (!dataStoreConfigMap.has(manifest.slug)) {
+      dataStoreConfigMap.set(manifest.slug, new Map());
+    }
+    const manifestDataStores = dataStoreConfigMap.get(manifest.slug)!;
+    manifest.dataStores?.forEach((ds) => {
+      manifestDataStores.set(ds.connectionSlug, !!ds.config);
+    });
+  });
+
   // Verify public schemas reference valid data stores
   manifests.forEach(({ manifest, path: manifestPath }) => {
     manifest.publicSchemas?.forEach((publicSchema, index) => {
@@ -238,6 +255,26 @@ export function verifyPublicSchemaReferences(
             context: `publicSchemas[${index}].source.dataStoreSlug: ${publicSchema.source.dataStoreSlug}`,
           },
         });
+      } else {
+        // Check if the data store has a config
+        const manifestDataStoreConfigs = dataStoreConfigMap.get(manifest.slug);
+        const hasConfig = manifestDataStoreConfigs?.get(publicSchema.source.dataStoreSlug);
+        if (manifestDataStoreConfigs?.has(publicSchema.source.dataStoreSlug) && !hasConfig) {
+          errors.push({
+            type: "DATA_STORE_MISSING_CONFIG",
+            severity: "error",
+            message: `Public schema '${publicSchema.name}' references data store '${publicSchema.source.dataStoreSlug}' which does not have a configuration`,
+            location: {
+              manifestSlug: manifest.slug,
+              manifestPath,
+              context: `publicSchemas[${index}].source.dataStoreSlug: ${publicSchema.source.dataStoreSlug}`,
+            },
+            hint: {
+              message: "Add a configuration to the data store",
+              suggestions: "Define the required connection type and other configuration properties",
+            },
+          });
+        }
       }
     });
   });
@@ -400,7 +437,7 @@ export function verifyManifests(
 
   return {
     isValid: errors.filter((e) => e.severity === "error").length === 0, // Only errors affect validity, not warnings
-    errors,
+    diagnostics: errors,
     externalReferences: publicSchemaReferencesResult.externalReferences,
   };
 }
@@ -419,7 +456,7 @@ export function verifyManifestsWithPaths(
   );
 
   // Enhance the diagnostics with file paths
-  const enhancedErrors = baseResult.errors.map((error) => {
+  const enhancedErrors = baseResult.diagnostics.map((error) => {
     const manifest = manifests.find((m) => m.manifest.slug === error.location.manifestSlug);
     if (manifest) {
       return {
@@ -435,6 +472,6 @@ export function verifyManifestsWithPaths(
 
   return {
     ...baseResult,
-    errors: enhancedErrors,
+    diagnostics: enhancedErrors,
   };
 }

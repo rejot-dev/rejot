@@ -23,7 +23,6 @@ import {
 } from "./manifest-helpers.ts";
 import {
   type ExternalPublicSchemaReference,
-  type ManifestDiagnostic,
   type VerificationResult,
   verifyManifests,
 } from "./verify-manifest.ts";
@@ -71,14 +70,33 @@ export class SyncManifest {
       options.checkPublicSchemaReferences,
     );
 
-    if (verificationResult.errors.length > 0) {
-      const errorMessages = verificationResult.errors
-        .map(
-          (error: ManifestDiagnostic) =>
-            `${error.type}: ${error.message} (in ${error.location.manifestSlug}${error.location.context ? `, ${error.location.context}` : ""})`,
-        )
-        .join("\n");
-      throw new Error(`Invalid manifest configuration:\n${errorMessages}`);
+    const warnings = verificationResult.diagnostics.filter(
+      (diagnostic) => diagnostic.severity === "warning",
+    );
+
+    const errors = verificationResult.diagnostics.filter(
+      (diagnostic) => diagnostic.severity === "error",
+    );
+
+    if (warnings.length > 0) {
+      log.user(`Found ${warnings.length} warning(s) in manifest configuration:`);
+      for (const warning of warnings) {
+        log.user(
+          `  - ${warning.type}: ${warning.message} (in ${warning.location.manifestSlug}${warning.location.context ? `, ${warning.location.context}` : ""})`,
+        );
+      }
+      log.user("");
+    }
+
+    if (errors.length > 0) {
+      log.user(`Found ${errors.length} error(s) in manifest configuration:`);
+      for (const error of errors) {
+        log.user(
+          `  - ${error.type}: ${error.message} (in ${error.location.manifestSlug}${error.location.context ? `, ${error.location.context}` : ""})`,
+        );
+      }
+      log.user("");
+      throw new Error(`Cannot sync: invalid manifest configuration.`);
     }
 
     this.#manifests = manifests;

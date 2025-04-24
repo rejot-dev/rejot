@@ -97,7 +97,11 @@ export class ManifestPrinter {
 
     for (const ds of manifest.dataStores ?? []) {
       output.push(`  - Connection: ${ds.connectionSlug}`);
-      output.push(this.printDataStoreConfig(ds.config));
+      if (ds.config) {
+        output.push(this.printDataStoreConfig(ds.config));
+      } else {
+        output.push("    (Sink only)");
+      }
     }
 
     return output;
@@ -288,20 +292,32 @@ export class ManifestPrinter {
     return output;
   }
 
-  static printManifestErrors(errors: {
-    errors: Array<{ message: string; hint?: { message: string; suggestions?: string } }>;
-  }): string[] {
-    const output: string[] = ["Manifest contains errors:"];
+  static printManifestDiagnosticsSummary(diagnostics: ManifestDiagnostic[]): string[] {
+    const output: string[] = [];
 
-    for (const error of errors.errors) {
-      let message = `  - ${error.message}`;
-      if (error.hint) {
-        message += `\n      Hint: ${error.hint.message}`;
-        if (error.hint.suggestions) {
-          message += `\n      Suggestions: ${error.hint.suggestions}`;
-        }
+    const warnings = diagnostics.filter((diagnostic) => diagnostic.severity === "warning");
+
+    const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+
+    if (warnings.length > 0) {
+      output.push(`Found ${warnings.length} warning(s) in manifest configuration:`);
+      for (const warning of warnings) {
+        output.push(
+          `  - ${warning.type}: ${warning.message} (in ${warning.location.manifestSlug}${warning.location.context ? `, ${warning.location.context}` : ""})`,
+        );
       }
-      output.push(message);
+      output.push("");
+    }
+
+    if (errors.length > 0) {
+      output.push(`Found ${errors.length} error(s) in manifest configuration:`);
+      for (const error of errors) {
+        output.push(
+          `  - ${error.type}: ${error.message} (in ${error.location.manifestSlug}${error.location.context ? `, ${error.location.context}` : ""})`,
+        );
+      }
+      output.push("");
+      throw new Error(`Cannot sync: invalid manifest configuration.`);
     }
 
     return output;

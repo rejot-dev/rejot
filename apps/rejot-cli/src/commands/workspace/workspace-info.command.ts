@@ -55,9 +55,9 @@ export class WorkspaceInfoCommand extends Command {
     // Print diagnostics
     const diagnostics = verifyWorkspace(workspace);
 
-    if (diagnostics.errors.length > 0) {
+    if (diagnostics.diagnostics.length > 0) {
       this.log("");
-      const diagnosticOutput = ManifestPrinter.printManifestDiagnostics(diagnostics.errors);
+      const diagnosticOutput = ManifestPrinter.printManifestDiagnostics(diagnostics.diagnostics);
       for (const line of diagnosticOutput) {
         this.log(line);
       }

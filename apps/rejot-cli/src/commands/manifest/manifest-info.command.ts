@@ -49,7 +49,7 @@ export class ManifestInfoCommand extends Command {
       const errors = verifyManifests([manifest]);
 
       if (!errors.isValid) {
-        const errorOutput = ManifestPrinter.printManifestErrors(errors);
+        const errorOutput = ManifestPrinter.printManifestDiagnosticsSummary(errors.diagnostics);
         for (const line of errorOutput) {
           this.log(line);
         }

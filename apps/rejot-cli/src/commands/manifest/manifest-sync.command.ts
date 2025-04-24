@@ -43,8 +43,8 @@ export class ManifestSyncCommand extends Command {
   static override flags = {
     "log-level": Flags.string({
       description: "Set the log level (error, warn, info, debug, trace)",
-      options: ["error", "warn", "info", "debug", "trace"],
-      default: "info",
+      options: ["user", "error", "warn", "info", "debug", "trace"],
+      default: "warn", // TODO: Change to user for v1 release
     }),
     "api-port": Flags.integer({
       description: "Set the port for the sync HTTP service",
@@ -226,6 +226,7 @@ export class ManifestSyncCommand extends Command {
       process.on("SIGTERM", async () => {
         log.info("\nReceived SIGTERM, killing...");
         await syncController.stop();
+        await syncController.close();
         process.exit(0);
       });
 
@@ -236,12 +237,14 @@ export class ManifestSyncCommand extends Command {
         await syncController.start();
         log.info("Sync process completed");
       } catch (error) {
-        log.error("Failed to start sync", error);
+        log.error("An error occurred during syncing.");
+        log.logErrorInstance(error);
         this.exit(1);
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
-        log.error("(ZodError) Invalid manifest file:", error.errors);
+        log.user("Manifest file format is invalid.");
+        log.logErrorInstance(error);
       } else {
         throw error;
       }
