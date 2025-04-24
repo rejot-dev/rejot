@@ -12,9 +12,9 @@ import type { IPublishMessageBus, ISubscribeMessageBus } from "@rejot-dev/contra
 
 import type { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import type { ISyncHTTPController } from "../sync-http-service/sync-http-service";
-import { PublicSchemaTransformer } from "./public-schema-transformer";
-import { SinkWriter } from "./sink-writer";
-import { SourceReader } from "./source-reader";
+import { PublicSchemaTransformer } from "./public-schema-transformer.ts";
+import { SinkWriter } from "./sink-writer.ts";
+import { SourceReader } from "./source-reader.ts";
 
 const log = getLogger(import.meta.url);
 

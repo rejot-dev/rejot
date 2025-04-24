@@ -4,7 +4,7 @@ import type { Transaction } from "@rejot-dev/contract/sync";
 
 import { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import { InMemoryConnectionAdapter } from "../_test/in-memory-adapter";
-import { SourceReader } from "./source-reader";
+import { SourceReader } from "./source-reader.ts";
 
 describe("SourceReader", () => {
   const createTestManifest = () =>

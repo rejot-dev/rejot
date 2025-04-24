@@ -8,8 +8,8 @@ import type {
   TransformedOperation,
 } from "@rejot-dev/contract/sync";
 
-import { type BackfillSource, ResultSetStore } from "./result-set-store";
-import { DEFAULT_BACKFILL_TIMEOUT_MS } from "./sync-consts";
+import { type BackfillSource, ResultSetStore } from "./result-set-store.ts";
+import { DEFAULT_BACKFILL_TIMEOUT_MS } from "./sync-consts.ts";
 
 const log = getLogger(import.meta.url);
 

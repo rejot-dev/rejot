@@ -12,8 +12,8 @@ import type { IDataSink, IDataSource, Transaction } from "@rejot-dev/contract/sy
 
 import { SyncManifest } from "../../contract/manifest/sync-manifest";
 import type { ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
-import { type ISyncHTTPController } from "./sync-http-service/sync-http-service";
-import { fetchRead } from "./sync-http-service/sync-http-service-fetch";
+import { type ISyncHTTPController } from "./sync-http-service/sync-http-service.ts";
+import { fetchRead } from "./sync-http-service/sync-http-service-fetch.ts";
 
 const log = getLogger(import.meta.url);
 

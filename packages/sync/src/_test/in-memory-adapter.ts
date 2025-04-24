@@ -8,8 +8,8 @@ import {
 } from "@rejot-dev/contract/manifest";
 import type { IConnection } from "@rejot-dev/contract/sync";
 
-import { InMemorySink } from "./in-memory-sink";
-import { InMemorySource } from "./in-memory-source";
+import { InMemorySink } from "./in-memory-sink.ts";
+import { InMemorySource } from "./in-memory-source.ts";
 
 export class InMemoryConnectionAdapter
   implements

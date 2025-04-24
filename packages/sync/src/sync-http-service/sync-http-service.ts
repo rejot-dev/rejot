@@ -1,13 +1,14 @@
 import type { IEventStore } from "@rejot-dev/contract/event-store";
+
+import { HttpController } from "../http-controller/http-controller";
+import type { ISyncController } from "../sync-controller/sync-controller";
 import {
   dataStoreCursorsRoute,
   indexRoute,
-  syncServiceReadRoute,
   publicSchemasRoute,
   statusRoute,
-} from "./sync-http-service-routes";
-import { HttpController } from "../http-controller/http-controller";
-import type { ISyncController } from "../sync-controller/sync-controller";
+  syncServiceReadRoute,
+} from "./sync-http-service-routes.ts";
 
 interface ServerConfig {
   hostname: string;

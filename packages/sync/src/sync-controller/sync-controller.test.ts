@@ -5,7 +5,7 @@ import type { Transaction } from "@rejot-dev/contract/sync";
 
 import { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import { InMemoryConnectionAdapter } from "../_test/in-memory-adapter";
-import { SyncController } from "./sync-controller";
+import { SyncController } from "./sync-controller.ts";
 
 describe("SyncController", () => {
   const createTestManifest = () =>

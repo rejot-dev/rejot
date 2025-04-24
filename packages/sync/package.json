@@ -9,15 +9,51 @@
     "directory": "packages/sync"
   },
   "exports": {
-    "./consts": "./src/sync-consts.ts",
-    "./validate-manifest": "./src/manifest/validate-manifest.ts",
-    "./sync-controller": "./src/sync-controller.ts",
-    "./sync-controller-new": "./src/sync-controller/sync-controller.ts",
-    "./sync-manifest": "./src/manifest/sync-manifest.ts",
-    "./sync-manifest-controller": "./src/sync-manifest-controller.ts",
-    "./sync-http-resolver": "./src/sync-http-service/sync-http-resolver.ts",
-    "./sync-http-service": "./src/sync-http-service/sync-http-service.ts",
-    "./external-sync-message-bus": "./src/sync-controller/external-sync-message-bus.ts"
+    "./consts": {
+      "bun": "./src/sync-consts.ts",
+      "types": "./dist/src/sync-consts.d.ts",
+      "default": "./dist/src/sync-consts.js"
+    },
+    "./validate-manifest": {
+      "bun": "./src/manifest/validate-manifest.ts",
+      "types": "./dist/src/manifest/validate-manifest.d.ts",
+      "default": "./dist/src/manifest/validate-manifest.js"
+    },
+    "./sync-controller": {
+      "bun": "./src/sync-controller.ts",
+      "types": "./dist/src/sync-controller.d.ts",
+      "default": "./dist/src/sync-controller.js"
+    },
+    "./sync-controller-new": {
+      "bun": "./src/sync-controller/sync-controller.ts",
+      "types": "./dist/src/sync-controller/sync-controller.d.ts",
+      "default": "./dist/src/sync-controller/sync-controller.js"
+    },
+    "./sync-manifest": {
+      "bun": "./src/manifest/sync-manifest.ts",
+      "types": "./dist/src/manifest/sync-manifest.d.ts",
+      "default": "./dist/src/manifest/sync-manifest.js"
+    },
+    "./sync-manifest-controller": {
+      "bun": "./src/sync-manifest-controller.ts",
+      "types": "./dist/src/sync-manifest-controller.d.ts",
+      "default": "./dist/src/sync-manifest-controller.js"
+    },
+    "./sync-http-resolver": {
+      "bun": "./src/sync-http-service/sync-http-resolver.ts",
+      "types": "./dist/src/sync-http-service/sync-http-resolver.d.ts",
+      "default": "./dist/src/sync-http-service/sync-http-resolver.js"
+    },
+    "./sync-http-service": {
+      "bun": "./src/sync-http-service/sync-http-service.ts",
+      "types": "./dist/src/sync-http-service/sync-http-service.d.ts",
+      "default": "./dist/src/sync-http-service/sync-http-service.js"
+    },
+    "./external-sync-message-bus": {
+      "bun": "./src/sync-controller/external-sync-message-bus.ts",
+      "types": "./dist/src/sync-controller/external-sync-message-bus.d.ts",
+      "default": "./dist/src/sync-controller/external-sync-message-bus.js"
+    }
   },
   "scripts": {
     "check": "tsc --noEmit"

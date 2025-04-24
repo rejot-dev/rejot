@@ -3,10 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { InMemoryEventStore } from "@rejot-dev/contract/event-store/in-memory-event-store";
 import type { Transaction } from "@rejot-dev/contract/sync";
 
-import { InMemoryConnectionAdapter } from "./_test/in-memory-adapter";
+import { InMemoryConnectionAdapter } from "./_test/in-memory-adapter.ts";
 import type { ISyncServiceResolver } from "./sync-http-service/sync-http-resolver";
 import type { ISyncHTTPController } from "./sync-http-service/sync-http-service";
-import { SyncManifestController } from "./sync-manifest-controller";
+import { SyncManifestController } from "./sync-manifest-controller.ts";
 
 class TestSyncHTTPController implements ISyncHTTPController {
   start(): Promise<void> {
