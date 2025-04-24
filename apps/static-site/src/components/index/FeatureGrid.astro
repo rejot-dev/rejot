@@ -1,0 +1,55 @@
+---
+import { getCollection } from "astro:content";
+
+import ArrowPath from "astro-heroicons/outline/ArrowPath.astro";
+import Language from "astro-heroicons/outline/Language.astro";
+import UserGroup from "astro-heroicons/outline/UserGroup.astro";
+import Key from "astro-heroicons/outline/Key.astro";
+
+import Card from "../card/Card.astro";
+import CardHolder from "../card/CardHolder.astro";
+
+const collection = await getCollection("product");
+---
+
+<CardHolder title="Features">
+  <Card href="/product#synchronize">
+    <Fragment slot="header">
+      <ArrowPath class="size-6" />
+      <h3 class="font-bold">Synchronize</h3>
+    </Fragment>
+    <Fragment slot="description">
+      {collection.find((item) => item.id === "synchronize")!.data.description}
+    </Fragment>
+  </Card>
+
+  <Card href="/product#transform">
+    <Fragment slot="header">
+      <Language class="size-6" />
+      <h3 class="font-bold">Transform</h3>
+    </Fragment>
+    <Fragment slot="description">
+      {collection.find((item) => item.id === "transform")!.data.description}
+    </Fragment>
+  </Card>
+
+  <Card href="/product#control">
+    <Fragment slot="header">
+      <Key class="size-6" />
+      <h3 class="font-bold">Control</h3>
+    </Fragment>
+    <Fragment slot="description">
+      {collection.find((item) => item.id === "control")!.data.description}
+    </Fragment>
+  </Card>
+
+  <Card href="/product#own">
+    <Fragment slot="header">
+      <UserGroup class="size-6" />
+      <h3 class="font-bold">Own</h3>
+    </Fragment>
+    <Fragment slot="description">
+      {collection.find((item) => item.id === "own")!.data.description}
+    </Fragment>
+  </Card>
+</CardHolder>

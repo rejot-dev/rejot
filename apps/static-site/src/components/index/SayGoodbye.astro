@@ -1,0 +1,35 @@
+---
+import ArrowTrendingDown from "astro-heroicons/outline/ArrowTrendingDown.astro";
+import ArrowTrendingUp from "astro-heroicons/outline/ArrowTrendingUp.astro";
+import FeatureRow from "./FeatureRow.astro";
+import CircleStack from "astro-heroicons/outline/CircleStack.astro";
+import UserGroup from "astro-heroicons/outline/UserGroup.astro";
+---
+
+<div class="space-y-4">
+  <h2 class="text-center text-4xl font-bold">Say goodbye to...</h2>
+</div>
+
+<FeatureRow title="Project Management Overhead">
+  <UserGroup class="size-20 text-rejot-red-600" stroke-width="1" slot="icon" />
+  Let your product managers focus on talking to users instead of talking to other teams.
+</FeatureRow>
+
+<FeatureRow title="Data Silos" inverted={true}>
+  <div class="flex flex-row items-center justify-center" slot="icon">
+    <CircleStack class="size-20 text-rejot-red-600" stroke-width="1" />
+    <CircleStack class="size-20 text-rejot-red-600" stroke-width="1" />
+    <CircleStack class="size-20 text-rejot-red-600" stroke-width="1" />
+  </div>
+  Data is most useful when it’s available to everyone. Publish data seamlessly without compromising on
+  control & autonomy.
+</FeatureRow>
+
+<FeatureRow title="Reverse ETL">
+  <div class="flex flex-row items-center justify-center" slot="icon">
+    <ArrowTrendingUp class="size-20 text-rejot-red-600" stroke-width="1" />
+    <ArrowTrendingDown class="size-20 text-rejot-red-600" stroke-width="1" />
+  </div>
+  Combine data directly in the operational layer using the catalog of contracts. Stop abusing your data
+  warehouse.
+</FeatureRow>

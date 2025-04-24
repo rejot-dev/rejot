@@ -1,0 +1,26 @@
+---
+title: "Connections"
+---
+
+Object representing a connection to a database. For supported databases see the
+[Connectors](/docs/reference/connectors)
+
+import ApiSchema from "@/components/schema/ApiSchema.astro";
+import manifestSchema from "@/content/manifests/manifest_v0.json";
+
+## Connection
+
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/connections/items"
+/>
+
+<span id="config"></span>
+## Connection Config
+
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/connections/items/properties/config"
+/>

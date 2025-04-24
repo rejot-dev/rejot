@@ -1,0 +1,68 @@
+---
+import ReJotLogo from "../icons/ReJotLogo.astro";
+import HeaderLink from "./HeaderLink.astro";
+
+import Bars3 from "astro-heroicons/outline/Bars3.astro";
+import XMark from "astro-heroicons/outline/XMark.astro";
+---
+
+<header class="mx-auto mb-12 min-h-10 w-full max-w-6xl">
+  <nav class="flex items-center justify-between">
+    <a href="/" aria-label="Go to homepage">
+      <ReJotLogo class="min-w-32" />
+    </a>
+    <button id="menu-button" class="md:hidden" aria-label="Open Menu">
+      <Bars3 class="size-6" />
+    </button>
+
+    <div
+      id="nav-links"
+      class="fixed inset-0 z-50 hidden bg-transparent md:relative md:flex md:gap-4 [&:not(.hidden)]:bg-white dark:[&:not(.hidden)]:bg-gray-800"
+    >
+      <div
+        class="relative flex h-full flex-col items-center justify-center gap-8 md:flex-row md:gap-4"
+      >
+        <div class="absolute left-4 top-4 md:hidden">
+          <a href="/" aria-label="Go to homepage">
+            <ReJotLogo class="min-w-32" />
+          </a>
+        </div>
+        <button id="close-menu" class="absolute right-4 top-6 md:hidden" aria-label="Close Menu">
+          <XMark class="size-6" />
+        </button>
+        <!-- <HeaderLink href="/product" activeClass="border-b-rejot-red-600"> Product </HeaderLink> -->
+        <!-- <HeaderLink href="/use-cases" activeClass="border-b-rejot-red-600">
+          Use Cases
+        </HeaderLink> -->
+        <HeaderLink href="/blog" activeClass="border-b-rejot-red-600">Blog</HeaderLink>
+        <HeaderLink href="/about" activeClass="border-b-rejot-red-600">About</HeaderLink>
+        <HeaderLink href="/contact" activeClass="border-b-rejot-red-600">Contact</HeaderLink>
+        <!-- <HeaderLink href="/docs" activeClass="border-b-rejot-red-600"> Docs </HeaderLink> -->
+        <!-- <LinkButton href="https://app.rejot.dev" target="_blank" rel="noreferrer">
+          <ArrowTopRightOnSquare class="size-4" />
+          App
+        </LinkButton> -->
+      </div>
+    </div>
+  </nav>
+</header>
+
+<script>
+  const menuButton = document.getElementById("menu-button");
+  const closeButton = document.getElementById("close-menu");
+  const navLinks = document.getElementById("nav-links");
+
+  menuButton?.addEventListener("click", () => {
+    navLinks?.classList.toggle("hidden");
+  });
+
+  closeButton?.addEventListener("click", () => {
+    navLinks?.classList.add("hidden");
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      navLinks?.classList.add("hidden");
+    }
+  });
+</script>

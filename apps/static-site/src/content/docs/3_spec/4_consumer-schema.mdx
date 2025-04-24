@@ -1,0 +1,35 @@
+---
+title: Consumer Schemas
+---
+
+import ApiSchema from "@/components/schema/ApiSchema.astro";
+import manifestSchema from "@/content/manifests/manifest_v0.json";
+
+Consumer schemas define how data is ingested from a public schema into a destination data store, see
+our [Defining Schemas](/docs/guides/defining-schemas) guide for more details.
+
+## Consumer Schema
+
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/consumerSchemas/items"
+/>
+
+## Public Schema Reference
+
+<span id="publicSchema"></span> {/* Add anchor for the link */}
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/consumerSchemas/items/properties/publicSchema"
+/>
+
+## Transformation
+
+<span id="transformations"></span> {/* Add anchor for the link */}
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/consumerSchemas/items/properties/transformations/items"
+/>

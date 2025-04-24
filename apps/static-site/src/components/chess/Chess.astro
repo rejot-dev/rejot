@@ -1,0 +1,336 @@
+---
+
+---
+
+<noscript>
+  <div class="w-full text-center">
+    <img
+      src="/content/blog/chess-duality/chess-board-screenshot.webp"
+      alt="Chess demonstration showing example of a service mesh with two chess boards"
+      class="mx-auto max-w-full md:max-w-[600px]"
+    />
+    <p class="text-sm text-gray-600">Enable JavaScript to see an interactive chess demo.</p>
+
+    <!-- Static explanations for when JavaScript is disabled -->
+    <div class="mx-auto mt-6 w-full max-w-2xl text-left">
+      <div class="rounded border border-gray-300 bg-white p-4 dark:bg-gray-800">
+        <h4 class="mb-2 font-semibold">Move Explanations:</h4>
+        <p class="mb-3 text-sm">
+          <strong>1. Qd5:</strong> White plays Qd5, meaning their queen moves from e4 to d5. The chess
+          microservice decides this move is legal. The downstream service looks up the position of white's
+          queen and updates the board state to reflect this move. All seems well.
+        </p>
+        <p class="text-sm">
+          <strong>2. Rd8:</strong> Black plays Rd8. The chess service knows this could only mean the
+          rook moving from e8 to d8, as the other rook moving to d8 would be an illegal move. The downstream
+          service receives the event and looks up the position of black's rook. It turns out there are
+          two rooks on the board. This move is undecidable for a downstream service that doesn't contain
+          the chess "business logic".
+        </p>
+      </div>
+    </div>
+  </div>
+</noscript>
+
+<div class="flex w-full flex-col">
+  <!-- Chess boards and moves list container -->
+  <div class="flex w-full flex-col justify-center md:flex-row md:gap-8">
+    <!-- Left board -->
+    <div class="flex flex-col items-center md:order-1">
+      <h3 class="text-lg font-semibold">Chess Service</h3>
+      <div class="w-full max-w-[240px]">
+        <canvas id="leftBoard" class="size-full"></canvas>
+      </div>
+    </div>
+
+    <!-- Move list (between boards on md+ screens, below buttons on small screens) -->
+    <div
+      class="order-last mx-auto flex w-full max-w-44 flex-col items-center md:order-2 md:w-auto md:min-w-36 md:self-center"
+    >
+      <h3 class="mb-2 text-lg font-semibold">Moves</h3>
+      <div id="moveList" class="w-full space-y-2 rounded border border-gray-300 p-4">
+        <!-- Moves will be added here dynamically -->
+      </div>
+    </div>
+
+    <!-- Right board -->
+    <div class="flex flex-col items-center md:order-3">
+      <h3 class="text-lg font-semibold">Downstream</h3>
+      <div class="w-full max-w-[240px]">
+        <canvas id="rightBoard" class="size-full"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="mt-6 flex justify-center gap-4 md:mt-4">
+    <button
+      id="moveButton"
+      class="inline-flex items-center gap-2 rounded-lg bg-rejot-red-600 px-6 py-2 text-white drop-shadow-md hover:bg-rejot-red-700"
+    >
+      Make a Move
+    </button>
+    <button
+      id="resetButton"
+      class="inline-flex items-center gap-2 rounded-lg border-2 border-rejot-red-600 px-6 py-2 text-rejot-red-600 hover:border-rejot-red-700 hover:text-rejot-red-700"
+    >
+      Reset Board
+    </button>
+  </div>
+
+  <!-- Move explanation section -->
+  <div class="mx-auto mt-6 w-full max-w-2xl">
+    <div
+      id="moveExplanation"
+      class="min-h-[100px] rounded-lg border-gray-300 bg-white p-4 shadow-md transition-all duration-300 dark:bg-gray-800"
+    >
+      <p class="text-sm">Make a move to see the explanation</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { createBoard } from "@/chess";
+  import type { BoardColors, ChessBoard, Move } from "@/chess";
+  import { PieceType, PieceColor } from "@/chessPieces";
+
+  // Initial position for left board - similar to original
+  const leftInitialPosition = {
+    // White pieces
+    g1: `${PieceColor.WHITE}${PieceType.ROOK}`,
+    e4: `${PieceColor.WHITE}${PieceType.QUEEN}`,
+
+    // Black pieces
+    e8: `${PieceColor.BLACK}${PieceType.ROOK}`,
+    h7: `${PieceColor.BLACK}${PieceType.ROOK}`,
+  };
+
+  // Initial position for right board - slightly different
+  const rightInitialPosition = {
+    // White pieces
+    g1: `${PieceColor.WHITE}${PieceType.ROOK}`,
+    e4: `${PieceColor.WHITE}${PieceType.QUEEN}`,
+
+    // Black pieces
+    e8: `${PieceColor.BLACK}${PieceType.ROOK}`,
+    h7: `${PieceColor.BLACK}${PieceType.ROOK}`,
+  };
+
+  // Custom board colors
+  function getCustomColors(): BoardColors {
+    const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return {
+      light: "#f0d9b5",
+      dark: "#b58863",
+      labels: isDarkMode ? "#e5e5e5" : "#333333",
+      moveFrom: "rgba(255, 215, 0, 0.5)",
+      moveTo: "rgba(50, 205, 50, 0.5)",
+      highlight: "rgba(30, 144, 255, 0.3)",
+    };
+  }
+
+  interface ChessMove {
+    algebraic: string;
+    moves: {
+      left: Move[];
+      right: Move[];
+    };
+    leftPositions: Record<string, string | undefined>;
+    rightPositions: Record<string, string | undefined>;
+    explanation: string;
+  }
+
+  // Helper function to create a new position after a move
+  function makeMove(
+    positions: Record<string, string | undefined>,
+    from: string,
+    to: string,
+  ): Record<string, string | undefined> {
+    const result = { ...positions };
+    const piece = positions[from];
+
+    if (piece) {
+      result[to] = piece;
+      result[from] = undefined;
+    }
+
+    return result;
+  }
+
+  // Create the sequence of moves - now with algebraic notation and different results for each board
+  const moves: ChessMove[] = [
+    // 1. Qe4-d5 - White queen moves from e4 to d5
+    {
+      algebraic: "Qd5",
+      moves: {
+        left: [{ from: "e4", to: "d5" }],
+        right: [{ from: "e4", to: "d5" }],
+      },
+      leftPositions: makeMove(leftInitialPosition, "e4", "d5"),
+      rightPositions: makeMove(rightInitialPosition, "e4", "d5"),
+      explanation:
+        "White plays `Qd5`, meaning their queen moves from `e4` to `d5`. The chess microservice decides this move is legal. The downstream service looks up the position of white's queen and updates the board state to reflect this move. All seems well.",
+    },
+    // 1...Rd8 - Black rook moves from e8 to d8 (left board) and from both e8 and h7 to d8 (right board)
+    {
+      algebraic: "Rd8 ‼️",
+      moves: {
+        left: [{ from: "e8", to: "d8" }],
+        right: [
+          { from: "e8", to: "d8" },
+          { from: "h7", to: "d8" }, // Second rook also moves on right board
+        ],
+      },
+      leftPositions: makeMove(makeMove(leftInitialPosition, "e4", "d5"), "e8", "d8"),
+      rightPositions: makeMove(
+        makeMove(makeMove(rightInitialPosition, "e4", "d5"), "e8", "d8"),
+        "h7",
+        "d8",
+      ),
+      explanation:
+        "Black plays `Rd8`. The chess service knows this could only mean the rook moving from `e8` to `d8`, as the other rook moving to `d8` would be an illegal move. The downstream service receives the event and looks up the position of black's rook. It turns out there are two rooks on the board. This move is undecidable for a downstream service that doesn't contain the chess \"business logic\".",
+    },
+  ];
+
+  let currentMoveIndex = 0;
+  let leftBoard: ChessBoard;
+  let rightBoard: ChessBoard;
+
+  const leftCanvas = document.getElementById("leftBoard") as HTMLCanvasElement;
+  const rightCanvas = document.getElementById("rightBoard") as HTMLCanvasElement;
+  const moveButton = document.getElementById("moveButton") as HTMLButtonElement;
+  const resetButton = document.getElementById("resetButton") as HTMLButtonElement;
+  const moveList = document.getElementById("moveList") as HTMLDivElement;
+  const moveExplanation = document.getElementById("moveExplanation") as HTMLDivElement;
+
+  // Function to add a move to the move list
+  function addMoveToList(move: ChessMove, index: number) {
+    const moveNumber = index + 1;
+    const moveText = document.createElement("div");
+    moveText.className = "text-sm";
+    moveText.textContent = `${moveNumber}.${move.algebraic}`;
+    moveList.appendChild(moveText);
+
+    // Update the move explanation
+    if (moveExplanation) {
+      moveExplanation.innerHTML = "";
+      const explanationText = document.createElement("p");
+      explanationText.className = "text-sm";
+
+      // Format the explanation with code highlighting
+      const formattedExplanation = move.explanation.replace(/`([^`]+)`/g, "<code>$1</code>");
+      explanationText.innerHTML = formattedExplanation;
+
+      // Add a highlight effect
+      moveExplanation.classList.add("bg-yellow-50");
+      moveExplanation.appendChild(explanationText);
+
+      // Remove highlight after a delay
+      setTimeout(() => {
+        moveExplanation.classList.remove("bg-yellow-50");
+      }, 1000);
+    }
+  }
+
+  if (leftCanvas && rightCanvas) {
+    // Initialize both boards
+    Promise.all([
+      createBoard(leftCanvas, leftInitialPosition, getCustomColors()),
+      createBoard(rightCanvas, rightInitialPosition, getCustomColors()),
+    ])
+      .then(([left, right]) => {
+        console.log("Boards initialized");
+        leftBoard = left;
+        rightBoard = right;
+
+        // Listen for system color scheme changes
+        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", async () => {
+          console.log("Color scheme changed");
+          // Recreate both boards with new colors
+          leftBoard = await createBoard(leftCanvas, leftInitialPosition, getCustomColors());
+          rightBoard = await createBoard(rightCanvas, rightInitialPosition, getCustomColors());
+        });
+
+        // Enable the move button
+        if (moveButton) {
+          moveButton.disabled = false;
+        }
+      })
+      .catch((err) => {
+        console.error("Board initialization error", err);
+      });
+  }
+
+  // Add event listener for the move button
+  if (moveButton) {
+    moveButton.disabled = true; // Disable until boards are initialized
+    moveButton.addEventListener("click", async () => {
+      if (!leftBoard || !rightBoard || currentMoveIndex >= moves.length) return;
+
+      const move = moves[currentMoveIndex];
+
+      try {
+        // Disable the button during animation
+        moveButton.disabled = true;
+
+        // Add the move to the move list BEFORE the animation starts
+        addMoveToList(move, currentMoveIndex);
+
+        // Update both boards with their respective new positions and animate the moves
+        await Promise.all([
+          leftBoard.update(move.leftPositions, move.moves.left),
+          rightBoard.update(move.rightPositions, move.moves.right),
+        ]);
+
+        // Increment the move index
+        currentMoveIndex++;
+
+        // Update button text or disable if no more moves
+        if (currentMoveIndex >= moves.length) {
+          moveButton.textContent = "No More Moves";
+          moveButton.disabled = true;
+        } else {
+          moveButton.disabled = false;
+        }
+      } catch (err) {
+        console.error("Error making move", err);
+      }
+    });
+  }
+
+  // Add event listener for the reset button
+  if (resetButton) {
+    resetButton.addEventListener("click", async () => {
+      if (!leftBoard || !rightBoard) return;
+
+      try {
+        // Reset to initial positions
+        await Promise.all([
+          leftBoard.update(leftInitialPosition),
+          rightBoard.update(rightInitialPosition),
+        ]);
+
+        // Clear move list
+        if (moveList) {
+          moveList.innerHTML = "";
+        }
+
+        // Reset move explanation
+        if (moveExplanation) {
+          moveExplanation.innerHTML = '<p class="text-sm">Make a move to see the explanation</p>';
+        }
+
+        // Reset move index
+        currentMoveIndex = 0;
+
+        // Reset move button
+        if (moveButton) {
+          moveButton.textContent = "Make a Move";
+          moveButton.disabled = false;
+        }
+      } catch (err) {
+        console.error("Error resetting board", err);
+      }
+    });
+  }
+</script>

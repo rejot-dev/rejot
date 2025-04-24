@@ -1,0 +1,44 @@
+---
+title: Public Schemas
+---
+
+import ApiSchema from "@/components/schema/ApiSchema.astro";
+import manifestSchema from "@/content/manifests/manifest_v0.json";
+
+Public schemas define how data is exposed from a data store managed by ReJot, see our
+[Defining Schemas](/docs/guides/defining-schemas) guide for more details.
+
+## Public Schema
+
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/publicSchemas/items"
+/>
+
+## Source
+
+<span id="source"></span>
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/publicSchemas/items/properties/source"
+/>
+
+## Version
+
+<span id="version"></span>
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/publicSchemas/items/properties/version"
+/>
+
+## Transformation
+
+<span id="transformations"></span>
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/publicSchemas/items/properties/transformations/items"
+/>

@@ -1,0 +1,238 @@
+---
+import CircleStack from "astro-heroicons/outline/CircleStack.astro";
+import ReJotIconWireframe from "../icons/ReJotIconWireframe.astro";
+import { Code } from "astro:components";
+---
+
+<div class="space-y-4">
+  <h2 class="text-center text-2xl font-bold md:text-3xl lg:text-4xl">Sync vs Event Streaming</h2>
+  <p class="mx-auto max-w-prose text-center text-base text-gray-600 md:text-lg dark:text-gray-400">
+    Event streaming complicates data integrations, Sync simplifies them.
+  </p>
+</div>
+
+<div class="space-y-4 rounded-lg bg-white p-4 shadow-md md:p-8 dark:bg-gray-800">
+  <h3 class="text-xl font-semibold md:text-2xl">Example: User status in a messaging app</h3>
+
+  <!-- Event Streaming Approach -->
+  <div class="space-y-4">
+    <div class="flex justify-center gap-2">
+      <h4 class="text-lg font-medium md:text-xl">Event Streaming</h4>
+    </div>
+
+    <!-- Main Events Diagram - Grid Layout with Integrated Responsibilities -->
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
+      <!-- Source Database with Internal State -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <CircleStack class="size-8 text-rejot-red-600 md:size-12" stroke-width="1" />
+          <span class="font-medium">Source DB</span>
+        </div>
+        <div class="w-full rounded-md bg-gray-50 p-2 dark:bg-gray-700">
+          <p class="text-sm font-semibold md:text-base">Users</p>
+
+          <table class="w-full border-collapse text-xs text-gray-600 md:text-sm dark:text-gray-400">
+            <thead>
+              <tr>
+                <th class="text-left text-xs">id</th>
+                <th class="text-left text-xs">name</th>
+                <th class="text-left text-xs">status</th>
+                <th class="text-left text-xs">password</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="dark:text-gray-200">
+                <td>1</td>
+                <td>Foo</td>
+                <td>2</td>
+                <td>cmVqb3QK</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Transformation to Events -->
+      <div class="flex flex-col items-center justify-center gap-1 sm:col-span-1">
+        <div class="text-center">
+          <h5 class="font-medium">Event Producer</h5>
+        </div>
+        <div class="flex flex-col gap-1">
+          <div class="rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-600">UserLoggedIn</div>
+          <div class="rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-600">UserSentMessage</div>
+          <div class="rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-600">UserOpenedApp</div>
+          <div class="rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-600">UserReadMessage</div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-center text-2xl text-gray-400">
+        <span class="lg:hidden">↓</span>
+        <span class="hidden lg:inline">→</span>
+      </div>
+
+      <!-- Transformation back to State -->
+      <div class="flex flex-col items-center justify-center gap-1 sm:col-span-1">
+        <!-- Event Consumer Responsibility -->
+        <div class="text-center">
+          <h5 class="font-medium">Event Consumer</h5>
+        </div>
+        <div class="flex flex-col gap-1">
+          <div class="rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-600">UserLoggedIn</div>
+          <div class="rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-600">UserSentMessage</div>
+          <div class="rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-600">UserOpenedApp</div>
+          <div class="rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-600">UserReadMessage</div>
+        </div>
+      </div>
+
+      <!-- Target Database -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <CircleStack class="size-8 text-rejot-red-600 md:size-12" stroke-width="1" />
+          <span class="font-medium">Destination DB</span>
+        </div>
+        <div class="w-full rounded-md bg-gray-50 p-2 dark:bg-gray-700">
+          <p class="text-sm font-semibold md:text-base">User status</p>
+
+          <table class="w-full text-xs text-gray-600 md:text-sm dark:text-gray-400">
+            <thead>
+              <tr>
+                <th class="text-left text-xs">id</th>
+                <th class="text-left text-xs">status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="dark:text-gray-200">
+                <td>1</td>
+                <td>online</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-center text-xs text-gray-700 sm:text-sm dark:text-gray-300">
+      Consumer must be aware of all events that change a users status, including events added later.
+    </p>
+  </div>
+
+  <hr class="dark:border-gray-600" />
+
+  <!-- ReJot Approach -->
+  <div class="space-y-4">
+    <div class="flex justify-center gap-2">
+      <h4 class="text-lg font-medium md:text-xl">ReJot Sync</h4>
+    </div>
+
+    <!-- Main ReJot Diagram - Grid Layout with Integrated Responsibilities -->
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
+      <!-- Source Database with Internal Schema -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <CircleStack class="size-8 text-rejot-red-600 md:size-12" stroke-width="1" />
+          <span class="font-medium">Source DB</span>
+        </div>
+        <div class="w-full rounded-md bg-gray-50 p-2 dark:bg-gray-700">
+          <p class="text-sm font-semibold md:text-base">Users</p>
+
+          <table class="w-full text-xs text-gray-600 md:text-sm dark:text-gray-400">
+            <thead>
+              <tr>
+                <th class="text-left text-xs">id</th>
+                <th class="text-left text-xs">name</th>
+                <th class="text-left text-xs">status</th>
+                <th class="text-left text-xs">password</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="dark:text-gray-200">
+                <td>1</td>
+                <td>Foo</td>
+                <td>2</td>
+                <td>cmVqb3QK</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Mapping to Public Schema -->
+      <div class="flex flex-col items-center justify-center gap-1 sm:col-span-1">
+        <div class="text-center">
+          <h5 class="font-medium">Public Schema</h5>
+        </div>
+        <div class="flex w-full justify-center overflow-x-auto text-xs">
+          <Code
+            theme="github-light"
+            code={`SELECT
+  id,
+  status::text
+FROM
+  users
+`}
+            lang="sql"
+          />
+        </div>
+      </div>
+
+      <!-- ReJot Sync -->
+      <div class="flex items-center justify-center text-2xl text-gray-400">
+        <span class="lg:hidden">↓</span>
+        <span class="hidden lg:inline">→</span>
+      </div>
+
+      <!-- Mapping to Consumer Schema -->
+      <div class="flex flex-col items-center justify-center gap-1 sm:col-span-1">
+        <div class="text-center">
+          <h5 class="font-medium">Consumer Schema</h5>
+        </div>
+        <div class="flex w-full justify-center overflow-x-auto text-xs">
+          <Code
+            theme="github-light"
+            code={`INSERT INTO
+  user_status (id, status)
+VALUES
+  (:id, :status)
+ON CONFLICT ...`}
+            lang="sql"
+          />
+        </div>
+      </div>
+
+      <!-- Target Database -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <CircleStack class="size-8 text-rejot-red-600 md:size-12" stroke-width="1" />
+          <span class="font-medium">Destination DB</span>
+        </div>
+        <div class="w-full rounded-md bg-gray-50 p-2 dark:bg-gray-700">
+          <p class="text-sm font-semibold md:text-base">User status</p>
+
+          <table class="w-full text-xs text-gray-600 md:text-sm dark:text-gray-400">
+            <thead>
+              <tr>
+                <th class="text-left text-xs">id</th>
+                <th class="text-left text-xs">status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="dark:text-gray-200">
+                <td>1</td>
+                <td>online</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <p
+        class="inline-flex items-center justify-center gap-2 rounded-md bg-green-50 p-3 font-medium text-green-700 dark:bg-green-900 dark:text-green-300"
+      >
+        <ReJotIconWireframe class="size-8" /> ReJot simply replicates state and protects domain boundaries
+        through SQL data contracts.
+      </p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,61 @@
+---
+title: "Backend-for-Frontend (BFF)"
+description:
+  "Create efficient, purpose-built API layers for your frontend applications. ReJot's
+  synchronization capabilities enable you to build optimized backend interfaces without complex
+  infrastructure."
+---
+
+# Backend-for-Frontend (BFF)
+
+In a service-oriented architecture, the Backend-for-Frontend (BFF) acts as an intermediary layer
+between the frontend and numerous backend services. Rather than having the frontend interact
+directly with each backend service, the BFF acts as a single point of entry for the frontend. This
+moves complexity away from the UI layer, improves latency, and solves over-fetching of data. BFFs
+are all about data, a perfect fit for ReJot's synchronization capabilities.
+
+## Background
+
+There are some terms you'll need to understand before we get started:
+
+- **Data Store**: A database. The canonical owner of the data you want to migrate. Typically has
+  some sort of schema.
+- **Data Server**: The service that interacts with the data store. We see this as the logical
+  "owner" of the data within the data store. Typically this service is stateless and is running in
+  multiple (load balanced) instances. Contains authentication routines and other business logic.
+- **Data Client**: An application that interacts with the server. This is usually (but not in this
+  use case) a frontend or user-facing application. The client also has a backing data store, but
+  this is usually ephemeral. It can be reconstructed from the data in the server/store.
+
+## Method
+
+In this use case, we'll have an extra data client that acts like the Backend-for-Frontend. We assume
+that the setup before introducing ReJot is a service-oriented architecture. A number of teams own
+their respective services with a backing data store. The team working on the frontend wants to
+integrate data from multiple teams before sending it to the end-user.
+
+The product teams have already set up publication rules for their data. The BFF data client is a
+receiver of data owned by these teams. The data that is shared depends on the type of frontend
+application we are dealing with. A back-office application would receive more data than a customer
+facing application.
+
+The BFF business logic code will be responsible for the authentication and authorization of the
+requests coming in. This is important, as the data client would receives data related to all
+customers, as opposed to only data of the customer issuing the request. The data client will also
+forward any mutation commands received from the frontend to the appropriate data server. Note that
+transformations to these commands can be freely applied, as the team thinks appropriate. The BFF
+data client can also choose to only receive a subset of the server data.
+
+## Overview
+
+import SvgImage from "@/components/SvgImage.astro";
+
+<SvgImage src="/content/use-cases/bff.svg" caption="Backend-for-Frontend overview">
+  <div
+    id="bff-circle"
+    class="absolute left-[30%] top-[48%] aspect-square h-[4%] rounded-full border-2 border-red-500"
+  ></div>
+</SvgImage>
+
+The architecture of the BFF setup is quite typical of any architecture that contains a BFF. The
+difference is in the way data is exchanged between the services. In a traditional setup,

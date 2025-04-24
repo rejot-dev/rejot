@@ -1,0 +1,72 @@
+---
+import Prose from "../components/Prose.astro";
+import BlueSkyIcon from "./icons/BlueSkyIcon.astro";
+import GithubIcon from "./icons/GithubIcon.astro";
+import LinkedInIcon from "./icons/LinkedInIcon.astro";
+import ReJotIconWireframe from "./icons/ReJotIconWireframe.astro";
+import TwitterIcon from "./icons/TwitterIcon.astro";
+const today = new Date();
+---
+
+<footer
+  class="mx-auto mt-16 w-full max-w-6xl space-y-6 border-t border-gray-200 p-6 text-gray-600 dark:border-gray-700 dark:text-gray-400"
+>
+  <div class="flex flex-col-reverse justify-between sm:flex-row">
+    <div class="mb-4 flex-1 grow text-left sm:mb-0">
+      <Prose>
+        <address>
+          ReJot, Inc. <br />
+          1111B S Governors Ave STE 25611 <br />
+          Dover, DE 19904 <br />
+        </address>
+      </Prose>
+    </div>
+    <div class="mb-4 flex-1 grow sm:mb-0">
+      <div class="flex justify-center">
+        <ReJotIconWireframe class="max-w-10 text-gray-600" />
+      </div>
+    </div>
+    <div class="mb-4 flex-1 grow text-left sm:mb-0 sm:text-right">
+      <a
+        href="/blog"
+        class="block text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+        >Blog</a
+      >
+      <a
+        href="/about"
+        class="block text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+        >About</a
+      >
+      <a
+        href="/contact"
+        class="block text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+        >Contact</a
+      >
+      <a
+        href="/privacy-policy"
+        class="block text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+        >Privacy Policy</a
+      >
+    </div>
+  </div>
+
+  <div class="flex flex-row items-center justify-between">
+    <p>
+      &copy; {today.getFullYear()} ReJot, inc.
+    </p>
+    <div class="flex flex-row space-x-3">
+      <a href="https://github.com/rejot-dev/" target="_blank">
+        <GithubIcon class="size-6" />
+      </a>
+      <a href="https://x.com/ReJotSync" target="_blank">
+        <TwitterIcon class="size-6" />
+      </a>
+      <a href="https://bsky.app/profile/ReJot.dev" target="_blank">
+        <BlueSkyIcon class="size-6" />
+      </a>
+      <a href="https://www.linkedin.com/company/rejot" target="_blank">
+        <LinkedInIcon class="size-6" />
+      </a>
+    </div>
+  </div>
+</footer>

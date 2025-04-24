@@ -1,0 +1,144 @@
+---
+import { pageTitle, REJOT_TAG_LINE, REJOT_DESCRIPTION } from "../consts";
+import RejotIcon from "../components/icons/ReJotIcon.astro";
+import LinkButton from "../components/LinkButton.astro";
+import FeatureItem from "../components/index/FeatureItem.astro";
+import Base from "../layouts/Base.astro";
+import Cloud from "astro-heroicons/outline/Cloud.astro";
+import Forward from "astro-heroicons/outline/Forward.astro";
+import PresentationChartLine from "astro-heroicons/outline/PresentationChartLine.astro";
+import HowWeDoItGrid from "@/components/index/HowWeDoItGrid.astro";
+import SayGoodbye from "@/components/index/SayGoodbye.astro";
+import BackgroundGradient from "@/components/index/BackgroundGradient.astro";
+import ArrowRight from "astro-heroicons/solid/ArrowRight.astro";
+import ArrowPath from "astro-heroicons/outline/ArrowPath.astro";
+import Newspaper from "astro-heroicons/outline/Newspaper.astro";
+import ArrowDownOnSquareStack from "astro-heroicons/outline/ArrowDownOnSquareStack.astro";
+import NewsletterForm from "@/components/NewsletterForm.astro";
+import EventsVsSync from "@/components/index/EventsVsSync.astro";
+import GithubIcon from "@/components/icons/GithubIcon.astro";
+
+const iconProps = { class: "-ml-2 max-h-20 text-rejot-red-600", "stroke-width": "1" };
+const description = `${REJOT_TAG_LINE}: ${REJOT_DESCRIPTION}`;
+---
+
+<Base title={pageTitle("Home")} description={description}>
+  <article class="w-full max-w-6xl space-y-16 md:space-y-20">
+    <div class="relative flex items-center justify-between gap-12">
+      <BackgroundGradient />
+      <div class="max-w-prose space-y-4">
+        <h1 class="max-w-prose bg-clip-text text-4xl font-bold md:text-6xl md:leading-tight">
+          {REJOT_TAG_LINE}
+        </h1>
+
+        <p class="max-w-prose text-xl text-gray-600 md:text-3xl dark:text-gray-400">
+          {REJOT_DESCRIPTION}
+        </p>
+      </div>
+      <RejotIcon class="max-w-48" />
+    </div>
+
+    <div class="flex flex-wrap justify-start gap-4 font-medium">
+      <LinkButton href="/contact/">Contact</LinkButton>
+      <LinkButton href="/about/">About Us</LinkButton>
+      <LinkButton href="https://github.com/rejot-dev/rejot" secondary={true} target="_blank">
+        <GithubIcon class="size-6" /> GitHub
+      </LinkButton>
+    </div>
+
+    <div class="flex flex-row justify-center gap-2">
+      <img src="/yc-y.svg" alt="YCombinator logo" class="size-6" />
+      <span class="min-h-full self-center">Backed by Y Combinator</span>
+    </div>
+
+    <div id="steps" class="flex flex-col justify-between gap-12 md:flex-row">
+      <FeatureItem title="Define">
+        <Newspaper {...iconProps} slot="icon" />
+        Teams own their data like they own their code. Data owners define a contract, add transformations,
+        and apply access control rules. Ownership leads to autonomy and speed.
+      </FeatureItem>
+
+      <FeatureItem title="Integrate">
+        <ArrowDownOnSquareStack {...iconProps} slot="icon" />
+        Integrators find data in the catalog. They create derived data from it to enhance their products.
+        Deep integration creates a cohesive platform.
+      </FeatureItem>
+
+      <FeatureItem title="Synchronize">
+        <ArrowPath {...iconProps} slot="icon" />
+        ReJot's synchronization engine moves data between teams as soon as it's created. Manual data
+        fetching and integration tasks are a thing of the past.
+      </FeatureItem>
+    </div>
+
+    <hr class="dark:border-gray-600" />
+    <EventsVsSync />
+
+    <hr class="dark:border-gray-600" />
+
+    <div class="space-y-4">
+      <h1 class="text-center text-4xl font-bold">Benefits</h1>
+      <p class="mx-auto max-w-prose text-center text-lg text-gray-600 dark:text-gray-400">
+        Your organization will benefit from ReJot in these ways.
+      </p>
+    </div>
+
+    <div id="value-proposition" class="flex flex-col justify-between gap-12 md:flex-row">
+      <FeatureItem title="Operate as One Platform">
+        <Cloud {...iconProps} slot="icon" />
+        Deeply integrate all aspects of your product catalog to create one cohesive platform.
+      </FeatureItem>
+
+      <FeatureItem title="Fearless Product Evolution">
+        <PresentationChartLine {...iconProps} slot="icon" />
+        Empower teams to change their product and implementation without worrying about dependent business
+        units.
+      </FeatureItem>
+
+      <FeatureItem title="Boost Developer Productivity">
+        <Forward {...iconProps} slot="icon" />
+        Speed up development cycles by cutting down on repetitive integration tasks. Define your data
+        contracts, and we'll make sure there are no breaches.
+      </FeatureItem>
+    </div>
+
+    <hr class="dark:border-gray-600" />
+    <SayGoodbye />
+    <hr class="dark:border-gray-600" />
+    <HowWeDoItGrid />
+
+    <div id="short-introduction" class="relative w-full">
+      <BackgroundGradient />
+
+      <div class="flex flex-1 flex-row">
+        <div class="flex-1 space-y-5">
+          <h2 class="bg-clip-text text-2xl font-bold">An Essay on the Burdens of Data</h2>
+          <p class="max-w-prose text-lg text-gray-600 dark:text-gray-400">
+            Data is valuable to organizations, but also a burden to software engineers. This essay
+            is core to the philosophy of ReJot, it explores how to unburden software engineers while
+            extracting value from data.
+          </p>
+
+          <LinkButton class="flex flex-row align-middle" href="/blog/essay" secondary={true}>
+            <span class="font-medium">Read the essay</span>
+            <ArrowRight class="size-5" />
+          </LinkButton>
+        </div>
+      </div>
+    </div>
+
+    <div id="contact-us" class="grid items-center gap-12 md:grid-cols-[1fr_auto_1fr]">
+      <div class="flex flex-col items-center gap-4">
+        <h1 class="text-4xl font-bold">Get in touch</h1>
+        <p>Let us know how we can help you!</p>
+        <LinkButton href="/contact/">Contact Us</LinkButton>
+      </div>
+      <div class="text-center text-gray-700 dark:text-gray-400">- or -</div>
+      <div class="flex flex-col items-center gap-4">
+        <h1 class="text-4xl font-bold">Get notified</h1>
+        <p>Receive email updates from ReJot</p>
+        <NewsletterForm class="max-w-sm" />
+      </div>
+    </div>
+  </article>
+</Base>

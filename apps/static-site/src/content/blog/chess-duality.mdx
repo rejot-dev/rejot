@@ -1,0 +1,107 @@
+---
+title: "When Kafka is not the right Move"
+description:
+  "Converting between state and events is a pain. Let's walk through a game of chess to see why."
+author: "Jan Schutte"
+publicationDate: "Mar 8 2025"
+heroImage: "/chess-cover-with-logo.png"
+useHeroImageAsHeadImage: true
+---
+
+# When Kafka is not the right Move
+
+When designing distributed systems, event streaming platforms such as Kafka are the preferred
+solution for asynchronous communication. In fact, on Kafka's official website, the first use-case
+listed is messaging[^10]. My believe is that this default choice can lead to problems and
+unnecessary complexity. The main reason for this is the conversion between state and events, which
+we'll look at in this article through a game of chess.
+
+[^10]: [Kafka: Use Cases](https://kafka.apache.org/uses#uses_messaging)
+
+## Big Chess, Inc
+
+import Chess from "@/components/chess/Chess.astro";
+
+Imagine you work at "Big Chess, Inc." and are tasked to develop a distributed chess platform. The
+system is distributed so that teams may work autonomously, and thus quickly, on the features they
+are tasked to develop. You create a `Chess` microservice that takes inputs from two users and makes
+chess moves accordingly. Of course, only allowing legal moves. Users play moves using a REST API and
+the state is stored in a relational database so users may pause playing and continue later on.
+
+The following is a simple implementation of the `chess_board` table:
+
+```sql
+CREATE TABLE chess_board (
+  file CHAR(1) CHECK (file IN ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')),
+  rank INTEGER CHECK (rank BETWEEN 1 AND 8),
+  piece VARCHAR(3),
+  PRIMARY KEY (file, rank)
+);
+```
+
+Big Chess, Inc. is in the business of live streaming chess games. As such, your colleagues are
+developing a downstream service that will re-enact the played chess moves on the big screen,
+presumably with some added flair such as spectator insights.
+
+To keep the system loosely coupled and asynchronous you decide in an architecture meeting to use an
+event streaming platform like Kafka to publish the moves to the downstream service. Moves are
+published using the standard
+[algebraic notation](<https://en.wikipedia.org/wiki/Algebraic_notation_(chess)>).
+
+To guarantee at-least-once delivery of the turn events, you apply the outbox pattern[^20]. With the
+outbox pattern events are written to an outbox table in the same transaction as the write to the
+`chess_board` table. The outbox messages are then asynchronously published to Kafka by a background
+job.
+
+[^20]:
+    [Transactional outbox pattern](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html)
+
+Unfortunately for your colleagues, algebraic chess notation requires the current state of the board
+in order to disambiguate moves. As such, they'll have to store the state of the board locally. They
+do this by "borrowing" your `chess_board` DDL and converting the algebraic notation back into state
+as they consume the events.
+
+Besides the duplication of the data model and the annoyance of having to convert back into state, a
+subtle problem arises. The following example shows this problem:
+
+<Chess />
+
+By publishing the moves as events, the downstream team is not only forced to re-implement the data
+model, but also the business logic. The consumer has to re-implement the chess rules to figure out
+which rook is moving. If there are multiple consumers, they might even each apply a slightly
+different version of the logic if they use a different (version of a) chess library or have a
+different interpretation of what an event means. Chess may be simple enough to avoid major
+inconsistencies, but more complex business domains risk drift.
+
+## The Alternative
+
+Let's consider an alternative: rather than communicating using _changes in state_ (a.k.a. events),
+why not communicate that state directly? Rather than going back and forth between state and events,
+the state can simply be replicated to consumer databases.
+
+This simplifies things greatly:
+
+- No additional business logic required to create events and post events to the outbox table.
+- No need for an outbox table in your data model.
+- No infrastructure needed to process the outbox table and publish events to Kafka.
+- No need to write and maintain (potentially) complicated event consumers.
+
+There's one caveat though: if you apply replication naively you would end up tightly coupling the
+consumer to the data model of the producer. The solution there is to make sure you don't replicate
+your state _as-is_ but encapsulate the intricacies of your data model by applying a transformation
+from your internal model to the one consumers get. Versioning would have to be involved as well, but
+that's a topic for another article.
+
+## Conclusion
+
+Kafka is an excellent tool for many use cases. However, it's not always the best solution for
+communication between (micro)services. Event streaming, as the name suggests, forces the use of
+events. This is unnecessary for many use cases. A direct replication strategy can be used instead
+for a greatly simplified system.
+
+Confluent claims that with "stream-table duality" you can "can easily turn a stream into a table,
+and vice versa"[^30]. The existence of this duality I don't argue with, but calling it "easy" is a
+bit a stretch.
+
+[^30]:
+    [Confluent: Streams and Tables in Apache Kafka: A Primer](https://www.confluent.io/blog/kafka-streams-tables-part-1-event-streaming/#stream-table-duality)

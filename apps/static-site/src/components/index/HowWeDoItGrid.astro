@@ -1,0 +1,37 @@
+---
+import CpuChip from "astro-heroicons/outline/CpuChip.astro";
+import ShieldCheck from "astro-heroicons/outline/ShieldCheck.astro";
+import HowWeDoItGridCard from "./HowWeDoItGridCard.astro";
+---
+
+<div class="mb-6 space-y-10">
+  <div class="space-y-4">
+    <h2 class="text-center text-4xl font-bold">How we integrate</h2>
+    <p class="mx-auto max-w-prose text-center text-lg text-gray-600 dark:text-gray-400"></p>
+  </div>
+
+  <div class={`grid grid-cols-1 gap-4 md:grid-cols-2`}>
+    <HowWeDoItGridCard>
+      <Fragment slot="header">
+        <CpuChip class="size-8 text-rejot-red-600 md:size-16 lg:size-8" />
+        <h3 class="font-bold">Bring-your-own-infrastructure</h3>
+      </Fragment>
+      <Fragment slot="description">
+        We integrate with the databases you already use and communicate using the infrastructure
+        that is already present. We don’t force you to integrate with yet another data store,
+        instead we extract the most out of what you already have.
+      </Fragment>
+    </HowWeDoItGridCard>
+
+    <HowWeDoItGridCard>
+      <Fragment slot="header">
+        <ShieldCheck class="size-8 text-rejot-red-600 md:size-16 lg:size-8" />
+        <h3 class="font-bold">Your data, your network</h3>
+      </Fragment>
+      <Fragment slot="description">
+        ReJot operates using either a hybrid or self-hosted deployment model. Critical data never
+        has to leave your infrastructure.
+      </Fragment>
+    </HowWeDoItGridCard>
+  </div>
+</div>

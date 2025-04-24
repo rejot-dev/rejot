@@ -1,0 +1,18 @@
+---
+const { title } = Astro.props;
+type Props = {
+  title: string;
+};
+---
+
+<div class="flex-1 space-y-4 md:space-y-0">
+  <div class="mr-4 flex flex-row-reverse items-center justify-between gap-4 md:mr-0 md:block">
+    <slot name="icon" />
+    <h2 class="text-2xl font-bold md:mt-4 md:min-h-[2lh]">
+      {title}
+    </h2>
+  </div>
+  <p class="mt-6 max-w-prose text-lg text-gray-600 dark:text-gray-400">
+    <slot />
+  </p>
+</div>

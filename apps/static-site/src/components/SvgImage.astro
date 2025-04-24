@@ -1,0 +1,28 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"figure"> & {
+  src: string;
+  caption?: string;
+};
+
+const { class: className = "", src, caption, ...props } = Astro.props;
+---
+
+<figure class={className} {...props}>
+  <div class="relative">
+    <object class="size-full" data={src} type="image/svg+xml"> </object>
+    <!-- Slot overlaying the image -->
+    <div class="absolute inset-0">
+      <slot />
+    </div>
+  </div>
+
+  {
+    caption && (
+      <figcaption class="text-center text-sm text-gray-600 dark:text-gray-400">
+        {caption}
+      </figcaption>
+    )
+  }
+</figure>

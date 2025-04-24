@@ -1,0 +1,87 @@
+---
+title: "Install"
+---
+
+## ReJot CLI
+
+The ReJot CLI is used to create and validate manifest files, as well as starting sync services. The
+`rejot-cli` requires [Bun](https://bun.sh/) v1.2.8 or higher, and is published to
+[npmjs.com](https://www.npmjs.com/package/@rejot-dev/cli).
+
+### NPM
+
+```bash
+bun install -g @rejot-dev/cli
+
+# You should now have the rejot-cli command on your PATH
+rejot-cli --help
+```
+
+### Build From Source
+
+```bash
+git clone git@github.com:rejot-dev/rejot.git
+cd ./rejot
+bun install
+bunx rejot-cli --help
+```
+
+### Container Image
+
+The CLI tool is also available as a
+[container image](https://github.com/rejot-dev/rejot/pkgs/container/rejot-cli).
+
+```bash
+docker run --rm ghcr.io/rejot-dev/rejot-cli:main --help
+```
+
+## MCP
+
+The ReJot Model Context Protocol (MCP) server gives AI based code editors the ability to manipulate,
+inspect and use ReJot's tooling.
+
+The MCP can be installed through NPM:
+
+```bash
+bun install @rejot-dev/mcp
+```
+
+Then the server can be started with:
+
+```bash
+bunx rejot-mcp
+```
+
+For AI IDE integration see the respective docs:
+
+- [Cursor](https://docs.cursor.com/context/model-context-protocol#configuring-mcp-servers)
+- [Windsurf](https://docs.windsurf.com/windsurf/mcp#adding-a-new-server)
+- [VS Code + Github Copilot](https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server)
+
+## Manifest JSON Schema
+
+To make editing manifest files easier, you can configure JSON Schema in your editor. The schema is
+included in the `@rejot-dev/contract` npm package. You can find it in either of these locations:
+
+- Local path: `node_modules/@rejot-dev/contract/schema.json`
+- URL: https://unpkg.com/@rejot-dev/contract@latest/schema.json
+
+### VS Code
+
+Add the following configuration to your `.vscode/settings.json` workspace file:
+
+```json
+"json.schemas": [
+    {
+        "fileMatch": ["rejot-manifest.json"],
+        "url": "https://unpkg.com/@rejot-dev/contract@latest/schema.json"
+    }
+]
+```
+
+### IntelliJ
+
+For IntelliJ-based IDEs, follow the [IntelliJ documentation][custom-schema-intellij] to add custom
+JSON Schemas to your project.
+
+[custom-schema-intellij]: https://www.jetbrains.com/help/idea/json.html#ws_json_schema_add_custom

@@ -1,0 +1,25 @@
+---
+
+---
+
+<div class="relative h-36 w-full">
+  <canvas id="canvas" class="absolute inset-0 h-36 w-full"></canvas>
+  <div class="absolute flex h-36 w-1/2 flex-col justify-center"></div>
+</div>
+
+<script>
+  const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+
+  if (canvas) {
+    const { initScene } = await import("../../pixi/scene");
+    const { SceneOne } = await import("../../pixi/scene-one");
+
+    initScene(canvas, SceneOne)
+      .then(() => {
+        console.log("Scene One Init");
+      })
+      .catch((err) => {
+        console.error("Scene One Init Error", err);
+      });
+  }
+</script>

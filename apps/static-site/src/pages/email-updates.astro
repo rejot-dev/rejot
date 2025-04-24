@@ -1,0 +1,17 @@
+---
+import Base from "../layouts/Base.astro";
+import { pageTitle } from "../consts";
+import NewsletterForm from "@/components/NewsletterForm.astro";
+---
+
+<Base title={pageTitle("Contact")} description="Contact us">
+  <article class="w-full max-w-6xl space-y-12">
+    <div class="flex items-center justify-center md:mt-12">
+      <div class="flex w-full max-w-md flex-col items-center gap-4">
+        <h1 class="text-4xl font-bold">Get notified</h1>
+        <p>Receive email updates from ReJot</p>
+        <NewsletterForm class="w-full" />
+      </div>
+    </div>
+  </article>
+</Base>

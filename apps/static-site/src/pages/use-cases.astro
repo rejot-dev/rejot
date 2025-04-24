@@ -1,0 +1,44 @@
+---
+import { getCollection, render } from "astro:content";
+import { pageTitle, REJOT_TAG_LINE } from "../consts";
+import Base from "../layouts/Base.astro";
+import Prose from "../components/Prose.astro";
+
+const collection = await getCollection("useCases");
+
+const { Content: ContentDataMigration } = await render(
+  collection.find((item) => item.id === "data-migration")!,
+);
+const { Content: ContentLocalFirst } = await render(
+  collection.find((item) => item.id === "local-first")!,
+);
+const { Content: ContentSimpleBFF } = await render(
+  collection.find((item) => item.id === "backend-for-frontend")!,
+);
+const { Content: ContentLegalEntityManagement } = await render(
+  collection.find((item) => item.id === "legal-entity-management")!,
+);
+const { Content: ContentScalableBI } = await render(
+  collection.find((item) => item.id === "scalable-business-intelligence")!,
+);
+---
+
+<Base title={pageTitle("Use Cases")} description={REJOT_TAG_LINE}>
+  <article class="w-full max-w-prose space-y-12">
+    <div class="mb-16 text-center">
+      <h1 class="mb-4 text-4xl font-bold">Use Cases</h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Discover how <span class="font-bold text-rejot-red-500">ReJot</span> can help your business.
+      </p>
+      <div class="mt-8 flex justify-center gap-4"></div>
+    </div>
+
+    <Prose>
+      <ContentDataMigration />
+      <ContentLocalFirst />
+      <ContentSimpleBFF />
+      <ContentLegalEntityManagement />
+      <ContentScalableBI />
+    </Prose>
+  </article>
+</Base>

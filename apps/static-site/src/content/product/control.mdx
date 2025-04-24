@@ -1,0 +1,36 @@
+---
+title: "Control"
+description:
+  "Access control is a critical component of any system. ReJot provides a flexible and powerful
+  access control system that allows you to control who receives your data."
+---
+
+# Control
+
+In enterprise systems, we often think about access control on the level of endpoints. When a client
+sends a request to an (API) endpoint the server probes some (de)central authority to figure out if
+the request is allowed. A client in this case can be a user with a certain role, but it could also
+be a service controlled by a different team.
+
+Since ReJot is a data platform, we think about access control on a different layer. Our access
+control system does not check **what action a user is allowed to do**, but rather, **which data a
+system is allowed to see**. The system, in turn, is responsible for checking permissions of the user
+using the service. This gives you a multi-layered access control system when using ReJot, which is
+more flexible than the traditional approach.
+
+This access control strategy makes it easier to stay compliant with regulations such as the GDPR and
+CCPA. The teams that work directly with personal data usually have the most intimate knowledge of
+what data is allowed to be shared. By giving them the ability to control what and how data is
+shared, you can ensure that you are always compliant. ReJot combines _discretionary access control_
+with other forms of access control (typically _role-based access control_) for maximum flexibility.
+
+## Use Cases
+
+import CardHolder from "../../components/card/CardHolder.astro";
+import UseCaseCard from "../../components/use-cases/UseCaseCard.astro";
+
+<CardHolder>
+  <UseCaseCard slug="legal-entity-management" />
+
+  <UseCaseCard slug="data-migration" />
+</CardHolder>

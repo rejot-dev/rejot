@@ -1,0 +1,61 @@
+---
+title: "Running Sync Services"
+---
+
+import DarkImage from "@/components/DarkImage.astro";
+
+A Sync service is responsible for monitoring changes in data stores, applying necessary
+transformations, and propagating these changes to consumers as mutation events.
+
+When starting a Sync service, you can supply any number of manifests. The service will be
+responsible for all Public schemas defined in those manifests. Consumer schemas that reference
+Public schemas in other manifests can be retrieved over the network from other Sync services.
+
+## Prerequisites
+
+- You need to have your manifest(s) ready. For more information, see the
+  [Managing Manifests](/docs/guides/managing-manifests) guide.
+- You need to have an Event Store deployed and configured in your manifest.
+
+## Single Sync Service
+
+If you're deploying a single Sync service, you can start the service from the `rejot-cli` and pass
+all your manifests:
+
+```bash
+rejot-cli manifest sync rejot-manifest.json another-rejot-manifest.json
+```
+
+Upon startup, the Sync service will verify connections to all data stores and open replication slots
+to begin monitoring for changes.
+
+## Multiple Sync Services
+
+It can be beneficial to set up separate Sync services in cases where you expect high load or you
+prefer to split service by domain. If you have data dependencies between Sync services, they can
+exchange data over the network. For this purpose, each Sync service exposes a web server that other
+Sync services can communicate with.
+
+You can configure the endpoint that a Sync service exposes through the `rejot-cli` arguments.
+
+To enable external Sync service discovery, you must specify a [Resolver](/docs/reference/resolvers)
+that helps the Sync service locate manifest slugs on the network. The simplest resolver is the
+environment resolver, where you supply a mapping of manifest to hostname through environment
+variables:
+
+```bash
+EXPORT REJOT_SYNC_SERVICE_slug-a=sync-service-a:3000
+
+rejot-cli manifest sync rejot-manifest.json \
+    --hostname 0.0.0.0 \
+    --port 3000 \
+    --resolver env
+```
+
+<DarkImage
+  src="/content/docs/sync-service-diagram.svg"
+  srcDark="/content/docs/sync-service-diagram-dark.svg"
+  caption="Relation of Manifests to Sync Services"
+  alt="Relation of Manifests to Sync Services"
+  class="max-w-lg"
+/>

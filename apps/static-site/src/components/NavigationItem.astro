@@ -1,0 +1,47 @@
+---
+import type { StructureNode } from "./CollectionNavigation.astro";
+import { normalizeSlug } from "../util/helpers";
+
+interface Props {
+  node: StructureNode;
+  currentPath?: string;
+  basePath: string;
+}
+
+const { node, currentPath, basePath } = Astro.props;
+const normalizedCurrentPath = currentPath ? normalizeSlug(currentPath) : undefined;
+---
+
+{
+  node.type === "file" && (
+    <li>
+      <a
+        href={`/${basePath}/${node.slug}`}
+        class:list={[
+          "hover:text-gray-800 dark:hover:text-gray-300 px-2 border-l-2 dark:border-gray-600",
+          normalizedCurrentPath === node.slug
+            ? "text-gray-900 dark:text-gray-100 font-medium border-gray-900 dark:border-gray-100"
+            : "text-gray-600 dark:text-gray-400",
+        ]}
+      >
+        {node.title}
+      </a>
+    </li>
+  )
+}
+{
+  node.type === "dir" && (
+    <li>
+      <h2 class="text-lg font-semibold">
+        {node.index?.title ? node.index.title : node.directoryName}
+      </h2>
+      {node.children.length > 0 && (
+        <ul class="space-y-2">
+          {node.children.map((child) => (
+            <Astro.self node={child} currentPath={normalizedCurrentPath} basePath={basePath} />
+          ))}
+        </ul>
+      )}
+    </li>
+  )
+}

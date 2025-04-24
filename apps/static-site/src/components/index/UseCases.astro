@@ -1,0 +1,139 @@
+---
+import Share from "astro-heroicons/outline/Share.astro";
+import ClipboardDocumentCheck from "astro-heroicons/outline/ClipboardDocumentCheck.astro";
+import TableCells from "astro-heroicons/outline/TableCells.astro";
+import ComputerDesktop from "astro-heroicons/outline/ComputerDesktop.astro";
+---
+
+<div class="space-y-4">
+  <h2 class="text-center text-4xl font-bold">Use Cases</h2>
+  <p class="mx-auto max-w-prose text-center text-lg text-gray-600 dark:text-gray-400">
+    Examples of how <em>integration through synchronization</em> can help you.
+  </p>
+</div>
+
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-20">
+  <div class="flex flex-col gap-4">
+    <button
+      class="rounded-lg border-b-4 border-rejot-red-600 bg-white p-4 text-left text-lg font-bold shadow-sm transition-all hover:bg-gray-50 hover:shadow-md md:border-b-0 md:border-r-4 dark:bg-gray-800 dark:hover:bg-gray-700"
+      data-tab-button
+    >
+      Deep Product Integration
+    </button>
+    <button
+      class="rounded-lg border-rejot-red-600 bg-white p-4 text-left text-xl shadow-sm transition-all hover:bg-gray-50 hover:shadow-md dark:bg-gray-800 dark:hover:bg-gray-700"
+      data-tab-button>Local-First Software</button
+    >
+    <button
+      class="rounded-lg border-rejot-red-600 bg-white p-4 text-left text-xl shadow-sm transition-all hover:bg-gray-50 hover:shadow-md dark:bg-gray-800 dark:hover:bg-gray-700"
+      data-tab-button>Backend-For-Frontend</button
+    >
+    <button
+      class="rounded-lg border-rejot-red-600 bg-white p-4 text-left text-xl shadow-sm transition-all hover:bg-gray-50 hover:shadow-md dark:bg-gray-800 dark:hover:bg-gray-700"
+      data-tab-button>Data Migrations</button
+    >
+  </div>
+
+  <div class="min-h-48">
+    <div class="transition-opacity duration-300" data-tab-content>
+      <div class="flex flex-row items-center justify-between gap-4">
+        <h2 class="text-2xl font-bold">Deep Product Integration</h2>
+        <div class="flex">
+          <Share class="size-16 rotate-90 text-rejot-red-600" stroke-width="1" />
+        </div>
+      </div>
+      <p class="mt-6 text-lg text-gray-600 dark:text-gray-400">
+        At enterprise scale, data is often siloed leading to poor integration between products.
+        ReJot lets teams expose the operational data created by their product in a data catalog.
+        Other teams are able to enhance their products with that data. Deep data integration leads
+        to a more cohesive user experience for the products in your platform.
+      </p>
+    </div>
+
+    <div class="hidden opacity-0 transition-opacity duration-300" data-tab-content>
+      <div class="flex flex-row items-center justify-between gap-4">
+        <h2 class="text-2xl font-bold">Local-First Software</h2>
+        <div class="flex">
+          <ClipboardDocumentCheck class="size-16 text-rejot-red-600" stroke-width="1" />
+        </div>
+      </div>
+      <p class="mt-6 text-lg text-gray-600 dark:text-gray-400">
+        Build responsive frontends that work offline. ReJot can synchronize data from your catalog
+        directly (or with transformations) to frontend applications. This enables super fast
+        interactions and live collaboration between users.
+      </p>
+    </div>
+
+    <div class="hidden opacity-0 transition-opacity duration-300" data-tab-content>
+      <div class="flex flex-row items-center justify-between gap-4">
+        <h2 class="text-2xl font-bold">Backend-For-Frontend</h2>
+        <div class="flex">
+          <ComputerDesktop class="size-16 text-rejot-red-600" stroke-width="1" />
+        </div>
+      </div>
+      <p class="mt-6 text-lg text-gray-600 dark:text-gray-400">
+        Consolidate data from multiple services into a single service that can be consumed by your
+        frontend. Simplifying the data retrieval and transformation processes.
+      </p>
+    </div>
+
+    <div class="hidden opacity-0 transition-opacity duration-300" data-tab-content>
+      <div class="flex flex-row items-center justify-between gap-4">
+        <h2 class="text-2xl font-bold">Data Migrations</h2>
+        <div class="flex">
+          <TableCells class="size-16 text-rejot-red-600" stroke-width="1" />
+        </div>
+      </div>
+      <p class="mt-6 text-lg text-gray-600 dark:text-gray-400">
+        Seamlessly migrate your data between different database systems or schemas while maintaining
+        data integrity and avoiding downtime. Use ReJot to model new data schemas and migrate to
+        them while ensuring:
+
+        <ul class="list-inside list-disc p-2 text-gray-600 dark:text-gray-400">
+          <li>Zero Downtime</li>
+          <li>Data Integrity</li>
+          <li>Rollback Safety</li>
+        </ul>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const tabButtons = document.querySelectorAll<HTMLButtonElement>("[data-tab-button]");
+  const tabContents = document.querySelectorAll<HTMLDivElement>("[data-tab-content]");
+
+  // Show/Hide a specific tab by index
+  function showTab(index: number) {
+    // Hide all tab contents and fade out
+    tabContents.forEach((content) => {
+      content.classList.add("opacity-0");
+      content.classList.add("hidden");
+    });
+
+    // Un-bold all tab buttons
+    tabButtons.forEach((content) => {
+      content.classList.remove("font-bold");
+      content.classList.remove("border-b-4");
+      content.classList.remove("md:border-b-0");
+      content.classList.remove("md:border-r-4");
+    });
+
+    // Show and fade in the selected tab content
+    tabContents[index].classList.remove("hidden");
+    setTimeout(() => {
+      tabContents[index].classList.remove("opacity-0");
+    }, 50);
+    tabButtons[index].classList.add("font-bold");
+    tabButtons[index].classList.add("border-b-4");
+    tabButtons[index].classList.add("md:border-b-0");
+    tabButtons[index].classList.add("md:border-r-4");
+  }
+
+  // Assign click event to each button
+  tabButtons.forEach((button, index) => {
+    button.addEventListener("click", () => {
+      showTab(index);
+    });
+  });
+</script>

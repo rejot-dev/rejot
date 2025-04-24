@@ -1,0 +1,43 @@
+---
+interface Props {
+  headings: {
+    depth: number;
+    slug: string;
+    text: string;
+  }[];
+}
+
+const { headings } = Astro.props;
+
+for (const heading of headings) {
+  if (heading.slug === "footnote-label") {
+    heading.depth = 1;
+  }
+}
+---
+
+{
+  headings.length > 0 && (
+    <nav class="sticky top-4 w-full">
+      <h3 class="mb-2 text-lg font-semibold">On this page</h3>
+      <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+        {headings.flatMap((heading) => {
+          if (heading.depth > 3) {
+            return [];
+          }
+
+          return (
+            <li
+              class:list={[
+                "hover:text-gray-800 dark:hover:text-gray-300",
+                { "ml-4": heading.depth === 2, "ml-8": heading.depth === 3 },
+              ]}
+            >
+              <a href={`#${heading.slug}`}>{heading.text}</a>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  )
+}

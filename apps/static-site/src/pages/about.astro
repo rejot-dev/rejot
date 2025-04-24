@@ -1,0 +1,78 @@
+---
+import Base from "../layouts/Base.astro";
+import { pageTitle } from "../consts";
+import Prose from "../components/Prose.astro";
+import ArrowRight from "astro-heroicons/solid/ArrowRight.astro";
+---
+
+<Base title={pageTitle("About")} description="About ReJot">
+  <article class="w-full max-w-prose space-y-12">
+    <div class="mb-16 text-center">
+      <h1 class="mb-4 text-4xl font-bold">About</h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Learn more about the mission and the people behind <span
+          class="font-bold text-rejot-red-500">ReJot</span
+        >.
+      </p>
+      <div class="mt-8 flex justify-center gap-4"></div>
+    </div>
+    <Prose>
+      <p>
+        ReJot was founded with a mission to make managing operational data at scale seamless. If the
+        data model is not taken care of, maintainability will suffer. Without a focus on
+        maintainability, product evolution becomes a pain, and innovation slows down. ReJot's goal
+        is to empower engineers to take care of their data model quality and maintainability, and in
+        turn, help them create better software for their end-users.
+      </p>
+      <p>
+        ReJot's founders saw these problems firsthand while working at Adyen, a large financial
+        technology firm. As the paradigm of "local-first software" took off, we connected the dots
+        and started working on a synchronization engine that is not only useful for creating fast
+        frontends but also for synchronizing data between teams within a large organization.
+      </p>
+      <p>
+        A passion for building quality software led us to figure out what "quality software"
+        actually means. It all starts with the codebase itself. If a codebase is not maintainable,
+        the developer experience is the first to degrade, with the end-user experience not far
+        behind. We see that user experience and software maintainability are interconnected. By
+        giving developers the tools to create quality software, the end-user experience will
+        naturally improve. The maintainability of a codebase is well-studied, but how the data model
+        fits into that, sadly, is not. This is the problem ReJot is solving.
+      </p>
+    </Prose>
+    <div class="flex flex-row justify-center gap-10 md:gap-20">
+      <figure class="text-center">
+        <img
+          src="/jan.webp"
+          alt="Photograph of Jan"
+          class="size-32 rounded-full sm:size-40 md:size-52"
+        />
+        <figcaption class="mt-2 text-base text-gray-600 dark:text-gray-400">Jan</figcaption>
+      </figure>
+      <figure class="text-center">
+        <img
+          src="/wilco.webp"
+          alt="Photograph of Wilco"
+          class="size-32 rounded-full sm:size-40 md:size-52"
+        />
+        <figcaption class="mt-2 text-base text-gray-600 dark:text-gray-400">Wilco</figcaption>
+      </figure>
+    </div>
+    <div class="flex flex-row justify-center gap-2">
+      <img src="/yc-y.svg" alt="YCombinator logo" class="size-6" />
+      <span class="min-h-full self-center">ReJot is backed by Y Combinator.</span>
+    </div>
+    <div>
+      <Prose>
+        <h2 class="text-2xl font-bold">Contact Us</h2>
+        <p class="mb-4 text-gray-600 dark:text-gray-400">
+          If there's anything we can help you with, please reach out!
+        </p>
+      </Prose>
+      <a href="/contact" class="flex items-center gap-2 text-rejot-red-600">
+        <span class="font-medium">Contact Us</span>
+        <ArrowRight class="size-5" />
+      </a>
+    </div>
+  </article>
+</Base>

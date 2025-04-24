@@ -1,0 +1,135 @@
+---
+title: "Managing Manifests"
+---
+
+import Notice from "@/components/Notice.astro";
+
+This guide covers how to create and manage ReJot manifest files using the `rejot-cli manifest`
+commands. ReJot uses [Manifests](/docs/spec/manifest) as a central configuration file that defines
+your data synchronization setup. Think of it as a "lockfile" for your data contracts - it specifies
+what data should be synced, where it should be synced, and in what format.
+
+## Why Use Manifests?
+
+Manifests provide several key benefits:
+
+- **Centralized Configuration**: All your sync settings are in one place
+- **Version Control**: Manifests can be committed to version control, making your data contracts
+  reproducible
+- **Network Discovery**: Other sync services can discover and use your public schemas
+- **Environment Management**: Different manifests can be used for development, staging, and
+  production
+
+## Manifest Components
+
+A manifest definition contains (a subset of) the following components:
+
+- [Data stores](/docs/spec/data-store): Source databases that ReJot monitors for changes
+- [Event stores](/docs/spec/event-store): Where ReJot stores and manages change events
+- [Public Schemas](/docs/spec/public-schema): Define what data is exposed from your data stores
+- [Consumer Schemas](/docs/spec/consumer-schema): Define how data is transformed and stored in
+  target systems
+
+<Notice type="TIP">
+  For AI-native code editors, the [ReJot MCP](/docs/start/install#mcp) server makes managing
+  manifest files effortless.
+</Notice>
+
+## Initializing a Manifest
+
+To create a new empty manifest file in the current directory, use the following command. Each
+manifest requires a unique slug, which is used to identify where public schemas are exposed and
+where sync services can locate them on the network.
+
+```bash
+rejot-cli manifest init --slug "my-sync-slug"
+```
+
+## Setting Up Data and Event Stores
+
+Before configuring public and consumer schemas, you need to specify how ReJot should connect to your
+databases and where the ReJot Event Store is located.
+
+For each data store, ReJot will monitor changes to public schemas defined for that data store and
+push those changes to the event store. While you can configure the event store to use the same
+database, it's generally recommended to use a separate database.
+
+<Notice type="WARNING">
+  Database connection credentials can be stored in the ReJot Manifest file, but these should only be
+  committed for development setups. For production environments, these secrets must be stored
+  separately.
+</Notice>
+
+### Adding Database Connections
+
+Let's start by adding the connection details:
+
+```bash
+rejot-cli manifest connection add \
+            --slug "my-datastore" \
+            --type postgres \
+            --database postgres \
+            --host localhost \
+            --password example \
+            --port 5432 \
+            --user postgres
+```
+
+Alternatively, you can provide a connection string:
+
+```bash
+rejot-cli manifest connection add \
+            --slug "my-datastore" \
+            --connection-string "postgres://postgres:postgres@example:5432/postgres"
+```
+
+### Configuring Data Stores
+
+Next, link the connection to a data store:
+
+```bash
+rejot-cli manifest datastore add \
+            --connection my-datastore \
+            --publication rejot_publication \  # This is the default value
+            --slot rejot_slot  # This is the default value
+```
+
+### Setting Up Event Stores
+
+To operate ReJot, you need at least one event store configured. You can create this connection the
+same way as for any other data store. Ensure the database user has permissions to create schemas and
+tables. Then, link the event store to that connection:
+
+```bash
+rejot-cli manifest eventstore add \
+            --connection my-eventstore-connection
+```
+
+## Verifying Your Configuration
+
+You can use the `info` command to display a parsed version of the manifest:
+
+```bash
+rejot-cli manifest info
+
+Manifest Configuration:
+
+Connections:
+  - my-datastore (postgres)
+    Host: localhost:5432
+    Database: postgres
+    User: postgres
+    string: postgres://postgres@localhost:5432/postgres
+
+Data Stores (Replication Sources):
+  - Connection: my-datastore
+    Publication / slot: rejot_publication / rejot_slot
+
+Event Stores (Replication Targets):
+  - Connection: my-datastore
+```
+
+## Next Steps
+
+Now that you know how to manage your manifest file, you can
+[create public and consumer schemas](/docs/guides/defining-schemas)

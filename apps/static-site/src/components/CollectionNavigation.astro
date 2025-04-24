@@ -1,0 +1,138 @@
+---
+import { basename, extname } from "node:path";
+
+import type { AnyCollectionEntry } from "../util/helpers";
+import NavigationItem from "./NavigationItem.astro";
+
+type Props = {
+  collection: CollectionNavigationEntry[];
+  currentPath?: string;
+  basePath: string;
+};
+
+export type CollectionNavigationEntry = {
+  title: string;
+  slug: string;
+  item: AnyCollectionEntry;
+};
+
+export type StructureNodeFile = {
+  type: "file";
+  item: AnyCollectionEntry;
+  title: string;
+  slug: string;
+  filePath: string;
+};
+
+export type StructureNodeDir = {
+  type: "dir";
+  children: StructureNode[];
+  directoryName: string;
+  index?: StructureNodeFile;
+};
+
+export type StructureNode = StructureNodeFile | StructureNodeDir;
+
+const { collection, currentPath, basePath } = Astro.props;
+
+function structureNodeComparator(a: StructureNode, b: StructureNode): number {
+  if (a.type === "file" && b.type === "file") {
+    return a.filePath.localeCompare(b.filePath);
+  }
+  if (a.type === "dir" && b.type === "dir") {
+    return a.directoryName.localeCompare(b.directoryName);
+  }
+  return a.type === "dir" ? -1 : 1;
+}
+
+function createNode(root: StructureNode, path: string, item: CollectionNavigationEntry): void {
+  if (root.type === "file") {
+    throw new Error("Cannot ensure directory on a file node");
+  }
+
+  if (path.startsWith("/")) {
+    path = path.slice(1);
+  }
+
+  const fileName = basename(path ?? "", extname(path ?? ""));
+
+  const parts = path.split("/");
+
+  if (parts.length === 1) {
+    if (fileName === "index") {
+      root.index = {
+        type: "file",
+        title: item.title,
+        slug: item.slug,
+        item: item.item,
+        filePath: item.item.filePath ?? "",
+      };
+    } else {
+      root.children.push({
+        type: "file",
+        title: item.title,
+        slug: item.slug,
+        item: item.item,
+        filePath: item.item.filePath ?? "",
+      });
+      root.children.sort(structureNodeComparator);
+    }
+
+    return;
+  }
+
+  const nextPart = parts[0];
+  const remainingPath = parts.slice(1).join("/");
+
+  // Find existing child directory
+  let dirNode = root.children.find(
+    (child): child is StructureNodeDir => child.type === "dir" && child.directoryName === nextPart,
+  );
+
+  // Create new directory if it doesn't exist
+  if (!dirNode) {
+    dirNode = {
+      type: "dir",
+      directoryName: nextPart,
+      children: [],
+    };
+    root.children.push(dirNode);
+    root.children.sort(structureNodeComparator);
+  }
+
+  if (remainingPath) {
+    createNode(dirNode, remainingPath, item);
+  }
+}
+
+// Helper function to create a nested structure from flat paths
+function createNestedStructure(items: CollectionNavigationEntry[]): StructureNode {
+  const root: StructureNode = {
+    type: "dir",
+    children: [],
+    directoryName: "",
+  };
+
+  for (const item of items) {
+    if (!item.item.filePath) {
+      throw new Error("item.item.filePath is required");
+    }
+
+    const filePath = item.item.filePath.slice(
+      item.item.filePath.indexOf(basePath) + basePath.length,
+    );
+
+    createNode(root, filePath, item);
+  }
+
+  return root;
+}
+
+const structure = createNestedStructure(collection);
+---
+
+<nav class="px-4">
+  <ul>
+    <NavigationItem node={structure} currentPath={currentPath} basePath={basePath} />
+  </ul>
+</nav>
