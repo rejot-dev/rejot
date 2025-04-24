@@ -32,10 +32,12 @@ export class ManifestInfoTool implements IFactory {
 
         try {
           const manifest = await readManifestOrGetEmpty(manifestAbsoluteFilePath);
-          const errors = verifyManifests([manifest]);
+          const verificationResult = verifyManifests([manifest]);
 
-          if (!errors.isValid) {
-            const errorOutput = ManifestPrinter.printManifestErrors(errors);
+          if (!verificationResult.isValid) {
+            const errorOutput = ManifestPrinter.printManifestDiagnostics(
+              verificationResult.diagnostics,
+            );
             return {
               content: [{ type: "text", text: errorOutput.join("\n") }],
             };

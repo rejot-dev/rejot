@@ -89,10 +89,10 @@ export class WorkspaceTool implements IFactory {
 
         const diagnostics = verifyManifests(workspaceToManifests(workspace));
 
-        if (diagnostics.errors.length > 0) {
+        if (diagnostics.diagnostics.length > 0) {
           content.push({
             type: "text",
-            text: ManifestPrinter.printManifestDiagnostics(diagnostics.errors).join("\n"),
+            text: ManifestPrinter.printManifestDiagnostics(diagnostics.diagnostics).join("\n"),
           });
           content.push({
             type: "text",

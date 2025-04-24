@@ -19,6 +19,17 @@ export function normalizePostgresTable(tableName: string): { schema: string; nam
   return { schema: parts[0], name: parts[1] };
 }
 
+export function simplePostgresTableName(table: { schema: string; name: string } | string): string {
+  if (typeof table === "string") {
+    table = normalizePostgresTable(table);
+  }
+
+  if (table.schema === "public") {
+    return table.name;
+  }
+  return `${table.schema}.${table.name}`;
+}
+
 export class PostgresIntrospectionAdapter
   implements IIntrospectionAdapter<z.infer<typeof PostgresConnectionSchema>>
 {
@@ -207,8 +218,7 @@ export class PostgresIntrospectionAdapter
       .map((column) => column["column_name"]);
 
     return {
-      schema: normalizedTable.schema,
-      name: normalizedTable.name,
+      name: simplePostgresTableName(normalizedTable),
       columns,
       keyColumns,
     };
@@ -287,8 +297,7 @@ export class PostgresIntrospectionAdapter
       const tableName = row["table_name"];
       if (!tableSchemas.has(tableName)) {
         tableSchemas.set(tableName, {
-          schema: row["table_schema"],
-          name: tableName.split(".")[1],
+          name: simplePostgresTableName(tableName),
           columns: [],
           keyColumns: [],
         });

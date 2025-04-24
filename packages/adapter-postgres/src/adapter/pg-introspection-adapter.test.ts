@@ -23,6 +23,8 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
 
     // Create some test tables for introspection tests
     await ctx.client.query(`
+      CREATE SCHEMA IF NOT EXISTS test_schema;
+
       CREATE TABLE IF NOT EXISTS test_users (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
@@ -44,6 +46,13 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
         tag_name VARCHAR(50) NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (post_id, tag_name)
+      );
+
+      CREATE TABLE IF NOT EXISTS test_schema.test_comments (
+        id SERIAL PRIMARY KEY,
+        post_id INTEGER NOT NULL REFERENCES test_posts(id),
+        content TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
   });
@@ -120,7 +129,6 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
     const schema = await adapter.getTableSchema(connectionSlug, "public.test_users");
 
     // Assert
-    expect(schema.schema).toBe("public");
     expect(schema.name).toBe("test_users");
     expect(schema.columns.length).toBeGreaterThanOrEqual(4); // Should have at least the columns we defined
     expect(schema.keyColumns).toContain("id"); // Primary key should be present
@@ -142,7 +150,6 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
     const schema = await adapter.getTableSchema(connectionSlug, "public.test_posts");
 
     // Assert
-    expect(schema.schema).toBe("public");
     expect(schema.name).toBe("test_posts");
     expect(schema.keyColumns).toContain("id"); // Primary key should be present
 
@@ -169,7 +176,6 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
     expect(testPostsSchema).toBeDefined();
 
     if (testUsersSchema) {
-      expect(testUsersSchema.schema).toBe("public");
       expect(testUsersSchema.name).toBe("test_users");
       expect(testUsersSchema.columns.length).toBeGreaterThanOrEqual(4);
       expect(testUsersSchema.keyColumns).toContain("id");
@@ -177,7 +183,6 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
     }
 
     if (testPostsSchema) {
-      expect(testPostsSchema.schema).toBe("public");
       expect(testPostsSchema.name).toBe("test_posts");
       expect(testPostsSchema.columns.length).toBeGreaterThanOrEqual(6);
       expect(testPostsSchema.keyColumns).toContain("id");
@@ -194,7 +199,6 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
     const schema = await adapter.getTableSchema(connectionSlug, "public.test_post_tags");
 
     // Assert
-    expect(schema.schema).toBe("public");
     expect(schema.name).toBe("test_post_tags");
     expect(schema.keyColumns).toHaveLength(2);
     expect(schema.keyColumns).toContain("post_id");
@@ -231,5 +235,34 @@ pgRollbackDescribe("PostgresIntrospectionAdapter", (ctx) => {
       expect(postIdColumn?.foreignKey).toBeDefined();
       expect(postIdColumn?.foreignKey?.referencedTable).toBe("public.test_posts");
     }
+  });
+
+  test("should handle tables in non-public schemas", async () => {
+    // Act
+    const tables = await adapter.getTables(connectionSlug);
+    const schema = await adapter.getTableSchema(connectionSlug, "test_schema.test_comments");
+    const allSchemas = await adapter.getAllTableSchemas(connectionSlug);
+
+    // Assert
+    // Check if table appears in getTables output
+    const testCommentsTable = tables.find(
+      (t) => t.name === "test_comments" && t.schema === "test_schema",
+    );
+    expect(testCommentsTable).toBeDefined();
+
+    // Check if table schema is retrieved correctly
+    expect(schema.name).toBe("test_schema.test_comments");
+    expect(schema.keyColumns).toContain("id");
+
+    // Check if column and foreign key information is correct
+    const postIdColumn = schema.columns.find((col) => col.columnName === "post_id");
+    expect(postIdColumn).toBeDefined();
+    expect(postIdColumn?.foreignKey).toBeDefined();
+    expect(postIdColumn?.foreignKey?.referencedTable).toBe("public.test_posts");
+
+    // Check if the table appears in getAllTableSchemas
+    const commentsSchema = allSchemas.get("test_schema.test_comments");
+    expect(commentsSchema).toBeDefined();
+    expect(commentsSchema?.name).toBe("test_schema.test_comments");
   });
 });
