@@ -1,4 +1,4 @@
-import type { IFileFinder, SearchOptions, SearchResult } from "./file-finder";
+import type { IFileFinder, SearchOptions, SearchResult } from "./file-finder.ts";
 
 export class MockFileFinder implements IFileFinder {
   private mockResults: SearchResult[] = [];

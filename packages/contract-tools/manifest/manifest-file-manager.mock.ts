@@ -4,7 +4,7 @@ import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
 import type { MergedManifest } from "@rejot-dev/contract/manifest-merger";
 
 import type { InitManifestOptions } from "./manifest.fs";
-import type { IManifestFileManager } from "./manifest-file-manager";
+import type { IManifestFileManager } from "./manifest-file-manager.ts";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 

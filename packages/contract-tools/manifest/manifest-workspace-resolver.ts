@@ -1,11 +1,12 @@
 import { dirname, join } from "node:path";
 
+import { z } from "zod";
+
 import { ReJotError } from "@rejot-dev/contract/error";
 import { getLogger } from "@rejot-dev/contract/logger";
 import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
 import { SyncManifest, type SyncManifestOptions } from "@rejot-dev/contract/sync-manifest";
 import type { ManifestWithPath, WorkspaceDefinition } from "@rejot-dev/contract/workspace";
-import { z } from "zod";
 
 import { DEFAULT_MANIFEST_FILENAME, readManifest, readManifestOrGetEmpty } from "./manifest.fs";
 import { findManifestPath } from "./manifest.fs";
