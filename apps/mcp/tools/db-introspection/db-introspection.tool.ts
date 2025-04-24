@@ -22,107 +22,20 @@ export class DbIntrospectionTool implements IFactory {
 
   async register(mcp: IRejotMcp): Promise<void> {
     mcp.registerTool(
-      "rejot_db_get_tables",
-      "Get all tables from a database connection",
-      {
-        connectionSlug: z.string().describe(CONNECTION_SLUG_DESCRIPTION),
-      },
-      async ({ connectionSlug }) => {
-        const { workspace } = await this.#workspaceService.resolveWorkspace(
-          mcp.state.workspaceDirectoryPath,
-        );
-
-        try {
-          const adapter = await mcp.state.ensureConnection(connectionSlug, workspace);
-
-          const tables = await adapter.introspectionAdapter.getTables(connectionSlug);
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Found ${tables.length} tables:\n${tables.map((t) => `${t.schema}.${t.name}`).join("\n")}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                isError: true,
-                type: "text",
-                text: `Error getting tables: ${error instanceof Error ? error.message : String(error)}`,
-              },
-            ],
-          };
-        }
-      },
-    );
-
-    mcp.registerTool(
-      "mcp_rejot_db_get_table_schema",
-      "Get schema information for a specific table",
-      {
-        connectionSlug: z.string().describe(CONNECTION_SLUG_DESCRIPTION),
-        tableName: z.string(),
-      },
-      async ({ connectionSlug, tableName }) => {
-        const { workspace } = await this.#workspaceService.resolveWorkspace(
-          mcp.state.workspaceDirectoryPath,
-        );
-
-        try {
-          const adapter = await mcp.state.ensureConnection(connectionSlug, workspace);
-
-          const schema = await adapter.introspectionAdapter.getTableSchema(
-            connectionSlug,
-            tableName,
-          );
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Table schema for ${tableName}:
-Schema: ${schema.schema}
-Name: ${schema.name}
-Key Columns: ${schema.keyColumns.join(", ")}
-
-Columns:
-${schema.columns
-  .map((col) => {
-    let colInfo = `${col.columnName} (${col.dataType})${col.isNullable ? " NULL" : " NOT NULL"}`;
-    if (col.columnDefault !== null) {
-      colInfo += ` DEFAULT ${col.columnDefault}`;
-    }
-    if (col.foreignKey) {
-      colInfo += `\n  -> FK ${col.foreignKey.constraintName}: references ${col.foreignKey.referencedTable}(${col.foreignKey.referencedColumnName})`;
-    }
-    return colInfo;
-  })
-  .join("\n")}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                isError: true,
-                type: "text",
-                text: `Error getting table schema: ${error instanceof Error ? error.message : String(error)}`,
-              },
-            ],
-          };
-        }
-      },
-    );
-
-    mcp.registerTool(
       "mcp_rejot_db_get_all_table_schemas",
       "Get schema information for all tables in the database",
       {
         connectionSlug: z.string().describe(CONNECTION_SLUG_DESCRIPTION),
+        tableNamePattern: z
+          .string()
+          .optional()
+          .describe("Regex pattern to match against table names."),
+        tableNamesOnly: z
+          .boolean()
+          .optional()
+          .describe("Only return table names, not schema information."),
       },
-      async ({ connectionSlug }) => {
+      async ({ connectionSlug, tableNamePattern, tableNamesOnly }) => {
         const { workspace } = await this.#workspaceService.resolveWorkspace(
           mcp.state.workspaceDirectoryPath,
         );
@@ -133,7 +46,25 @@ ${schema.columns
           const allSchemas = await adapter.introspectionAdapter.getAllTableSchemas(connectionSlug);
 
           // Convert the Map to an array of tables for easier formatting
-          const tables = Array.from(allSchemas.values());
+          let tables = Array.from(allSchemas.values());
+
+          // Filter tables by pattern if provided
+          if (tableNamePattern) {
+            const pattern = new RegExp(tableNamePattern);
+            tables = tables.filter((schema) => pattern.test(schema.name));
+          }
+
+          // If tableNamesOnly is true, just return a list of table names
+          if (tableNamesOnly) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `Found ${tables.length} tables:\n\n${tables.map((schema) => `${schema.name}`).join("\n")}`,
+                },
+              ],
+            };
+          }
 
           return {
             content: [
@@ -144,7 +75,7 @@ ${schema.columns
 ${tables
   .map(
     (schema) => `
-Table: ${schema.schema}.${schema.name}
+Table: ${schema.name}
 Key Columns: ${schema.keyColumns.join(", ")}
 
 Columns:

@@ -110,6 +110,22 @@ contain relative path references to manifests in sub-directories.
   </use_case>
 
   <use_case>
+    <title>Trigger a public schema / sync</title>
+    <steps>
+      1. Use the find schema tool to find the schema in the workspace.
+      2. Use the query tool to write something to the underlying data store.
+    </steps>
+  </use_case>
+
+  <use_case>
+    <title>Validate item written to consumer schema / sink / destination</title>
+    <steps>
+      1. Use the find schema tool to find the consumer schema in the workspace.
+      2. Use the transformation to derive a retrieve query and use the query tool.
+    </steps>
+  </use_case>
+
+  <use_case>
     <title>Configure a data store to be usable in syncing.</title>
     <steps>
       1. Use the data store help tool to figure out the necessary configuration.
