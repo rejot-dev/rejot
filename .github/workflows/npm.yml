@@ -35,6 +35,9 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Build
+        run: bun run build
+
       - name: Publish package
         working-directory: ${{ matrix.path }}
         run: bun publish --access public
