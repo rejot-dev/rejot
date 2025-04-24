@@ -3,8 +3,8 @@ import { z } from "zod";
 import { type Cursor, Cursors } from "@rejot-dev/contract/cursor";
 import type { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
 
-import type { ISyncController, SyncControllerState } from "../sync-controller/sync-controller";
-import type { ISyncHTTPController } from "../sync-http-service/sync-http-service";
+import type { ISyncController, SyncControllerState } from "../sync-controller/sync-controller.ts";
+import type { ISyncHTTPController } from "../sync-http-service/sync-http-service.ts";
 
 export class MockSyncController implements ISyncController {
   #cursors: Cursor[] = [];

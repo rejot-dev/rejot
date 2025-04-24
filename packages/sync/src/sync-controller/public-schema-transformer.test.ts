@@ -5,8 +5,8 @@ import { z } from "zod";
 import type { IPublicSchemaTransformationAdapter } from "@rejot-dev/contract/adapter";
 import type { PostgresPublicSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
 import type { TableOperation, Transaction, TransformedOperation } from "@rejot-dev/contract/sync";
+import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
-import { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import { PublicSchemaTransformer } from "./public-schema-transformer.ts";
 
 describe("PublicSchemaTransformer", () => {

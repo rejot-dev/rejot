@@ -4,8 +4,8 @@ import { getLogger } from "@rejot-dev/contract/logger";
 import type { ISubscribeMessageBus, OperationMessage } from "@rejot-dev/contract/message-bus";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
-import type { ISyncServiceResolver } from "../sync-http-service/sync-http-resolver";
-import { fetchRead } from "../sync-http-service/sync-http-service-fetch";
+import type { ISyncServiceResolver } from "../sync-http-service/sync-http-resolver.ts";
+import { fetchRead } from "../sync-http-service/sync-http-service-fetch.ts";
 const State = {
   INITIAL: 1,
   PREPARED: 2,

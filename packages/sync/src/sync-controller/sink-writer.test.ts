@@ -12,8 +12,8 @@ import type { IEventStore } from "@rejot-dev/contract/event-store";
 import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
 import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
 import type { IDataSource } from "@rejot-dev/contract/sync";
+import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
-import { SyncManifest } from "../../../contract/manifest/sync-manifest";
 import { SinkWriter } from "./sink-writer.ts";
 
 describe("SinkWriter", () => {

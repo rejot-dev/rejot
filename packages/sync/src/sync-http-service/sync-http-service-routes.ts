@@ -1,5 +1,6 @@
 import { z } from "zod";
-import type { RouteConfig } from "../http-controller/http-controller";
+
+import type { RouteConfig } from "../http-controller/http-controller.ts";
 
 export const PublicSchemaReferenceSchema = z.object({
   manifest: z.object({

@@ -2,9 +2,9 @@ import { describe, expect, test } from "bun:test";
 
 import { InMemoryMessageBus } from "@rejot-dev/contract/message-bus";
 import type { Transaction } from "@rejot-dev/contract/sync";
+import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
-import { SyncManifest } from "../../../contract/manifest/sync-manifest";
-import { InMemoryConnectionAdapter } from "../_test/in-memory-adapter";
+import { InMemoryConnectionAdapter } from "../_test/in-memory-adapter.ts";
 import { SyncController } from "./sync-controller.ts";
 
 describe("SyncController", () => {

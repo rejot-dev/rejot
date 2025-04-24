@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { RequestParams, RouteConfig } from "../http-controller/http-controller";
+import type { RequestParams, RouteConfig } from "../http-controller/http-controller.ts";
 import { publicSchemasRoute, syncServiceReadRoute } from "./sync-http-service-routes.ts";
 
 function getFetchForRoute<T extends RouteConfig>(

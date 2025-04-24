@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
 import type { Transaction } from "@rejot-dev/contract/sync";
+import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
-import { SyncManifest } from "../../../contract/manifest/sync-manifest";
-import { InMemoryConnectionAdapter } from "../_test/in-memory-adapter";
+import { InMemoryConnectionAdapter } from "../_test/in-memory-adapter.ts";
 import { SourceReader } from "./source-reader.ts";
 
 describe("SourceReader", () => {

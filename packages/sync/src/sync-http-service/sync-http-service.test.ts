@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
-import { InMemoryEventStore } from "../../../contract/event-store/in-memory-event-store";
-import { MockSyncController } from "../_test/mock-sync-controller";
+import { InMemoryEventStore } from "@rejot-dev/contract/event-store/in-memory-event-store";
+
+import { MockSyncController } from "../_test/mock-sync-controller.ts";
 import { SyncHTTPController } from "./sync-http-service.ts";
 import { fetchRead } from "./sync-http-service-fetch.ts";
 
