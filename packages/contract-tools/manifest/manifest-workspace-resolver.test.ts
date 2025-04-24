@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { CURRENT_MANIFEST_FILE_VERSION, DEFAULT_MANIFEST_FILENAME } from "./manifest.fs";
-import { ManifestWorkspaceResolver } from "./manifest-workspace-resolver";
+import { ManifestWorkspaceResolver } from "./manifest-workspace-resolver.ts";
 
 // Helper function to create manifest files
 const createManifestFile = async (

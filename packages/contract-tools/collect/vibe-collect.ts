@@ -10,8 +10,8 @@ import { ManifestMerger, type MergeDiagnostic } from "@rejot-dev/contract/manife
 
 import type { IManifestFileManager } from "../manifest/manifest-file-manager";
 import { ManifestPrinter } from "../manifest/manifest-printer";
-import { type IFileFinder } from "./file-finder";
-import { collectGitIgnore } from "./git-ignore";
+import { type IFileFinder } from "./file-finder.ts";
+import { collectGitIgnore } from "./git-ignore.ts";
 
 const log = getLogger(import.meta.url);
 

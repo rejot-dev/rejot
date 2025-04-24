@@ -12,7 +12,7 @@ import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
 import { CURRENT_MANIFEST_FILE_VERSION } from "../manifest/manifest.fs";
 import { MockManifestFileManager } from "../manifest/manifest-file-manager.mock";
 import { MockFileFinder } from "./file-finder.mock";
-import { type VibeCollectedSchemas, VibeCollector } from "./vibe-collect";
+import { type VibeCollectedSchemas, VibeCollector } from "./vibe-collect.ts";
 
 export class MockSchemaCollector implements ISchemaCollector {
   #schemaMap: Map<string, { public: PublicSchemaData[]; consumer: ConsumerSchemaData[] }>;
