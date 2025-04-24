@@ -7,7 +7,7 @@ import { InMemoryEventStore } from "../../../contract/event-store/in-memory-even
 import { MockSyncController } from "../_test/mock-sync-controller";
 import type { ISyncServiceResolver } from "../sync-http-service/sync-http-resolver";
 import { SyncHTTPController } from "../sync-http-service/sync-http-service";
-import { ExternalSyncMessageBus } from "./external-sync-message-bus";
+import { ExternalSyncMessageBus } from "./external-sync-message-bus.ts";
 
 const TEST_PORT = 3334;
 const TEST_HOST = `localhost:${TEST_PORT}`;

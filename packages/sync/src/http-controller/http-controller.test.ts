@@ -1,6 +1,8 @@
-import { describe, test as bunTest, expect, beforeEach } from "bun:test";
-import { HttpController, type RouteConfig } from "./http-controller";
+import { beforeEach, describe, expect, test as bunTest } from "bun:test";
+
 import { z } from "zod";
+
+import { HttpController, type RouteConfig } from "./http-controller.ts";
 
 const TEST_PORT = 4444;
 const TEST_HOST = `localhost:${TEST_PORT}`;

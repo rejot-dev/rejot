@@ -2,8 +2,8 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import { InMemoryEventStore } from "../../../contract/event-store/in-memory-event-store";
 import { MockSyncController } from "../_test/mock-sync-controller";
-import { SyncHTTPController } from "./sync-http-service";
-import { fetchRead } from "./sync-http-service-fetch";
+import { SyncHTTPController } from "./sync-http-service.ts";
+import { fetchRead } from "./sync-http-service-fetch.ts";
 
 const TEST_PORT = 3333;
 const TEST_HOST = `localhost:${TEST_PORT}`;

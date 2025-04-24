@@ -3,7 +3,7 @@ import { type z, ZodError, ZodType } from "zod";
 
 import { getLogger } from "@rejot-dev/contract/logger";
 
-import { HTTPBadRequestError, HTTPBaseError } from "./http-service-errors";
+import { HTTPBadRequestError, HTTPBaseError } from "./http-service-errors.ts";
 
 const log = getLogger(import.meta.url);
 

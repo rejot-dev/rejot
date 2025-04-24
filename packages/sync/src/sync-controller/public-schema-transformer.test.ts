@@ -7,7 +7,7 @@ import type { PostgresPublicSchemaTransformationSchema } from "@rejot-dev/contra
 import type { TableOperation, Transaction, TransformedOperation } from "@rejot-dev/contract/sync";
 
 import { SyncManifest } from "../../../contract/manifest/sync-manifest";
-import { PublicSchemaTransformer } from "./public-schema-transformer";
+import { PublicSchemaTransformer } from "./public-schema-transformer.ts";
 
 describe("PublicSchemaTransformer", () => {
   // Mock PostgreSQL transformation adapter
