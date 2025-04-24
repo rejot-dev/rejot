@@ -31,7 +31,7 @@ function findPackageJson(startDir) {
   }
 }
 
-const rule = {
+const packageRule = {
   meta: {
     type: "problem",
     docs: {
@@ -88,8 +88,50 @@ const rule = {
   },
 };
 
+const relativeImportRule = {
+  meta: {
+    type: "problem",
+    docs: {
+      description: "Disallow imports using the current package name; use relative paths instead.",
+      recommended: "warn",
+    },
+    schema: [], // No options for this rule
+  },
+  create(context) {
+    const filename = context.getFilename();
+    // For virtual file paths used in some testing environments
+    if (!path.isAbsolute(filename) && !filename.startsWith(".")) {
+      return {};
+    }
+    const packageInfo = findPackageJson(path.dirname(filename));
+
+    if (!packageInfo || !packageInfo.name) {
+      // Could not find package.json or it lacks a name, skip this file
+      return {};
+    }
+
+    const packageName = packageInfo.name;
+    const packagePrefix = `${packageName}/`;
+
+    return {
+      ImportDeclaration(node) {
+        const importSource = node.source.value;
+
+        // Check if the import path starts with the package name + '/'
+        if (typeof importSource === "string" && importSource.startsWith(packagePrefix)) {
+          context.report({
+            node: node.source, // Report the error on the source string literal
+            message: `Importing from the current package "${packageName}" using its name is disallowed. Use relative path instead.`,
+          });
+        }
+      },
+    };
+  },
+};
+
 export default {
   rules: {
-    "require-local-package-deps": rule,
+    "require-local-package-deps": packageRule,
+    "disallow-package-name-imports": relativeImportRule,
   },
 };

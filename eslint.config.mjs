@@ -37,6 +37,7 @@ export default tseslint.config(
     rules: {
       // ...unicornFixableRules,
       "local/require-local-package-deps": "error",
+      "local/disallow-package-name-imports": "warn",
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
