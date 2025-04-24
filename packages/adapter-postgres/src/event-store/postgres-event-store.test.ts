@@ -1,13 +1,15 @@
-import { test, expect, beforeEach } from "bun:test";
+import { beforeEach, expect, test } from "bun:test";
+
+import type { PublicSchemaReference } from "@rejot-dev/contract/cursor";
 import type {
   TransformedOperationWithSource,
+  TransformedOperationWithSourceDelete,
   TransformedOperationWithSourceInsert,
   TransformedOperationWithSourceUpdate,
-  TransformedOperationWithSourceDelete,
 } from "@rejot-dev/contract/event-store";
+
 import { pgRollbackDescribe } from "../util/postgres-test-utils";
-import { PostgresEventStore } from "./postgres-event-store";
-import type { PublicSchemaReference } from "@rejot-dev/contract/cursor";
+import { PostgresEventStore } from "./postgres-event-store.ts";
 
 const TEST_SCHEMA_NAME = "rejot_events";
 const TEST_TABLE_NAME = "events";

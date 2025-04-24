@@ -4,8 +4,8 @@ import { getLogger } from "@rejot-dev/contract/logger";
 import type { OperationMessage } from "@rejot-dev/contract/message-bus";
 
 import { PostgresClient } from "../util/postgres-client";
-import { PostgresEventStoreRepository } from "./pg-event-store-repository";
-import { EventStoreSchemaManager } from "./pg-event-store-schema-manager";
+import { PostgresEventStoreRepository } from "./pg-event-store-repository.ts";
+import { EventStoreSchemaManager } from "./pg-event-store-schema-manager.ts";
 
 const log = getLogger(import.meta.url);
 

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { AsyncQueue, AsyncQueueAbortedError } from "./async-queue";
+import { AsyncQueue, AsyncQueueAbortedError } from "./async-queue.ts";
 
 test("AsyncQueue - enqueue and dequeue in order", async () => {
   const controller = new AbortController();

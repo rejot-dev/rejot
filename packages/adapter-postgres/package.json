@@ -9,14 +9,46 @@
     "directory": "packages/adapter-postgres"
   },
   "exports": {
-    ".": "./src/adapter/index.ts",
-    "./replication-listener": "./src/postgres-replication-listener.ts",
-    "./consts": "./src/postgres-consts.ts",
-    "./source": "./src/postgres-source.ts",
-    "./sink": "./src/postgres-sink.ts",
-    "./event-store": "./src/event-store/postgres-event-store.ts",
-    "./postgres-client": "./src/util/postgres-client.ts",
-    "./replication-repository": "./src/data-store/pg-replication-repository.ts"
+    ".": {
+      "bun": "./src/adapter/index.ts",
+      "types": "./dist/src/adapter/index.d.ts",
+      "default": "./dist/src/adapter/index.js"
+    },
+    "./replication-listener": {
+      "bun": "./src/postgres-replication-listener.ts",
+      "types": "./dist/src/postgres-replication-listener.d.ts",
+      "default": "./dist/src/postgres-replication-listener.js"
+    },
+    "./consts": {
+      "bun": "./src/postgres-consts.ts",
+      "types": "./dist/src/postgres-consts.d.ts",
+      "default": "./dist/src/postgres-consts.js"
+    },
+    "./source": {
+      "bun": "./src/postgres-source.ts",
+      "types": "./dist/src/postgres-source.d.ts",
+      "default": "./dist/src/postgres-source.js"
+    },
+    "./sink": {
+      "bun": "./src/postgres-sink.ts",
+      "types": "./dist/src/postgres-sink.d.ts",
+      "default": "./dist/src/postgres-sink.js"
+    },
+    "./event-store": {
+      "bun": "./src/event-store/postgres-event-store.ts",
+      "types": "./dist/src/event-store/postgres-event-store.d.ts",
+      "default": "./dist/src/event-store/postgres-event-store.js"
+    },
+    "./postgres-client": {
+      "bun": "./src/util/postgres-client.ts",
+      "types": "./dist/src/util/postgres-client.d.ts",
+      "default": "./dist/src/util/postgres-client.js"
+    },
+    "./replication-repository": {
+      "bun": "./src/data-store/pg-replication-repository.ts",
+      "types": "./dist/src/data-store/pg-replication-repository.d.ts",
+      "default": "./dist/src/data-store/pg-replication-repository.js"
+    }
   },
   "scripts": {
     "check": "tsc --noEmit"

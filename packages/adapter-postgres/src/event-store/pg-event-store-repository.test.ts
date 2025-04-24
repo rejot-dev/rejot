@@ -1,8 +1,9 @@
-import { test, expect, beforeEach } from "bun:test";
-import { pgRollbackDescribe } from "../util/postgres-test-utils";
+import { beforeEach, expect, test } from "bun:test";
+
 import { PostgresClient } from "../util/postgres-client";
-import { PostgresEventStoreRepository } from "./pg-event-store-repository";
-import { EventStoreSchemaManager } from "./pg-event-store-schema-manager";
+import { pgRollbackDescribe } from "../util/postgres-test-utils";
+import { PostgresEventStoreRepository } from "./pg-event-store-repository.ts";
+import { EventStoreSchemaManager } from "./pg-event-store-schema-manager.ts";
 
 async function setupEventStore(client: PostgresClient): Promise<void> {
   await new EventStoreSchemaManager(client).ensureSchema();

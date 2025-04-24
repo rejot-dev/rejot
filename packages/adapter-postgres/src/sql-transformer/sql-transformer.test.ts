@@ -1,6 +1,10 @@
-import { test, expect, describe, beforeAll } from "bun:test";
-import { validateSqlPlaceholders, convertNamedToPositionalPlaceholders } from "./sql-transformer";
+import { beforeAll, describe, expect, test } from "bun:test";
+
 import { initSqlparser } from "../../../sqlparser";
+import {
+  convertNamedToPositionalPlaceholders,
+  validateSqlPlaceholders,
+} from "./sql-transformer.ts";
 
 // Initialize the SQL parser before running tests
 beforeAll(async () => {

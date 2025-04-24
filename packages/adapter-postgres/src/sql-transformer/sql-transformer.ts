@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-import { type PlaceholderInfo } from "@rejot-dev/sqlparser";
+import type { ValidationResult } from "@rejot-dev/contract/adapter";
 import { extractSchemaKeys } from "@rejot-dev/contract/json-schema";
 import type { ConsumerSchemaSchema } from "@rejot-dev/contract/manifest";
 import type { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
-import type { ValidationResult } from "@rejot-dev/contract/adapter";
+import { type PlaceholderInfo } from "@rejot-dev/sqlparser";
 
-import { sqlTransformationCache } from "./sql-transformation-cache";
+import { sqlTransformationCache } from "./sql-transformation-cache.ts";
 
 /**
  * Validates a SQL statement against a JSON schema.
