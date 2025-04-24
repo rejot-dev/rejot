@@ -16,7 +16,8 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "emitDeclarationOnly": true,
+    "rewriteRelativeImportExtensions": true,
+    "emitDeclarationOnly": false,
     "isolatedDeclarations": false,
     "isolatedModules": true,
     // Best practices

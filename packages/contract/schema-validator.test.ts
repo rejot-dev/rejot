@@ -1,7 +1,9 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
+
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { SchemaValidator, type ISchemaLike } from "./schema-validator";
+
+import { type ISchemaLike, SchemaValidator } from "./schema-validator.ts";
 
 describe("SchemaValidator", () => {
   const testSchema: ISchemaLike = {

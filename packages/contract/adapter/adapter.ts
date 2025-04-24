@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { type Cursor } from "../cursor/cursors";
+import { type Cursor } from "../cursor/cursors.ts";
 import type { IEventStore, TransformedOperationWithSource } from "../event-store/event-store.ts";
 import {
   ConnectionConfigSchema,

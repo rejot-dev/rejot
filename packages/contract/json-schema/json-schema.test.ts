@@ -4,9 +4,9 @@ import { readFile } from "node:fs/promises";
 
 import type { JsonSchema7Type } from "zod-to-json-schema";
 
-import type { JsonSchema } from "./json-schema";
-import { JsonSchemaSchema } from "./json-schema";
-import { extractSchemaKeys } from "./json-schema-utils";
+import type { JsonSchema } from "./json-schema.ts";
+import { JsonSchemaSchema } from "./json-schema.ts";
+import { extractSchemaKeys } from "./json-schema-utils.ts";
 
 type JsonSchemaFromLib = JsonSchema7Type & {
   $schema?: string;

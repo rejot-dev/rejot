@@ -1,15 +1,14 @@
 import { z } from "zod";
 
-import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-import { getLogger } from "@rejot-dev/contract/logger";
-
+import type { TransformedOperationWithSource } from "../event-store/event-store.ts";
+import { getLogger } from "../logger/logger.ts";
 import {
   type ConnectionConfigSchema,
   ConsumerSchemaSchema,
   type DataStoreConfigSchema,
   type PublicSchemaSchema,
   SyncManifestSchema,
-} from "./manifest";
+} from "./manifest.ts";
 import {
   getConnectionBySlugHelper,
   getConnectionsHelper,
@@ -21,13 +20,13 @@ import {
   getPublicSchemasForOperationHelper,
   getPublicSchemasHelper,
   getSourceDataStoresHelper,
-} from "./manifest-helpers";
+} from "./manifest-helpers.ts";
 import {
   type ExternalPublicSchemaReference,
   type ManifestDiagnostic,
   type VerificationResult,
   verifyManifests,
-} from "./verify-manifest";
+} from "./verify-manifest.ts";
 
 const log = getLogger(import.meta.url);
 

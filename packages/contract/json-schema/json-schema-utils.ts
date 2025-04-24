@@ -1,4 +1,4 @@
-import { type JsonSchema } from "./json-schema";
+import { type JsonSchema } from "./json-schema.ts";
 
 /**
  * Validates that a JSON schema is an object and extracts all its keys

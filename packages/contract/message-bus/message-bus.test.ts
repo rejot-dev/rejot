@@ -1,6 +1,7 @@
-import { test, expect } from "bun:test";
-import { InMemoryMessageBus } from "./message-bus";
-import type { OperationMessage } from "./message-bus";
+import { expect, test } from "bun:test";
+
+import type { OperationMessage } from "./message-bus.ts";
+import { InMemoryMessageBus } from "./message-bus.ts";
 
 const createTestMessage = (id: number): OperationMessage => ({
   transactionId: `test-${id}`,

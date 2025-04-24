@@ -2,9 +2,9 @@ import { describe, expect, test } from "bun:test";
 
 import { z } from "zod";
 
-import { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest";
-import { ManifestMerger } from "./manifest-merger";
-import type { Connection } from "./sync-manifest";
+import { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest.ts";
+import { ManifestMerger } from "./manifest-merger.ts";
+import type { Connection } from "./sync-manifest.ts";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 

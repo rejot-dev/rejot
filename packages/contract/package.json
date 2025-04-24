@@ -11,31 +11,99 @@
   "scripts": {
     "check": "tsc --noEmit",
     "prepack": "bun run manifest-jsonschema.ts > schema.json",
+    "build": "tsc",
+    "clean": "rm -rf dist",
     "manifest:schema": "bun run manifest-jsonschema.ts"
   },
   "exports": {
-    "./adapter": "./adapter/adapter.ts",
-    "./collect": "./collect/collect.ts",
-    "./collect/mock": "./collect/mock-schema-collector.ts",
-    "./consumer-schema": "./consumer-schema/consumer-schema.ts",
-    "./cursor": "./cursor/cursors.ts",
-    "./event-store": "./event-store/event-store.ts",
-    "./event-store-message-bus": "./event-store/event-store-message-bus.ts",
-    "./event-store/in-memory-event-store": "./event-store/in-memory-event-store.ts",
-    "./logger": "./logger/logger.ts",
-    "./manifest": "./manifest/manifest.ts",
-    "./manifest.fs": "./manifest/manifest.fs.ts",
-    "./manifest-helpers": "./manifest/manifest-helpers.ts",
-    "./manifest-merger": "./manifest/manifest-merger.ts",
-    "./sync-manifest": "./manifest/sync-manifest.ts",
-    "./postgres": "./postgres/postgres.ts",
-    "./public-schema": "./public-schema/public-schema.ts",
-    "./workspace": "./workspace/workspace.ts",
-    "./error": "./error/error.ts",
-    "./sync": "./sync/sync.ts",
-    "./schema-validator": "./schema-validator.ts",
-    "./message-bus": "./message-bus/message-bus.ts",
-    "./json-schema": "./json-schema/json-schema.ts"
+    "./adapter": {
+      "types": "./dist/adapter/adapter.d.ts",
+      "default": "./dist/adapter/adapter.js"
+    },
+    "./collect": {
+      "types": "./dist/collect/collect.d.ts",
+      "default": "./dist/collect/collect.js"
+    },
+    "./collect/mock": {
+      "types": "./dist/collect/mock-schema-collector.d.ts",
+      "default": "./dist/collect/mock-schema-collector.js"
+    },
+    "./consumer-schema": {
+      "types": "./dist/consumer-schema/consumer-schema.d.ts",
+      "default": "./dist/consumer-schema/consumer-schema.js"
+    },
+    "./cursor": {
+      "types": "./dist/cursor/cursors.d.ts",
+      "default": "./dist/cursor/cursors.js"
+    },
+    "./event-store": {
+      "types": "./dist/event-store/event-store.d.ts",
+      "default": "./dist/event-store/event-store.js"
+    },
+    "./event-store-message-bus": {
+      "types": "./dist/event-store/event-store-message-bus.d.ts",
+      "default": "./dist/event-store/event-store-message-bus.js"
+    },
+    "./event-store/in-memory-event-store": {
+      "types": "./dist/event-store/in-memory-event-store.d.ts",
+      "default": "./dist/event-store/in-memory-event-store.js"
+    },
+    "./logger": {
+      "types": "./dist/logger/logger.d.ts",
+      "default": "./dist/logger/logger.js"
+    },
+    "./manifest": {
+      "types": "./dist/manifest/manifest.d.ts",
+      "default": "./dist/manifest/manifest.js"
+    },
+    "./manifest.fs": {
+      "types": "./dist/manifest/manifest.fs.d.ts",
+      "default": "./dist/manifest/manifest.fs.js"
+    },
+    "./manifest-helpers": {
+      "types": "./dist/manifest/manifest-helpers.d.ts",
+      "default": "./dist/manifest/manifest-helpers.js"
+    },
+    "./manifest-merger": {
+      "types": "./dist/manifest/manifest-merger.d.ts",
+      "default": "./dist/manifest/manifest-merger.js"
+    },
+    "./sync-manifest": {
+      "types": "./dist/manifest/sync-manifest.d.ts",
+      "default": "./dist/manifest/sync-manifest.js"
+    },
+    "./postgres": {
+      "types": "./dist/postgres/postgres.d.ts",
+      "default": "./dist/postgres/postgres.js"
+    },
+    "./public-schema": {
+      "types": "./dist/public-schema/public-schema.d.ts",
+      "default": "./dist/public-schema/public-schema.js"
+    },
+    "./workspace": {
+      "types": "./dist/workspace/workspace.d.ts",
+      "default": "./dist/workspace/workspace.js"
+    },
+    "./error": {
+      "types": "./dist/error/error.d.ts",
+      "default": "./dist/error/error.js"
+    },
+    "./sync": {
+      "types": "./dist/sync/sync.d.ts",
+      "default": "./dist/sync/sync.js"
+    },
+    "./schema-validator": {
+      "types": "./dist/schema-validator.d.ts",
+      "default": "./dist/schema-validator.js"
+    },
+    "./message-bus": {
+      "types": "./dist/message-bus/message-bus.d.ts",
+      "default": "./dist/message-bus/message-bus.js"
+    },
+    "./json-schema": {
+      "types": "./dist/json-schema/json-schema.d.ts",
+      "default": "./dist/json-schema/json-schema.js"
+    }
   },
   "type": "module",
   "dependencies": {

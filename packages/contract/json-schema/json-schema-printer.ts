@@ -1,4 +1,4 @@
-import { type JsonSchema } from "./json-schema";
+import { type JsonSchema } from "./json-schema.ts";
 
 export class JsonSchemaPrinter {
   static printJsonSchema(schema: JsonSchema, indentLevel: number = 1): string[] {

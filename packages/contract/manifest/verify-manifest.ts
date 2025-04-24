@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import type { ManifestWithPath } from "../workspace/workspace";
-import { SyncManifestSchema } from "./manifest";
+import type { ManifestWithPath } from "../workspace/workspace.ts";
+import { SyncManifestSchema } from "./manifest.ts";
 
 export type ManifestDiagnosticSeverity = "error" | "warning";
 

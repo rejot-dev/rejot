@@ -1,6 +1,7 @@
-import type { TableOperation } from "@rejot-dev/contract/sync";
 import { z } from "zod";
+
 import { PublicSchemaSchema } from "../manifest/manifest.ts";
+import type { TableOperation } from "../sync/sync.ts";
 
 export interface IPublicSchemaTransformationRepository {
   getPublicSchemasForOperation(

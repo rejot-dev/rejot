@@ -2,8 +2,8 @@ import { expect, test } from "bun:test";
 
 import { z } from "zod";
 
-import { PublicSchemaSchema, SyncManifestSchema } from "./manifest";
-import { verifyManifests, verifyManifestsWithPaths } from "./verify-manifest";
+import { PublicSchemaSchema, SyncManifestSchema } from "./manifest.ts";
+import { verifyManifests, verifyManifestsWithPaths } from "./verify-manifest.ts";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 

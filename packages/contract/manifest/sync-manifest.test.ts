@@ -2,8 +2,8 @@ import { expect, test } from "bun:test";
 
 import { z } from "zod";
 
-import { SyncManifestSchema } from "./manifest";
-import { SyncManifest } from "./sync-manifest";
+import { SyncManifestSchema } from "./manifest.ts";
+import { SyncManifest } from "./sync-manifest.ts";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
