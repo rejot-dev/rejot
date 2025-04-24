@@ -1,6 +1,7 @@
-import { test, describe, expect, beforeAll } from "bun:test";
-import { initSqlparser, parseSql } from "./index";
-import { findPlaceholders } from "./index";
+import { beforeAll, describe, expect, test } from "bun:test";
+
+import { initSqlparser, parseSql } from "./index.ts";
+import { findPlaceholders } from "./index.ts";
 
 describe("placeholder tests", () => {
   beforeAll(async () => {
