@@ -62,7 +62,7 @@ describe("SyncHTTPController", () => {
       },
     ]);
 
-    await controller.start();
+    controller.start();
   });
 
   afterAll(async () => {

@@ -36,6 +36,8 @@ export class HttpController {
 
   readonly #routeHandlers: Map<RouteConfig, RouteHandler<RouteConfig>> = new Map();
 
+  readonly #serverPromise = Promise.withResolvers<void>();
+
   #server: Server | null = null;
 
   constructor({ hostname, port }: ServerConfig) {
@@ -50,6 +52,11 @@ export class HttpController {
 
   get routeConfigs(): RouteConfig[] {
     return Array.from(this.#routeHandlers.keys());
+  }
+
+  /** Resolves when the server is stopped using stop() */
+  get promise(): Promise<void> {
+    return this.#serverPromise.promise;
   }
 
   /**
@@ -151,6 +158,9 @@ export class HttpController {
     return routes;
   }
 
+  /**
+   * @returns A promise that resolves when the server has stopped serving, i.e. stop() is called.
+   */
   async start(): Promise<void> {
     log.info(`Http controller starting on ${this.#hostname}:${this.#port}`);
 
@@ -161,14 +171,16 @@ export class HttpController {
       fetch:
         this.#routeHandlers.size > 0 ? undefined : () => new Response("Not found", { status: 404 }),
     });
+
+    return this.#serverPromise.promise;
   }
 
   async stop(): Promise<void> {
-    if (!this.#server) {
-      throw new Error("Http controller not started");
+    if (this.#server) {
+      await this.#server.stop();
+      this.#server = null;
     }
 
-    await this.#server.stop();
-    this.#server = null;
+    this.#serverPromise.resolve();
   }
 }

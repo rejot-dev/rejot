@@ -28,7 +28,17 @@ export class Cursors {
 
   constructor(cursors: Cursor[]) {
     for (const cursor of cursors) {
-      this.#cursors.set(publicSchemaReferenceToString(cursor.schema), cursor);
+      const key = publicSchemaReferenceToString(cursor.schema);
+
+      const existingCursor = this.#cursors.get(key);
+
+      if (
+        !existingCursor ||
+        !existingCursor.transactionId ||
+        (cursor.transactionId && cursor.transactionId > existingCursor.transactionId)
+      ) {
+        this.#cursors.set(key, cursor);
+      }
     }
   }
 

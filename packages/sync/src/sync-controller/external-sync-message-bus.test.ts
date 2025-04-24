@@ -47,7 +47,7 @@ describe("ExternalSyncMessageBus", () => {
         },
       },
     ]);
-    await controller.start();
+    controller.start();
   });
 
   afterAll(async () => {
