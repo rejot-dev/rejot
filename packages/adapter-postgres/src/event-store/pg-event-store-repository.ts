@@ -1,6 +1,7 @@
-import type { PostgresClient } from "../util/postgres-client";
-import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 import type { PublicSchemaReference } from "@rejot-dev/contract/cursor";
+import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
+
+import type { PostgresClient } from "../util/postgres-client.ts";
 
 type EventRow = {
   operation: "insert" | "update" | "delete";

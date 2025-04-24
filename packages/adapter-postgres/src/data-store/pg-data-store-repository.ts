@@ -1,4 +1,4 @@
-import type { PostgresClient } from "../util/postgres-client";
+import type { PostgresClient } from "../util/postgres-client.ts";
 
 export type PublicSchemaReference = {
   manifestSlug: string;

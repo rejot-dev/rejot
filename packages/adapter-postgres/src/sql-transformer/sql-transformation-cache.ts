@@ -1,9 +1,9 @@
 import {
-  type PlaceholderInfo,
-  type Statement,
-  parseSql,
   findPlaceholders,
   initSqlparser,
+  parseSql,
+  type PlaceholderInfo,
+  type Statement,
 } from "@rejot-dev/sqlparser";
 
 interface ParsedSqlResult {

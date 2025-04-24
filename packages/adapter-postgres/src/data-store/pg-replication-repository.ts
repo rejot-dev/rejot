@@ -1,7 +1,7 @@
 import { getLogger } from "@rejot-dev/contract/logger";
 
-import type { PostgresClient } from "../util/postgres-client";
-import { isPostgresError, PG_DUPLICATE_OBJECT } from "../util/postgres-error-codes";
+import type { PostgresClient } from "../util/postgres-client.ts";
+import { isPostgresError, PG_DUPLICATE_OBJECT } from "../util/postgres-error-codes.ts";
 
 const log = getLogger(import.meta.url);
 
