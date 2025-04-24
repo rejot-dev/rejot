@@ -69,7 +69,9 @@ export const ConsumerSchemaTransformationSchema = z.discriminatedUnion("transfor
 
 export const DataStoreSchema = z.object({
   connectionSlug: z.string().describe("Slug of the connection to use for this data store."),
-  config: DataStoreConfigSchema.describe("Configuration details specific to the data store type."),
+  config: DataStoreConfigSchema.optional().describe(
+    "Configuration details specific to the data store type.",
+  ),
 });
 
 export const EventStoreSchema = z.object({

@@ -60,7 +60,7 @@ export interface IConnectionAdapter<
   createSource(
     connectionSlug: string,
     connectionConfig: TConnectionConfig,
-    options: TDataStoreConfig,
+    dataStoreConfig: TDataStoreConfig,
   ): TSource;
   createSink(connectionSlug: string, connectionConfig: TConnectionConfig): TSink;
   createEventStore(connectionSlug: string, connectionConfig: TConnectionConfig): TEventStore;
@@ -142,7 +142,6 @@ export interface Column {
 }
 
 export interface Table {
-  schema: string;
   name: string;
   columns: Column[];
   keyColumns: string[];

@@ -71,9 +71,7 @@ export class InMemoryEventStore implements IEventStore {
     for (const { transactionId } of cursors) {
       if (transactionId !== null) {
         const cursorIndex = this.#transactionIds.indexOf(transactionId);
-        if (cursorIndex === -1) {
-          throw new Error(`Transaction ID ${transactionId} not found`);
-        }
+        // If cursorIndex is -1, we start at index 0.
         // Start from the transaction after the cursor
         startIndex = Math.max(startIndex, cursorIndex + 1);
       }

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { Cursor } from "../cursor/cursors.ts";
 import type { TransformedOperationWithSource } from "../event-store/event-store.ts";
 import type { WorkspaceDefinition } from "../workspace/workspace.ts";
 import type { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest.ts";
@@ -53,20 +54,32 @@ export function getConnectionBySlugHelper(
 
 export function getSourceDataStoresHelper(manifests: Manifest[]): SourceDataStore[] {
   return manifests
-    .flatMap((manifest) =>
-      (manifest.dataStores ?? []).map((ds) => ({
-        ...ds,
-        sourceManifestSlug: manifest.slug,
-      })),
-    )
+    .flatMap((manifest) => {
+      if (!manifest.dataStores) {
+        return [];
+      }
+
+      return manifest.dataStores
+        .filter(
+          (ds): ds is typeof ds & { config: NonNullable<typeof ds.config> } =>
+            ds.config !== undefined,
+        )
+        .map((ds) => ({
+          sourceManifestSlug: manifest.slug,
+          connectionSlug: ds.connectionSlug,
+          config: ds.config,
+        }));
+    })
     .map((ds) => {
       const connection = getConnectionBySlugHelper(manifests, ds.connectionSlug);
       if (!connection) {
-        // This error should ideally be caught during verification, but keep for safety
+        // This error should ideally be caught during verification
         throw new Error(`Connection '${ds.connectionSlug}' not found in manifests`);
       }
       return {
-        ...ds,
+        sourceManifestSlug: ds.sourceManifestSlug,
+        connectionSlug: ds.connectionSlug,
+        config: ds.config,
         connection: {
           slug: connection.slug,
           config: connection.config,
@@ -175,4 +188,21 @@ export function getPublicSchemasHelper(
       manifestSlug: manifest.slug,
     })),
   );
+}
+
+export function getNullCursorsForConsumingPublicSchemas(manifests: Manifest[]): Cursor[] {
+  const consumerSchemas = manifests.flatMap((manifest) => manifest.consumerSchemas ?? []);
+
+  return consumerSchemas.map((consumerSchema) => ({
+    schema: {
+      manifest: {
+        slug: consumerSchema.sourceManifestSlug,
+      },
+      schema: {
+        name: consumerSchema.publicSchema.name,
+        version: { major: consumerSchema.publicSchema.majorVersion },
+      },
+    },
+    transactionId: null,
+  }));
 }

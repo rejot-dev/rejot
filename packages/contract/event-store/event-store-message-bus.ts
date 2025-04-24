@@ -76,7 +76,6 @@ export class EventStoreMessageBus implements IMessageBus {
       const messages = await this.#eventStore.read(this.#cursors.toArray());
 
       if (messages.length > 0) {
-        log.trace("subscribe yielding", { messages: messages.length });
         yield* messages;
         this.#cursors.advanceWithMessages(messages);
       }
