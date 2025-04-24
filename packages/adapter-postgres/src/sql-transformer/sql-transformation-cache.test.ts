@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { SqlTransformationCache } from "./sql-transformation-cache";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
+
+import { SqlTransformationCache } from "./sql-transformation-cache.ts";
 
 describe("SqlTransformationCache", () => {
   let cache: SqlTransformationCache;

@@ -7,8 +7,8 @@ import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/cont
 
 import { PostgresConsumerDataStoreSchemaManager } from "../data-store/pg-consumer-data-store-schema-manager";
 import { getTestConnectionConfig, pgRollbackDescribe } from "../util/postgres-test-utils";
-import { PostgresConnectionAdapter } from "./pg-connection-adapter";
-import { PostgresConsumerSchemaTransformationAdapter } from "./pg-consumer-schema-transformation-adapter";
+import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
+import { PostgresConsumerSchemaTransformationAdapter } from "./pg-consumer-schema-transformation-adapter.ts";
 
 pgRollbackDescribe("PostgresConsumerSchemaTransformationAdapter", (ctx) => {
   let connectionAdapter: PostgresConnectionAdapter;

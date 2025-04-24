@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { Column, IIntrospectionAdapter, Table } from "@rejot-dev/contract/adapter";
 import type { PostgresConnectionSchema } from "@rejot-dev/contract/manifest";
 
-import { PostgresConnectionAdapter } from "./pg-connection-adapter";
+import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
 
 // SQL tag helper function to use tagged template literals with Postgres
 export function sql(strings: TemplateStringsArray, ...values: unknown[]): string {

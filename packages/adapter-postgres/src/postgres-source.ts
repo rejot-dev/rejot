@@ -10,10 +10,10 @@ import {
   checkLogicalReplication,
   ensurePublication,
   ensureReplicationSlot,
-} from "./data-store/pg-replication-repository";
-import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./postgres-consts";
-import { PostgresReplicationListener } from "./postgres-replication-listener";
-import { PostgresClient } from "./util/postgres-client";
+} from "./data-store/pg-replication-repository.ts";
+import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./postgres-consts.ts";
+import { PostgresReplicationListener } from "./postgres-replication-listener.ts";
+import { PostgresClient } from "./util/postgres-client.ts";
 
 const log = getLogger(import.meta.url);
 

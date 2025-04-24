@@ -1,9 +1,11 @@
-import { test, expect, beforeEach, afterEach, describe } from "bun:test";
-import { PostgresReplicationListener } from "./postgres-replication-listener";
-import type { Operation } from "./postgres-replication-listener";
-import type { PostgresClient } from "./util/postgres-client";
-import { getTestClient } from "./util/postgres-test-utils";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+
 import type { TableOperationDelete } from "@rejot-dev/contract/sync";
+
+import type { Operation } from "./postgres-replication-listener";
+import { PostgresReplicationListener } from "./postgres-replication-listener.ts";
+import type { PostgresClient } from "./util/postgres-client";
+import { getTestClient } from "./util/postgres-test-utils.ts";
 
 const TEST_TABLE_NAME = "test_pg_rep_list_table";
 const TEST_PUBLICATION_NAME = "test_pg_rep_list_publication";

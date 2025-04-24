@@ -1,8 +1,8 @@
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
 
-import { PostgresConsumerDataStoreSchemaManager } from "./data-store/pg-consumer-data-store-schema-manager";
-import { PostgresClient } from "./util/postgres-client";
+import { PostgresConsumerDataStoreSchemaManager } from "./data-store/pg-consumer-data-store-schema-manager.ts";
+import { PostgresClient } from "./util/postgres-client.ts";
 
 const log = getLogger(import.meta.url);
 

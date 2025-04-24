@@ -1,9 +1,10 @@
-import { describe, beforeEach, afterEach, afterAll, beforeAll } from "bun:test";
+import { afterAll, afterEach, beforeAll, beforeEach, describe } from "bun:test";
+
 import {
   parsePostgresConnectionString,
   PostgresClient,
   type PostgresConfig,
-} from "./postgres-client";
+} from "./postgres-client.ts";
 
 export interface DbTestContext {
   client: PostgresClient;
