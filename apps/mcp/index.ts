@@ -65,35 +65,59 @@ manifest.
 contain relative path references to manifests in sub-directories.
 
 ## Working with Schemas
-- Schemas are defined in code. E.g. in TypeScript files. The collect command will scan the 
-workspace to find these schemas and add them to the manifest. To edit these schemas, you MUST change
-the code directly. If you cannot edit text files, you must tell the user to do it manually.
-- When you are asked to modify a schema, you MUST modify the source which is referenced by the
-'definitionFile' property. After that you can run the collect command to update the manifest.
-
-## Examples of what you can do:
-- You will help the user set up database connections. Usually connections appear in a codebase or 
-in environment variables/files.
-- You can help validate if certain transformations will work by executing queries to the database
-connections.
-- You can help verify if a public or consumer schema is valid by checking if the tables it's reading
-from and writing to exist.
-- You can help setup the necessary configuration for data stores to work. Like creating replication
-slots and publications in Postgres.
-- Run transformation queries defined in schemas to see if they work properly.
-
-## Some tips
-- ALWAYS use the tools in this MCP to edit the manifest.
-- Obtain the workspace information first.
-- If you do not know a connection's slug. Get the workspace manifest first.
-- You don't have to check health before doing other operations.
-- When the users asks about the ReJot workspace, use the workspace info tool.
+- Schemas are defined in code. E.g. in TypeScript files. 
+- The collect command will scan the  workspace to find these schemas and add them to the manifest. 
+- You SHALL NEVER edit schemas in the manifest file directly.
+- You MUST modify the underlying source which is referenced by the 'definitionFile' property. 
+- Run the collect command to update the manifest after editing the source.
 
 ## Rules
-- NEVER apply edits to a manifest directly.
-- ALWAYS apply edits to the definitionFiles and use the tools in this MCP.
-- DO NOT use the ReJot CLI. Use the tools in this MCP instead.
-- DO NOT insert data into tables. ONLY do this when the user EXPLICITLY asks you to.
+- NEVER update the manifest file directly.
+- DO NOT check connection health unless you think something is wrong.
+- NEVER use the ReJot CLI.
+- DO NOT run write operations on any database without EXPLICIT USER permission.
+- Call as FEW tools as possible.
+- When a specific table is mentioned, use GET TABLE SCHEMA directly without other tools.
+
+<use_cases>
+  <use_case>
+    <title>Help the user set up database connections.</title>
+    <steps>
+      1. Find database credentials in the user's codebase.
+      2. Use add connection tool.
+      3. Check the connection's health.
+    </steps>
+  </use_case>
+
+  <use_case>
+    <title>Validate public/consumer schemas transformations.</title>
+    <steps>
+      1. Use the find schema tool to find the schema in the workspace.
+      2. Use the get table schemas tool to figure out if the tables referenced in the schema exist.
+      3. Insert real parameters into the transformation query and run it using the query tool.
+    </steps>
+    <example_questions>
+      <question>Will this [public/consumer] schema work?</question>
+    </example_questions>
+    <example_answers>
+      <answer>No, because the table [table_name] does not exist.</answer>
+      <answer>Possibly, there are no rows in the table.</answer>
+      <answer>Yes, I ran an example query with [id] and it returned the following: [rows]</answer>
+    </example_answers>
+    <rules>
+      <rule>When asked about a schema DO NOT answer questions about anything else.</rule>
+    </rules>
+  </use_case>
+
+  <use_case>
+    <title>Configure a data store to be usable in syncing.</title>
+    <steps>
+      1. Use the data store help tool to figure out the necessary configuration.
+      2. Use the query tool to modify the configuration as necessary.
+    </steps>
+  </use_case>
+
+</use_cases>
       `,
   },
 );

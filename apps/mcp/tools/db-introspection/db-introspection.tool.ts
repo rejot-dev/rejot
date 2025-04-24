@@ -217,7 +217,7 @@ ${schema.columns
           .default(false)
           .optional()
           .describe(
-            "Allow write operations. ONLY use this when the user explicitly asks you to execute a write operation. This includes creating tables etc.",
+            "Allow write operations. DO NOT run write operations on any database without EXPLICIT USER permission.",
           ),
       },
       async ({ connectionSlug, queries }) => {

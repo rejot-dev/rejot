@@ -307,8 +307,20 @@ export class ManifestPrinter {
     return output;
   }
 
-  static printPublicSchema(publicSchemas: Array<z.infer<typeof PublicSchemaSchema>>): string[] {
-    const output: string[] = ["Public Schemas:"];
+  static printPublicSchema(
+    publicSchemas: Array<z.infer<typeof PublicSchemaSchema>>,
+    options?: {
+      header?: boolean;
+      includeSourceTables?: boolean;
+    },
+  ): string[] {
+    const { header = true, includeSourceTables = false } = options ?? {};
+
+    const output: string[] = [];
+
+    if (header) {
+      output.push("Public Schemas:");
+    }
 
     if (publicSchemas.length === 0) {
       output.push("  No public schemas defined");
@@ -320,14 +332,18 @@ export class ManifestPrinter {
         `  - ${publicSchema.name} (v${publicSchema.version.major}.${publicSchema.version.minor})`,
       );
 
-      output.push("    Source Tables:");
-      if (publicSchema.source.tables.length === 0) {
-        output.push("      No source tables defined");
-      } else {
-        for (const table of publicSchema.source.tables) {
-          output.push(`        - ${table}`);
+      if (includeSourceTables) {
+        output.push("    Source Tables:");
+        if (publicSchema.source.tables.length === 0) {
+          output.push("      No source tables defined");
+        } else {
+          for (const table of publicSchema.source.tables) {
+            output.push(`        - ${table}`);
+          }
         }
       }
+
+      output.push(`    Source connection/data store: ${publicSchema.source.dataStoreSlug}`);
 
       output.push(`    Output Schema:`);
       output.push(...JsonSchemaPrinter.printJsonSchema(publicSchema.outputSchema, 3));
@@ -347,8 +363,19 @@ export class ManifestPrinter {
     return output;
   }
 
-  static printConsumerSchema(consumerSchemas: z.infer<typeof ConsumerSchemaSchema>[]): string[] {
-    const output: string[] = ["Consumer Schemas:"];
+  static printConsumerSchema(
+    consumerSchemas: z.infer<typeof ConsumerSchemaSchema>[],
+    options?: {
+      header?: boolean;
+    },
+  ): string[] {
+    const { header = true } = options ?? {};
+
+    const output: string[] = [];
+
+    if (header) {
+      output.push("Consumer Schemas:");
+    }
 
     if (consumerSchemas.length === 0) {
       output.push("  No consumer schemas defined");
@@ -359,13 +386,15 @@ export class ManifestPrinter {
       output.push(`  - ${consumerSchema.name}`);
       output.push("    Source:");
       if (consumerSchema.sourceManifestSlug) {
-        output.push(`      External Manifest: ${consumerSchema.sourceManifestSlug}`);
+        output.push(`      Source Manifest: ${consumerSchema.sourceManifestSlug}`);
       }
       output.push(
-        `      Public Schema: ${consumerSchema.publicSchema.name} (v${consumerSchema.publicSchema.majorVersion})`,
+        `      Public Schema: ${consumerSchema.publicSchema.name} (v${consumerSchema.publicSchema.majorVersion}.x)`,
       );
 
-      output.push(`    Destination Data Store: ${consumerSchema.destinationDataStoreSlug}`);
+      output.push(
+        `    Destination Connection/Data Store: ${consumerSchema.destinationDataStoreSlug}`,
+      );
 
       output.push("    Transformations:");
       for (const transformation of consumerSchema.transformations) {
@@ -391,7 +420,7 @@ export class ManifestPrinter {
 
     output.push(`${indent}- Type: ${transform.transformationType}`);
     if (transform.transformationType === "postgresql") {
-      output.push(`${indent}  Table: ${transform.table}`);
+      output.push(`${indent}  Ran on change of table: ${transform.table}`);
       output.push(`${indent}  SQL: ${transform.sql}`);
     }
 
