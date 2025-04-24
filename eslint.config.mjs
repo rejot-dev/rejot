@@ -38,6 +38,7 @@ export default tseslint.config(
       // ...unicornFixableRules,
       "local/require-local-package-deps": "error",
       "local/disallow-package-name-imports": "warn",
+      "local/require-relative-import-extension": "error",
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
@@ -79,6 +80,13 @@ export default tseslint.config(
         },
       ],
       "simple-import-sort/exports": "warn",
+    },
+  },
+  {
+    // Disable the rule for apps/ and specific packages
+    files: ["scripts/**/*", "apps/**/*", "packages/api-interface-controller/**/*"],
+    rules: {
+      "local/require-relative-import-extension": "off",
     },
   },
   {

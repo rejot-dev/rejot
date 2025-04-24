@@ -31,6 +31,8 @@ function findPackageJson(startDir) {
   }
 }
 
+const PATH_HAS_EXT_RE = /\.[a-z0-9]+$/i;
+
 const packageRule = {
   meta: {
     type: "problem",
@@ -129,9 +131,49 @@ const relativeImportRule = {
   },
 };
 
+const relativeImportExtensionRule = {
+  meta: {
+    type: "problem",
+    docs: {
+      description: "Force relative import paths to include `.ts`",
+      recommended: false,
+    },
+    fixable: "code",
+    schema: [],
+  },
+
+  create(context) {
+    /** @param {import("estree").Literal} literal */
+    function checkLiteral(literal) {
+      if (typeof literal.value !== "string") return;
+
+      const value = literal.value;
+      const isRelative = value.startsWith("./") || value.startsWith("../");
+      const hasExt = PATH_HAS_EXT_RE.test(value);
+
+      if (isRelative && !hasExt) {
+        context.report({
+          node: literal,
+          message: "Add '.ts' extension to relative import '{{path}}'",
+          data: { path: value },
+          fix(fixer) {
+            return fixer.replaceText(literal, `'${value}.ts'`);
+          },
+        });
+      }
+    }
+
+    return {
+      ImportDeclaration(node) {
+        if (node.source?.type === "Literal") checkLiteral(node.source);
+      },
+    };
+  },
+};
 export default {
   rules: {
     "require-local-package-deps": packageRule,
     "disallow-package-name-imports": relativeImportRule,
+    "require-relative-import-extension": relativeImportExtensionRule,
   },
 };
