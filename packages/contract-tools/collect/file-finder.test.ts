@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
 
-import { FileFinder } from "./file-finder";
+import { FileFinder } from "./file-finder.ts";
 import type { GitIgnorePattern } from "./git-ignore";
 
 describe("file-finder", () => {

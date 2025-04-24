@@ -12,14 +12,46 @@
     "check": "tsc --noEmit"
   },
   "exports": {
-    "./manifest": "./manifest/index.ts",
-    "./manifest/manifest-printer": "./manifest/manifest-printer.ts",
-    "./manifest/manifest-workspace-resolver": "./manifest/manifest-workspace-resolver.ts",
-    "./manifest/manifest.fs": "./manifest/manifest.fs.ts",
-    "./manifest/manifest-file-manager": "./manifest/manifest-file-manager.ts",
-    "./collect/file-finder": "./collect/file-finder.ts",
-    "./collect/git-ignore": "./collect/git-ignore.ts",
-    "./collect/vibe-collect": "./collect/vibe-collect.ts"
+    "./manifest": {
+      "bun": "./manifest/index.ts",
+      "types": "./dist/manifest/index.d.ts",
+      "default": "./dist/manifest/index.js"
+    },
+    "./manifest/manifest-printer": {
+      "bun": "./manifest/manifest-printer.ts",
+      "types": "./dist/manifest/manifest-printer.d.ts",
+      "default": "./dist/manifest/manifest-printer.js"
+    },
+    "./manifest/manifest-workspace-resolver": {
+      "bun": "./manifest/manifest-workspace-resolver.ts",
+      "types": "./dist/manifest/manifest-workspace-resolver.d.ts",
+      "default": "./dist/manifest/manifest-workspace-resolver.js"
+    },
+    "./manifest/manifest.fs": {
+      "bun": "./manifest/manifest.fs.ts",
+      "types": "./dist/manifest/manifest.fs.d.ts",
+      "default": "./dist/manifest/manifest.fs.js"
+    },
+    "./manifest/manifest-file-manager": {
+      "bun": "./manifest/manifest-file-manager.ts",
+      "types": "./dist/manifest/manifest-file-manager.d.ts",
+      "default": "./dist/manifest/manifest-file-manager.js"
+    },
+    "./collect/file-finder": {
+      "bun": "./collect/file-finder.ts",
+      "types": "./dist/collect/file-finder.d.ts",
+      "default": "./dist/collect/file-finder.js"
+    },
+    "./collect/git-ignore": {
+      "bun": "./collect/git-ignore.ts",
+      "types": "./dist/collect/git-ignore.d.ts",
+      "default": "./dist/collect/git-ignore.js"
+    },
+    "./collect/vibe-collect": {
+      "bun": "./collect/vibe-collect.ts",
+      "types": "./dist/collect/vibe-collect.d.ts",
+      "default": "./dist/collect/vibe-collect.js"
+    }
   },
   "type": "module",
   "dependencies": {
