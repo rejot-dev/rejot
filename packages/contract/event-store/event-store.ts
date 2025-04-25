@@ -61,4 +61,4 @@ export interface IEventStore {
   read(cursors: Cursor[], limit?: number): Promise<OperationMessage[]>;
 }
 
-export { InMemoryEventStore } from "./in-memory-event-store";
+export { InMemoryEventStore } from "./in-memory-event-store.ts";

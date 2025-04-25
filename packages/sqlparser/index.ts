@@ -51,4 +51,4 @@ export function findPlaceholders(statements: Statement[]): PlaceholderInfo[] {
 }
 
 // Re-export all types
-export * from "./types";
+export * from "./types.ts";
