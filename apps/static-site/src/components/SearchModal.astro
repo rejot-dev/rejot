@@ -1,0 +1,100 @@
+---
+import Search from "astro-pagefind/components/Search";
+
+interface Props {
+  query?: string;
+}
+
+const { query } = Astro.props;
+---
+
+<div class="search-header">
+  <div class="search-container">
+    <Search id="search" className="pagefind-ui" uiOptions={{ showImages: false }} query={query} />
+  </div>
+</div>
+
+<style is:global>
+  @media (prefers-color-scheme: dark) {
+    .pagefind-ui {
+      --pagefind-ui-primary: #eeeeee;
+      --pagefind-ui-text: #eeeeee;
+      --pagefind-ui-background: #152028;
+      --pagefind-ui-border: #152028;
+      --pagefind-ui-tag: #152028;
+    }
+  }
+
+  .search-header {
+    width: 100%;
+    margin-top: -2rem;
+    padding: 0 0 2rem 0;
+  }
+
+  .search-container {
+    max-width: 50rem;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .pagefind-ui__drawer {
+    background: var(--pagefind-ui-background);
+    padding: 1rem;
+    border: 1px solid var(--pagefind-ui-border);
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .pagefind-ui__result {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  .pagefind-ui__result-inner {
+    padding-left: 0.5rem;
+  }
+
+  .pagefind-ui__result:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .pagefind-ui__result:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  }
+
+  .pagefind-ui__result-title,
+  .pagefind-ui__result-excerpt {
+    pointer-events: none;
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Focus search input when Ctrl+K or Cmd+K is pressed
+    document.addEventListener("keydown", function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        const searchInput = document.querySelector(".pagefind-ui__search-input");
+        if (searchInput) {
+          (searchInput as HTMLInputElement).focus();
+        }
+      }
+    });
+
+    // Handle clicks on search results
+    document.addEventListener("click", function (e) {
+      const result = (e.target as HTMLElement).closest(".pagefind-ui__result");
+      if (result) {
+        const link = result.querySelector(".pagefind-ui__result-link") as HTMLAnchorElement;
+        if (link) {
+          e.preventDefault();
+          window.location.href = link.href;
+        }
+      }
+    });
+  });
+</script>

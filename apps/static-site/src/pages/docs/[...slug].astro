@@ -10,6 +10,7 @@ import { type CollectionNavigationEntry } from "../../components/CollectionNavig
 import { normalizeSlug } from "../../util/helpers";
 import Bars3BottomLeftIcon from "astro-heroicons/mini/Bars3BottomLeft.astro";
 import XMarkIcon from "astro-heroicons/mini/XMark.astro";
+import SearchModal from "@/components/SearchModal.astro";
 
 export async function getStaticPaths() {
   const docsEntries = await getCollection("docs");
@@ -40,6 +41,7 @@ const docNavigationEntries: CollectionNavigationEntry[] = collection
 
 <Base title={pageTitle(post.data.title)} description="">
   <div class="mx-auto w-full max-w-[1400px]">
+    <SearchModal />
     <div class="flex flex-col lg:flex-row lg:space-x-4">
       <!-- Mobile navigation overlay - hidden by default -->
       <div
