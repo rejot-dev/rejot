@@ -4,9 +4,9 @@ title: "Setup Source Postgres"
 
 import Notice from "@/components/Notice.astro";
 
-This guide explains how to prepare your PostgreSQL database for use with ReJot. ReJot leverages
-PostgreSQL's logical replication stream using the `pgoutput` native plugin to capture database
-changes.
+This guide explains how to prepare your PostgreSQL database as a Source for use with ReJot. ReJot
+leverages PostgreSQL's logical replication stream using the `pgoutput` native plugin to capture
+database changes.
 
 ## Enabling Logical Replication
 
@@ -56,16 +56,23 @@ DELETE ON ALL TABLES IN SCHEMA public TO rejot_role;
 
 ## Creating a PostgreSQL Publication
 
-Any table that needs to be available for sync must be included in a postgres publication.
+A Postgres [Publication][pg-create-publication] is defined on a primary postgres node and defines
+which set of tables in a database can be replicated to other systems.
+
+[Creating a publication][pg-create-publication] can be done as follows:
 
 ```sql
 CREATE PUBLICATION rejot_publication FOR TABLE some_table,
 another_table;
 ```
 
-<Notice type="WARNING">
-  Be sure not to create a publication for all tables using `FOR ALL TABLES` as this can cause sync
-  loop if your datastore is used as both a source and destination data store.
-</Notice>
+Often it is convenient to create a publication for all tables, a sync service will create this
+publication for you on first launch.
+
+```sql
+CREATE PUBLICATION rejot_publication FOR ALL TABLES;
+```
 
 [pg-wal-level]: https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-WAL-LEVEL
+[pg-publication]: https://www.postgresql.org/docs/current/logical-replication-publication.html
+[pg-create-publication]: https://www.postgresql.org/docs/current/sql-createpublication.html

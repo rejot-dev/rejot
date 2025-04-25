@@ -3,6 +3,7 @@ title: "Defining Schemas"
 ---
 
 import { Code } from "astro:components";
+import Notice from "@/components/Notice.astro";
 
 ReJot allows you to define Public and Consumer Schemas using TypeScript code, which offers several
 benefits:
@@ -68,14 +69,17 @@ export default {
 ### Transformations
 
 Transformations are a crucial part of schema definitions that specify how data is transformed
-between different stages of the sync process.
+between different stages of the sync process. Transformation are used by both the publishing and
+consuming parties, for publishers, the transformation defines how data from the internal
+representation should be mapped to the public schema. Conversely on the consuming side the
+transformation maps the public schema back into an internal representation for the consumer.
 
 #### Public Schema Transformations
 
 For public schemas, you need to create a SQL transformation for each table referenced in the schema.
 These transformations:
 
-- Take a primary key as input parameter (`$1`)
+- Take a primary key as input parameter(s) (`$1`, `$2`, etc)
 - Return exactly one row that matches the public schema's output structure
 
 Here's an example of a public schema transformation:
@@ -88,6 +92,48 @@ transformations: [
   ),
 ];
 ```
+
+#### Multi-table transformations
+
+A common case is to (partially) de-normalize your data for the public schema, to ensure correct
+results ReJot should listen to updates to all of these tables. As a data producer you will have to
+define schema transformations for each table.
+
+```typescript
+transformations: [
+    createPostgresPublicSchemaTransformation(
+      "accounts",
+      `SELECT
+          accounts.id,
+          accounts.name,
+          addresses.country
+        FROM
+          accounts
+          JOIN addresses ON accounts.id = addresses.account_id
+        WHERE
+          accounts.id = $1`,
+    ),
+    createPostgresPublicSchemaTransformation(
+      "addresses",
+      `SELECT
+          accounts.id,
+          accounts.name,
+          addresses.country
+        FROM
+          accounts
+          JOIN addresses ON accounts.id = addresses.account_id
+        WHERE
+          addresses.id = $1`,
+    ),
+  ],
+```
+
+<Notice type="WARNING">
+  Note that your public schema transformation must always return one result, in case there is a
+  one-to-many relationship between tables you cannot include them in your ReJot public schema
+  without doing some kind aggregation in your query. For PostgreSQL, use one of the [aggregation
+  functions](https://www.postgresql.org/docs/current/functions-aggregate.html) that are available.
+</Notice>
 
 #### Consumer Schema Transformations
 

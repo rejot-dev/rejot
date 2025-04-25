@@ -1,0 +1,72 @@
+---
+title: "Composing Manifests"
+---
+
+import Notice from "@/components/Notice.astro";
+
+When deploying sync services, you'll often need different configurations for various environments
+(development, staging, production) or manifests that have different owners within the organization.
+This guide explains strategies for structuring and managing your manifest file collections.
+
+- **Database Connections**: Development, staging, and production typically use separate databases
+  with different credentials or hostnames
+- **Event Store Configurations**: Your event store might differ between development and production
+- **Secret Management**: Production secrets are typically stored in secure vaults
+- **Mono-repo vs Multi-repo**: Definitions might exist in completely separate code repositories
+- **Ownership**: Different stakeholders in the organization might want to control specific schemas
+
+## Environment-Specific Manifest Files
+
+The most common reason to split manifest files is to separate environment-specific configuration and
+secrets into distinct files.
+
+```
+/manifests
+  ├── rejot-manifest.base.json
+  ├── rejot-manifest.dev.json
+  ├── rejot-manifest.staging.json
+  └── rejot-manifest.prod.json
+```
+
+You'll typically need different connection configurations for each environment, which means your
+base manifest won't specify any connections:
+
+```json
+// rejot-manifest.base.json
+{
+  "connections": [],
+  "dataStores": ...,
+  "publicSchemas": ...,
+}
+// rejot-manifest.dev.json
+{
+  "connections": [{
+    "slug": "conn-datastore-a",
+    "config": {
+      "host": "localhost",
+      ...
+    }
+  }]
+}
+
+// rejot-manifest.prod.json
+{
+  "connections": [{
+    "slug": "conn-datastore-a",
+    "config": {
+      "host": "my-datastore-a.europe-west4.domain.com",
+      ...
+    }
+  }]
+}
+```
+
+When starting a sync service, you can pass multiple manifest files:
+
+```bash
+# Development
+rejot-cli manifest sync rejot-manifest.base.json rejot-manifest.dev.json
+
+# Production
+rejot-cli manifest sync rejot-manifest.base.json rejot-manifest.prod.json
+```
