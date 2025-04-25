@@ -8,15 +8,15 @@ export type ManifestDiagnosticSeverity = "error" | "warning";
 export type ManifestDiagnostic = {
   type:
     | "CONNECTION_NOT_FOUND"
-    | "PUBLIC_SCHEMA_NOT_FOUND"
-    | "VERSION_MISMATCH"
-    | "DUPLICATE_PUBLIC_SCHEMA"
-    | "UNUSED_CONNECTION"
+    | "CONNECTION_TYPE_MISMATCH"
+    | "DATA_STORE_MISSING_CONFIG"
     | "DATA_STORE_NOT_FOUND"
     | "DUPLICATE_MANIFEST_SLUG"
-    | "CONNECTION_TYPE_MISMATCH"
+    | "DUPLICATE_PUBLIC_SCHEMA"
     | "MANIFEST_NOT_FOUND"
-    | "DATA_STORE_MISSING_CONFIG";
+    | "PUBLIC_SCHEMA_NOT_FOUND"
+    | "UNUSED_CONNECTION"
+    | "VERSION_MISMATCH";
 
   severity: ManifestDiagnosticSeverity;
   message: string;
@@ -347,19 +347,53 @@ export function verifyPublicSchemaReferences(
         });
       }
 
-      // Check if referenced data store exists
-      const sourceManifestStores = dataStoreMap.get(consumerSchema.sourceManifestSlug);
-      if (!sourceManifestStores?.has(consumerSchema.destinationDataStoreSlug)) {
+      // Check if referenced data store exists in ANY manifest
+      // The destination data store could be in any manifest, not just the consumer's or source's
+      let dataStoreFound = false;
+      let dataStoreManifest = null;
+
+      // Search across all manifests for the data store
+      for (const [manifestSlug, stores] of dataStoreMap.entries()) {
+        if (stores.has(consumerSchema.destinationDataStoreSlug)) {
+          dataStoreFound = true;
+          dataStoreManifest = manifestSlug;
+          break;
+        }
+      }
+
+      if (!dataStoreFound) {
         errors.push({
           type: "DATA_STORE_NOT_FOUND",
           severity: "error",
-          message: `Consumer schema references data store '${consumerSchema.destinationDataStoreSlug}' which does not exist in manifest '${consumerSchema.sourceManifestSlug}'`,
+          message: `Consumer schema references data store '${consumerSchema.destinationDataStoreSlug}' which does not exist in any manifest`,
           location: {
             manifestSlug: manifest.slug,
             manifestPath,
             context: `consumerSchema.destinationDataStoreSlug: ${consumerSchema.destinationDataStoreSlug}`,
           },
         });
+      } else {
+        // If data store found, check if it has a config
+        const storeHasConfig = dataStoreConfigMap
+          .get(dataStoreManifest!)
+          ?.get(consumerSchema.destinationDataStoreSlug);
+        if (storeHasConfig === false) {
+          // Explicitly check for false, not undefined
+          errors.push({
+            type: "DATA_STORE_MISSING_CONFIG",
+            severity: "error",
+            message: `Consumer schema references data store '${consumerSchema.destinationDataStoreSlug}' in manifest '${dataStoreManifest}' which does not have a configuration`,
+            location: {
+              manifestSlug: manifest.slug,
+              manifestPath,
+              context: `consumerSchema.destinationDataStoreSlug: ${consumerSchema.destinationDataStoreSlug}`,
+            },
+            hint: {
+              message: "Add a configuration to the data store",
+              suggestions: "Define the required connection type and other configuration properties",
+            },
+          });
+        }
       }
     });
   });

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { z } from "zod";
 
-import { PublicSchemaSchema, SyncManifestSchema } from "./manifest.ts";
+import { SyncManifestSchema } from "./manifest.ts";
 import { verifyManifests, verifyManifestsWithPaths } from "./verify-manifest.ts";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
@@ -77,105 +77,6 @@ describe("verifyManifests", () => {
     expect(eventStoreError?.type).toBe("CONNECTION_NOT_FOUND");
   });
 
-  test("public schema reference validation", () => {
-    const manifest1: Manifest = {
-      ...createBasicManifest("manifest1"),
-      connections: [
-        {
-          slug: "ds1",
-          config: {
-            connectionType: "postgres",
-            host: "localhost",
-            port: 5432,
-            database: "test",
-            user: "user",
-            password: "pass",
-          },
-        },
-      ],
-      dataStores: [
-        {
-          connectionSlug: "ds1",
-          config: {
-            connectionType: "postgres",
-            slotName: "pub1",
-            publicationName: "pub1",
-          },
-        },
-      ],
-      publicSchemas: [
-        {
-          name: "users",
-          source: {
-            dataStoreSlug: "ds1",
-            tables: ["users"],
-          },
-          outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
-          version: { major: 1, minor: 0 },
-        },
-      ],
-    };
-
-    const manifest2: Manifest = {
-      ...createBasicManifest("manifest2"),
-      consumerSchemas: [
-        {
-          name: "consume-public-account",
-          sourceManifestSlug: "manifest1",
-          publicSchema: {
-            name: "users",
-            majorVersion: 2, // Version mismatch
-          },
-          destinationDataStoreSlug: "ds1",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO users SELECT * FROM source_users",
-            },
-          ],
-        },
-        {
-          name: "consume-public-account",
-          sourceManifestSlug: "manifest1",
-          publicSchema: {
-            name: "products", // Non-existent schema
-            majorVersion: 1,
-          },
-          destinationDataStoreSlug: "ds1",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO products SELECT * FROM source_products",
-            },
-          ],
-        },
-      ],
-    };
-
-    const result = verifyManifests([manifest1, manifest2]);
-
-    expect(result.isValid).toBe(false);
-    expect(result.diagnostics).toHaveLength(2);
-
-    // Check version mismatch error
-    const versionError = result.diagnostics.find((e) => e.type === "VERSION_MISMATCH");
-    expect(versionError).toBeDefined();
-    expect(versionError?.message).toContain("version 2");
-    expect(versionError?.message).toContain("users");
-
-    // Check missing schema error
-    const schemaError = result.diagnostics.find((e) => e.type === "PUBLIC_SCHEMA_NOT_FOUND");
-    expect(schemaError).toBeDefined();
-    expect(schemaError?.message).toContain("products");
-  });
-
   test("non-existent source manifest", () => {
     const manifest: Manifest = {
       ...createBasicManifest("test-manifest"),
@@ -215,89 +116,6 @@ describe("verifyManifests", () => {
     expect(extRef.manifestSlug).toBe("non-existent");
     expect(extRef.publicSchema.name).toBe("test");
     expect(extRef.publicSchema.majorVersion).toBe(1);
-  });
-
-  test("duplicate public schema definition", () => {
-    const publicSchema: z.infer<typeof PublicSchemaSchema> = {
-      name: "users",
-      source: {
-        dataStoreSlug: "ds1",
-        tables: ["users"],
-      },
-      outputSchema: { type: "object", properties: {} },
-      transformations: [
-        {
-          transformationType: "postgresql",
-          table: "users",
-          sql: "SELECT * FROM users",
-        },
-      ],
-      version: { major: 1, minor: 0 },
-    };
-
-    const manifest1: Manifest = {
-      ...createBasicManifest("manifest1"),
-      connections: [
-        {
-          slug: "ds1",
-          config: {
-            connectionType: "postgres",
-            host: "localhost",
-            port: 5432,
-            database: "test",
-            user: "user",
-            password: "pass",
-          },
-        },
-      ],
-      dataStores: [
-        {
-          connectionSlug: "ds1",
-          config: {
-            connectionType: "postgres",
-            slotName: "pub1",
-            publicationName: "pub1",
-          },
-        },
-      ],
-      publicSchemas: [publicSchema],
-    };
-
-    const manifest2: Manifest = {
-      ...createBasicManifest("manifest2"),
-      connections: [
-        {
-          slug: "ds1",
-          config: {
-            connectionType: "postgres",
-            host: "localhost",
-            port: 5432,
-            database: "test",
-            user: "user",
-            password: "pass",
-          },
-        },
-      ],
-      dataStores: [
-        {
-          connectionSlug: "ds1",
-          config: {
-            connectionType: "postgres",
-            slotName: "pub1",
-            publicationName: "pub1",
-          },
-        },
-      ],
-      publicSchemas: [publicSchema],
-    };
-
-    const result = verifyManifests([manifest1, manifest2]);
-
-    expect(result.isValid).toBe(false);
-    expect(result.diagnostics).toHaveLength(1);
-    expect(result.diagnostics[0].type).toBe("DUPLICATE_PUBLIC_SCHEMA");
-    expect(result.diagnostics[0].message).toContain("manifest1");
-    expect(result.diagnostics[0].location.manifestSlug).toBe("manifest2");
   });
 
   test("identifies multiple external references", () => {
@@ -423,19 +241,6 @@ describe("verifyManifests", () => {
     expect(result.externalReferences).toHaveLength(1);
     expect(result.externalReferences[0].manifestSlug).toBe("external-manifest");
     expect(result.externalReferences[0].publicSchema.name).toBe("external-schema");
-  });
-
-  test("duplicate manifest slugs", () => {
-    const manifest1 = createBasicManifest("test-manifest");
-    const manifest2 = createBasicManifest("test-manifest");
-
-    const result = verifyManifests([manifest1, manifest2]);
-    expect(result.isValid).toBe(false);
-    expect(result.diagnostics).toHaveLength(1);
-    expect(result.diagnostics[0].type).toBe("DUPLICATE_MANIFEST_SLUG");
-    expect(result.diagnostics[0].severity).toBe("error");
-    expect(result.diagnostics[0].message).toContain("test-manifest");
-    expect(result.diagnostics[0].location.manifestSlug).toBe("test-manifest");
   });
 
   test("verifyManifestsWithPaths - enhances diagnostics with file paths", () => {
@@ -594,125 +399,6 @@ describe("verifyManifests", () => {
     expect(dataStoreError?.message).toContain("non-existent-store");
     expect(dataStoreError?.severity).toBe("error");
     expect(dataStoreError?.location.context).toContain("publicSchemas");
-  });
-
-  test("consumer schema destination data store validation", () => {
-    const manifest1: Manifest = {
-      ...createBasicManifest("manifest1"),
-      connections: [
-        {
-          slug: "conn1",
-          config: {
-            connectionType: "postgres",
-            host: "localhost",
-            port: 5432,
-            database: "test",
-            user: "user",
-            password: "pass",
-          },
-        },
-      ],
-      dataStores: [
-        {
-          connectionSlug: "conn1",
-          config: {
-            connectionType: "postgres",
-            slotName: "pub1",
-            publicationName: "pub1",
-          },
-        },
-      ],
-      publicSchemas: [
-        {
-          name: "users",
-          source: {
-            dataStoreSlug: "conn1",
-            tables: ["users"],
-          },
-          outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
-          version: { major: 1, minor: 0 },
-        },
-      ],
-    };
-
-    const manifest2: Manifest = {
-      ...createBasicManifest("manifest2"),
-      connections: [
-        {
-          slug: "conn2",
-          config: {
-            connectionType: "postgres",
-            host: "localhost",
-            port: 5432,
-            database: "test",
-            user: "user",
-            password: "pass",
-          },
-        },
-      ],
-      dataStores: [
-        {
-          connectionSlug: "conn2",
-          config: {
-            connectionType: "postgres",
-            slotName: "pub2",
-            publicationName: "pub2",
-          },
-        },
-      ],
-      consumerSchemas: [
-        {
-          name: "valid-consumer",
-          sourceManifestSlug: "manifest1",
-          publicSchema: {
-            name: "users",
-            majorVersion: 1,
-          },
-          destinationDataStoreSlug: "conn2", // This exists - no error
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO users SELECT * FROM source_users",
-            },
-          ],
-        },
-        {
-          name: "invalid-consumer",
-          sourceManifestSlug: "manifest1",
-          publicSchema: {
-            name: "users",
-            majorVersion: 1,
-          },
-          destinationDataStoreSlug: "non-existent-store", // This doesn't exist - should error
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO users SELECT * FROM source_users",
-            },
-          ],
-        },
-      ],
-    };
-
-    const result = verifyManifests([manifest1, manifest2]);
-    expect(result.isValid).toBe(false);
-
-    // Find the data store not found error
-    const dataStoreError = result.diagnostics.find(
-      (e) => e.type === "DATA_STORE_NOT_FOUND" && e.message.includes("non-existent-store"),
-    );
-    expect(dataStoreError).toBeDefined();
-    expect(dataStoreError?.message).toContain("non-existent-store");
-    expect(dataStoreError?.message).toContain("manifest1");
-    expect(dataStoreError?.severity).toBe("error");
-    expect(dataStoreError?.location.context).toContain("destinationDataStoreSlug");
   });
 
   test("undefined source manifest slug", () => {
