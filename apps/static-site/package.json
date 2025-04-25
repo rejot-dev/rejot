@@ -26,6 +26,7 @@
     "@cloudflare/pages-plugin-static-forms": "^1.0.3",
     "astro": "^5.0.9",
     "astro-heroicons": "^2.1.5-1",
+    "astro-pagefind": "^1.8.3",
     "json-pointer": "^0.6.2",
     "pixi.js": "^8.6.6",
     "tailwindcss": "^3.4.17"
