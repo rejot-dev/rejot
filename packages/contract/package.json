@@ -13,7 +13,8 @@
     "prepack": "bun run manifest-jsonschema.ts > schema.json",
     "build": "tsc",
     "clean": "rm -rf dist",
-    "manifest:schema": "bun run manifest-jsonschema.ts"
+    "manifest:schema": "bun run manifest-jsonschema.ts",
+    "test": "bun test **/*.test.ts"
   },
   "exports": {
     "./adapter": {
