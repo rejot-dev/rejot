@@ -1,11 +1,12 @@
+import { and, eq, sql } from "drizzle-orm";
 import { tokens } from "typed-inject";
+
+import { isPostgresError } from "@/postgres/postgres-error-codes.ts";
+
+import type { IDependencyRepository } from "../dependency/dependency.repository.ts";
 import type { PostgresManager } from "../postgres/postgres.ts";
 import { schema } from "../postgres/schema.ts";
-import { eq, and, sql } from "drizzle-orm";
-import { isPostgresError } from "@/postgres/postgres-error-codes.ts";
-import { unreachable } from "@std/assert";
 import { ConsumerSchemaError, ConsumerSchemaErrors } from "./consumer-schema.error.ts";
-import type { IDependencyRepository } from "../dependency/dependency.repository.ts";
 
 export type CreateConsumerSchema = {
   name: string;
@@ -316,7 +317,7 @@ export class ConsumerSchemaRepository implements IConsumerSchemaRepository {
           sql: insertedTransformationDetails.sql,
         };
       } else {
-        unreachable(transformation.details.type);
+        throw new Error("Unreachable code path");
       }
 
       return {

@@ -1,11 +1,12 @@
+import { and, eq, sql } from "drizzle-orm";
 import { tokens } from "typed-inject";
+
+import { isPostgresError } from "@/postgres/postgres-error-codes.ts";
+
 import type { PostgresManager } from "../postgres/postgres.ts";
 import { schema } from "../postgres/schema.ts";
-import { eq, and, sql } from "drizzle-orm";
 import { PublicSchemaError, PublicSchemaErrors } from "./public-schema.error.ts";
-import { SchemaDefinitionSchema, type SchemaDefinition } from "./public-schema.ts";
-import { isPostgresError } from "@/postgres/postgres-error-codes.ts";
-import { unreachable } from "@std/assert";
+import { type SchemaDefinition, SchemaDefinitionSchema } from "./public-schema.ts";
 
 export type CreatePublicSchema = {
   name: string;
@@ -290,7 +291,7 @@ export class PublicSchemaRepository implements IPublicSchemaRepository {
           sql: insertedTransformationDetails.sql,
         };
       } else {
-        unreachable(transformation.details.type);
+        throw new Error("Unreachable code path");
       }
 
       const parsedSchema = SchemaDefinitionSchema.safeParse(transformationResult[0].schema);

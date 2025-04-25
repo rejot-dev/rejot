@@ -1,7 +1,7 @@
 {
   "name": "@rejot-dev/mcp",
   "type": "module",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "license": "Apache-2.0",
   "private": false,
   "repository": {
@@ -28,7 +28,6 @@
     "@rejot-dev/contract": "*",
     "@rejot-dev/contract-tools": "*",
     "@rejot-dev/sync": "*",
-    "@std/cli": "npm:@jsr/std__cli",
     "pg": "^8.14.1"
   },
   "bin": {

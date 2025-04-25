@@ -1,5 +1,6 @@
-import { $ } from "bun";
 import path from "node:path";
+
+import { $ } from "bun";
 import { glob } from "glob";
 
 // Determine the version bump type from command-line arguments (patch, minor, major).
@@ -48,5 +49,8 @@ for (const packageDir of publishablePackages) {
     console.error(`Failed to bump version in ${packageDir}:`, error);
   }
 }
+
+// package-lock.json is automatically created, remove it
+await $`rm -f package-lock.json`.quiet().text();
 
 console.log("Version bumping process completed.");

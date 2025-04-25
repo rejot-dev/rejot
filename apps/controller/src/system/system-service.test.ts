@@ -1,39 +1,35 @@
-import { assertExists } from "@std/assert/exists";
-import { assertEquals } from "@std/assert/equals";
-import { assertMatch } from "@std/assert/match";
+import { expect, test } from "bun:test";
+
 import { dbDescribe } from "@/postgres/db-test.ts";
-import { test } from "bun:test";
 
 dbDescribe("SystemService tests", async (ctx) => {
-  test("Create Org - Create System - Get System", async () => {
+  test("create and get system", async () => {
     const systemService = ctx.injector.resolve("systemService");
-
     const organization = await ctx.resolve("organizationService").createOrganization({
       name: "Test Organization",
     });
 
-    assertExists(organization);
-    assertEquals(organization.name, "Test Organization");
-    assertMatch(organization.code, /^ORG_/);
+    expect(organization).toBeDefined();
+    expect(organization.name).toEqual("Test Organization");
+    expect(organization.code).toMatch(/^ORG_/);
 
     const system = await systemService.createSystem(organization.code, {
       name: "Test System",
       slug: "test-system",
     });
 
-    assertExists(system);
-    assertMatch(system.id, /^SYS_/);
-    assertEquals(system.name, "Test System");
-    assertEquals(system.organization.id, organization.code);
-    assertMatch(system.organization.id, /^ORG_/);
-    assertEquals(system.organization.name, "Test Organization");
+    expect(system).toBeDefined();
+    expect(system.id).toMatch(/^SYS_/);
+    expect(system.name).toEqual("Test System");
+    expect(system.organization.id).toEqual(organization.code);
+    expect(system.organization.name).toEqual("Test Organization");
 
-    const retrievedSystem = await systemService.getSystem(organization.code, system.slug);
-
-    assertEquals(retrievedSystem.id, system.id);
-    assertEquals(retrievedSystem.name, system.name);
-    assertExists(retrievedSystem.slug, system.slug);
-    assertEquals(retrievedSystem.organization.id, organization.code);
-    assertEquals(retrievedSystem.organization.name, "Test Organization");
+    const retrieved = await systemService.getSystem(organization.code, system.slug);
+    expect(retrieved).toBeDefined();
+    expect(retrieved.id).toEqual(system.id);
+    expect(retrieved.name).toEqual(system.name);
+    expect(retrieved.slug).toEqual(system.slug);
+    expect(retrieved.organization.id).toEqual(organization.code);
+    expect(retrieved.organization.name).toEqual("Test Organization");
   });
 });
