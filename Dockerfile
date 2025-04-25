@@ -33,8 +33,15 @@ FROM base AS release
 WORKDIR /opt
 USER bun
 
-COPY --from=install /install/node_modules /opt/node_modules 
+COPY --from=install /install/node_modules /opt/node_modules
 COPY . /opt
 COPY entrypoint.sh /entrypoint.sh
+
+USER root
+RUN if [ "${REJOT_APP}" = "rejot-cli" ]; then \
+    echo '#!/bin/bash\nexec bun run /opt/apps/rejot-cli/bin/run.js "$@"' > /usr/local/bin/rejot-cli && \
+    chmod +x /usr/local/bin/rejot-cli; \
+    fi
+USER bun
 
 ENTRYPOINT [ "/entrypoint.sh" ]
