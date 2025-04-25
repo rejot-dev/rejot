@@ -5,7 +5,7 @@ const { class: classNames = "", reverse = false } = Astro.props;
 ---
 
 <div
-  class={`absolute left-1/2 top-0 -z-10 -mt-10 h-[calc(100%+5rem)] w-screen
+  class={`absolute left-1/2 top-0 -z-10 -mt-10 h-[calc(100%+5rem)] w-[calc(100vw-3rem)]
   -translate-x-1/2 ${reverse ? "bg-gradient-to-l" : "bg-gradient-to-r"} from-rejot-red-100 to-[rgba(255,255,255,0)] opacity-80 blur-[50px]
   dark:from-rejot-red-950 ${classNames}`}
 >
