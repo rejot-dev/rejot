@@ -1,18 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { ILogger, LogLevel, type LogLine, NamespacedLogger, shouldLog } from "./logger.ts";
-
-class MockLogger extends ILogger {
-  public messages: LogLine[] = [];
-
-  init(): void {
-    this.messages = [];
-  }
-
-  log(logLine: LogLine): void {
-    this.messages.push(logLine);
-  }
-}
+import { LogLevel, MockLogger, NamespacedLogger, shouldLog } from "./logger.ts";
 
 describe("Logger", () => {
   test("MockLogger respects log levels", () => {

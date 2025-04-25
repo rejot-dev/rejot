@@ -11,6 +11,8 @@ import type {
 import { type BackfillSource, ResultSetStore } from "./result-set-store.ts";
 import { DEFAULT_BACKFILL_TIMEOUT_MS } from "./sync-consts.ts";
 
+// TODO(Wilco): This should be removed, but it has an implementation for backfills we still need to port.
+
 const log = getLogger(import.meta.url);
 
 type SyncControllerConfig = {
@@ -56,7 +58,7 @@ function recordToPublicSchemaOperation(
   };
 }
 
-export class SyncController {
+export class LegacySyncController {
   #source: IDataSource;
   #sink: IDataSink;
 

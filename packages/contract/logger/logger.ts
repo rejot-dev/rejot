@@ -395,3 +395,15 @@ function getNamespaceFromFilePath(namespace?: string): string | undefined {
 
   return namespace;
 }
+
+export class MockLogger extends ILogger {
+  public messages: LogLine[] = [];
+
+  init(): void {
+    this.messages = [];
+  }
+
+  log(logLine: LogLine): void {
+    this.messages.push(logLine);
+  }
+}

@@ -87,11 +87,15 @@ export class SyncController implements ISyncController {
   }
 
   async start() {
+    log.debug("hello world");
+
     this.state = "started";
+    await this.#httpController?.start();
+
+    log.debug("SyncController start race");
     await Promise.race([
       this.#startIterateSourceReader(),
       ...this.#subscribeMessageBuses.map((bus) => this.#startIterateSubscribeMessageBus(bus)),
-      this.#httpController?.start(),
     ]);
     log.debug("SyncController start race finished, stopping.");
     await this.stop();

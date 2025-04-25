@@ -89,7 +89,6 @@ describe("ManifestDataStore commands", () => {
 
   describe("list datastores", () => {
     test("list empty datastores", async () => {
-      // Capture console output
       const logs: string[] = [];
       const originalLog = console.log;
       console.log = (message: string) => logs.push(message);

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
-import { watermarkFromTransaction } from "@rejot-dev/sync/sync-controller";
+import { watermarkFromTransaction } from "@rejot-dev/sync/legacy-sync-controller";
 
 import { PostgresSource } from "./postgres-source.ts";
 import type { PostgresClient } from "./util/postgres-client.ts";

@@ -16,6 +16,7 @@ export class ManifestDataStoreListCommand extends Command {
 
   public async run(): Promise<void> {
     const { flags } = await this.parse(ManifestDataStoreListCommand);
+
     const manifestPath = path.resolve(flags.manifest);
     const manifest = await readManifestOrGetEmpty(manifestPath);
 

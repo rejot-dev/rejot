@@ -1,5 +1,6 @@
 import type { IEventStore } from "@rejot-dev/contract/event-store";
 
+import { FastifyHttpController } from "../http-controller/fastify-http-controller.ts";
 import { HttpController } from "../http-controller/http-controller.ts";
 import type { ISyncController } from "../sync-controller/sync-controller.ts";
 import {
@@ -27,7 +28,7 @@ export class SyncHTTPController implements ISyncHTTPController {
   constructor(config: ServerConfig, syncController: ISyncController, eventStore: IEventStore) {
     this.#syncController = syncController;
 
-    this.#httpController = new HttpController(config);
+    this.#httpController = new FastifyHttpController(config);
     this.#httpController.createRequest(indexRoute, async () => {
       return {
         health: "ok" as const,
