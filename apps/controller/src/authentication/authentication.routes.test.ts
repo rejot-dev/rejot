@@ -1,10 +1,11 @@
 import { test } from "bun:test";
+import { expect } from "bun:test";
 
-import type { IAuthenticationService } from "@/authentication/authentication-service.ts";
-import { AuthenticationRoutes } from "@/authentication/authentication.routes.ts";
-import { createInjector } from "typed-inject";
 import { testClient } from "hono/testing";
-import { assertExists } from "@std/assert/exists";
+import { createInjector } from "typed-inject";
+
+import { AuthenticationRoutes } from "@/authentication/authentication.routes.ts";
+import type { IAuthenticationService } from "@/authentication/authentication-service.ts";
 
 class MockAuthenticationService implements IAuthenticationService {
   sendCode(email: string, code: string): Promise<void> {
@@ -26,5 +27,6 @@ test("authentication routes test", () => {
 
   const routes = authenticationRoutes.routes;
   const honoClient = testClient(routes);
-  assertExists(honoClient);
+
+  expect(honoClient).toBeDefined();
 });

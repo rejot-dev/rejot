@@ -1,16 +1,18 @@
+import { expect, test } from "bun:test";
+
 import { testClient } from "hono/testing";
 import { createInjector } from "typed-inject";
-import { test, expect } from "bun:test";
-import { assert } from "@std/assert/assert";
 
-import type { ISystemService, System } from "./system-service.ts";
-import { SystemRoutes } from "./system-routes.ts";
-import { MockAuthenticationMiddleware } from "@/_test/mock-authentication.middleware.ts";
 import type { CreateSystem } from "@rejot-dev/api-interface-controller/system";
-import type { SystemOverview } from "./system-service.ts";
+
+import { MockAuthenticationMiddleware } from "@/_test/mock-authentication.middleware.ts";
 import type { ClerkUserMetadata, IClerkApiClient } from "@/clerk/clerk.api-client.ts";
 import { ClerkErrors } from "@/clerk/clerk.error.ts";
 import { ClerkError } from "@/clerk/clerk.error.ts";
+
+import { SystemRoutes } from "./system-routes.ts";
+import type { ISystemService, System } from "./system-service.ts";
+import type { SystemOverview } from "./system-service.ts";
 
 class MockSystemService implements ISystemService {
   getSystemsForClerkUser(_clerkUserId: string): Promise<System[]> {
@@ -112,7 +114,11 @@ test("System Routes - Create System", async () => {
     },
   });
 
-  assert(createSystemResponse.status === 201);
+  expect(createSystemResponse.status === 201).toBe(true);
+  if (!createSystemResponse.ok) {
+    throw new Error("Failed to create system");
+  }
+
   const createSystemBody = await createSystemResponse.json();
   expect(createSystemBody.id).toBe("SYS_1");
 });
@@ -176,12 +182,12 @@ test("System Routes - Create System - Invalid Slugs", async () => {
       },
     });
 
-    assert(
-      createSystemResponse.status === 400,
-      `Status is not 400: ${createSystemResponse.status}`,
-    );
-    const createSystemBody = await createSystemResponse.json();
+    expect(createSystemResponse.status === 400).toBe(true);
+    if (createSystemResponse.status !== 400) {
+      throw new Error("Not 400.");
+    }
 
+    const createSystemBody = await createSystemResponse.json();
     expect(createSystemBody.success).toBe(false);
   }
 });

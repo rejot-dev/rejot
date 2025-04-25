@@ -1,12 +1,13 @@
+import { expect, test } from "bun:test";
+
 import { testClient } from "hono/testing";
 import { createInjector } from "typed-inject";
-import { test, expect } from "bun:test";
 
-import type { CreateOrganization, IOrganizationService } from "./organization-service.ts";
-import { OrganizationRoutes } from "./organization-routes.ts";
-import type { OrganizationEntity } from "./organization-repository.ts";
 import { MockAuthenticationMiddleware } from "@/_test/mock-authentication.middleware.ts";
-import { assert } from "@std/assert/assert";
+
+import type { OrganizationEntity } from "./organization-repository.ts";
+import { OrganizationRoutes } from "./organization-routes.ts";
+import type { CreateOrganization, IOrganizationService } from "./organization-service.ts";
 
 class MockOrganizationService implements IOrganizationService {
   createOrganization({ name }: CreateOrganization): Promise<OrganizationEntity> {
@@ -69,7 +70,11 @@ test("createOrganization route test", async () => {
     },
   });
 
-  assert(createOrganizationResponse.ok, createOrganizationResponse.statusText);
+  expect(createOrganizationResponse.ok).toBe(true);
+  if (!createOrganizationResponse.ok) {
+    throw new Error("Failed to create organization");
+  }
+
   const createOrganizationBody = await createOrganizationResponse.json();
   expect(createOrganizationBody.code).toBe("ORG_1");
 
@@ -79,7 +84,11 @@ test("createOrganization route test", async () => {
     },
   });
 
-  assert(getOrganizationResponse.ok);
+  expect(getOrganizationResponse.ok).toBe(true);
+  if (!getOrganizationResponse.ok) {
+    throw new Error("Failed to get organization");
+  }
+
   const [getOrganizationBody] = await getOrganizationResponse.json();
   expect(getOrganizationBody.code).toBe("ORG_1");
 });

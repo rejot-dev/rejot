@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { parseArgs } from "node:util";
 
 import { FileLogger, setLogger } from "@rejot-dev/contract/logger";
 import { FileFinder } from "@rejot-dev/contract-tools/collect/file-finder";
@@ -10,7 +11,6 @@ import { WorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-wo
 import { TypeStripper } from "@rejot-dev/contract-tools/type-stripper";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { parseArgs } from "@std/cli/parse-args";
 
 import { CollectTool } from "./collect/collect.tool";
 import { RejotMcp } from "./rejot-mcp";
@@ -23,20 +23,27 @@ import { SchemasTool } from "./tools/schemas/schema.tool";
 import { WorkspaceResources } from "./workspace/workspace.resources";
 import { WorkspaceTool } from "./workspace/workspace.tool";
 
-// Open the log file when starting up
-const args = parseArgs(process.argv.slice(2));
+const { values: argValues } = parseArgs({
+  args: process.argv.slice(2),
+  options: {
+    project: {
+      type: "string",
+      short: "p",
+    },
+  },
+});
 
-if (!("project" in args)) {
-  console.error("No project provided", args);
+if (!("project" in argValues) || !argValues.project) {
+  console.error("Invalid usage. Use `rejot-mcp --project <path>` to specify the project.");
   process.exit(1);
 }
 
-const log = setLogger(new FileLogger(join(args["project"], "mcp.log"), "DEBUG"));
+const log = setLogger(new FileLogger(join(argValues.project, "mcp.log"), "DEBUG"));
 
 const server = new McpServer(
   {
     name: "@rejot-dev/mcp",
-    version: "0.0.7",
+    version: "0.0.14",
   },
   {
     instructions: `
@@ -148,7 +155,7 @@ const vibeCollector = new VibeCollector(
   manifestFileManager,
 );
 
-const rejotMcp = new RejotMcp(args["project"], server, [
+const rejotMcp = new RejotMcp(argValues.project, server, [
   new WorkspaceResources(workspaceService),
   new DbIntrospectionTool(workspaceService),
   new ManifestInfoTool(),

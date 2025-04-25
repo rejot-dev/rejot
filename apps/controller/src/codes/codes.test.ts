@@ -1,51 +1,50 @@
-import { assert, assertEquals, assertMatch } from "@std/assert";
-import { generateCode } from "./codes.ts";
+import { expect, test } from "bun:test";
+
 import type { CodePrefix } from "./codes.ts";
-import { test } from "bun:test";
+import { generateCode } from "./codes.ts";
 
 test("generateCode - generates valid codes with ORG prefix", () => {
   const code = generateCode("ORG");
-
-  assertMatch(code, /^ORG_[0-9A-Za-z]+$/);
-  assertEquals(code.startsWith("ORG"), true);
+  expect(code).toMatch(/^ORG_[0-9A-Za-z]+$/);
+  expect(code.startsWith("ORG")).toBeTruthy();
 });
 
 test("generateCode - generates valid codes with SYS prefix", () => {
   const code = generateCode("SYS");
-  assertMatch(code, /^SYS_[0-9A-Za-z]+$/);
-  assertEquals(code.startsWith("SYS"), true);
+  expect(code).toMatch(/^SYS_[0-9A-Za-z]+$/);
+  expect(code.startsWith("SYS")).toBeTruthy();
 });
 
 test("generateCode - generates valid codes with SYNC prefix", () => {
   const code = generateCode("SYNC");
-  assertMatch(code, /^SYNC_[0-9A-Za-z]+$/);
-  assertEquals(code.startsWith("SYNC"), true);
+  expect(code).toMatch(/^SYNC_[0-9A-Za-z]+$/);
+  expect(code.startsWith("SYNC")).toBeTruthy();
 });
 
 test("generateCode - generates unique codes", () => {
-  const codes = new Set();
   const iterations = 1000;
-  const prefixes: CodePrefix[] = ["ORG", "SYS", "SYNC"];
+  const prefixes: CodePrefix[] = ["ORG", "SYS", "SYNC", "PERS", "CONN", "PUBS", "CONS"];
 
   for (const prefix of prefixes) {
+    const codes = new Set<string>();
     for (let i = 0; i < iterations; i++) {
       const code = generateCode(prefix);
-      assertEquals(codes.has(code), false, "Generated duplicate code");
+      expect(codes.has(code)).toBeFalsy();
       codes.add(code);
-      assert(code.length <= 30, `Generated code should be <30 characters long, was ${code.length}`);
+      expect(code.length).toBeLessThanOrEqual(30);
     }
   }
 });
 
-test("generateCode - generates codes without hyphens", () => {
-  const iterations = 100;
-  const prefixes: CodePrefix[] = ["ORG", "SYS", "SYNC"];
+test("generateCode - no hyphens", () => {
+  const iterations = 1000;
+  const prefixes: CodePrefix[] = ["ORG", "SYS", "SYNC", "PERS", "CONN", "PUBS", "CONS"];
 
   for (const prefix of prefixes) {
     for (let i = 0; i < iterations; i++) {
       const code = generateCode(prefix);
-      assertEquals(code.includes("-"), false, "Generated code should not contain hyphens");
-      assert(code.length <= 30, `Generated code should be <30 characters long, was ${code.length}`);
+      expect(code.includes("-")).toBeFalsy();
+      expect(code.length).toBeLessThanOrEqual(30);
     }
   }
 });

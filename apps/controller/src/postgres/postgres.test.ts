@@ -1,24 +1,18 @@
-import { sql } from "drizzle-orm";
-import { assertEquals } from "@std/assert/equals";
-import { test } from "bun:test";
+import { expect, test } from "bun:test";
 
-import { assertInstanceOf } from "@std/assert/instance-of";
-import { DrizzleError } from "drizzle-orm/errors";
-import { assertStringIncludes } from "@std/assert/string-includes";
-import { assertRejects } from "@std/assert/rejects";
-import { assertGreater } from "@std/assert/greater";
+import { sql } from "drizzle-orm";
 
 import { dbDescribe } from "./db-test.ts";
 
-dbDescribe("test", (ctx) => {
-  test("PSQL - SELECT 1", async () => {
+dbDescribe("PSQL tests", (ctx) => {
+  test("PSQL - Basic query", async () => {
     const db = ctx.db;
     const [res] = await db.execute(sql`
       SELECT
-        1
+        1;
     `);
 
-    assertEquals(Object.values(res)[0], 1);
+    expect(Object.values(res)[0]).toEqual(1);
   });
 
   test("PSQL - SELECT 1 - Again, make sure database is still available", async () => {
@@ -29,7 +23,7 @@ dbDescribe("test", (ctx) => {
         1
     `);
 
-    assertEquals(Object.values(res)[0], 1);
+    expect(Object.values(res)[0]).toEqual(1);
   });
 
   test("PSQL - create table", async () => {
@@ -52,7 +46,7 @@ dbDescribe("test", (ctx) => {
         some_new_table_to_test
     `);
 
-    assertEquals(Object.values(res)[0], 1);
+    expect(Object.values(res)[0]).toEqual(1);
   });
 
   test("PSQL - create table - Again, make sure test changes are isolated.", async () => {
@@ -75,7 +69,7 @@ dbDescribe("test", (ctx) => {
         some_new_table_to_test
     `);
 
-    assertEquals(Object.values(res)[0], 1);
+    expect(Object.values(res)[0]).toEqual(1);
   });
 
   test("PSQL - Use repository - Create and get", async () => {
@@ -86,20 +80,18 @@ dbDescribe("test", (ctx) => {
       name: "test",
     });
 
-    assertGreater(id, 0);
+    expect(id).toBeGreaterThan(0);
 
     const res = await organizationRepository.get("ORG_TEST123");
 
-    assertEquals(res.code, "ORG_TEST123");
-    assertEquals(res.name, "test");
+    expect(res.code).toEqual("ORG_TEST123");
+    expect(res.name).toEqual("test");
   });
 
   test("PSQL - Use repository - Get from previous test", async () => {
     const organizationRepository = ctx.injector.resolve("organizationRepository");
 
-    await assertRejects(async () => {
-      await organizationRepository.get("ORG_TEST123");
-    });
+    await expect(organizationRepository.get("ORG_TEST123")).rejects.toThrow();
   });
 
   test("PSQL - nested transaction", async () => {
@@ -111,39 +103,33 @@ dbDescribe("test", (ctx) => {
           1
       `);
 
-      assertEquals(Object.values(res)[0], 1);
+      expect(Object.values(res)[0]).toEqual(1);
     });
   });
 
-  test("PSQL - nested transaction - rollback", async () => {
+  test("PSQL - rollback in transaction", async () => {
     const db = ctx.db;
 
-    const error = await assertRejects(async () => {
-      await db.transaction(async (tx) => {
+    await expect(
+      db.transaction(async (tx) => {
         const [res] = await tx.execute(sql`
           SELECT
-            1
+            1;
         `);
 
-        assertEquals(Object.values(res)[0], 1);
+        expect(Object.values(res)[0]).toEqual(1);
 
         tx.rollback();
-      });
-    });
-
-    assertInstanceOf(error, DrizzleError);
-    assertStringIncludes(error.message, "Rollback");
+      }),
+    ).rejects.toThrow(/Rollback/);
   });
 
   test("PSQL - throw in transaction", async () => {
     const db = ctx.db;
-    const error = await assertRejects(async () => {
-      await db.transaction(async (_tx) => {
+    await expect(
+      db.transaction(async (_tx) => {
         throw new Error("test");
-      });
-    });
-
-    assertInstanceOf(error, Error);
-    assertEquals(error.message, "test");
+      }),
+    ).rejects.toThrow("test");
   });
 });

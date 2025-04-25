@@ -1,8 +1,7 @@
+import { expect, test } from "bun:test";
+
 import { generateCode } from "@/codes/codes.ts";
 import { dbDescribe } from "@/postgres/db-test.ts";
-import { assertFalse } from "@std/assert/false";
-import { assert } from "@std/assert/assert";
-import { test } from "bun:test";
 
 dbDescribe("ClerkRepository tests", async (ctx) => {
   test("ClerkRepository - Insert Person And Clerk User", async () => {
@@ -38,7 +37,7 @@ dbDescribe("ClerkRepository tests", async (ctx) => {
       },
     });
 
-    assert(didInsert1);
+    expect(didInsert1).toBe(true);
 
     const code2 = generateCode("PERS");
     const didInsert2 = await clerkRepository.insertPersonAndClerkUser({
@@ -51,7 +50,7 @@ dbDescribe("ClerkRepository tests", async (ctx) => {
       },
     });
 
-    assertFalse(didInsert2);
+    expect(didInsert2).toBe(false);
 
     // TODO: We should check the person object here but we currently cannot because our test infra is
     //       bad.

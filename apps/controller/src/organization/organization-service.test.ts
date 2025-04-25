@@ -1,10 +1,7 @@
-import { assertExists } from "@std/assert/exists";
+import { expect, test } from "bun:test";
+
 import { generateCode } from "../codes/codes.ts";
-import { assertEquals } from "@std/assert/equals";
-import { assertMatch } from "@std/assert/match";
 import { dbDescribe } from "../postgres/db-test.ts";
-import { assertRejects } from "@std/assert/rejects";
-import { test } from "bun:test";
 
 dbDescribe("OrganizationService tests", async (ctx) => {
   test.only("OrganizationService - Create Organization", async () => {
@@ -16,9 +13,9 @@ dbDescribe("OrganizationService tests", async (ctx) => {
       name: "Test Organization",
     });
 
-    assertExists(organization);
-    assertMatch(organization.code, /^ORG_/);
-    assertEquals(organization.name, "Test Organization");
+    expect(organization).toBeDefined();
+    expect(organization.code).toMatch(/^ORG_/);
+    expect(organization.name).toEqual("Test Organization");
 
     console.log("test end");
   });
@@ -32,19 +29,17 @@ dbDescribe("OrganizationService tests", async (ctx) => {
 
     const organization = await organizationService.getOrganization(created.code);
 
-    assertExists(organization);
-    assertEquals(organization.id, created.id);
-    assertEquals(organization.code, created.code);
-    assertEquals(organization.name, "Test Organization");
+    expect(organization).toBeDefined();
+    expect(organization.id).toEqual(created.id);
+    expect(organization.code).toEqual(created.code);
+    expect(organization.name).toEqual("Test Organization");
   });
 
   test("OrganizationService - Get Organization - Not Found", async () => {
     const organizationService = ctx.resolve("organizationService");
     const nonExistentCode = generateCode("ORG");
 
-    await assertRejects(
-      () => organizationService.getOrganization(nonExistentCode),
-      Error,
+    await expect(organizationService.getOrganization(nonExistentCode)).rejects.toThrow(
       "Organization not found",
     );
   });

@@ -9,7 +9,7 @@ FROM base AS install
 WORKDIR /install
 
 # Top level dependencies
-COPY package.json bun.lock .npmrc ./
+COPY package.json bun.lock ./
 
 # Workspace dependencies
 # bun.lock is based on all workspace packages, so all must be included for builds
