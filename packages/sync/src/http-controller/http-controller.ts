@@ -1,24 +1,19 @@
-import { serve, type Server } from "bun";
 import { type z, ZodError, ZodType } from "zod";
-
-import { getLogger } from "@rejot-dev/contract/logger";
 
 import { HTTPBadRequestError, HTTPBaseError } from "./http-service-errors.ts";
 
-const log = getLogger(import.meta.url);
-
-interface ServerConfig {
-  hostname: string;
-  port: number;
+export interface ServerConfig {
+  hostname?: string;
+  port?: number;
 }
 
-// TODO: the undefineds shouldn't be in this object at all.
+// TODO: the undefined shouldn't be in this object at all.
 export type RequestParams<T extends RouteConfig> = {
   queryParams: T["queryParams"] extends ZodType ? z.infer<T["queryParams"]> : undefined;
   jsonBody: T["jsonBody"] extends ZodType ? z.infer<T["jsonBody"]> : undefined;
 };
 
-type RouteHandler<T extends RouteConfig> = (
+export type RouteHandler<T extends RouteConfig> = (
   params: RequestParams<T>,
 ) => Promise<z.infer<T["response"]>>;
 
@@ -30,40 +25,37 @@ export type RouteConfig = {
   response: ZodType;
 };
 
-export class HttpController {
-  readonly #hostname: string;
-  readonly #port: number;
+export abstract class HttpController {
+  protected readonly requestedHostname: string;
+  protected readonly requestedPort: number;
 
-  readonly #routeHandlers: Map<RouteConfig, RouteHandler<RouteConfig>> = new Map();
-
-  readonly #serverPromise = Promise.withResolvers<void>();
-
-  #server: Server | null = null;
+  readonly routeHandlers: Map<RouteConfig, RouteHandler<RouteConfig>> = new Map();
 
   constructor({ hostname, port }: ServerConfig) {
-    this.#hostname = hostname;
-    this.#port = port;
+    this.requestedHostname = hostname ?? "localhost";
+    this.requestedPort = port ?? 0;
   }
 
   createRequest<T extends RouteConfig>(routeConfig: T, callback: RouteHandler<T>): this {
-    this.#routeHandlers.set(routeConfig, callback);
+    this.routeHandlers.set(routeConfig, callback);
     return this;
   }
 
   get routeConfigs(): RouteConfig[] {
-    return Array.from(this.#routeHandlers.keys());
+    return Array.from(this.routeHandlers.keys());
   }
 
   /** Resolves when the server is stopped using stop() */
-  get promise(): Promise<void> {
-    return this.#serverPromise.promise;
-  }
+  abstract get promise(): Promise<void>;
+  abstract get assignedPort(): number;
+  abstract start(): Promise<void>;
+  abstract stop(): Promise<void>;
 
   /**
    * Safely parses a JSON request body against the supplied Zod schema.
    * Throws an HTTPBadRequestError if parsing fails.
    */
-  async #parseJSONRequest<T>(request: Request, schema: ZodType<T>): Promise<T> {
+  protected async parseJSONRequest<T>(request: Request, schema: ZodType<T>): Promise<T> {
     let body: unknown;
     try {
       body = await request.json();
@@ -83,7 +75,7 @@ export class HttpController {
    * Safely parses query parameters against the supplied Zod schema.
    * Throws an HTTPBadRequestError if parsing fails.
    */
-  #parseQueryParams<T>(url: string, schema: ZodType<T>): T {
+  static parseQueryParams<T>(url: string, schema: ZodType<T>): T {
     const urlObj = new URL(url);
 
     const obj: Record<string, unknown> = {};
@@ -104,7 +96,7 @@ export class HttpController {
     return parsed.data;
   }
 
-  async #wrapRequest<T extends RouteConfig>(
+  protected async wrapRequest<T extends RouteConfig>(
     req: Request,
     routeConfig: T,
     callback: RouteHandler<T>,
@@ -116,10 +108,10 @@ export class HttpController {
     try {
       const requestData = {} as RequestParams<T>;
       if (routeConfig.queryParams) {
-        requestData.queryParams = this.#parseQueryParams(req.url, routeConfig.queryParams);
+        requestData.queryParams = HttpController.parseQueryParams(req.url, routeConfig.queryParams);
       }
       if (routeConfig.jsonBody) {
-        requestData.jsonBody = await this.#parseJSONRequest(req, routeConfig.jsonBody);
+        requestData.jsonBody = await this.parseJSONRequest(req, routeConfig.jsonBody);
       }
 
       const responseObject = await callback(requestData);
@@ -139,48 +131,22 @@ export class HttpController {
     }
   }
 
-  #createRoutes(): Record<string, { [key: string]: (req: Request) => Promise<Response> }> {
+  protected createRoutes(): Record<string, { [key: string]: (req: Request) => Promise<Response> }> {
     const routes: Record<string, { [key: string]: (req: Request) => Promise<Response> }> = {};
 
-    for (const routeConfig of this.#routeHandlers.keys()) {
-      const handler = this.#routeHandlers.get(routeConfig);
+    for (const routeConfig of this.routeHandlers.keys()) {
+      const handler = this.routeHandlers.get(routeConfig);
       if (!handler) {
         throw new Error(`No handler found for route: ${routeConfig.path}`);
       }
 
       routes[routeConfig.path] = {
         [routeConfig.method]: async (req: Request) => {
-          return this.#wrapRequest(req, routeConfig, handler);
+          return this.wrapRequest(req, routeConfig, handler);
         },
       };
     }
 
     return routes;
-  }
-
-  /**
-   * @returns A promise that resolves when the server has stopped serving, i.e. stop() is called.
-   */
-  async start(): Promise<void> {
-    log.info(`Http controller starting on ${this.#hostname}:${this.#port}`);
-
-    this.#server = serve({
-      port: this.#port,
-      hostname: this.#hostname,
-      routes: this.#routeHandlers.size > 0 ? this.#createRoutes() : undefined,
-      fetch:
-        this.#routeHandlers.size > 0 ? undefined : () => new Response("Not found", { status: 404 }),
-    });
-
-    return this.#serverPromise.promise;
-  }
-
-  async stop(): Promise<void> {
-    if (this.#server) {
-      await this.#server.stop();
-      this.#server = null;
-    }
-
-    this.#serverPromise.resolve();
   }
 }

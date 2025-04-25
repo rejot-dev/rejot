@@ -8,7 +8,7 @@ import type {
   TransformedOperation,
 } from "@rejot-dev/contract/sync";
 
-import { SyncController } from "./sync-controller.ts";
+import { LegacySyncController } from "./legacy-sync-controller.ts";
 
 function createWatermarkTransaction(type: "low" | "high", backfillId: string): Transaction {
   return {
@@ -121,7 +121,7 @@ describe("Simple Sync Controller Operations", () => {
   test("insert operation", async () => {
     const sink = new TestSink();
     const source = new TestSource();
-    const syncController = new SyncController({ source, sink });
+    const syncController = new LegacySyncController({ source, sink });
     await syncController.prepare();
     await syncController.start();
 
@@ -148,7 +148,7 @@ describe("Simple Sync Controller Operations", () => {
   test("update operation", async () => {
     const sink = new TestSink();
     const source = new TestSource();
-    const syncController = new SyncController({ source, sink });
+    const syncController = new LegacySyncController({ source, sink });
     await syncController.prepare();
     await syncController.start();
 
@@ -175,7 +175,7 @@ describe("Simple Sync Controller Operations", () => {
   test("delete operation", async () => {
     const sink = new TestSink();
     const source = new TestSource();
-    const syncController = new SyncController({ source, sink });
+    const syncController = new LegacySyncController({ source, sink });
     await syncController.prepare();
     await syncController.start();
 
@@ -210,7 +210,7 @@ describe("Backfills for Sync Controller", () => {
       { id: 3, name: "c" },
     ];
 
-    const syncController = new SyncController({ source, sink });
+    const syncController = new LegacySyncController({ source, sink });
     await syncController.prepare();
     await syncController.start();
 
@@ -291,7 +291,7 @@ describe("Backfills for Sync Controller", () => {
       { pkeya: 3, pkeyb: 3, name: "c" },
     ];
 
-    const syncController = new SyncController({ source, sink });
+    const syncController = new LegacySyncController({ source, sink });
     await syncController.prepare();
     await syncController.start();
 
@@ -340,7 +340,7 @@ describe("Backfills for Sync Controller", () => {
       { address_id: 3, user_id: 3, name: "backfill" },
     ];
 
-    const syncController = new SyncController({ source, sink });
+    const syncController = new LegacySyncController({ source, sink });
     await syncController.prepare();
     await syncController.start();
 
@@ -406,7 +406,7 @@ describe("Backfills for Sync Controller", () => {
       { id: 2, name: "backfill" },
     ];
 
-    const syncController = new SyncController({ source, sink });
+    const syncController = new LegacySyncController({ source, sink });
     await syncController.prepare();
     await syncController.start();
 
@@ -467,7 +467,7 @@ describe("Backfills for Sync Controller", () => {
     const sink = new TestSink();
     const source = new TestSource();
 
-    const syncController = new SyncController({ source, sink });
+    const syncController = new LegacySyncController({ source, sink });
     await syncController.prepare();
     await syncController.start();
 
@@ -488,7 +488,7 @@ describe("Backfills for Sync Controller", () => {
   test("sequential backfills", async () => {
     const sink = new TestSink();
     const source = new TestSource();
-    const syncController = new SyncController({ source, sink });
+    const syncController = new LegacySyncController({ source, sink });
 
     await syncController.prepare();
     await syncController.start();
@@ -534,7 +534,7 @@ describe("Backfills for Sync Controller", () => {
   test("backfill times out", async () => {
     const sink = new TestSink();
     const source = new TestSource();
-    const syncController = new SyncController({ source, sink, backfillTimeoutMs: 1 });
+    const syncController = new LegacySyncController({ source, sink, backfillTimeoutMs: 1 });
 
     await syncController.prepare();
     await syncController.start();

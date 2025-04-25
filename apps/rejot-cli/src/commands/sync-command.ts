@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 
 import { DEFAULT_PUBLICATION_NAME } from "@rejot-dev/adapter-postgres/consts";
 import { getLogger, setLogLevel } from "@rejot-dev/contract/logger";
-import { SyncController } from "@rejot-dev/sync/sync-controller";
+import { LegacySyncController } from "@rejot-dev/sync/legacy-sync-controller";
 
 import { Command, Flags } from "@oclif/core";
 
@@ -190,7 +190,7 @@ export default class SyncCommand extends Command {
     );
 
     // Create sync controller
-    const syncController = new SyncController({
+    const syncController = new LegacySyncController({
       source,
       sink,
     });

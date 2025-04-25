@@ -110,6 +110,8 @@ describe("SyncController", () => {
     await controller.prepare();
     const controllerPromise = controller.start();
 
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     // Stop immediately
     await controller.stop();
     await controller.close();
