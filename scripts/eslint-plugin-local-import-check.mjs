@@ -135,8 +135,7 @@ const relativeImportExtensionRule = {
   meta: {
     type: "problem",
     docs: {
-      description: "Force relative import paths to include `.ts`",
-      recommended: false,
+      description: "Force relative import and export paths to include `.ts`",
     },
     fixable: "code",
     schema: [],
@@ -154,7 +153,7 @@ const relativeImportExtensionRule = {
       if (isRelative && !hasExt) {
         context.report({
           node: literal,
-          message: "Add '.ts' extension to relative import '{{path}}'",
+          message: "Add '.ts' extension to relative path '{{path}}'",
           data: { path: value },
           fix(fixer) {
             return fixer.replaceText(literal, `'${value}.ts'`);
@@ -165,6 +164,12 @@ const relativeImportExtensionRule = {
 
     return {
       ImportDeclaration(node) {
+        if (node.source?.type === "Literal") checkLiteral(node.source);
+      },
+      ExportAllDeclaration(node) {
+        if (node.source?.type === "Literal") checkLiteral(node.source);
+      },
+      ExportNamedDeclaration(node) {
         if (node.source?.type === "Literal") checkLiteral(node.source);
       },
     };
