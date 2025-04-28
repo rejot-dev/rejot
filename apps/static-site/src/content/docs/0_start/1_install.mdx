@@ -5,13 +5,12 @@ title: "Install"
 ## ReJot CLI
 
 The ReJot CLI is used to create and validate manifest files, as well as starting sync services. The
-`rejot-cli` requires [Bun](https://bun.sh/) v1.2.8 or higher, and is published to
-[npmjs.com](https://www.npmjs.com/package/@rejot-dev/cli).
+`rejot-cli` is published to [npmjs.com](https://www.npmjs.com/package/@rejot-dev/cli).
 
 ### NPM
 
 ```bash
-bun install -g @rejot-dev/cli
+npm install -g @rejot-dev/cli
 
 # You should now have the rejot-cli command on your PATH
 rejot-cli --help
@@ -22,8 +21,8 @@ rejot-cli --help
 ```bash
 git clone git@github.com:rejot-dev/rejot.git
 cd ./rejot
-bun install
-bunx rejot-cli --help
+npm install
+npx rejot-cli --help
 ```
 
 ### Container Image
@@ -43,13 +42,13 @@ inspect and use ReJot's tooling.
 The MCP can be installed through NPM:
 
 ```bash
-bun install @rejot-dev/mcp
+npm install @rejot-dev/mcp
 ```
 
 Then the server can be started with:
 
 ```bash
-bunx rejot-mcp
+npx rejot-mcp
 ```
 
 For AI IDE integration see the respective docs:

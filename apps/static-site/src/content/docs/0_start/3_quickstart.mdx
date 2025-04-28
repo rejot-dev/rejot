@@ -1,0 +1,156 @@
+---
+title: "Quickstart"
+---
+
+import Notice from "@/components/Notice.astro";
+
+This guide helps you quickly set up data synchronization between PostgreSQL databases using ReJot
+manifests. For demonstration purposes we'll use one postgres database for both publishing and
+consuming data and configure it using a single manifest file and with no external event store.
+
+## Prerequisites
+
+- [Install the `rejot-cli`](/docs/start/install)
+- [Prepare a Postgres source](/docs/guides/setup-postgres) database
+
+## Create a ReJot Manifest
+
+First, we'll have to initialize a [Manifest](/docs/spec/manifest) file. This file contains all
+configuration that ReJot needs in order to sync between datastores. By default this will create a
+`rejot-manifest.json` file in the working directory.
+
+```bash
+rejot-cli manifest init --slug "my-sync-project"
+```
+
+### Add Database Connections
+
+Configure connections to your source and destination databases. In this example, we'll use one
+database as both source and destination, so we will need only one connection.
+
+```bash
+rejot-cli manifest connection add \
+        --slug "my-db" \
+        --type postgres \
+        --database postgres \
+        --host localhost \
+        --password example \
+        --port 5432 \
+        --user postgres
+```
+
+### Set Up Data Store
+
+Define a data store and attach it to the connection we just created.
+
+```bash
+# Source data store
+rejot-cli manifest datastore add \
+        --connection my-db
+```
+
+### Set Up Event store
+
+We'll need to define an event store, in this case we will use the same postgres database for the
+event store. ReJot CLI will create the appropriate schemas on first launch. For production workloads
+you might consider an event store distinct from your source/destination databases.
+
+```bash
+rejot-cli manifest eventstore add \
+        --connection my-db
+```
+
+### Define Public and Consumer Schemas
+
+Our public and consumer schemas define what data is exposed from the datastore and how that exposed
+data should be synced to the destination. For the publishing side, this is done through a simple
+select query that will be run each time the source table is updated. The select query is responsible
+for transforming the internal schema to the public schema and must include a `WHERE` clause using
+the primary key for that table. Note that in the example query, the `$1` placeholder will be the
+primary key value for incoming updates.
+
+Public and Consumer Schemas can be created through Typescript code, create a `schemas.ts` file
+containing your schemas. See our full [guide on defining schemas](/docs/guides/defining-schemas) for
+more detailed description of the schema definition process.
+
+```typescript
+// schemas.ts
+import { z } from "zod";
+
+import {
+  createPostgresPublicSchemaTransformation,
+  createPostgresConsumerSchemaTransformation,
+} from "@rejot-dev/adapter-postgres";
+import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
+import { createPublicSchema } from "@rejot-dev/contract/public-schema";
+
+// Public schema definition for api_key table
+const apiKeyPublicSchema = createPublicSchema("my-public-schema", {
+  source: { dataStoreSlug: "my-db", tables: ["api_key"] },
+  outputSchema: z.object({
+    id: z.string(),
+    api_key: z.string(),
+  }),
+  transformations: [
+    createPostgresPublicSchemaTransformation(
+      "api_key",
+      `SELECT id, key AS "api_key" FROM api_key WHERE id = $1`,
+    ),
+  ],
+  version: {
+    major: 1,
+    minor: 0,
+  },
+});
+
+// Consumer schema that writes to target_table
+const apiKeyConsumerSchema = createConsumerSchema("my-consumer-schema", {
+  source: {
+    manifestSlug: "my-sync-project",
+    publicSchema: {
+      name: "my-public-schema",
+      majorVersion: 1,
+    },
+  },
+  destinationDataStoreSlug: "my-db",
+  transformations: [
+    createPostgresConsumerSchemaTransformation(
+      `INSERT INTO target_table (id, api_key) VALUES (:id, :api_key)
+       ON CONFLICT (id) DO UPDATE SET api_key = :api_key`,
+    ),
+  ],
+});
+
+export default {
+  apiKeyPublicSchema,
+  apiKeyConsumerSchema,
+};
+```
+
+### Collect Schemas to Manifest
+
+Before your newly defined schemas can be used, they must me collected into your manifest file. You
+can do this using the `collect` command in the CLI:
+
+```bash
+rejot-cli collect schemas.ts --write
+```
+
+## Create Target Table in Destination
+
+Before launching the synchronization process, create the target table in your destination database:
+
+```sql
+CREATE TABLE target_table (id SERIAL PRIMARY KEY, api_key TEXT NOT NULL);
+```
+
+## Start Synchronization
+
+Start the synchronization process:
+
+```bash
+rejot-cli manifest sync rejot-manifest.json
+```
+
+Any new writes to your source tables in the source datastore should now be transformed and written
+into the destination datastore!

@@ -5,6 +5,9 @@ title: "Data Stores"
 import ApiSchema from "@/components/schema/ApiSchema.astro";
 import manifestSchema from "@/content/manifests/manifest_v0.json";
 
+A data store represents a source or destination of data. Data stores are typically databases, and
+[Connections](/docs/spec/connection) are used to configure clients to these databases.
+
 ## Data Store
 
 <ApiSchema version={"v0"} globalSchema={manifestSchema} schemaRef="#/properties/dataStores/items" />
