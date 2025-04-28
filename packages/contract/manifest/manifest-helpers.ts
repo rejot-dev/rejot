@@ -4,12 +4,7 @@ import type { Cursor } from "../cursor/cursors.ts";
 import type { TransformedOperationWithSource } from "../event-store/event-store.ts";
 import type { WorkspaceDefinition } from "../workspace/workspace.ts";
 import type { ConsumerSchemaSchema, PublicSchemaSchema, SyncManifestSchema } from "./manifest.ts";
-import type {
-  Connection,
-  DestinationDataStore,
-  Operation,
-  SourceDataStore,
-} from "./sync-manifest.ts";
+import type { Connection, DestinationDataStore, SourceDataStore } from "./sync-manifest.ts";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
@@ -92,7 +87,7 @@ export function getDestinationDataStoresHelper(manifests: Manifest[]): Destinati
   const slugs = Array.from(
     new Set(
       manifests.flatMap((manifest) =>
-        (manifest.consumerSchemas ?? []).map((cs) => cs.destinationDataStoreSlug),
+        (manifest.consumerSchemas ?? []).map((cs) => cs.config.destinationDataStoreSlug),
       ),
     ),
   );
@@ -148,31 +143,26 @@ export function getConsumerSchemasForPublicSchemaHelper(
   );
 }
 
-export function getPublicSchemasForOperationHelper(
+export function getPublicSchemasForDataStore(
   manifests: Manifest[],
-  dataStoreSlug: string,
-  operation: Operation,
+  sourceDataStoreSlug: string,
 ): (z.infer<typeof PublicSchemaSchema> & { source: { manifestSlug: string } })[] {
   return manifests.flatMap((manifest) =>
     (manifest.publicSchemas ?? [])
       .filter((schema) => {
         const dataStore = (manifest.dataStores ?? []).find(
-          (ds) => ds.connectionSlug === dataStoreSlug,
+          (ds) => ds.connectionSlug === sourceDataStoreSlug,
         );
         // Ensure dataStore exists and matches the source slug, and the operation table is included
-        return (
-          dataStore &&
-          schema.source.dataStoreSlug === dataStore.connectionSlug && // Match dataStoreSlug correctly
-          schema.source.tables.includes(operation.table)
-        );
+        return dataStore && schema.source.dataStoreSlug === dataStore.connectionSlug;
       })
-      .map(({ name, source, transformations, version, outputSchema }) => ({
+      .map(({ name, source, config, version, outputSchema }) => ({
         name,
         source: {
           ...source,
           manifestSlug: manifest.slug, // Add manifest slug to the source
         },
-        transformations,
+        config,
         version,
         outputSchema,
       })),

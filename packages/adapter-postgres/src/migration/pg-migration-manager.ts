@@ -1,6 +1,6 @@
 import { getLogger } from "@rejot-dev/contract/logger";
 
-import type { PostgresClient } from "../util/postgres-client.ts";
+import type { IPostgresClient } from "../util/postgres-client.ts";
 
 const log = getLogger(import.meta.url);
 
@@ -11,13 +11,13 @@ export interface Migration {
 }
 
 export class PgMigrationManager {
-  #client: PostgresClient;
+  #client: IPostgresClient;
   #schemaName: string;
   #migrationsTableName: string;
   #migrations: Migration[];
 
   constructor(
-    client: PostgresClient,
+    client: IPostgresClient,
     schemaName: string,
     migrationsTableName: string,
     migrations: Migration[],

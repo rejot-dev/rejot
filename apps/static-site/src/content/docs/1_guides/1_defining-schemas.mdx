@@ -29,7 +29,7 @@ import { z } from "zod";
 
 import {
   createPostgresPublicSchemaTransformation,
-  createPostgresConsumerSchemaTransformation,
+  createPostgresConsumerSchemaConfig,
 } from "@rejot-dev/adapter-postgres";
 import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
 import { createPublicSchema } from "@rejot-dev/contract/public-schema";
@@ -146,7 +146,7 @@ Here's an example of a consumer schema transformation:
 
 ```typescript
 transformations: [
-  createPostgresConsumerSchemaTransformation(
+  createPostgresConsumerSchemaConfig(
     "INSERT INTO destination_table (id, name) VALUES (:id, :name) ON CONFLICT (id) DO UPDATE SET name = :name",
   ),
 ];

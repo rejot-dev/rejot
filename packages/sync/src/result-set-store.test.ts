@@ -10,19 +10,17 @@ describe("Result set store", () => {
         type: "insert",
         keyColumns: ["id"],
         table: "test",
-        tableSchema: "public",
         new: { id: 1, name: "test" },
       }),
-    ).toEqual("public.test.id=1");
+    ).toEqual("test.id=1");
     expect(
       resultSetStore.getResultSetKeyForTableOperation({
         type: "update",
         keyColumns: ["id", "name"],
         table: "test",
-        tableSchema: "public",
         new: { id: 1, name: "test" },
       }),
-    ).toEqual("public.test.id=1,public.test.name=test");
+    ).toEqual("test.id=1,test.name=test");
   });
 
   test("Result set keys for backfill parsing", () => {
@@ -30,26 +28,26 @@ describe("Result set store", () => {
 
     expect(
       resultSetStore.getResultSetKeysForBackfill(
-        [{ tableRef: "public.test", primaryKeyAliases: new Map([["id", "account_id"]]) }],
+        [{ tableRef: "test", primaryKeyAliases: new Map([["id", "account_id"]]) }],
         { account_id: 1, name: "test" },
       ),
-    ).toEqual(["public.test.id=1"]);
+    ).toEqual(["test.id=1"]);
 
     expect(
       resultSetStore.getResultSetKeysForBackfill(
         [
-          { tableRef: "public.test", primaryKeyAliases: new Map([["id", "account_id"]]) },
-          { tableRef: "public.another", primaryKeyAliases: new Map([["id", "another_id"]]) },
+          { tableRef: "test", primaryKeyAliases: new Map([["id", "account_id"]]) },
+          { tableRef: "another", primaryKeyAliases: new Map([["id", "another_id"]]) },
         ],
         { account_id: 1, another_id: 2, name: "test" },
       ),
-    ).toEqual(["public.test.id=1", "public.another.id=2"]);
+    ).toEqual(["test.id=1", "another.id=2"]);
 
     expect(
       resultSetStore.getResultSetKeysForBackfill(
         [
           {
-            tableRef: "public.test",
+            tableRef: "test",
             primaryKeyAliases: new Map([
               ["id", "account_id"],
               ["second_pkey", "some_id"],
@@ -58,7 +56,7 @@ describe("Result set store", () => {
         ],
         { account_id: 1, some_id: 2, name: "test" },
       ),
-    ).toEqual(["public.test.id=1,public.test.second_pkey=2"]);
+    ).toEqual(["test.id=1,test.second_pkey=2"]);
   });
 
   test("Result set store excludes dropped keys", () => {
@@ -68,7 +66,6 @@ describe("Result set store", () => {
       type: "insert",
       keyColumns: ["id"],
       table: "test",
-      tableSchema: "public",
       new: { id: 1, name: "test" },
     });
 
@@ -76,18 +73,17 @@ describe("Result set store", () => {
       type: "insert",
       keyColumns: ["id"],
       table: "other",
-      tableSchema: "public",
       new: { id: 2, name: "test" },
     });
 
     resultSetStore.addRecords(
       [
-        { tableRef: "public.test", primaryKeyAliases: new Map([["id", "test_id"]]) },
-        { tableRef: "public.other", primaryKeyAliases: new Map([["id", "other_id"]]) },
+        { tableRef: "test", primaryKeyAliases: new Map([["id", "test_id"]]) },
+        { tableRef: "other", primaryKeyAliases: new Map([["id", "other_id"]]) },
       ],
       [
-        { test_id: 1, name: "test", other_id: 1 }, // invalidated by public.test.id=1 drop key
-        { test_id: 2, name: "test", other_id: 2 }, // invalidated by other.public.id=2 drop key
+        { test_id: 1, name: "test", other_id: 1 }, // invalidated by test.id=1 drop key
+        { test_id: 2, name: "test", other_id: 2 }, // invalidated by other.id=2 drop key
         { test_id: 3, name: "test", other_id: 3 }, // valid
       ],
     );

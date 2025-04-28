@@ -88,13 +88,11 @@ describe("verifyManifests", () => {
             name: "test",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "ds1",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO test SELECT * FROM source_test",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "ds1",
+            sql: "INSERT INTO test SELECT * FROM source_test",
+          },
         },
       ],
     };
@@ -129,8 +127,11 @@ describe("verifyManifests", () => {
             name: "schema1",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "ds1",
-          transformations: [],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "ds1",
+            sql: "",
+          },
         },
         {
           name: "consume-public-account",
@@ -139,8 +140,11 @@ describe("verifyManifests", () => {
             name: "schema2",
             majorVersion: 2,
           },
-          destinationDataStoreSlug: "ds1",
-          transformations: [],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "ds1",
+            sql: "",
+          },
         },
         {
           name: "consume-public-account",
@@ -149,8 +153,11 @@ describe("verifyManifests", () => {
             name: "schema3",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "ds1",
-          transformations: [],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "ds1",
+            sql: "",
+          },
         },
       ],
     };
@@ -220,8 +227,11 @@ describe("verifyManifests", () => {
             name: "external-schema",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "ds1",
-          transformations: [],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "ds1",
+            sql: "",
+          },
         },
       ],
     };
@@ -355,33 +365,37 @@ describe("verifyManifests", () => {
         {
           name: "valid-schema",
           source: {
-            dataStoreSlug: "existing-store", // This exists - no error
-            tables: ["users"],
+            dataStoreSlug: "existing-store",
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
         {
           name: "invalid-schema",
           source: {
-            dataStoreSlug: "non-existent-store", // This doesn't exist - should error
-            tables: ["users"],
+            dataStoreSlug: "non-existent-store",
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -413,13 +427,11 @@ describe("verifyManifests", () => {
             name: "public-account",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "data-destination-1",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "\n        INSERT INTO users_destination \n          (id, full_name)\n        VALUES \n          (:id, :email || ' ' || :name)\n        ON CONFLICT (id) DO UPDATE\n          SET full_name = :email || ' ' || :name\n        ;\n      ",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "data-destination-1",
+            sql: "\n        INSERT INTO users_destination \n          (id, full_name)\n        VALUES \n          (:id, :email || ' ' || :name)\n        ON CONFLICT (id) DO UPDATE\n          SET full_name = :email || ' ' || :name\n        ;\n      ",
+          },
           definitionFile: "apps/rejot-cli/_test/example-schema.ts",
         },
       ],
@@ -447,13 +459,11 @@ describe("verifyManifests", () => {
             name: "public-account",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "data-destination-1",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "\n        INSERT INTO users_destination \n          (id, full_name)\n        VALUES \n          (:id, :email || ' ' || :name)\n        ON CONFLICT (id) DO UPDATE\n          SET full_name = :email || ' ' || :name\n        ;\n      ",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "data-destination-1",
+            sql: "\n        INSERT INTO users_destination \n          (id, full_name)\n        VALUES \n          (:id, :email || ' ' || :name)\n        ON CONFLICT (id) DO UPDATE\n          SET full_name = :email || ' ' || :name\n        ;\n      ",
+          },
           definitionFile: "apps/rejot-cli/_test/example-schema.ts",
         },
       ],
@@ -499,16 +509,18 @@ describe("verifyManifests", () => {
           name: "users",
           source: {
             dataStoreSlug: "conn1",
-            tables: ["users"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -520,13 +532,11 @@ describe("verifyManifests", () => {
             name: "users",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "conn1", // Data store exists but has no config
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO users SELECT * FROM source_users",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "conn1",
+            sql: "INSERT INTO users SELECT * FROM source_users",
+          },
         },
       ],
     };
@@ -589,16 +599,18 @@ describe("verifyManifests", () => {
           name: "users",
           source: {
             dataStoreSlug: "conn2", // Uses data store with config
-            tables: ["users"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],

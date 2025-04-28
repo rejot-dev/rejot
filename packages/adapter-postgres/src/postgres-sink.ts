@@ -2,22 +2,19 @@ import { getLogger } from "@rejot-dev/contract/logger";
 import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
 
 import { PostgresConsumerDataStoreSchemaManager } from "./data-store/pg-consumer-data-store-schema-manager.ts";
-import { PostgresClient } from "./util/postgres-client.ts";
+import { type IPostgresClient } from "./util/postgres-client.ts";
 
 const log = getLogger(import.meta.url);
 
 type PostgresSinkConfig = {
-  client: PostgresClient;
-  consumerSchemaSQL: string;
+  client: IPostgresClient;
 };
 
 export class PostgresSink implements IDataSink {
-  #client: PostgresClient;
-  #consumerSchemaSQL: string;
+  #client: IPostgresClient;
 
-  constructor({ client, consumerSchemaSQL }: PostgresSinkConfig) {
+  constructor({ client }: PostgresSinkConfig) {
     this.#client = client;
-    this.#consumerSchemaSQL = consumerSchemaSQL;
   }
 
   get connectionType(): "postgres" {
@@ -48,13 +45,7 @@ export class PostgresSink implements IDataSink {
     }
   }
 
-  async writeData(operation: TransformedOperation): Promise<void> {
-    if (operation.type === "insert" || operation.type === "update") {
-      // Execute the consumer schema transformation with the data
-      await this.#client.query(this.#consumerSchemaSQL, Object.values(operation.object));
-    } else {
-      throw new Error("Not implemented!");
-    }
-    log.info("Successfully wrote data to PostgreSQL sink");
+  async writeData(_operation: TransformedOperation): Promise<void> {
+    throw new Error("Implementation removed. Legacy code.");
   }
 }

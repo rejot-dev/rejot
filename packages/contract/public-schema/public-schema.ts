@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
+import { ReJotError } from "../error/error.ts";
 import { JsonSchemaSchema } from "../json-schema/json-schema.ts";
 import { PublicSchemaSchema } from "../manifest/manifest.ts";
 
-export type PublicSchemaTransformation = {
-  transformationType: "postgresql";
+export type PostgresPublicSchemaConfigTransformation = {
+  operation: "insert" | "update" | "delete";
   table: string;
   sql: string;
 };
@@ -15,13 +16,21 @@ export type Version = {
   minor: number;
 };
 
+export type PublicSchemaConfigBase = {
+  publicSchemaType: "postgres";
+};
+
+export type PublicSchemaConfig = PublicSchemaConfigBase & {
+  publicSchemaType: "postgres";
+  transformations: PostgresPublicSchemaConfigTransformation[];
+};
+
 export type CreatePublicSchemaOptionsBase = {
   source: {
     dataStoreSlug: string;
-    tables: string[];
   };
-  transformations: PublicSchemaTransformation[];
   version: Version;
+  config: PublicSchemaConfig;
 };
 
 export type CreatePublicSchemaZodOptions<T extends z.ZodSchema> = CreatePublicSchemaOptionsBase & {
@@ -33,34 +42,24 @@ export type CreatePublicSchemaJsonOptions = CreatePublicSchemaOptionsBase & {
 };
 
 export type PublicSchemaOptions = {
+  publicSchemaType: "postgres";
   source: {
     dataStoreSlug: string;
-    tables: string[];
   };
   outputSchema: z.infer<typeof JsonSchemaSchema>;
-  transformations: PublicSchemaTransformation[];
   version: Version;
+  config: PublicSchemaConfig;
 };
 
 export type PublicSchemaData = z.infer<typeof PublicSchemaSchema>;
 
-export class InvalidPublicationError extends Error {
+export class InvalidPublicSchemaError extends ReJotError {
+  get name(): string {
+    return "InvalidPublicSchemaError";
+  }
+
   constructor(message: string) {
     super(message);
-  }
-}
-
-export function validatePublicSchema(name: string, options: PublicSchemaOptions): void {
-  if (name.length === 0) {
-    throw new InvalidPublicationError("Publication name cannot be empty");
-  }
-
-  if (options.source.tables.length === 0) {
-    throw new InvalidPublicationError("Publication must have at least one table");
-  }
-
-  if (options.transformations.length === 0) {
-    throw new InvalidPublicationError("Publication must have at least one transformation");
   }
 }
 
@@ -82,33 +81,21 @@ export function createPublicSchema<T extends z.ZodSchema>(
       ? zodToJsonSchema(options.outputSchema)
       : options.outputSchema;
 
-  const schemaOptions: PublicSchemaOptions = {
-    source: options.source,
-    outputSchema: jsonSchema,
-    transformations: options.transformations,
-    version: options.version,
-  };
-
-  validatePublicSchema(publicSchemaName, schemaOptions);
+  if (options.config.transformations.length === 0) {
+    throw new InvalidPublicSchemaError("Public schema must have at least one transformation");
+  }
 
   return {
     name: publicSchemaName,
-    source: schemaOptions.source,
-    outputSchema: schemaOptions.outputSchema,
-    transformations: schemaOptions.transformations,
-    version: schemaOptions.version,
+    source: options.source,
+    outputSchema: jsonSchema,
+    version: options.version,
+    config: options.config,
   };
 }
 
 export function deserializePublicSchema(schema: string): PublicSchemaData {
-  const data = PublicSchemaSchema.parse(JSON.parse(schema));
-  validatePublicSchema(data.name, {
-    source: data.source,
-    outputSchema: data.outputSchema,
-    transformations: data.transformations,
-    version: data.version,
-  });
-  return data;
+  return PublicSchemaSchema.parse(JSON.parse(schema));
 }
 
 export { type IPublicSchemaTransformationRepository } from "./public-schema-transformation.repository.ts";

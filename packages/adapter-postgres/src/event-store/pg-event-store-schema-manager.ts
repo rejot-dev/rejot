@@ -1,5 +1,5 @@
 import { type Migration, PgMigrationManager } from "../migration/pg-migration-manager.ts";
-import type { PostgresClient } from "../util/postgres-client.ts";
+import type { IPostgresClient } from "../util/postgres-client.ts";
 
 export const EVENT_STORE_MIGRATIONS: Migration[] = [
   {
@@ -120,7 +120,7 @@ export const EVENT_STORE_MIGRATIONS: Migration[] = [
 export class EventStoreSchemaManager {
   #migrationManager: PgMigrationManager;
 
-  constructor(client: PostgresClient) {
+  constructor(client: IPostgresClient) {
     this.#migrationManager = new PgMigrationManager(
       client,
       "rejot_events",

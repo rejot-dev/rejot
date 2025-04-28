@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
+
 import type { RouteConfig } from "../http-controller/http-controller.ts";
 
 export const PublicSchemaReferenceSchema = z.object({
@@ -89,18 +91,7 @@ export const publicSchemasRoute = {
   method: "GET",
   path: "/public-schemas",
   response: z.array(
-    z.object({
-      name: z.string(),
-      source: z.object({
-        dataStoreSlug: z.string(),
-        tables: z.array(z.string()),
-      }),
-      transformations: z.array(z.record(z.any())),
-      version: z.object({
-        major: z.number(),
-        minor: z.number(),
-      }),
-      outputSchema: z.record(z.any()),
+    PublicSchemaSchema.extend({
       manifestSlug: z.string(),
     }),
   ),

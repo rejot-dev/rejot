@@ -1,9 +1,9 @@
 import type { Cursor } from "../cursor/cursors.ts";
-import type { TransformedOperationWithSource } from "../event-store/event-store.ts";
+import type { TransformedOperation } from "../sync/sync.ts";
 
 export interface OperationMessage {
   transactionId: string;
-  operations: TransformedOperationWithSource[];
+  operations: TransformedOperation[];
 }
 
 export interface IMessageBus extends IPublishMessageBus, ISubscribeMessageBus {}

@@ -2,13 +2,21 @@ import { beforeEach, expect, test } from "bun:test";
 
 import { z } from "zod";
 
-import type { OperationTransformationPair } from "@rejot-dev/contract/adapter";
-import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
+import type {
+  ConsumerSchemaSchema,
+  PostgresConsumerSchemaConfigSchema,
+} from "@rejot-dev/contract/manifest";
+import type { TransformedOperation } from "@rejot-dev/contract/sync";
 
 import { PostgresConsumerDataStoreSchemaManager } from "../data-store/pg-consumer-data-store-schema-manager.ts";
 import { getTestConnectionConfig, pgRollbackDescribe } from "../util/postgres-test-utils.ts";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
 import { PostgresConsumerSchemaTransformationAdapter } from "./pg-consumer-schema-transformation-adapter.ts";
+
+type ConsumerSchemaWithPostgresConfig = Extract<
+  z.infer<typeof ConsumerSchemaSchema>,
+  { config: z.infer<typeof PostgresConsumerSchemaConfigSchema> }
+>;
 
 pgRollbackDescribe("PostgresConsumerSchemaTransformationAdapter", (ctx) => {
   let connectionAdapter: PostgresConnectionAdapter;
@@ -70,27 +78,32 @@ pgRollbackDescribe("PostgresConsumerSchemaTransformationAdapter", (ctx) => {
       );
     `);
 
-    // Create sample operations
-    const operations: OperationTransformationPair<
-      z.infer<typeof PostgresConsumerSchemaTransformationSchema>
-    >[] = [
+    // Create sample operations and consumer schemas
+    const operations: TransformedOperation[] = [
       {
-        operation: {
-          type: "insert",
-          sourcePublicSchema: {
-            name: "test-schema",
-            version: { major: 1, minor: 0 },
-          },
-          sourceManifestSlug: "test-manifest",
-          object: { id: "1", name: "Test Name", description: "Test Description" },
+        type: "insert",
+        sourcePublicSchema: {
+          name: "test-schema",
+          version: { major: 1, minor: 0 },
         },
-        transformations: [
-          {
-            transformationType: "postgresql",
-            sql: "INSERT INTO test_transform_table (id, name, description) VALUES (:id, :name, :description)",
-            whenOperation: "insertOrUpdate",
-          },
-        ],
+        sourceManifestSlug: "test-manifest",
+        object: { id: "1", name: "Test Name", description: "Test Description" },
+      },
+    ];
+
+    const consumerSchemas: ConsumerSchemaWithPostgresConfig[] = [
+      {
+        name: "test-consumer-schema",
+        sourceManifestSlug: "test-manifest",
+        publicSchema: {
+          name: "test-schema",
+          majorVersion: 1,
+        },
+        config: {
+          consumerSchemaType: "postgres",
+          destinationDataStoreSlug: "test-connection",
+          sql: "INSERT INTO test_transform_table (id, name, description) VALUES (:id, :name, :description)",
+        },
       },
     ];
 
@@ -99,6 +112,7 @@ pgRollbackDescribe("PostgresConsumerSchemaTransformationAdapter", (ctx) => {
       "test-connection",
       "tx3",
       operations,
+      consumerSchemas,
     );
 
     // Assert
@@ -137,45 +151,55 @@ pgRollbackDescribe("PostgresConsumerSchemaTransformationAdapter", (ctx) => {
       VALUES ('2', 'Initial Name', 'Initial Description');
     `);
 
-    // Create sample operations with different types
-    const operations: OperationTransformationPair<
-      z.infer<typeof PostgresConsumerSchemaTransformationSchema>
-    >[] = [
+    // Create sample operations
+    const operations: TransformedOperation[] = [
       {
-        operation: {
-          type: "update",
-          sourcePublicSchema: {
-            name: "test-schema",
-            version: { major: 1, minor: 0 },
-          },
-          sourceManifestSlug: "test-manifest",
-          object: { id: "2", name: "Updated Name", description: "Updated Description" },
+        type: "update",
+        sourcePublicSchema: {
+          name: "test-schema",
+          version: { major: 1, minor: 0 },
         },
-        transformations: [
-          {
-            transformationType: "postgresql",
-            sql: "UPDATE test_transform_table SET name = :name, description = :description WHERE id = :id",
-            whenOperation: "insertOrUpdate",
-          },
-        ],
+        sourceManifestSlug: "test-manifest",
+        object: { id: "2", name: "Updated Name", description: "Updated Description" },
       },
       {
-        operation: {
-          type: "delete",
-          sourcePublicSchema: {
-            name: "test-schema-2",
-            version: { major: 2, minor: 0 },
-          },
-          sourceManifestSlug: "test-manifest-2",
-          objectKeys: { id: "2" },
+        type: "delete",
+        sourcePublicSchema: {
+          name: "test-schema-2",
+          version: { major: 2, minor: 0 },
         },
-        transformations: [
-          {
-            transformationType: "postgresql",
-            sql: "DELETE FROM test_transform_table WHERE id = :id",
-            whenOperation: "delete",
-          },
-        ],
+        sourceManifestSlug: "test-manifest-2",
+        objectKeys: { id: "2" },
+      },
+    ];
+
+    const consumerSchemas: ConsumerSchemaWithPostgresConfig[] = [
+      {
+        name: "test-consumer-schema",
+        sourceManifestSlug: "test-manifest",
+        publicSchema: {
+          name: "test-schema",
+          majorVersion: 1,
+        },
+        config: {
+          consumerSchemaType: "postgres",
+          destinationDataStoreSlug: "test-connection",
+          sql: "UPDATE test_transform_table SET name = :name, description = :description WHERE id = :id",
+        },
+      },
+      {
+        name: "test-consumer-schema-2",
+        sourceManifestSlug: "test-manifest-2",
+        publicSchema: {
+          name: "test-schema-2",
+          majorVersion: 2,
+        },
+        config: {
+          consumerSchemaType: "postgres",
+          destinationDataStoreSlug: "test-connection",
+          sql: "SELECT 1", // Not used for delete
+          deleteSql: "DELETE FROM test_transform_table WHERE id = :id",
+        },
       },
     ];
 
@@ -184,6 +208,7 @@ pgRollbackDescribe("PostgresConsumerSchemaTransformationAdapter", (ctx) => {
       "test-connection",
       "tx4",
       operations,
+      consumerSchemas,
     );
 
     // Assert
@@ -216,67 +241,62 @@ pgRollbackDescribe("PostgresConsumerSchemaTransformationAdapter", (ctx) => {
     expect(testManifest2 && testManifest2["last_seen_transaction_id"]).toBe("tx4");
   });
 
-  test("should respect whenOperation filter for transformations", async () => {
+  test("should skip delete operations when no deleteSql is specified", async () => {
     // Arrange
     const adapter = new PostgresConsumerSchemaTransformationAdapter(connectionAdapter);
 
-    // Create test tables
+    // Create test table
     await ctx.client.query(`
-      CREATE TABLE IF NOT EXISTS inserts_table (
+      CREATE TABLE IF NOT EXISTS test_transform_table (
         id TEXT PRIMARY KEY,
         name TEXT
       );
       
-      CREATE TABLE IF NOT EXISTS updates_table (
-        id TEXT PRIMARY KEY,
-        name TEXT
-      );
+      INSERT INTO test_transform_table (id, name)
+      VALUES ('3', 'Should Not Delete');
     `);
 
-    // Create an operation with multiple transformations with different whenOperation values
-    const operations: OperationTransformationPair<
-      z.infer<typeof PostgresConsumerSchemaTransformationSchema>
-    >[] = [
+    const operations: TransformedOperation[] = [
       {
-        operation: {
-          type: "insert",
-          sourcePublicSchema: {
-            name: "test-schema",
-            version: { major: 1, minor: 0 },
-          },
-          sourceManifestSlug: "test-manifest",
-          object: { id: "multi", name: "Multi Test" },
+        type: "delete",
+        sourcePublicSchema: {
+          name: "test-schema",
+          version: { major: 1, minor: 0 },
         },
-        transformations: [
-          {
-            transformationType: "postgresql",
-            sql: "INSERT INTO inserts_table (id, name) VALUES (:id, :name) ON CONFLICT (id) DO UPDATE SET name = :name",
-            whenOperation: "insertOrUpdate", // Modified to a valid value
-          },
-          {
-            transformationType: "postgresql",
-            sql: "INSERT INTO updates_table (id, name) VALUES (:id, :name) ON CONFLICT (id) DO UPDATE SET name = :name",
-            // This has no whenOperation, so it's using the default "insertOrUpdate"
-          },
-          {
-            transformationType: "postgresql",
-            sql: "INSERT INTO inserts_table (id, name) VALUES (:id, 'fallback') ON CONFLICT (id) DO UPDATE SET name = :name",
-            whenOperation: "insertOrUpdate", // This should run (fallback)
-          },
-        ],
+        sourceManifestSlug: "test-manifest",
+        objectKeys: { id: "3" },
+      },
+    ];
+
+    const consumerSchemas: ConsumerSchemaWithPostgresConfig[] = [
+      {
+        name: "test-consumer-schema",
+        sourceManifestSlug: "test-manifest",
+        publicSchema: {
+          name: "test-schema",
+          majorVersion: 1,
+        },
+        config: {
+          consumerSchemaType: "postgres",
+          destinationDataStoreSlug: "test-connection",
+          sql: "INSERT INTO test_transform_table (id, name) VALUES (:id, :name)",
+          // No deleteSql specified
+        },
       },
     ];
 
     // Act
-    await adapter.applyConsumerSchemaTransformation("test-connection", "tx5", operations);
+    await adapter.applyConsumerSchemaTransformation(
+      "test-connection",
+      "tx5",
+      operations,
+      consumerSchemas,
+    );
 
     // Assert
-    // Check inserts_table - should have one row due to conflicts
-    const insertsResult = await ctx.client.query("SELECT * FROM inserts_table WHERE id = 'multi'");
-    expect(insertsResult.rows.length).toBe(1); // Only one should remain after conflicts
-
-    // Check updates_table - should have a row because the whenOperation is default "insertOrUpdate"
-    const updatesResult = await ctx.client.query("SELECT * FROM updates_table WHERE id = 'multi'");
-    expect(updatesResult.rows.length).toBe(1); // Should have a row now
+    // Check the row still exists (delete was skipped)
+    const result = await ctx.client.query("SELECT * FROM test_transform_table WHERE id = '3'");
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0]["name"]).toBe("Should Not Delete");
   });
 });

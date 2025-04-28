@@ -4,7 +4,7 @@ import type { TableOperationDelete } from "@rejot-dev/contract/sync";
 
 import type { Operation } from "./postgres-replication-listener.ts";
 import { PostgresReplicationListener } from "./postgres-replication-listener.ts";
-import type { PostgresClient } from "./util/postgres-client.ts";
+import type { IPostgresClient } from "./util/postgres-client.ts";
 import { getTestClient } from "./util/postgres-test-utils.ts";
 
 const TEST_TABLE_NAME = "test_pg_rep_list_table";
@@ -17,7 +17,7 @@ function randomSlotName() {
 }
 
 describe("PostgreSQL Replication Listener", () => {
-  let client: PostgresClient;
+  let client: IPostgresClient;
   let slotName: string;
 
   beforeEach(async () => {

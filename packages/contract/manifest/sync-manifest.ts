@@ -17,7 +17,7 @@ import {
   getDestinationDataStoresHelper,
   getEventStoresHelper,
   getExternalConsumerSchemasHelper,
-  getPublicSchemasForOperationHelper,
+  getPublicSchemasForDataStore,
   getPublicSchemasHelper,
   getSourceDataStoresHelper,
 } from "./manifest-helpers.ts";
@@ -159,9 +159,8 @@ export class SyncManifest {
 
   getPublicSchemasForOperation(
     dataStoreSlug: string,
-    operation: Operation,
   ): (z.infer<typeof PublicSchemaSchema> & { source: { manifestSlug: string } })[] {
-    return getPublicSchemasForOperationHelper(this.#manifests, dataStoreSlug, operation);
+    return getPublicSchemasForDataStore(this.#manifests, dataStoreSlug);
   }
 
   getPublicSchemas(): (z.infer<typeof PublicSchemaSchema> & { manifestSlug: string })[] {

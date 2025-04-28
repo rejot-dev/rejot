@@ -92,10 +92,7 @@ export class ResultSetStore {
     }
     const columnValues = operation.keyColumns
       .sort()
-      .map(
-        (column) =>
-          `${operation.tableSchema}.${operation.table}.${column}=${operation.new[column]}`,
-      );
+      .map((column) => `${operation.table}.${column}=${operation.new[column]}`);
     return columnValues.join(",");
   }
 

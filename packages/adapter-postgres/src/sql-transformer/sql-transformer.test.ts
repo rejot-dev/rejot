@@ -4,7 +4,7 @@ import { initSqlparser } from "@rejot-dev/sqlparser";
 
 import {
   convertNamedToPositionalPlaceholders,
-  validateSqlPlaceholders,
+  validateNamedPlaceholders,
 } from "./sql-transformer.ts";
 
 // Initialize the SQL parser before running tests
@@ -21,7 +21,7 @@ describe("SQL Transformer", () => {
       `;
       const schemaKeys = ["id", "name", "email", "created_at"];
 
-      const errors = await validateSqlPlaceholders(sql, schemaKeys);
+      const errors = await validateNamedPlaceholders(sql, schemaKeys);
       expect(errors).toHaveLength(0);
     });
 
@@ -32,7 +32,7 @@ describe("SQL Transformer", () => {
       `;
       const schemaKeys = ["id", "name", "email"];
 
-      const errors = await validateSqlPlaceholders(sql, schemaKeys);
+      const errors = await validateNamedPlaceholders(sql, schemaKeys);
       expect(errors).toHaveLength(1);
       expect(errors[0]).toContain("role");
     });
@@ -44,9 +44,8 @@ describe("SQL Transformer", () => {
       `;
       const schemaKeys = ["id", "name", "email"];
 
-      const errors = await validateSqlPlaceholders(sql, schemaKeys);
-      expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain("Mixing positional");
+      const errors = await validateNamedPlaceholders(sql, schemaKeys);
+      expect(errors).toEqual(["$1"]);
     });
   });
 

@@ -19,9 +19,11 @@ export class ManifestTransformationRepository implements IPublicSchemaTransforma
     // Find all public schemas that use this datastore
     const relevantSchemas = this.#manifests.flatMap((manifest) =>
       (manifest.publicSchemas ?? []).filter(
-        (schema) =>
-          schema.source.dataStoreSlug === dataStoreSlug &&
-          schema.source.tables.includes(operation.table),
+        (publicSchema) =>
+          publicSchema.source.dataStoreSlug === dataStoreSlug &&
+          (publicSchema.config.transformations ?? []).some(
+            (transformation) => transformation.table === operation.table,
+          ),
       ),
     );
 

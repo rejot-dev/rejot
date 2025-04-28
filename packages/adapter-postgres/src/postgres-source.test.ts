@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { watermarkFromTransaction } from "@rejot-dev/sync/legacy-sync-controller";
 
 import { PostgresSource } from "./postgres-source.ts";
-import type { PostgresClient } from "./util/postgres-client.ts";
+import type { IPostgresClient } from "./util/postgres-client.ts";
 import { getTestClient } from "./util/postgres-test-utils.ts";
 
 const TEST_TABLE_NAME = "test_pg_source";
@@ -14,21 +14,13 @@ function randomSlotName() {
 }
 
 function createClientAndSource(): {
-  client: PostgresClient;
+  client: IPostgresClient;
   source: PostgresSource;
 } {
   const client = getTestClient();
   const source = new PostgresSource({
     client,
-    publicSchemaSql: `
-      SELECT
-        "id",
-        "name"
-      FROM
-        ${TEST_TABLE_NAME}
-      WHERE
-        id = $1;
-    `,
+
     options: {
       publicationName: TEST_PUBLICATION_NAME,
       createPublication: false,
@@ -40,7 +32,7 @@ function createClientAndSource(): {
 
 describe("PostgreSQL Source tests", () => {
   let { client, source } = {} as {
-    client: PostgresClient;
+    client: IPostgresClient;
     source: PostgresSource;
   };
 

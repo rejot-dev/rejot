@@ -354,7 +354,7 @@ export function verifyPublicSchemaReferences(
 
       // Search across all manifests for the data store
       for (const [manifestSlug, stores] of dataStoreMap.entries()) {
-        if (stores.has(consumerSchema.destinationDataStoreSlug)) {
+        if (stores.has(consumerSchema.config.destinationDataStoreSlug)) {
           dataStoreFound = true;
           dataStoreManifest = manifestSlug;
           break;
@@ -365,28 +365,28 @@ export function verifyPublicSchemaReferences(
         errors.push({
           type: "DATA_STORE_NOT_FOUND",
           severity: "error",
-          message: `Consumer schema references data store '${consumerSchema.destinationDataStoreSlug}' which does not exist in any manifest`,
+          message: `Consumer schema references data store '${consumerSchema.config.destinationDataStoreSlug}' which does not exist in any manifest`,
           location: {
             manifestSlug: manifest.slug,
             manifestPath,
-            context: `consumerSchema.destinationDataStoreSlug: ${consumerSchema.destinationDataStoreSlug}`,
+            context: `consumerSchema.destinationDataStoreSlug: ${consumerSchema.config.destinationDataStoreSlug}`,
           },
         });
       } else {
         // If data store found, check if it has a config
         const storeHasConfig = dataStoreConfigMap
           .get(dataStoreManifest!)
-          ?.get(consumerSchema.destinationDataStoreSlug);
+          ?.get(consumerSchema.config.destinationDataStoreSlug);
         if (storeHasConfig === false) {
           // Explicitly check for false, not undefined
           errors.push({
             type: "DATA_STORE_MISSING_CONFIG",
             severity: "error",
-            message: `Consumer schema references data store '${consumerSchema.destinationDataStoreSlug}' in manifest '${dataStoreManifest}' which does not have a configuration`,
+            message: `Consumer schema references data store '${consumerSchema.config.destinationDataStoreSlug}' in manifest '${dataStoreManifest}' which does not have a configuration`,
             location: {
               manifestSlug: manifest.slug,
               manifestPath,
-              context: `consumerSchema.destinationDataStoreSlug: ${consumerSchema.destinationDataStoreSlug}`,
+              context: `consumerSchema.destinationDataStoreSlug: ${consumerSchema.config.destinationDataStoreSlug}`,
             },
             hint: {
               message: "Add a configuration to the data store",

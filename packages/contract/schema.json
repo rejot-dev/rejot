@@ -183,55 +183,15 @@
                 "type": "string",
                 "minLength": 1,
                 "description": "Slug of the data store that contains the source data."
-              },
-              "tables": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "minItems": 1,
-                "description": "List of tables from the source data store that are required to produce the public schema data."
               }
             },
             "required": [
-              "dataStoreSlug",
-              "tables"
+              "dataStoreSlug"
             ],
             "additionalProperties": false
           },
           "outputSchema": {
             "$ref": "http://json-schema.org/draft-07/schema#"
-          },
-          "transformations": {
-            "type": "array",
-            "items": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "transformationType": {
-                      "type": "string",
-                      "const": "postgresql",
-                      "description": "Postgres transformation type."
-                    },
-                    "table": {
-                      "type": "string"
-                    },
-                    "sql": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "transformationType",
-                    "table",
-                    "sql"
-                  ],
-                  "additionalProperties": false
-                }
-              ]
-            },
-            "minItems": 1,
-            "description": "Transformations to apply to the source data to arrive at the output schema."
           },
           "version": {
             "type": "object",
@@ -252,14 +212,64 @@
           "definitionFile": {
             "type": "string",
             "description": "Path to the source file defining this schema."
+          },
+          "config": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "publicSchemaType": {
+                    "type": "string",
+                    "const": "postgres"
+                  },
+                  "transformations": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "operation": {
+                          "type": "string",
+                          "enum": [
+                            "insert",
+                            "update",
+                            "delete"
+                          ],
+                          "description": "This transformation will be used when this operation is executed on the source table."
+                        },
+                        "table": {
+                          "type": "string",
+                          "description": "This transformation will be applied when this source table is changed."
+                        },
+                        "sql": {
+                          "type": "string",
+                          "description": "The SQL query to execute when a relevant operation is performed on the source table. This query supports positional query parameters ($1, $2), or named parameters (:name), but not both at the same time. Note that positional parameters will be ordered according to the column order in the table definition."
+                        }
+                      },
+                      "required": [
+                        "operation",
+                        "table",
+                        "sql"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "publicSchemaType",
+                  "transformations"
+                ],
+                "additionalProperties": false
+              }
+            ],
+            "description": "Configuration details specific to the public schema type."
           }
         },
         "required": [
           "name",
           "source",
           "outputSchema",
-          "transformations",
-          "version"
+          "version",
+          "config"
         ],
         "additionalProperties": false
       },
@@ -297,57 +307,49 @@
             "additionalProperties": false,
             "description": "Reference to a specific version of a public schema."
           },
-          "destinationDataStoreSlug": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Slug of the data store where the transformed data will be stored."
-          },
-          "transformations": {
-            "type": "array",
-            "items": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "transformationType": {
-                      "type": "string",
-                      "const": "postgresql",
-                      "description": "Postgres transformation type."
-                    },
-                    "sql": {
-                      "type": "string"
-                    },
-                    "whenOperation": {
-                      "type": "string",
-                      "enum": [
-                        "insertOrUpdate",
-                        "delete"
-                      ],
-                      "description": "This transformation will be applied for this operation. Will default to insertOrUpdate if not specified."
-                    }
-                  },
-                  "required": [
-                    "transformationType",
-                    "sql"
-                  ],
-                  "additionalProperties": false
-                }
-              ]
-            },
-            "minItems": 1,
-            "description": "Transformation to apply to the public schema data in order to write it to the destination data store."
-          },
           "definitionFile": {
             "type": "string",
             "description": "Path to the source file defining this schema."
+          },
+          "config": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "consumerSchemaType": {
+                    "type": "string",
+                    "const": "postgres",
+                    "description": "Postgres consumer schema type."
+                  },
+                  "destinationDataStoreSlug": {
+                    "type": "string",
+                    "description": "Slug of the data store to write to."
+                  },
+                  "sql": {
+                    "type": "string",
+                    "description": "SQL to execute when an insert or update operation is performed in the referenced public schema."
+                  },
+                  "deleteSql": {
+                    "type": "string",
+                    "description": "SQL to execute when a delete operation is performed in the referenced public schema."
+                  }
+                },
+                "required": [
+                  "consumerSchemaType",
+                  "destinationDataStoreSlug",
+                  "sql"
+                ],
+                "additionalProperties": false
+              }
+            ],
+            "description": "Configuration details specific to the consumer schema type."
           }
         },
         "required": [
           "name",
           "sourceManifestSlug",
           "publicSchema",
-          "destinationDataStoreSlug",
-          "transformations"
+          "config"
         ],
         "additionalProperties": false
       },

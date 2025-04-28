@@ -1,42 +1,50 @@
 import { z } from "zod";
 
-import type { ValidationResult } from "@rejot-dev/contract/adapter";
+import type {
+  ConsumerSchemaValidationResult,
+  PublicSchemaValidationResult,
+} from "@rejot-dev/contract/adapter";
 import { extractSchemaKeys } from "@rejot-dev/contract/json-schema";
-import type { ConsumerSchemaSchema } from "@rejot-dev/contract/manifest";
+import type {
+  ConsumerSchemaSchema,
+  PostgresConsumerSchemaConfigSchema,
+  PostgresPublicSchemaConfigSchema,
+} from "@rejot-dev/contract/manifest";
 import type { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
 import { type PlaceholderInfo } from "@rejot-dev/sqlparser";
 
+import type {
+  PostgresConsumerSchemaValidationErrorInfo,
+  PostgresPublicSchemaValidationErrorInfo,
+} from "../adapter/pg-consumer-schema-validation-adapter.ts";
 import { sqlTransformationCache } from "./sql-transformation-cache.ts";
+
+export async function isMixingPositionalAndNamedPlaceholders(sql: string): Promise<boolean> {
+  const { placeholders } = await sqlTransformationCache.parseAndFindPlaceholders(sql);
+  const hasPositionalPlaceholders = placeholders.some((p) => p.value.startsWith("$"));
+  const hasNamedPlaceholders = placeholders.some((p) => p.value.startsWith(":"));
+  return hasPositionalPlaceholders && hasNamedPlaceholders;
+}
 
 /**
  * Validates a SQL statement against a JSON schema.
- * Ensures that:
- * 1. The SQL doesn't mix positional and named placeholders
- * 2. All named placeholders correspond to keys in the schema
+ * Ensures that all named placeholders correspond to keys in the schema
  *
  * @param sql The SQL statement to validate
  * @param schemaKeys Array of available keys from the schema
- * @returns Array of error messages, empty if valid
+ * @returns Array keys that are missing
  */
-export async function validateSqlPlaceholders(
+export async function validateNamedPlaceholders(
   sql: string,
   schemaKeys: string[],
 ): Promise<string[]> {
   // Use the cache to get parsed SQL and placeholders
   const { placeholders } = await sqlTransformationCache.parseAndFindPlaceholders(sql);
 
-  // Check if the SQL mixes $ and : placeholders
-  const hasPositionalPlaceholders = placeholders.some((p) => p.value.startsWith("$"));
   const hasNamedPlaceholders = placeholders.some((p) => p.value.startsWith(":"));
 
-  if (hasPositionalPlaceholders && hasNamedPlaceholders) {
-    return [
-      "Mixing positional ($) and named (:) placeholders in the same SQL statement is not allowed",
-    ];
-  }
-
-  // Skip further validation for positional placeholders
-  if (hasPositionalPlaceholders) {
+  // There are no placeholders, there is no validation to do.
+  if (!hasNamedPlaceholders) {
     return [];
   }
 
@@ -52,15 +60,93 @@ export async function validateSqlPlaceholders(
     .filter((name): name is string => typeof name === "string");
 
   // Find any placeholders that don't have corresponding keys in the schema
-  const missingKeys = placeholderNames.filter((name) => !schemaKeys.includes(name));
+  return placeholderNames.filter((name) => !schemaKeys.includes(name));
+}
 
-  if (missingKeys.length > 0) {
-    return [
-      `Transformation contains placeholders not available in the schema: ${missingKeys.join(", ")}`,
-    ];
+export async function validatePublicSchema(
+  publicSchema: Extract<
+    z.infer<typeof PublicSchemaSchema>,
+    { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
+  >,
+): Promise<PublicSchemaValidationResult<PostgresPublicSchemaValidationErrorInfo>> {
+  const result: PublicSchemaValidationResult<PostgresPublicSchemaValidationErrorInfo> = {
+    isValid: true,
+    errors: [],
+    publicSchemaName: publicSchema.name,
+  };
+
+  if (publicSchema.config.transformations.length === 0) {
+    result.isValid = false;
+    result.errors.push({
+      message: "No PostgreSQL transformation found in public schema.",
+      info: {
+        type: "NO_TRANSFORMATION_FOUND",
+      },
+    });
+    return result;
   }
 
-  return [];
+  for (let i = 0; i < publicSchema.config.transformations.length; i++) {
+    const transformation = publicSchema.config.transformations[i];
+    const sql = transformation.sql;
+
+    if (await isMixingPositionalAndNamedPlaceholders(sql)) {
+      result.isValid = false;
+      result.errors.push({
+        message:
+          "Mixing positional ($) and named (:) placeholders in the same SQL statement is not allowed",
+        info: {
+          type: "MIXING_POSITIONAL_AND_NAMED_PLACEHOLDERS",
+          sql: sql,
+        },
+      });
+    }
+  }
+
+  return result;
+}
+
+async function validateConsumerQuery(
+  sql: string,
+  availableKeys: string[],
+  inQuery: "insertOrUpdate" | "delete",
+): Promise<{
+  errors: {
+    message: string;
+    info: PostgresConsumerSchemaValidationErrorInfo;
+  }[];
+}> {
+  const errors: {
+    message: string;
+    info: PostgresConsumerSchemaValidationErrorInfo;
+  }[] = [];
+  if (await isMixingPositionalAndNamedPlaceholders(sql)) {
+    errors.push({
+      message:
+        "Mixing positional ($) and named (:) placeholders in the same SQL statement is not allowed.",
+      info: {
+        type: "MIXING_POSITIONAL_AND_NAMED_PLACEHOLDERS",
+        sql,
+        inQuery,
+      },
+    });
+  }
+  const missingKeys = await validateNamedPlaceholders(sql, availableKeys);
+  if (missingKeys.length > 0) {
+    const { placeholders } = await sqlTransformationCache.parseAndFindPlaceholders(sql);
+    const placeholderValues = placeholders.map((p) => p.value);
+    errors.push({
+      message: `Transformation contains placeholders not available in the schema: ${missingKeys.join(", ")}`,
+      info: {
+        type: "NAMED_PLACEHOLDER_NOT_VALID",
+        sql,
+        placeholders: placeholderValues,
+        availableKeys,
+        inQuery,
+      },
+    });
+  }
+  return { errors };
 }
 
 /**
@@ -71,54 +157,49 @@ export async function validateSqlPlaceholders(
  * @returns Promise with ValidationResult object
  */
 export async function validateConsumerSchema(
-  publicSchema: z.infer<typeof PublicSchemaSchema>,
-  consumerSchema: z.infer<typeof ConsumerSchemaSchema>,
-): Promise<ValidationResult> {
+  publicSchema: Extract<
+    z.infer<typeof PublicSchemaSchema>,
+    { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
+  >,
+  consumerSchema: Extract<
+    z.infer<typeof ConsumerSchemaSchema>,
+    { config: z.infer<typeof PostgresConsumerSchemaConfigSchema> }
+  >,
+): Promise<ConsumerSchemaValidationResult<PostgresConsumerSchemaValidationErrorInfo>> {
   const jsonSchema = publicSchema.outputSchema;
   const availableKeys = extractSchemaKeys(jsonSchema);
 
-  const result: ValidationResult = {
+  const result: ConsumerSchemaValidationResult<PostgresConsumerSchemaValidationErrorInfo> = {
     isValid: true,
     errors: [],
     publicSchemaName: publicSchema.name,
     consumerSchemaInfo: {
       sourceManifestSlug: consumerSchema.sourceManifestSlug,
-      destinationDataStore: consumerSchema.destinationDataStoreSlug,
+      destinationDataStore: consumerSchema.config.destinationDataStoreSlug,
     },
   };
 
-  // Find all PostgreSQL transformations
-  const pgTransformations = consumerSchema.transformations.filter(
-    (t: { transformationType: string }) => t.transformationType === "postgresql",
+  // Validate main sql
+  const { errors: sqlErrors } = await validateConsumerQuery(
+    consumerSchema.config.sql,
+    availableKeys,
+    "insertOrUpdate",
   );
-
-  if (pgTransformations.length === 0) {
+  if (sqlErrors.length > 0) {
     result.isValid = false;
-    result.errors.push({
-      message: "No PostgreSQL transformation found in consumer schema",
-    });
-    return result;
+    result.errors.push(...sqlErrors);
   }
 
-  // Validate each transformation
-  for (let i = 0; i < pgTransformations.length; i++) {
-    const transformation = pgTransformations[i];
-    const sql = transformation.sql;
-    const validationErrors = await validateSqlPlaceholders(sql, availableKeys);
-
-    if (validationErrors.length > 0) {
+  // Validate deleteSql if present
+  if (consumerSchema.config.deleteSql) {
+    const { errors: deleteSqlErrors } = await validateConsumerQuery(
+      consumerSchema.config.deleteSql,
+      availableKeys,
+      "delete",
+    );
+    if (deleteSqlErrors.length > 0) {
       result.isValid = false;
-
-      // Get placeholders from the SQL
-      const { placeholders } = await sqlTransformationCache.parseAndFindPlaceholders(sql);
-      const placeholderValues = placeholders.map((p) => p.value);
-
-      result.errors.push({
-        message: validationErrors.join("\n"),
-        transformationIndex: i,
-        sql: sql,
-        placeholders: placeholderValues,
-      });
+      result.errors.push(...deleteSqlErrors);
     }
   }
 

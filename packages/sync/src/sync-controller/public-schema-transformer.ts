@@ -1,10 +1,7 @@
-import { z } from "zod";
-
 import type { AnyIPublicSchemaTransformationAdapter } from "@rejot-dev/contract/adapter";
-import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 import { getLogger } from "@rejot-dev/contract/logger";
-import type { PublicSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
-import type { Transaction } from "@rejot-dev/contract/sync";
+import { getPublicSchemasForDataStore } from "@rejot-dev/contract/manifest-helpers";
+import type { Transaction, TransformedOperation } from "@rejot-dev/contract/sync";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
 const log = getLogger(import.meta.url);
@@ -24,82 +21,46 @@ export class PublicSchemaTransformer {
   /**
    * Process a transaction and return the transformed operations.
    *
-   * @param dataStoreSlug - The slug of the data store to process the transaction for.
+   * @param sourceDataStoreSlug - The slug of the data store to process the transaction for.
    * @param transaction - The transaction to process.
    * @returns The transformed operations.
    */
   async transformToPublicSchema(
-    dataStoreSlug: string,
+    sourceDataStoreSlug: string,
     transaction: Transaction,
-  ): Promise<TransformedOperationWithSource[]> {
+  ): Promise<TransformedOperation[]> {
     log.info(
-      `Processing transaction ${transaction.id} with ${transaction.operations.length} operation(s) for data store '${dataStoreSlug}'.`,
+      `Processing transaction ${transaction.id} with ${transaction.operations.length} operation(s) for data store '${sourceDataStoreSlug}'.`,
     );
 
-    const transformedOperations: TransformedOperationWithSource[] = [];
+    const transformedOperations: TransformedOperation[] = [];
 
-    // A transaction can have many operations (insert, update, delete) on arbitrary tables.
-    for (const operation of transaction.operations) {
-      // There might be zero or more relevant public schemas for a operation in a given table.
-      const publicSchemas = this.#syncManifest.getPublicSchemasForOperation(
-        dataStoreSlug,
-        operation,
+    const publicSchemas = getPublicSchemasForDataStore(
+      this.#syncManifest.manifests,
+      sourceDataStoreSlug,
+    );
+
+    const publicSchemasByType = Object.groupBy(
+      publicSchemas,
+      (schema) => schema.config.publicSchemaType,
+    );
+
+    for (const [type, schemas] of Object.entries(publicSchemasByType)) {
+      const transformationAdapter = this.#getTransformationAdapter(type);
+
+      const ops = await transformationAdapter.applyPublicSchemaTransformation(
+        sourceDataStoreSlug,
+        transaction.operations,
+        schemas,
       );
 
-      for (const publicSchema of publicSchemas) {
-        // Process each transformation in the array
-        for (const transformation of publicSchema.transformations) {
-          const transformationAdapter = this.#getTransformationAdapter(
-            transformation.transformationType,
-          );
-
-          const transformedData = await transformationAdapter.applyPublicSchemaTransformation(
-            dataStoreSlug,
-            operation,
-            transformation,
-          );
-
-          if (!transformedData) {
-            continue;
-          }
-
-          if (transformedData.type === "delete") {
-            transformedOperations.push({
-              type: transformedData.type,
-              sourceManifestSlug: publicSchema.source.manifestSlug,
-              sourcePublicSchema: {
-                name: publicSchema.name,
-                version: {
-                  major: publicSchema.version.major,
-                  minor: publicSchema.version.minor,
-                },
-              },
-              objectKeys: transformedData.objectKeys,
-            });
-          } else {
-            transformedOperations.push({
-              type: transformedData.type,
-              sourceManifestSlug: publicSchema.source.manifestSlug,
-              sourcePublicSchema: {
-                name: publicSchema.name,
-                version: {
-                  major: publicSchema.version.major,
-                  minor: publicSchema.version.minor,
-                },
-              },
-              object: transformedData.object,
-            });
-          }
-        }
-      }
+      transformedOperations.push(...ops);
     }
 
     return transformedOperations;
   }
 
-  #getTransformationAdapter(
-    transformationType: z.infer<typeof PublicSchemaTransformationSchema>["transformationType"],
-  ) {
+  #getTransformationAdapter(transformationType: string): AnyIPublicSchemaTransformationAdapter {
     const transformationAdapter = this.#publicSchemaTransformationAdapters.find(
       (adapter) => adapter.transformationType === transformationType,
     );

@@ -117,7 +117,6 @@ describe("SourceReader", () => {
           type: "insert",
           keyColumns: ["id"],
           table: "test_table",
-          tableSchema: "public",
           new: { id: 1, name: "test" },
         },
       ],
