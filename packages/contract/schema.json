@@ -9,6 +9,10 @@
       "type": "number",
       "description": "Version of the manifest file format."
     },
+    "$schema": {
+      "type": "string",
+      "description": "URL for the self-describing JSON schema."
+    },
     "connections": {
       "type": "array",
       "items": {

@@ -142,6 +142,7 @@ export const SyncManifestSchema = z.object({
     ),
   /** Version of the manifest file format. */
   manifestVersion: z.number().describe("Version of the manifest file format."),
+  $schema: z.string().optional().describe("URL for the self-describing JSON schema."),
 
   connections: z.array(ConnectionSchema).optional(),
   dataStores: z.array(DataStoreSchema).optional(),

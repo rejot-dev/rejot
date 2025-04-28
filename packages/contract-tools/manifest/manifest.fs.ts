@@ -101,6 +101,16 @@ export async function findManifestPath(
   }
 }
 
+async function findContractPackageVersion(): Promise<string | null> {
+  try {
+    // @ts-expect-error: dynamic import
+    const pkg = (await import("@rejot-dev/contract/package.json")) as { version?: string };
+    return pkg.version || null;
+  } catch (_e) {
+    return null;
+  }
+}
+
 export async function writeManifest(manifest: Manifest, path: string) {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, JSON.stringify(manifest, null, 2));
@@ -198,6 +208,11 @@ export async function initManifest(
     slug,
     manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
   };
+
+  const contractVersion = await findContractPackageVersion();
+  if (contractVersion) {
+    manifest.$schema = `https://unpkg.com/@rejot-dev/contract@${contractVersion}/schema.json`;
+  }
 
   if (options.workspace) {
     manifest.workspaces = [];
