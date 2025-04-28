@@ -2,7 +2,9 @@
 import { getCollection } from "astro:content";
 import DocsEntry from "./[...slug].astro";
 
-const indexPage = (await getCollection("docs")).find((entry) => entry.id === "index");
+const indexPage = (await getCollection("docs")).find(
+  (entry) => entry.id === "0_start/0_what-is-rejot",
+);
 
 if (!indexPage) {
   throw new Error("Index page not found");
