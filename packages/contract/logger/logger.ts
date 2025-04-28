@@ -1,3 +1,5 @@
+import process from "node:process";
+
 import fs from "fs";
 import { fileURLToPath } from "url";
 
@@ -231,8 +233,10 @@ export class ConsoleLogger extends ILogger {
       return;
     }
 
-    // Override the timestamp part with elapsed time
-    let logMessage = `[${logLevelToStringPadded(type)}] ${this.formatElapsedTime()} [${(namespace ?? "").padEnd(longestNamespaceLengthSeen)}] ${message}`;
+    const timestamp = process.stdout.isTTY ? this.formatElapsedTime() : new Date().toISOString();
+    const namespaceString = (namespace ?? "").padEnd(longestNamespaceLengthSeen);
+
+    let logMessage = `[${logLevelToStringPadded(type)}] ${timestamp} [${namespaceString}] ${message}`;
 
     if (args && args.length > 0) {
       const serializedArgs = args.map(serializeArg);
