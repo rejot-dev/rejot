@@ -6,14 +6,14 @@ import Notice from "@/components/Notice.astro";
 
 This guide helps you quickly set up data synchronization between PostgreSQL databases using ReJot
 manifests. For demonstration purposes we'll use one postgres database for both publishing and
-consuming data and configure it using a single manifest file.
+consuming data and configure it using a single manifest file and with no external event store.
 
 ## Prerequisites
 
 - [Install the `rejot-cli`](/docs/start/install)
 - [Prepare a Postgres source](/docs/guides/setup-postgres) database
 
-## Initialize a ReJot Manifest
+## Create a ReJot Manifest
 
 First, we'll have to initialize a [Manifest](/docs/spec/manifest) file. This file contains all
 configuration that ReJot needs in order to sync between datastores. By default this will create a
@@ -46,7 +46,18 @@ Define a data store and attach it to the connection we just created.
 ```bash
 # Source data store
 rejot-cli manifest datastore add \
-        --connection my-data-store
+        --connection my-db
+```
+
+### Set Up Event store
+
+We'll need to define an event store, in this case we will use the same postgres database for the
+event store. ReJot CLI will create the appropriate schemas on first launch. For production workloads
+you might consider an event store distinct from your source/destination databases.
+
+```bash
+rejot-cli manifest eventstore add \
+        --connection my-db
 ```
 
 ### Define Public and Consumer Schemas
@@ -116,7 +127,7 @@ export default {
 };
 ```
 
-### Materialize Schemas to Manifest
+### Collect Schemas to Manifest
 
 Before your newly defined schemas can be used, they must me collected into your manifest file. You
 can do this using the `collect` command in the CLI:
