@@ -1,6 +1,6 @@
 import { getLogger } from "@rejot-dev/contract/logger";
 
-import type { PostgresClient } from "../util/postgres-client.ts";
+import type { IPostgresClient } from "../util/postgres-client.ts";
 import { isPostgresError, PG_DUPLICATE_OBJECT } from "../util/postgres-error-codes.ts";
 
 const log = getLogger(import.meta.url);
@@ -16,7 +16,7 @@ export interface Publication {
   pubAllTables: boolean;
 }
 
-export async function checkLogicalReplication(client: PostgresClient): Promise<boolean> {
+export async function checkLogicalReplication(client: IPostgresClient): Promise<boolean> {
   const result = await client.query(`
     SELECT name, setting FROM pg_settings WHERE name = 'wal_level'
   `);
@@ -25,7 +25,7 @@ export async function checkLogicalReplication(client: PostgresClient): Promise<b
 }
 
 export async function getAvailableReplicationSlots(
-  client: PostgresClient,
+  client: IPostgresClient,
 ): Promise<ReplicationSlot[]> {
   try {
     const result = await client.query(
@@ -46,7 +46,7 @@ export async function getAvailableReplicationSlots(
   }
 }
 
-export async function getAvailablePublications(client: PostgresClient): Promise<Publication[]> {
+export async function getAvailablePublications(client: IPostgresClient): Promise<Publication[]> {
   try {
     const result = await client.query(`
       SELECT pubname, puballtables
@@ -63,7 +63,7 @@ export async function getAvailablePublications(client: PostgresClient): Promise<
 }
 
 export async function ensureReplicationSlot(
-  client: PostgresClient,
+  client: IPostgresClient,
   slotName: string,
 ): Promise<void> {
   // Check if slot exists
@@ -110,7 +110,7 @@ export async function ensureReplicationSlot(
 }
 
 export async function ensurePublication(
-  client: PostgresClient,
+  client: IPostgresClient,
   publicationName: string,
   createPublication: boolean,
 ): Promise<void> {

@@ -2,18 +2,19 @@ import type { Cursor, PublicSchemaReference } from "@rejot-dev/contract/cursor";
 import type { IEventStore, TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { OperationMessage } from "@rejot-dev/contract/message-bus";
+import type { TransformedOperation } from "@rejot-dev/contract/sync";
 
-import { PostgresClient } from "../util/postgres-client.ts";
+import { type IPostgresClient } from "../util/postgres-client.ts";
 import { PostgresEventStoreRepository } from "./pg-event-store-repository.ts";
 import { EventStoreSchemaManager } from "./pg-event-store-schema-manager.ts";
 
 const log = getLogger(import.meta.url);
 
 export class PostgresEventStore implements IEventStore {
-  #client: PostgresClient;
+  #client: IPostgresClient;
   #schemaManager: EventStoreSchemaManager;
 
-  constructor(client: PostgresClient) {
+  constructor(client: IPostgresClient) {
     this.#client = client;
     this.#schemaManager = new EventStoreSchemaManager(client);
   }
@@ -119,7 +120,7 @@ export class PostgresEventStore implements IEventStore {
           },
         };
 
-        const operation: TransformedOperationWithSource =
+        const operation: TransformedOperation =
           row.operation === "delete"
             ? {
                 ...baseOperation,

@@ -5,11 +5,13 @@ import { z } from "zod";
 import type {
   IConnectionAdapter,
   IConsumerSchemaTransformationAdapter,
-  OperationTransformationPair,
 } from "@rejot-dev/contract/adapter";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 import type { IEventStore } from "@rejot-dev/contract/event-store";
-import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
+import type {
+  ConsumerSchemaConfigSchema,
+  ConsumerSchemaSchema,
+} from "@rejot-dev/contract/manifest";
 import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
 import type { IDataSource } from "@rejot-dev/contract/sync";
 import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
@@ -69,23 +71,29 @@ describe("SinkWriter", () => {
 
   // Mock PostgreSQL transformation adapter
   class MockPostgresTransformationAdapter
-    implements
-      IConsumerSchemaTransformationAdapter<
-        z.infer<typeof PostgresConsumerSchemaTransformationSchema>
-      >
+    implements IConsumerSchemaTransformationAdapter<z.infer<typeof ConsumerSchemaConfigSchema>>
   {
-    transformationType = "postgresql" as const;
+    transformationType = "postgres" as const;
     connectionType = "postgres" as const;
     getCursors = mock(async (_destinationDataStoreSlug: string) => []);
     applyConsumerSchemaTransformation = mock(
       async (
         _destinationDataStoreSlug: string,
         _transactionId: string,
-        operationTransformationPairs: OperationTransformationPair<
-          z.infer<typeof PostgresConsumerSchemaTransformationSchema>
-        >[],
+        operations: TransformedOperation[],
+        _consumerSchemas: z.infer<typeof ConsumerSchemaSchema>[],
       ): Promise<TransformedOperationWithSource[]> =>
-        operationTransformationPairs.map((pair) => pair.operation),
+        operations.map((operation) => ({
+          ...operation,
+          sourceManifestSlug: "test-manifest",
+          sourcePublicSchema: {
+            name: "test-schema",
+            version: {
+              major: 1,
+              minor: 0,
+            },
+          },
+        })),
     );
   }
 
@@ -123,7 +131,6 @@ describe("SinkWriter", () => {
             name: "test-schema",
             source: {
               dataStoreSlug: "test-connection",
-              tables: ["test_table"],
             },
             outputSchema: {
               type: "object",
@@ -133,13 +140,16 @@ describe("SinkWriter", () => {
               },
               required: ["id", "name"],
             },
-            transformations: [
-              {
-                transformationType: "postgresql" as const,
-                table: "test_table",
-                sql: "SELECT * FROM test_table WHERE id = $1",
-              },
-            ],
+            config: {
+              publicSchemaType: "postgres" as const,
+              transformations: [
+                {
+                  operation: "insert" as const,
+                  table: "test_table",
+                  sql: "SELECT * FROM test_table WHERE id = $1",
+                },
+              ],
+            },
             version: {
               major: 1,
               minor: 0,
@@ -154,13 +164,11 @@ describe("SinkWriter", () => {
               name: "test-schema",
               majorVersion: 1,
             },
-            destinationDataStoreSlug: "test-connection",
-            transformations: [
-              {
-                transformationType: "postgresql" as const,
-                sql: "INSERT INTO test_table (id, name) VALUES ($1, $2)",
-              },
-            ],
+            config: {
+              consumerSchemaType: "postgres" as const,
+              destinationDataStoreSlug: "test-connection",
+              sql: "INSERT INTO test_table (id, name) VALUES ($1, $2)",
+            },
           },
         ],
       },
@@ -217,9 +225,10 @@ describe("SinkWriter", () => {
 
     const sinkWriter = new SinkWriter(manifest, [connectionAdapter], [transformationAdapter]);
 
-    const operations: TransformedOperationWithSource[] = [
+    const operations: TransformedOperation[] = [
       {
         type: "insert",
+        object: { id: 1, name: "test" },
         sourceManifestSlug: "test-manifest",
         sourcePublicSchema: {
           name: "test-schema",
@@ -228,7 +237,6 @@ describe("SinkWriter", () => {
             minor: 0,
           },
         },
-        object: { id: 1, name: "test" },
       },
     ];
 
@@ -236,21 +244,12 @@ describe("SinkWriter", () => {
 
     // The operation should be transformed
     expect(transformationAdapter.applyConsumerSchemaTransformation.mock.calls).toHaveLength(1);
-    expect(transformationAdapter.applyConsumerSchemaTransformation.mock.calls[0]).toEqual([
-      "test-connection",
-      "test-transaction",
-      [
-        {
-          operation: operations[0],
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO test_table (id, name) VALUES ($1, $2)",
-            },
-          ],
-        },
-      ],
-    ]);
+    const [destSlug, txId, ops, schemas] =
+      transformationAdapter.applyConsumerSchemaTransformation.mock.calls[0];
+    expect(destSlug).toBe("test-connection");
+    expect(txId).toBe("test-transaction");
+    expect(ops).toEqual(operations);
+    expect(schemas).toEqual([manifest.getConsumerSchemasForPublicSchema(operations[0])[0]]);
   });
 
   test("should throw error for unsupported transformation type", async () => {
@@ -260,9 +259,10 @@ describe("SinkWriter", () => {
     // Create sink writer without transformation adapters
     const sinkWriter = new SinkWriter(manifest, [connectionAdapter], []);
 
-    const operations: TransformedOperationWithSource[] = [
+    const operations: TransformedOperation[] = [
       {
         type: "insert",
+        object: { id: 1, name: "test" },
         sourceManifestSlug: "test-manifest",
         sourcePublicSchema: {
           name: "test-schema",
@@ -271,12 +271,11 @@ describe("SinkWriter", () => {
             minor: 0,
           },
         },
-        object: { id: 1, name: "test" },
       },
     ];
 
     await expect(
       sinkWriter.write({ operations, transactionId: "test-transaction" }),
-    ).rejects.toThrow("No transformation adapter found for transformation type: postgresql");
+    ).rejects.toThrow("No consumer schema adapter found for consumer schema type: postgres");
   });
 });

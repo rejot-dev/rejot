@@ -73,13 +73,11 @@ describe("ExternalSyncMessageBus", () => {
                 name: "test",
                 majorVersion: 1,
               },
-              destinationDataStoreSlug: "test-store",
-              transformations: [
-                {
-                  transformationType: "postgresql",
-                  sql: "SELECT * FROM test",
-                },
-              ],
+              config: {
+                consumerSchemaType: "postgres",
+                destinationDataStoreSlug: "test-store",
+                sql: "SELECT * FROM test",
+              },
             },
           ],
         },
@@ -161,13 +159,11 @@ describe("ExternalSyncMessageBus", () => {
                 name: "test",
                 majorVersion: 1,
               },
-              destinationDataStoreSlug: "test-store",
-              transformations: [
-                {
-                  transformationType: "postgresql",
-                  sql: "SELECT * FROM test",
-                },
-              ],
+              config: {
+                consumerSchemaType: "postgres",
+                destinationDataStoreSlug: "test-store",
+                sql: "SELECT * FROM test",
+              },
             },
           ],
         },
@@ -232,13 +228,11 @@ describe("ExternalSyncMessageBus", () => {
                 name: "test",
                 majorVersion: 1,
               },
-              destinationDataStoreSlug: "test-store",
-              transformations: [
-                {
-                  transformationType: "postgresql",
-                  sql: "SELECT * FROM test",
-                },
-              ],
+              config: {
+                consumerSchemaType: "postgres",
+                destinationDataStoreSlug: "test-store",
+                sql: "SELECT * FROM test",
+              },
             },
           ],
         },
@@ -289,13 +283,11 @@ describe("ExternalSyncMessageBus", () => {
                 name: "test",
                 majorVersion: 1,
               },
-              destinationDataStoreSlug: "test-store",
-              transformations: [
-                {
-                  transformationType: "postgresql",
-                  sql: "SELECT * FROM test",
-                },
-              ],
+              config: {
+                consumerSchemaType: "postgres",
+                destinationDataStoreSlug: "test-store",
+                sql: "SELECT * FROM test",
+              },
             },
           ],
         },

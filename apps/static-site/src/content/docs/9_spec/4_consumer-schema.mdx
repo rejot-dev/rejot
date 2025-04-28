@@ -16,20 +16,35 @@ our [Defining Schemas](/docs/guides/defining-schemas) guide for more details.
   schemaRef="#/properties/consumerSchemas/items"
 />
 
+## Source Manifest Slug
+
+<span id="sourceManifestSlug"></span>
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/consumerSchemas/items/properties/sourceManifestSlug"
+/>
+
 ## Public Schema Reference
 
-<span id="publicSchema"></span> {/* Add anchor for the link */}
+<span id="publicSchema"></span>
 <ApiSchema
   version={"v0"}
   globalSchema={manifestSchema}
   schemaRef="#/properties/consumerSchemas/items/properties/publicSchema"
 />
 
-## Transformation
+## Config
 
-<span id="transformations"></span> {/* Add anchor for the link */}
+The configuration of a consumer schema depends on its type, specified by the `consumerSchemaType`
+field. Currently, the following types are supported:
+
+### Postgres
+
+Configuration for PostgreSQL-based consumer schemas.
+
 <ApiSchema
   version={"v0"}
   globalSchema={manifestSchema}
-  schemaRef="#/properties/consumerSchemas/items/properties/transformations/items"
+  schemaRef="#/properties/consumerSchemas/items/properties/config/anyOf/0"
 />

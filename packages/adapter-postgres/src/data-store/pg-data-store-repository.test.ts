@@ -1,11 +1,11 @@
 import { beforeEach, expect, test } from "bun:test";
 
-import { PostgresClient } from "../util/postgres-client.ts";
+import { type IPostgresClient } from "../util/postgres-client.ts";
 import { pgRollbackDescribe } from "../util/postgres-test-utils.ts";
 import { PostgresConsumerDataStoreSchemaManager } from "./pg-consumer-data-store-schema-manager.ts";
 import { getPublicSchemaStates, updatePublicSchemaState } from "./pg-data-store-repository.ts";
 
-async function setupDataStore(client: PostgresClient): Promise<void> {
+async function setupDataStore(client: IPostgresClient): Promise<void> {
   await new PostgresConsumerDataStoreSchemaManager(client).ensureSchema();
 }
 

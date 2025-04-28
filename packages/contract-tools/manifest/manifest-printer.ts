@@ -3,12 +3,12 @@ import { z } from "zod";
 import { JsonSchemaPrinter } from "@rejot-dev/contract/json-schema";
 import {
   ConnectionSchema,
+  type ConsumerSchemaConfigSchema,
   type ConsumerSchemaSchema,
-  ConsumerSchemaTransformationSchema,
   type DataStoreConfigSchema,
   type ManifestDiagnostic,
+  type PublicSchemaConfigSchema,
   type PublicSchemaSchema,
-  PublicSchemaTransformationSchema,
   SyncManifestSchema,
 } from "@rejot-dev/contract/manifest";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
@@ -349,11 +349,12 @@ export class ManifestPrinter {
       );
 
       if (includeSourceTables) {
+        const sourceTables = publicSchema.config.transformations.map((t) => t.table);
         output.push("    Source Tables:");
-        if (publicSchema.source.tables.length === 0) {
+        if (sourceTables.length === 0) {
           output.push("      No source tables defined");
         } else {
-          for (const table of publicSchema.source.tables) {
+          for (const table of sourceTables) {
             output.push(`        - ${table}`);
           }
         }
@@ -364,10 +365,7 @@ export class ManifestPrinter {
       output.push(`    Output Schema:`);
       output.push(...JsonSchemaPrinter.printJsonSchema(publicSchema.outputSchema, 3));
 
-      output.push("    Transformations:");
-      for (const transformation of publicSchema.transformations) {
-        output.push(...this.printPublicSchemaTransformation(transformation, 4));
-      }
+      output.push(...this.printPublicSchemaConfig(publicSchema.config, 4));
 
       if (publicSchema.definitionFile) {
         output.push(`    Definition File: ${publicSchema.definitionFile}`);
@@ -408,14 +406,7 @@ export class ManifestPrinter {
         `      Public Schema: ${consumerSchema.publicSchema.name} (v${consumerSchema.publicSchema.majorVersion}.x)`,
       );
 
-      output.push(
-        `    Destination Connection/Data Store: ${consumerSchema.destinationDataStoreSlug}`,
-      );
-
-      output.push("    Transformations:");
-      for (const transformation of consumerSchema.transformations) {
-        output.push(...this.printConsumerSchemaTransformation(transformation, 4));
-      }
+      output.push(...this.printConsumerSchemaConfig(consumerSchema.config, 4));
 
       if (consumerSchema.definitionFile) {
         output.push(`    Definition File: ${consumerSchema.definitionFile}`);
@@ -427,35 +418,40 @@ export class ManifestPrinter {
     return output;
   }
 
-  private static printPublicSchemaTransformation(
-    transform: z.infer<typeof PublicSchemaTransformationSchema>,
+  private static printPublicSchemaConfig(
+    config: z.infer<typeof PublicSchemaConfigSchema>,
     indentLevel: number,
   ): string[] {
     const indent = " ".repeat(indentLevel * 2);
     const output: string[] = [];
 
-    output.push(`${indent}- Type: ${transform.transformationType}`);
-    if (transform.transformationType === "postgresql") {
-      output.push(`${indent}  Ran on change of table: ${transform.table}`);
-      output.push(`${indent}  SQL: ${transform.sql}`);
+    output.push(`${indent}- Type: ${config.publicSchemaType}`);
+    if (config.publicSchemaType === "postgres") {
+      for (const transformation of config.transformations) {
+        output.push(
+          `${indent}  Runs on change of table: ${transformation.table} (${transformation.operation})`,
+        );
+        output.push(`${indent}  SQL: ${transformation.sql}`);
+      }
     }
 
     return output;
   }
 
-  private static printConsumerSchemaTransformation(
-    transform: z.infer<typeof ConsumerSchemaTransformationSchema>,
+  private static printConsumerSchemaConfig(
+    config: z.infer<typeof ConsumerSchemaConfigSchema>,
     indentLevel: number,
   ): string[] {
     const indent = " ".repeat(indentLevel * 2);
     const output: string[] = [];
 
-    output.push(`${indent}- Type: ${transform.transformationType}`);
-    if (transform.transformationType === "postgresql") {
-      if (transform.whenOperation) {
-        output.push(`${indent}  When: ${transform.whenOperation}`);
+    output.push(`${indent}- Type: ${config.consumerSchemaType}`);
+    if (config.consumerSchemaType === "postgres") {
+      output.push(`${indent}  Destination Data Store: ${config.destinationDataStoreSlug}`);
+      output.push(`${indent}  INSERT/UPDATE SQL: ${config.sql}`);
+      if (config.deleteSql) {
+        output.push(`${indent}  DELETE SQL: ${config.deleteSql}`);
       }
-      output.push(`${indent}  SQL: ${transform.sql}`);
     }
 
     return output;

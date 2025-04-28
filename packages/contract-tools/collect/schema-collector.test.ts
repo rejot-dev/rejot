@@ -32,8 +32,7 @@ describe("collect", () => {
         export default {
           name: "test-schema",
           source: {
-            dataStoreSlug: "source-store",
-            tables: ["table1"]
+            dataStoreSlug: "source-store"
           },
           outputSchema: {
             type: "object",
@@ -41,13 +40,16 @@ describe("collect", () => {
               test: { type: "string" }
             }
           },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "table1",
-              sql: "SELECT * FROM table1"
-            }
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "table1",
+                sql: "SELECT * FROM table1"
+              }
+            ]
+          },
           version: {
             major: 1,
             minor: 0
@@ -71,20 +73,22 @@ describe("collect", () => {
           {
             name: "schema1",
             source: {
-              dataStoreSlug: "source-store",
-              tables: ["table1"]
+              dataStoreSlug: "source-store"
             },
             outputSchema: {
               type: "object",
               properties: { test: { type: "string" } }
             },
-            transformations: [
-              {
-                transformationType: "postgresql",
-                table: "table1",
-                sql: "SELECT * FROM table1"
-              }
-            ],
+            config: {
+              publicSchemaType: "postgres",
+              transformations: [
+                {
+                  operation: "insert",
+                  table: "table1",
+                  sql: "SELECT * FROM table1"
+                }
+              ]
+            },
             version: {
               major: 1,
               minor: 0
@@ -93,20 +97,22 @@ describe("collect", () => {
           {
             name: "schema2",
             source: {
-              dataStoreSlug: "source-store",
-              tables: ["table2"]
+              dataStoreSlug: "source-store"
             },
             outputSchema: {
               type: "object",
               properties: { test: { type: "number" } }
             },
-            transformations: [
-              {
-                transformationType: "postgresql",
-                table: "table2",
-                sql: "SELECT * FROM table2"
-              }
-            ],
+            config: {
+              publicSchemaType: "postgres",
+              transformations: [
+                {
+                  operation: "insert",
+                  table: "table2",
+                  sql: "SELECT * FROM table2"
+                }
+              ]
+            },
             version: {
               major: 1,
               minor: 0
@@ -132,13 +138,11 @@ describe("collect", () => {
             name: "test-schema",
             majorVersion: 1
           },
-          destinationDataStoreSlug: "destination-store",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);"
-            }
-          ]
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "destination-store",
+            sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);"
+          }
         };
       `;
       await writeFile(schemaFile, schemaContent);
@@ -177,8 +181,7 @@ describe("collect", () => {
         const testPublicSchema = {
           name: "test-schema",
           source: {
-            dataStoreSlug: "source-store",
-            tables: ["table1"]
+            dataStoreSlug: "source-store"
           },
           outputSchema: {
             type: "object",
@@ -186,13 +189,16 @@ describe("collect", () => {
               test: { type: "string" }
             }
           },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "table1",
-              sql: "SELECT * FROM table1"
-            }
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "table1",
+                sql: "SELECT * FROM table1"
+              }
+            ]
+          },
           version: {
             major: 1,
             minor: 0
@@ -219,8 +225,7 @@ describe("collect", () => {
           {
             name: "test-public-schema",
             source: {
-              dataStoreSlug: "source-store",
-              tables: ["table1"]
+              dataStoreSlug: "source-store"
             },
             outputSchema: {
               type: "object",
@@ -228,13 +233,16 @@ describe("collect", () => {
                 test: { type: "string" }
               }
             },
-            transformations: [
-              {
-                transformationType: "postgresql",
-                table: "table1",
-                sql: "SELECT * FROM table1"
-              }
-            ],
+            config: {
+              publicSchemaType: "postgres",
+              transformations: [
+                {
+                  operation: "insert",
+                  table: "table1",
+                  sql: "SELECT * FROM table1"
+                }
+              ]
+            },
             version: {
               major: 1,
               minor: 0
@@ -247,13 +255,11 @@ describe("collect", () => {
               name: "test-schema",
               majorVersion: 1
             },
-            destinationDataStoreSlug: "destination-store",
-            transformations: [
-              {
-                transformationType: "postgresql",
-                sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);"
-              }
-            ]
+            config: {
+              consumerSchemaType: "postgres",
+              destinationDataStoreSlug: "destination-store",
+              sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);"
+            }
           }
         ];
       `;
@@ -283,8 +289,7 @@ describe("collect", () => {
               deeplyNestedSchema: {
                 name: "deeply-nested-schema",
                 source: {
-                  dataStoreSlug: "source-store",
-                  tables: ["table1"]
+                  dataStoreSlug: "source-store"
                 },
                 outputSchema: {
                   type: "object",
@@ -292,13 +297,16 @@ describe("collect", () => {
                     test: { type: "string" }
                   }
                 },
-                transformations: [
-                  {
-                    transformationType: "postgresql",
-                    table: "table1",
-                    sql: "SELECT * FROM table1"
-                  }
-                ],
+                config: {
+                  publicSchemaType: "postgres",
+                  transformations: [
+                    {
+                      operation: "insert",
+                      table: "table1",
+                      sql: "SELECT * FROM table1"
+                    }
+                  ]
+                },
                 version: {
                   major: 1,
                   minor: 0
@@ -342,7 +350,6 @@ describe("collect", () => {
           name: "test-schema",
           source: {
             dataStoreSlug: "source-store",
-            tables: ["table1"]
           },
           outputSchema: {
             type: "object",
@@ -350,13 +357,16 @@ describe("collect", () => {
               test: { type: "string" }
             }
           },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "table1",
-              sql: "SELECT * FROM table1"
-            }
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "table1",
+                sql: "SELECT * FROM table1"
+              }
+            ],
+          },
           version: {
             major: 1,
             minor: 0

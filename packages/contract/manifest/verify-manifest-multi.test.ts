@@ -111,16 +111,18 @@ describe("verifyManifests - multiple", () => {
           name: "users",
           source: {
             dataStoreSlug: "ds1",
-            tables: ["users"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -136,13 +138,11 @@ describe("verifyManifests - multiple", () => {
             name: "users",
             majorVersion: 2, // Version mismatch
           },
-          destinationDataStoreSlug: "ds1",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO users SELECT * FROM source_users",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "ds1",
+            sql: "INSERT INTO users SELECT * FROM source_users",
+          },
         },
         {
           name: "consume-public-account",
@@ -151,13 +151,11 @@ describe("verifyManifests - multiple", () => {
             name: "products", // Non-existent schema
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "ds1",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO products SELECT * FROM source_products",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "ds1",
+            sql: "INSERT INTO products SELECT * FROM source_products",
+          },
         },
       ],
     };
@@ -190,13 +188,11 @@ describe("verifyManifests - multiple", () => {
             name: "test",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "ds1",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO test SELECT * FROM source_test",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "ds1",
+            sql: "INSERT INTO test SELECT * FROM source_test",
+          },
         },
       ],
     };
@@ -226,8 +222,11 @@ describe("verifyManifests - multiple", () => {
             name: "schema1",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "ds1",
-          transformations: [],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "ds1",
+            sql: "",
+          },
         },
       ],
     };
@@ -242,8 +241,11 @@ describe("verifyManifests - multiple", () => {
             name: "schema2",
             majorVersion: 2,
           },
-          destinationDataStoreSlug: "ds1",
-          transformations: [],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "ds1",
+            sql: "",
+          },
         },
         {
           name: "consume-schema3",
@@ -252,8 +254,11 @@ describe("verifyManifests - multiple", () => {
             name: "schema3",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "ds1",
-          transformations: [],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "ds1",
+            sql: "",
+          },
         },
       ],
     };
@@ -280,16 +285,18 @@ describe("verifyManifests - multiple", () => {
       name: "users",
       source: {
         dataStoreSlug: "ds1",
-        tables: ["users"],
       },
       outputSchema: { type: "object", properties: {} },
-      transformations: [
-        {
-          transformationType: "postgresql",
-          table: "users",
-          sql: "SELECT * FROM users",
-        },
-      ],
+      config: {
+        publicSchemaType: "postgres",
+        transformations: [
+          {
+            operation: "insert",
+            table: "users",
+            sql: "SELECT * FROM users",
+          },
+        ],
+      },
       version: { major: 1, minor: 0 },
     };
 
@@ -409,8 +416,11 @@ describe("verifyManifests - multiple", () => {
             name: "external-schema",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "ds1",
-          transformations: [],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "ds1",
+            sql: "",
+          },
         },
       ],
     };
@@ -566,16 +576,18 @@ describe("verifyManifests - multiple", () => {
           name: "users",
           source: {
             dataStoreSlug: "conn1",
-            tables: ["users"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -614,13 +626,11 @@ describe("verifyManifests - multiple", () => {
             name: "users",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "conn2", // This exists - no error
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO users SELECT * FROM source_users",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "conn2",
+            sql: "INSERT INTO users SELECT * FROM source_users",
+          },
         },
         {
           name: "invalid-consumer",
@@ -629,13 +639,11 @@ describe("verifyManifests - multiple", () => {
             name: "users",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "non-existent-store", // This doesn't exist - should error
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO users SELECT * FROM source_users",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "non-existent-store", // This doesn't exist - should error
+            sql: "INSERT INTO users SELECT * FROM source_users",
+          },
         },
       ],
     };
@@ -676,16 +684,18 @@ describe("verifyManifests - multiple", () => {
           name: "invalid-schema",
           source: {
             dataStoreSlug: "non-existent-store", // This doesn't exist - should error
-            tables: ["users"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -716,13 +726,11 @@ describe("verifyManifests - multiple", () => {
             name: "public-account",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "data-destination-1",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "\n        INSERT INTO users_destination \n          (id, full_name)\n        VALUES \n          (:id, :email || ' ' || :name)\n        ON CONFLICT (id) DO UPDATE\n          SET full_name = :email || ' ' || :name\n        ;\n      ",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "data-destination-1",
+            sql: "\n        INSERT INTO users_destination \n          (id, full_name)\n        VALUES \n          (:id, :email || ' ' || :name)\n        ON CONFLICT (id) DO UPDATE\n          SET full_name = :email || ' ' || :name\n        ;\n      ",
+          },
           definitionFile: "apps/rejot-cli/_test/example-schema.ts",
         },
       ],
@@ -750,13 +758,11 @@ describe("verifyManifests - multiple", () => {
             name: "public-account",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "data-destination-1",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "\n        INSERT INTO users_destination \n          (id, full_name)\n        VALUES \n          (:id, :email || ' ' || :name)\n        ON CONFLICT (id) DO UPDATE\n          SET full_name = :email || ' ' || :name\n        ;\n      ",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "data-destination-1",
+            sql: "\n        INSERT INTO users_destination \n          (id, full_name)\n        VALUES \n          (:id, :email || ' ' || :name)\n        ON CONFLICT (id) DO UPDATE\n          SET full_name = :email || ' ' || :name\n        ;\n      ",
+          },
           definitionFile: "apps/rejot-cli/_test/example-schema.ts",
         },
       ],
@@ -801,16 +807,18 @@ describe("verifyManifests - multiple", () => {
           name: "users",
           source: {
             dataStoreSlug: "conn1",
-            tables: ["users"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -826,13 +834,11 @@ describe("verifyManifests - multiple", () => {
             name: "users",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "conn1", // Data store exists but has no config
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO users SELECT * FROM source_users",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "conn1",
+            sql: "INSERT INTO users SELECT * FROM source_users",
+          },
         },
       ],
     };
@@ -903,16 +909,18 @@ describe("verifyManifests - multiple", () => {
           name: "users",
           source: {
             dataStoreSlug: "conn2", // Uses data store with config
-            tables: ["users"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -965,16 +973,18 @@ describe("verifyManifests - multiple", () => {
           name: "users",
           source: {
             dataStoreSlug: "conn1",
-            tables: ["users"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -1015,13 +1025,11 @@ describe("verifyManifests - multiple", () => {
             name: "users",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "conn2", // References datastore in manifest2
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO local_users SELECT * FROM source_users",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "conn2",
+            sql: "INSERT INTO local_users SELECT * FROM source_users",
+          },
         },
       ],
     };
@@ -1067,16 +1075,18 @@ describe("verifyManifests - multiple", () => {
           name: "users",
           source: {
             dataStoreSlug: "conn1",
-            tables: ["users"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -1123,13 +1133,11 @@ describe("verifyManifests - multiple", () => {
             name: "users",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "conn2", // References data store in manifest2
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO remote_users SELECT * FROM source_users",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "conn2",
+            sql: "INSERT INTO remote_users SELECT * FROM source_users",
+          },
         },
       ],
     };
@@ -1174,16 +1182,18 @@ describe("verifyManifests - multiple", () => {
           name: "schema1",
           source: {
             dataStoreSlug: "conn1",
-            tables: ["table1"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "table1",
-              sql: "SELECT * FROM table1",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "table1",
+                sql: "SELECT * FROM table1",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -1195,13 +1205,11 @@ describe("verifyManifests - multiple", () => {
             name: "schema2",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "conn1",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO circle SELECT * FROM source_table",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "conn1",
+            sql: "INSERT INTO circle SELECT * FROM source_table",
+          },
         },
       ],
     };
@@ -1237,16 +1245,18 @@ describe("verifyManifests - multiple", () => {
           name: "schema2",
           source: {
             dataStoreSlug: "conn2",
-            tables: ["table2"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "table2",
-              sql: "SELECT * FROM table2",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "table2",
+                sql: "SELECT * FROM table2",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -1258,13 +1268,11 @@ describe("verifyManifests - multiple", () => {
             name: "schema1",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "conn2",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO circle SELECT * FROM source_table",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "conn2",
+            sql: "INSERT INTO circle SELECT * FROM source_table",
+          },
         },
       ],
     };
@@ -1307,16 +1315,18 @@ describe("verifyManifests - multiple", () => {
           name: "origin-data",
           source: {
             dataStoreSlug: "conn1",
-            tables: ["source_table"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "source_table",
-              sql: "SELECT * FROM source_table",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "source_table",
+                sql: "SELECT * FROM source_table",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -1353,16 +1363,18 @@ describe("verifyManifests - multiple", () => {
           name: "middle-data",
           source: {
             dataStoreSlug: "conn2",
-            tables: ["middle_table"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "middle_table",
-              sql: "SELECT * FROM middle_table",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "middle_table",
+                sql: "SELECT * FROM middle_table",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],
@@ -1374,13 +1386,11 @@ describe("verifyManifests - multiple", () => {
             name: "origin-data",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "conn2",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO middle_table SELECT * FROM source_table",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "conn2",
+            sql: "INSERT INTO middle_table SELECT * FROM source_table",
+          },
         },
       ],
     };
@@ -1419,13 +1429,11 @@ describe("verifyManifests - multiple", () => {
             name: "middle-data",
             majorVersion: 1,
           },
-          destinationDataStoreSlug: "conn3",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO final_table SELECT * FROM source_table",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "conn3",
+            sql: "INSERT INTO final_table SELECT * FROM source_table",
+          },
         },
       ],
     };
@@ -1468,33 +1476,37 @@ describe("verifyManifests - multiple", () => {
           name: "users",
           source: {
             dataStoreSlug: "conn1",
-            tables: ["users"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT id, name, email FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT id, name, email FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
         {
           name: "users",
           source: {
             dataStoreSlug: "conn1",
-            tables: ["users", "profiles"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT u.id, u.name, u.email, p.avatar FROM users u JOIN profiles p ON u.id = p.user_id",
-            },
-          ],
-          version: { major: 2, minor: 0 }, // Different major version
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT u.id, u.name, u.email, p.avatar FROM users u JOIN profiles p ON u.id = p.user_id",
+              },
+            ],
+          },
+          version: { major: 2, minor: 0 },
         },
       ],
     };
@@ -1533,13 +1545,11 @@ describe("verifyManifests - multiple", () => {
             name: "users",
             majorVersion: 1, // References version 1
           },
-          destinationDataStoreSlug: "conn2",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO users_v1 SELECT * FROM source_users",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "conn2",
+            sql: "INSERT INTO users_v1 SELECT * FROM source_users",
+          },
         },
         {
           name: "consumer-v2",
@@ -1548,13 +1558,11 @@ describe("verifyManifests - multiple", () => {
             name: "users",
             majorVersion: 2, // References version 2
           },
-          destinationDataStoreSlug: "conn2",
-          transformations: [
-            {
-              transformationType: "postgresql",
-              sql: "INSERT INTO users_v2 SELECT * FROM source_users",
-            },
-          ],
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "conn2",
+            sql: "INSERT INTO users_v2 SELECT * FROM source_users",
+          },
         },
       ],
     };
@@ -1595,16 +1603,18 @@ describe("verifyManifests - multiple", () => {
           name: "users",
           source: {
             dataStoreSlug: "conn1",
-            tables: ["users"],
           },
           outputSchema: { type: "object", properties: {} },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "users",
-              sql: "SELECT * FROM users",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
           version: { major: 1, minor: 0 },
         },
       ],

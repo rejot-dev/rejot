@@ -173,7 +173,6 @@ describe("vibe-collect", () => {
       name: "TestSchema",
       source: {
         dataStoreSlug: "test-store",
-        tables: ["test_table"],
       },
       outputSchema: {
         type: "object" as const,
@@ -182,18 +181,21 @@ describe("vibe-collect", () => {
           name: { type: "string" },
         },
       },
-      transformations: [
-        {
-          transformationType: "postgresql" as const,
-          table: "test_table",
-          sql: "SELECT * FROM test_table",
-        },
-      ],
       version: {
         major: 1,
         minor: 0,
       },
       definitionFile: "schema1.ts",
+      config: {
+        publicSchemaType: "postgres" as const,
+        transformations: [
+          {
+            operation: "insert" as const,
+            table: "test_table",
+            sql: "SELECT * FROM test_table",
+          },
+        ],
+      },
     };
 
     const mockConsumerSchema: ConsumerSchemaData = {
@@ -203,14 +205,12 @@ describe("vibe-collect", () => {
         name: "TestConsumer",
         majorVersion: 1,
       },
-      destinationDataStoreSlug: "dest-store",
-      transformations: [
-        {
-          transformationType: "postgresql" as const,
-          sql: "INSERT INTO dest_table SELECT * FROM source_table",
-        },
-      ],
       definitionFile: "schema2.ts",
+      config: {
+        consumerSchemaType: "postgres" as const,
+        destinationDataStoreSlug: "dest-store",
+        sql: "INSERT INTO dest_table SELECT * FROM source_table",
+      },
     };
 
     beforeEach(async () => {
@@ -293,7 +293,6 @@ describe("vibe-collect", () => {
           name: "test-public-schema",
           source: {
             dataStoreSlug: "source-store",
-            tables: ["table1"],
           },
           outputSchema: {
             type: "object" as const,
@@ -301,18 +300,21 @@ describe("vibe-collect", () => {
               test: { type: "string" },
             },
           },
-          transformations: [
-            {
-              transformationType: "postgresql" as const,
-              table: "table1",
-              sql: "SELECT * FROM table1",
-            },
-          ],
           version: {
             major: 1,
             minor: 0,
           },
           definitionFile: "mixed-schemas.ts",
+          config: {
+            publicSchemaType: "postgres" as const,
+            transformations: [
+              {
+                operation: "insert" as const,
+                table: "table1",
+                sql: "SELECT * FROM table1",
+              },
+            ],
+          },
         },
         testConsumerSchema: {
           name: "test-consumer-schema",
@@ -322,13 +324,12 @@ describe("vibe-collect", () => {
             majorVersion: 1,
           },
           destinationDataStoreSlug: "destination-store",
-          transformations: [
-            {
-              transformationType: "postgresql" as const,
-              sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);",
-            },
-          ],
           definitionFile: "mixed-schemas.ts",
+          config: {
+            consumerSchemaType: "postgres" as const,
+            destinationDataStoreSlug: "destination-store",
+            sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);",
+          },
         },
       };
 
@@ -361,7 +362,6 @@ describe("vibe-collect", () => {
           name: "Schema1",
           source: {
             dataStoreSlug: "test-store-1",
-            tables: ["table1"],
           },
           outputSchema: {
             type: "object" as const,
@@ -369,24 +369,26 @@ describe("vibe-collect", () => {
               id: { type: "number" },
             },
           },
-          transformations: [
-            {
-              transformationType: "postgresql" as const,
-              table: "table1",
-              sql: "SELECT * FROM table1",
-            },
-          ],
           version: {
             major: 1,
             minor: 0,
           },
           definitionFile: "schema1.ts",
+          config: {
+            publicSchemaType: "postgres" as const,
+            transformations: [
+              {
+                operation: "insert" as const,
+                table: "table1",
+                sql: "SELECT * FROM table1",
+              },
+            ],
+          },
         },
         {
           name: "Schema2",
           source: {
             dataStoreSlug: "test-store-2",
-            tables: ["table2"],
           },
           outputSchema: {
             type: "object" as const,
@@ -394,18 +396,21 @@ describe("vibe-collect", () => {
               name: { type: "string" },
             },
           },
-          transformations: [
-            {
-              transformationType: "postgresql" as const,
-              table: "table2",
-              sql: "SELECT * FROM table2",
-            },
-          ],
           version: {
             major: 1,
             minor: 0,
           },
           definitionFile: "schema2.ts",
+          config: {
+            publicSchemaType: "postgres" as const,
+            transformations: [
+              {
+                operation: "insert" as const,
+                table: "table2",
+                sql: "SELECT * FROM table2",
+              },
+            ],
+          },
         },
       ];
 
@@ -610,7 +615,6 @@ describe("vibe-collect", () => {
           name: "duplicate-schema",
           source: {
             dataStoreSlug: "source-store",
-            tables: ["table1"],
           },
           outputSchema: {
             type: "object" as const,
@@ -618,18 +622,21 @@ describe("vibe-collect", () => {
               test: { type: "string" },
             },
           },
-          transformations: [
-            {
-              transformationType: "postgresql" as const,
-              table: "table1",
-              sql: "SELECT * FROM table1",
-            },
-          ],
           version: {
             major: 1,
             minor: 0,
           },
           definitionFile: "schema1.ts",
+          config: {
+            publicSchemaType: "postgres" as const,
+            transformations: [
+              {
+                operation: "insert" as const,
+                table: "table1",
+                sql: "SELECT * FROM table1",
+              },
+            ],
+          },
         };
 
         // Set up mock collector to return the same schema for both files
@@ -682,7 +689,6 @@ describe("vibe-collect", () => {
                 name: "schema-1",
                 source: {
                   dataStoreSlug: "source-store",
-                  tables: ["table1"],
                 },
                 outputSchema: {
                   type: "object" as const,
@@ -690,18 +696,21 @@ describe("vibe-collect", () => {
                     test: { type: "string" },
                   },
                 },
-                transformations: [
-                  {
-                    transformationType: "postgresql" as const,
-                    table: "table1",
-                    sql: "SELECT * FROM table1",
-                  },
-                ],
                 version: {
                   major: 1,
                   minor: 0,
                 },
                 definitionFile: "schema1.ts",
+                config: {
+                  publicSchemaType: "postgres" as const,
+                  transformations: [
+                    {
+                      operation: "insert" as const,
+                      table: "table1",
+                      sql: "SELECT * FROM table1",
+                    },
+                  ],
+                },
               },
             ],
           }),
@@ -715,7 +724,6 @@ describe("vibe-collect", () => {
           name: "schema-1", // Same name as pre-existing schema
           source: {
             dataStoreSlug: "source-store-updated", // Updated content
-            tables: ["table1"],
           },
           outputSchema: {
             type: "object" as const,
@@ -724,25 +732,27 @@ describe("vibe-collect", () => {
               newField: { type: "number" }, // Updated schema
             },
           },
-          transformations: [
-            {
-              transformationType: "postgresql" as const,
-              table: "table1",
-              sql: "SELECT * FROM table1",
-            },
-          ],
           version: {
             major: 1,
             minor: 0,
           },
           definitionFile: "schema1.ts",
+          config: {
+            publicSchemaType: "postgres" as const,
+            transformations: [
+              {
+                operation: "insert" as const,
+                table: "table1",
+                sql: "SELECT * FROM table1",
+              },
+            ],
+          },
         };
 
         const schema2 = {
           name: "schema-2",
           source: {
             dataStoreSlug: "source-store",
-            tables: ["table2"],
           },
           outputSchema: {
             type: "object" as const,
@@ -750,18 +760,21 @@ describe("vibe-collect", () => {
               test: { type: "string" },
             },
           },
-          transformations: [
-            {
-              transformationType: "postgresql" as const,
-              table: "table2",
-              sql: "SELECT * FROM table2",
-            },
-          ],
           version: {
             major: 1,
             minor: 0,
           },
           definitionFile: "schema2.ts",
+          config: {
+            publicSchemaType: "postgres" as const,
+            transformations: [
+              {
+                operation: "insert" as const,
+                table: "table2",
+                sql: "SELECT * FROM table2",
+              },
+            ],
+          },
         };
 
         // Set up mock collector
@@ -809,7 +822,6 @@ describe("vibe-collect", () => {
             name: "test-public-schema",
             source: {
               dataStoreSlug: "source-store",
-              tables: ["table1"],
             },
             outputSchema: {
               type: "object" as const,
@@ -817,18 +829,21 @@ describe("vibe-collect", () => {
                 test: { type: "string" },
               },
             },
-            transformations: [
-              {
-                transformationType: "postgresql" as const,
-                table: "table1",
-                sql: "SELECT * FROM table1",
-              },
-            ],
             version: {
               major: 1,
               minor: 0,
             },
             definitionFile: "mixed-schema1.ts",
+            config: {
+              publicSchemaType: "postgres" as const,
+              transformations: [
+                {
+                  operation: "insert" as const,
+                  table: "table1",
+                  sql: "SELECT * FROM table1",
+                },
+              ],
+            },
           },
           testConsumerSchema: {
             name: "test-consumer-schema",
@@ -838,13 +853,12 @@ describe("vibe-collect", () => {
               majorVersion: 1,
             },
             destinationDataStoreSlug: "destination-store",
-            transformations: [
-              {
-                transformationType: "postgresql" as const,
-                sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);",
-              },
-            ],
             definitionFile: "mixed-schema1.ts",
+            config: {
+              consumerSchemaType: "postgres" as const,
+              destinationDataStoreSlug: "destination-store",
+              sql: "INSERT INTO test_table (id, name) VALUES ($1, $2);",
+            },
           },
         };
 
@@ -918,7 +932,6 @@ describe("vibe-collect", () => {
       name: "TestSchema",
       source: {
         dataStoreSlug: "test-store",
-        tables: ["test_table"],
       },
       outputSchema: {
         type: "object" as const,
@@ -927,18 +940,21 @@ describe("vibe-collect", () => {
           name: { type: "string" },
         },
       },
-      transformations: [
-        {
-          transformationType: "postgresql" as const,
-          table: "test_table",
-          sql: "SELECT * FROM test_table",
-        },
-      ],
       version: {
         major: 1,
         minor: 0,
       },
       definitionFile: "schema1.ts",
+      config: {
+        publicSchemaType: "postgres" as const,
+        transformations: [
+          {
+            operation: "insert" as const,
+            table: "test_table",
+            sql: "SELECT * FROM test_table",
+          },
+        ],
+      },
     };
 
     const mockConsumerSchema: ConsumerSchemaData = {
@@ -948,14 +964,12 @@ describe("vibe-collect", () => {
         name: "TestConsumer",
         majorVersion: 1,
       },
-      destinationDataStoreSlug: "dest-store",
-      transformations: [
-        {
-          transformationType: "postgresql" as const,
-          sql: "INSERT INTO dest_table SELECT * FROM source_table",
-        },
-      ],
       definitionFile: "schema2.ts",
+      config: {
+        consumerSchemaType: "postgres" as const,
+        destinationDataStoreSlug: "dest-store",
+        sql: "INSERT INTO dest_table SELECT * FROM source_table",
+      },
     };
 
     beforeEach(() => {
@@ -1041,7 +1055,6 @@ describe("vibe-collect", () => {
       name: "TestSchema",
       source: {
         dataStoreSlug: "test-store",
-        tables: ["test_table"],
       },
       outputSchema: {
         type: "object" as const,
@@ -1050,18 +1063,21 @@ describe("vibe-collect", () => {
           name: { type: "string" },
         },
       },
-      transformations: [
-        {
-          transformationType: "postgresql" as const,
-          table: "test_table",
-          sql: "SELECT * FROM test_table",
-        },
-      ],
       version: {
         major: 1,
         minor: 0,
       },
       definitionFile: "schema1.ts",
+      config: {
+        publicSchemaType: "postgres" as const,
+        transformations: [
+          {
+            operation: "insert" as const,
+            table: "test_table",
+            sql: "SELECT * FROM test_table",
+          },
+        ],
+      },
     };
 
     const mockConsumerSchema: ConsumerSchemaData = {
@@ -1071,14 +1087,12 @@ describe("vibe-collect", () => {
         name: "TestConsumer",
         majorVersion: 1,
       },
-      destinationDataStoreSlug: "dest-store",
-      transformations: [
-        {
-          transformationType: "postgresql" as const,
-          sql: "INSERT INTO dest_table SELECT * FROM source_table",
-        },
-      ],
       definitionFile: "schema2.ts",
+      config: {
+        consumerSchemaType: "postgres" as const,
+        destinationDataStoreSlug: "dest-store",
+        sql: "INSERT INTO dest_table SELECT * FROM source_table",
+      },
     };
 
     beforeEach(async () => {
@@ -1104,7 +1118,6 @@ describe("vibe-collect", () => {
             name: "ExistingSchema",
             source: {
               dataStoreSlug: "existing-store",
-              tables: ["existing_table"],
             },
             outputSchema: {
               type: "object" as const,
@@ -1112,18 +1125,21 @@ describe("vibe-collect", () => {
                 id: { type: "number" as const },
               },
             },
-            transformations: [
-              {
-                transformationType: "postgresql" as const,
-                table: "existing_table",
-                sql: "SELECT * FROM existing_table",
-              },
-            ],
             version: {
               major: 1,
               minor: 0,
             },
             definitionFile: "existing.ts",
+            config: {
+              publicSchemaType: "postgres" as const,
+              transformations: [
+                {
+                  operation: "insert" as const,
+                  table: "existing_table",
+                  sql: "SELECT * FROM existing_table",
+                },
+              ],
+            },
           },
         ],
       };
@@ -1212,7 +1228,6 @@ describe("vibe-collect", () => {
         name: "ExistingSchema",
         source: {
           dataStoreSlug: "existing-store",
-          tables: ["existing_table"],
         },
         outputSchema: {
           type: "object" as const,
@@ -1220,18 +1235,21 @@ describe("vibe-collect", () => {
             id: { type: "number" as const },
           },
         },
-        transformations: [
-          {
-            transformationType: "postgresql" as const,
-            table: "existing_table",
-            sql: "SELECT * FROM existing_table",
-          },
-        ],
         version: {
           major: 1,
           minor: 0,
         },
         definitionFile: "existing.ts",
+        config: {
+          publicSchemaType: "postgres" as const,
+          transformations: [
+            {
+              operation: "insert" as const,
+              table: "existing_table",
+              sql: "SELECT * FROM existing_table",
+            },
+          ],
+        },
       };
 
       // Set up existing manifest content
@@ -1287,19 +1305,13 @@ describe("vibe-collect", () => {
           name: "public-account",
           majorVersion: 1,
         },
-        destinationDataStoreSlug: "data-destination-1",
-        transformations: [
-          {
-            transformationType: "postgresql",
-            sql: "\n        INSERT INTO users_destination \n          (id, full_name)\n        VALUES \n          (:id, :email || ' ' || :name)\n        ON CONFLICT (id) DO UPDATE\n          SET full_name = :email || ' ' || :name\n        ;\n      ",
-          },
-          {
-            transformationType: "postgresql",
-            sql: "DELETE FROM users_destination WHERE id = :id",
-            whenOperation: "delete",
-          },
-        ],
         definitionFile: "existing.ts",
+        config: {
+          consumerSchemaType: "postgres" as const,
+          destinationDataStoreSlug: "data-destination-1",
+          sql: "\n        INSERT INTO users_destination \n          (id, full_name)\n        VALUES \n          (:id, :email || ' ' || :name)\n        ON CONFLICT (id) DO UPDATE\n          SET full_name = :email || ' ' || :name\n        ;\n      ",
+          deleteSql: "DELETE FROM users_destination WHERE id = :id",
+        },
       } satisfies ConsumerSchemaData;
 
       // Set up existing manifest content

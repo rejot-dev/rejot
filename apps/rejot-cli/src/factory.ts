@@ -1,10 +1,11 @@
-import type { IDataSource, IDataSink } from "@rejot-dev/contract/sync";
-import { StdoutSink } from "./sinks/stdout-sink.ts";
-import { FileSink } from "./sinks/file-sink.ts";
-import { SUPPORTED_SCHEMES, type ConnectionScheme } from "./rejot-cli-consts.ts";
-import { PostgresSource } from "@rejot-dev/adapter-postgres/source";
-import { PostgresSink } from "@rejot-dev/adapter-postgres/sink";
 import { PostgresClient } from "@rejot-dev/adapter-postgres/postgres-client";
+import { PostgresSink } from "@rejot-dev/adapter-postgres/sink";
+import { PostgresSource } from "@rejot-dev/adapter-postgres/source";
+import type { IDataSink, IDataSource } from "@rejot-dev/contract/sync";
+
+import { type ConnectionScheme, SUPPORTED_SCHEMES } from "./rejot-cli-consts.ts";
+import { FileSink } from "./sinks/file-sink.ts";
+import { StdoutSink } from "./sinks/stdout-sink.ts";
 
 /**
  * Create a source and sink based on the connection strings
@@ -43,7 +44,7 @@ export function createSourceAndSink(
  */
 export function createSource(
   connectionString: string,
-  publicSchemaSQL: string,
+  _publicSchemaSQL: string,
   options: {
     publicationName?: string;
     createPublication?: boolean;
@@ -55,7 +56,6 @@ export function createSource(
     case "postgresql":
       return new PostgresSource({
         client: PostgresClient.fromConnectionString(connectionString),
-        publicSchemaSql: publicSchemaSQL,
         options: {
           publicationName: options.publicationName,
           createPublication: options.createPublication,
@@ -73,18 +73,14 @@ export function createSource(
  */
 export function createSink(
   connectionString: string,
-  consumerSchemaSQL: string | undefined,
+  _consumerSchemaSQL: string | undefined,
 ): IDataSink {
   const connection = parseConnectionString(connectionString);
 
   switch (connection.scheme) {
     case "postgresql":
-      if (!consumerSchemaSQL) {
-        throw new Error("Consumer schema SQL is required for PostgreSQL sink");
-      }
       return new PostgresSink({
         client: PostgresClient.fromConnectionString(connectionString),
-        consumerSchemaSQL,
       });
     case "stdout":
       return new StdoutSink();

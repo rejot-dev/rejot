@@ -1,7 +1,7 @@
 import type { PublicSchemaReference } from "@rejot-dev/contract/cursor";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 
-import type { PostgresClient } from "../util/postgres-client.ts";
+import type { IPostgresClient } from "../util/postgres-client.ts";
 
 type EventRow = {
   operation: "insert" | "update" | "delete";
@@ -14,7 +14,7 @@ type EventRow = {
 };
 
 export class PostgresEventStoreRepository {
-  async insertDataStore(client: PostgresClient, slug: string): Promise<number> {
+  async insertDataStore(client: IPostgresClient, slug: string): Promise<number> {
     const result = await client.query(
       `INSERT INTO rejot_events.data_store (slug)
        VALUES ($1)
@@ -26,12 +26,12 @@ export class PostgresEventStoreRepository {
   }
 
   async writeEvents(
-    client: PostgresClient,
+    client: IPostgresClient,
     transactionId: string,
-    operations: Array<{
+    operations: {
       index: number;
       operation: TransformedOperationWithSource;
-    }>,
+    }[],
   ): Promise<void> {
     for (const { index, operation: op } of operations) {
       await client.query(
@@ -61,7 +61,7 @@ export class PostgresEventStoreRepository {
   }
 
   async getLastTransactionId(
-    client: PostgresClient,
+    client: IPostgresClient,
     { schema }: PublicSchemaReference,
   ): Promise<string | null> {
     const result = await client.query<{ transaction_id: string }>(
@@ -78,7 +78,7 @@ export class PostgresEventStoreRepository {
   }
 
   async readEvents(
-    client: PostgresClient,
+    client: IPostgresClient,
     { schema }: PublicSchemaReference,
     transactionId: string | null,
     limit: number,

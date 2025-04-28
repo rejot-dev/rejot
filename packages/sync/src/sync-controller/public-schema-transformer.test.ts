@@ -2,38 +2,47 @@ import { describe, expect, test } from "bun:test";
 
 import { z } from "zod";
 
-import type { IPublicSchemaTransformationAdapter } from "@rejot-dev/contract/adapter";
-import type { PostgresPublicSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
+import type { AnyIPublicSchemaTransformationAdapter } from "@rejot-dev/contract/adapter";
+import { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
 import type { TableOperation, Transaction, TransformedOperation } from "@rejot-dev/contract/sync";
 import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
 import { PublicSchemaTransformer } from "./public-schema-transformer.ts";
 
 describe("PublicSchemaTransformer", () => {
-  // Mock PostgreSQL transformation adapter
-  class MockPostgresTransformationAdapter
-    implements
-      IPublicSchemaTransformationAdapter<z.infer<typeof PostgresPublicSchemaTransformationSchema>>
-  {
-    transformationType = "postgresql" as const;
+  // Mock Postgres transformation adapter
+  class MockPostgresTransformationAdapter implements AnyIPublicSchemaTransformationAdapter {
+    transformationType = "postgres" as const;
 
     async applyPublicSchemaTransformation(
-      _dataStoreSlug: string,
-      operation: TableOperation,
-      _transformation: z.infer<typeof PostgresPublicSchemaTransformationSchema>,
-    ): Promise<TransformedOperation> {
-      if (operation.type === "delete") {
+      _sourceDataStoreSlug: string,
+      operations: TableOperation[],
+      publicSchemas: Array<z.infer<typeof PublicSchemaSchema>>,
+    ): Promise<TransformedOperation[]> {
+      // For each operation, return a transformed operation with required fields
+      return operations.map((operation) => {
+        const publicSchema = publicSchemas[0];
+        if (operation.type === "delete") {
+          return {
+            type: "delete",
+            sourceManifestSlug: "test-manifest",
+            sourcePublicSchema: {
+              name: publicSchema.name,
+              version: publicSchema.version,
+            },
+            objectKeys: operation.oldKeys || {},
+          };
+        }
         return {
-          type: "delete",
-          keyColumns: operation.keyColumns,
-          objectKeys: operation.oldKeys || {},
+          type: operation.type,
+          sourceManifestSlug: "test-manifest",
+          sourcePublicSchema: {
+            name: publicSchema.name,
+            version: publicSchema.version,
+          },
+          object: operation.new,
         };
-      }
-      return {
-        type: operation.type,
-        keyColumns: operation.keyColumns,
-        object: operation.new,
-      };
+      });
     }
   }
 
@@ -71,7 +80,6 @@ describe("PublicSchemaTransformer", () => {
             name: "test-schema",
             source: {
               dataStoreSlug: "test-connection",
-              tables: ["test_table"],
             },
             outputSchema: {
               type: "object",
@@ -81,16 +89,24 @@ describe("PublicSchemaTransformer", () => {
               },
               required: ["id", "name"],
             },
-            transformations: [
-              {
-                transformationType: "postgresql" as const,
-                table: "test_table",
-                sql: "SELECT * FROM test_table WHERE id = $1",
-              },
-            ],
             version: {
               major: 1,
               minor: 0,
+            },
+            config: {
+              publicSchemaType: "postgres",
+              transformations: [
+                {
+                  operation: "insert",
+                  table: "test_table",
+                  sql: "SELECT * FROM test_table WHERE id = $1",
+                },
+                {
+                  operation: "delete",
+                  table: "test_table",
+                  sql: "DELETE FROM test_table WHERE id = $1",
+                },
+              ],
             },
           },
         ],
@@ -111,7 +127,6 @@ describe("PublicSchemaTransformer", () => {
           type: "insert",
           keyColumns: ["id"],
           table: "test_table",
-          tableSchema: "public",
           new: { id: 1, name: "test" },
         },
       ],
@@ -148,7 +163,6 @@ describe("PublicSchemaTransformer", () => {
           type: "delete",
           keyColumns: ["id"],
           table: "test_table",
-          tableSchema: "public",
           oldKeys: { id: 1 },
         },
       ],
@@ -184,7 +198,6 @@ describe("PublicSchemaTransformer", () => {
           type: "insert",
           keyColumns: ["id"],
           table: "test_table",
-          tableSchema: "public",
           new: { id: 1, name: "test" },
         },
       ],
@@ -193,6 +206,6 @@ describe("PublicSchemaTransformer", () => {
 
     await expect(
       transformer.transformToPublicSchema("test-connection", transaction),
-    ).rejects.toThrow("No transformation adapter found for transformation type: postgresql");
+    ).rejects.toThrow("No transformation adapter found for transformation type: postgres");
   });
 });

@@ -45,15 +45,17 @@ describe("SyncHTTPController", () => {
         name: "test-schema",
         source: {
           dataStoreSlug: "test-source",
-          tables: ["test-table"],
         },
-        transformations: [
-          {
-            transformationType: "postgresql",
-            table: "test_table",
-            sql: "SELECT * FROM test_table",
-          },
-        ],
+        config: {
+          publicSchemaType: "postgres",
+          transformations: [
+            {
+              operation: "insert",
+              table: "test_table",
+              sql: "SELECT * FROM test_table",
+            },
+          ],
+        },
         version: {
           major: 1,
           minor: 0,
@@ -124,15 +126,17 @@ describe("SyncHTTPController", () => {
           name: "test-schema",
           source: {
             dataStoreSlug: "test-source",
-            tables: ["test-table"],
           },
-          transformations: [
-            {
-              transformationType: "postgresql",
-              table: "test_table",
-              sql: "SELECT * FROM test_table",
-            },
-          ],
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "test_table",
+                sql: "SELECT * FROM test_table",
+              },
+            ],
+          },
           version: {
             major: 1,
             minor: 0,

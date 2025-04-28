@@ -60,7 +60,22 @@ type PoolOrClient =
 
 type ConstructorObject = (PoolOrClient & { config: PostgresConfig }) | { config: PostgresConfig };
 
-export class PostgresClient {
+export interface IPostgresClient {
+  connect(): Promise<void>;
+  end(): Promise<void>;
+  query<T extends QueryResultRow = QueryResultRow>(
+    queryText: string,
+    values?: unknown[],
+  ): Promise<QueryResult<T>>;
+  dangerousLeakyTx(): Promise<{ pc: IPostgresClient; rollback: () => Promise<void> }>;
+  tx<T>(cb: (client: IPostgresClient) => Promise<T>): Promise<T>;
+  readonly inTransaction: boolean;
+  readonly config: PostgresConfig;
+  readonly poolOrClient: unknown;
+  readonly pgClient: unknown;
+}
+
+export class PostgresClient implements IPostgresClient {
   readonly #poolOrClient: PoolOrClient;
   readonly #config: PostgresConfig;
 
@@ -185,7 +200,7 @@ export class PostgresClient {
     }
   }
 
-  async dangerousLeakyTx(): Promise<{ pc: PostgresClient; rollback: () => Promise<void> }> {
+  async dangerousLeakyTx(): Promise<{ pc: IPostgresClient; rollback: () => Promise<void> }> {
     if (this.poolOrClient.type !== "pool") {
       throw new Error("Can only open leakyTx on top-level PostgresClient.");
     }
@@ -206,7 +221,7 @@ export class PostgresClient {
     };
   }
 
-  async tx<T>(cb: (client: PostgresClient) => Promise<T>): Promise<T> {
+  async tx<T>(cb: (client: IPostgresClient) => Promise<T>): Promise<T> {
     const poolOrClient = this.#poolOrClient;
 
     if (poolOrClient.type === "pool") {

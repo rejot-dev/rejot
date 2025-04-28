@@ -28,11 +28,7 @@ type BackfillWatermark = {
 
 export function watermarkFromTransaction(transaction: Transaction): BackfillWatermark | null {
   for (const operation of transaction.operations) {
-    if (
-      operation.type === "insert" &&
-      operation.table === "watermarks" &&
-      operation.tableSchema == "rejot"
-    ) {
+    if (operation.type === "insert" && operation.table === "watermarks") {
       const watermark = operation.new["type"];
       if (watermark === "low" || watermark === "high") {
         return {
@@ -47,14 +43,18 @@ export function watermarkFromTransaction(transaction: Transaction): BackfillWate
   return null;
 }
 
-function recordToPublicSchemaOperation(
-  keyColumns: string[],
-  record: Record<string, unknown>,
-): TransformedOperation {
+function recordToPublicSchemaOperation(record: Record<string, unknown>): TransformedOperation {
   return {
     type: "insert",
-    keyColumns: keyColumns,
     object: record,
+    sourceManifestSlug: "legacy-sync-controller",
+    sourcePublicSchema: {
+      name: "legacy-sync-controller",
+      version: {
+        major: 1,
+        minor: 0,
+      },
+    },
   };
 }
 
@@ -108,8 +108,8 @@ export class LegacySyncController {
 
   async #flushResultSet(): Promise<void> {
     let flushCount = 0;
-    for (const [keyColumns, record] of this.#resultSet.getRecordsWithoutDropKeys()) {
-      const operation = recordToPublicSchemaOperation(keyColumns, record);
+    for (const [_keyColumns, record] of this.#resultSet.getRecordsWithoutDropKeys()) {
+      const operation = recordToPublicSchemaOperation(record);
       await this.#sink.writeData(operation);
       flushCount++;
     }

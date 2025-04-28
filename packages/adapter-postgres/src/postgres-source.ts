@@ -13,7 +13,7 @@ import {
 } from "./data-store/pg-replication-repository.ts";
 import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./postgres-consts.ts";
 import { PostgresReplicationListener } from "./postgres-replication-listener.ts";
-import { PostgresClient } from "./util/postgres-client.ts";
+import { type IPostgresClient } from "./util/postgres-client.ts";
 
 const log = getLogger(import.meta.url);
 
@@ -24,22 +24,19 @@ type PostgresOptions = {
 };
 
 type PostgresSourceConfig = {
-  client: PostgresClient;
-  publicSchemaSql: string;
+  client: IPostgresClient;
   options: PostgresOptions;
 };
 
 export class PostgresSource implements IDataSource {
-  #client: PostgresClient;
+  #client: IPostgresClient;
   #replicationListener: PostgresReplicationListener | null = null;
   #publicationName: string;
   #slotName: string;
   #createPublication: boolean;
-  #publicSchemaSql: string;
 
   constructor({
     client,
-    publicSchemaSql,
     options: {
       publicationName = DEFAULT_PUBLICATION_NAME,
       createPublication = true,
@@ -49,7 +46,6 @@ export class PostgresSource implements IDataSource {
     this.#client = client;
     this.#publicationName = publicationName;
     this.#createPublication = createPublication;
-    this.#publicSchemaSql = publicSchemaSql;
     this.#slotName = slotName;
   }
 
@@ -161,37 +157,7 @@ export class PostgresSource implements IDataSource {
    * @param operation The operation to transform
    * @returns The transformed data or null if transformation failed
    */
-  async applyTransformations(operation: TableOperation): Promise<TransformedOperation | null> {
-    if (!this.#publicSchemaSql) {
-      log.warn("No public schema SQL provided for transformation");
-      return null;
-    }
-
-    if (operation.type === "delete") {
-      return null;
-    }
-
-    try {
-      // Get key values for the operation
-      const keyValues = operation.keyColumns.map((column) => operation.new[column]);
-
-      const result = await this.#client.query(this.#publicSchemaSql, keyValues);
-
-      if (result.rows.length !== 1) {
-        log.warn(
-          `Expected 1 row from public schema transformation, got ${result.rows.length}, operation: ${JSON.stringify(operation)}`,
-        );
-        return null;
-      }
-
-      return {
-        type: operation.type,
-        keyColumns: operation.keyColumns,
-        object: result.rows[0],
-      };
-    } catch (error) {
-      log.error("Error applying public schema transformation:", error);
-      return null;
-    }
+  async applyTransformations(_operation: TableOperation): Promise<TransformedOperation | null> {
+    throw new Error("Implementation removed. Legacy code.");
   }
 }

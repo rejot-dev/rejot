@@ -11,3 +11,18 @@ A data store represents a source or destination of data. Data stores are typical
 ## Data Store
 
 <ApiSchema version={"v0"} globalSchema={manifestSchema} schemaRef="#/properties/dataStores/items" />
+
+## Config
+
+The configuration of a data store depends on its type, specified by the `connectionType` field.
+Currently, the following types are supported:
+
+### Postgres
+
+Configuration for PostgreSQL-based data stores.
+
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/dataStores/items/properties/config/anyOf/0"
+/>

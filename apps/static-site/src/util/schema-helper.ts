@@ -13,6 +13,8 @@ export interface JSONSchema {
   items?: JSONSchema;
   description?: string;
   title?: string;
+  enum?: unknown[];
+  const?: unknown;
   [key: string]: unknown;
 }
 
@@ -23,6 +25,8 @@ export type SchemaItem =
       valueType: string;
       required: boolean;
       description: string;
+      enumValues?: unknown[];
+      constValue?: unknown;
     }
   | {
       type: "ref";
@@ -32,6 +36,8 @@ export type SchemaItem =
       valueRef: string;
       required: boolean;
       description: string;
+      enumValues?: unknown[];
+      constValue?: unknown;
     };
 
 /**
@@ -93,6 +99,8 @@ export function extractSchemaItems(subSchema: JSONSchema, baseSchema: JSONSchema
     let isRef = false;
     let valueRef = "";
     let valueRefName = "";
+    let enumValues = propDef.enum;
+    let constValue = propDef.const;
 
     // Handle reference to the JSON Schema meta-schema
     if (propDef.$ref === "http://json-schema.org/draft-07/schema#") {
@@ -127,6 +135,14 @@ export function extractSchemaItems(subSchema: JSONSchema, baseSchema: JSONSchema
         // Array of simple types or refs (refs handled above)
         valueType = `array[${itemsDef?.type ?? "any"}]`;
       }
+      // Check for enum in array items
+      if (itemsDef?.enum) {
+        enumValues = itemsDef.enum;
+      }
+      // Check for const in array items
+      if (itemsDef?.const !== undefined) {
+        constValue = itemsDef.const;
+      }
     }
     // anyOf union (non-array)
     else if (propDef.anyOf) {
@@ -149,6 +165,8 @@ export function extractSchemaItems(subSchema: JSONSchema, baseSchema: JSONSchema
         valueRef,
         required: isRequired,
         description,
+        enumValues,
+        constValue,
       });
     } else {
       items.push({
@@ -157,6 +175,8 @@ export function extractSchemaItems(subSchema: JSONSchema, baseSchema: JSONSchema
         valueType,
         required: isRequired,
         description,
+        enumValues,
+        constValue,
       });
     }
   }

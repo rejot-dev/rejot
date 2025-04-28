@@ -1,5 +1,5 @@
 import { type Migration, PgMigrationManager } from "../migration/pg-migration-manager.ts";
-import type { PostgresClient } from "../util/postgres-client.ts";
+import type { IPostgresClient } from "../util/postgres-client.ts";
 
 export const SCHEMA_NAME = "rejot_data_store";
 export const PUBLIC_SCHEMA_STATE_TABLE = "public_schema_state";
@@ -27,7 +27,7 @@ export const CONSUMER_DATA_STORE_MIGRATIONS: Migration[] = [
 export class PostgresConsumerDataStoreSchemaManager {
   #migrationManager: PgMigrationManager;
 
-  constructor(client: PostgresClient) {
+  constructor(client: IPostgresClient) {
     this.#migrationManager = new PgMigrationManager(
       client,
       SCHEMA_NAME,

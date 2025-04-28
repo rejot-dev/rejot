@@ -1,27 +1,67 @@
 import { z } from "zod";
 
 import type {
+  ConsumerSchemaValidationResult,
   IConsumerSchemaValidationAdapter,
-  ValidationResult,
+  IPublicSchemaValidationAdapter,
+  PublicSchemaValidationResult,
 } from "@rejot-dev/contract/adapter";
-import type { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
+import type {
+  PostgresConsumerSchemaConfigSchema,
+  PostgresPublicSchemaConfigSchema,
+  PublicSchemaSchema,
+} from "@rejot-dev/contract/manifest";
 import type { ConsumerSchemaSchema } from "@rejot-dev/contract/manifest";
-import type { PostgresConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
 
-import { validateConsumerSchema } from "../sql-transformer/sql-transformer.ts";
+import {
+  validateConsumerSchema,
+  validatePublicSchema,
+} from "../sql-transformer/sql-transformer.ts";
+
+export type PostgresPublicSchemaValidationErrorInfo =
+  | { type: "NO_TRANSFORMATION_FOUND" }
+  | { type: "MIXING_POSITIONAL_AND_NAMED_PLACEHOLDERS"; sql: string };
+
+export type PostgresConsumerSchemaValidationErrorInfo =
+  | { type: "NO_TRANSFORMATION_FOUND" }
+  | {
+      type: "MIXING_POSITIONAL_AND_NAMED_PLACEHOLDERS";
+      sql: string;
+      inQuery: "insertOrUpdate" | "delete";
+    }
+  | {
+      type: "NAMED_PLACEHOLDER_NOT_VALID";
+      sql: string;
+      placeholders: string[];
+      availableKeys: string[];
+      inQuery: "insertOrUpdate" | "delete";
+    };
 
 export class PostgresConsumerSchemaValidationAdapter
   implements
-    IConsumerSchemaValidationAdapter<z.infer<typeof PostgresConsumerSchemaTransformationSchema>>
+    IPublicSchemaValidationAdapter<
+      z.infer<typeof PostgresPublicSchemaConfigSchema>,
+      PostgresPublicSchemaValidationErrorInfo
+    >,
+    IConsumerSchemaValidationAdapter<
+      z.infer<typeof PostgresConsumerSchemaConfigSchema>,
+      PostgresConsumerSchemaValidationErrorInfo
+    >
 {
-  get transformationType(): "postgresql" {
-    return "postgresql";
+  get transformationType(): "postgres" {
+    return "postgres";
+  }
+
+  async validatePublicSchema(
+    publicSchema: z.infer<typeof PublicSchemaSchema>,
+  ): Promise<PublicSchemaValidationResult<PostgresPublicSchemaValidationErrorInfo>> {
+    return validatePublicSchema(publicSchema);
   }
 
   async validateConsumerSchema(
     publicSchema: z.infer<typeof PublicSchemaSchema>,
     consumerSchema: z.infer<typeof ConsumerSchemaSchema>,
-  ): Promise<ValidationResult> {
+  ): Promise<ConsumerSchemaValidationResult<PostgresConsumerSchemaValidationErrorInfo>> {
     return validateConsumerSchema(publicSchema, consumerSchema);
   }
 }

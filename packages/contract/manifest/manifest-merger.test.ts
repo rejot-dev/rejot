@@ -144,19 +144,21 @@ describe("ManifestMerger", () => {
       version: { major, minor },
       source: {
         dataStoreSlug: "ds1",
-        tables: ["table1"],
       },
       outputSchema: {
         type: "object",
         properties: {},
       },
-      transformations: [
-        {
-          transformationType: "postgresql" as const,
-          table: "table1",
-          sql,
-        },
-      ],
+      config: {
+        publicSchemaType: "postgres",
+        transformations: [
+          {
+            operation: "insert",
+            table: "table1",
+            sql,
+          },
+        ],
+      },
       definitionFile: `/path/to/someFile.ts`,
     });
 
@@ -246,13 +248,11 @@ describe("ManifestMerger", () => {
         name: publicSchemaName,
         majorVersion,
       },
-      destinationDataStoreSlug: "ds1",
-      transformations: [
-        {
-          transformationType: "postgresql" as const,
-          sql: transformSql,
-        },
-      ],
+      config: {
+        consumerSchemaType: "postgres",
+        destinationDataStoreSlug: "ds1",
+        sql: transformSql,
+      },
       definitionFile: `/path/to/${name}-consumer.ts`,
     });
 
@@ -284,7 +284,7 @@ describe("ManifestMerger", () => {
     // Check consumer1 was updated with new transformation and public schema version
     const consumer1 = result.find((s) => s.name === "consumer1");
     expect(consumer1?.publicSchema.majorVersion).toBe(2);
-    expect(consumer1?.transformations[0].sql).toBe("SELECT id, name FROM source");
+    expect(consumer1?.config.sql).toBe("SELECT id, name FROM source");
 
     // Check consumer2 was updated with new major version
     const consumer2 = result.find((s) => s.name === "consumer2");
@@ -292,7 +292,7 @@ describe("ManifestMerger", () => {
 
     // Check consumer3 was updated with new transformation (last write wins)
     const consumer3 = result.find((s) => s.name === "consumer3");
-    expect(consumer3?.transformations[0].sql).toBe("SELECT * FROM source WHERE id > 0");
+    expect(consumer3?.config.sql).toBe("SELECT * FROM source WHERE id > 0");
 
     // Check consumer4 was added
     const consumer4 = result.find((s) => s.name === "consumer4");
@@ -339,13 +339,11 @@ describe("ManifestMerger", () => {
         name: publicSchemaName,
         majorVersion,
       },
-      destinationDataStoreSlug: "ds1",
-      transformations: [
-        {
-          transformationType: "postgresql" as const,
-          sql: "SELECT * FROM source",
-        },
-      ],
+      config: {
+        consumerSchemaType: "postgres",
+        destinationDataStoreSlug: "ds1",
+        sql: "SELECT * FROM source",
+      },
       definitionFile: `/path/to/${name}-consumer.ts`,
     });
 
@@ -402,19 +400,21 @@ describe("ManifestMerger", () => {
       version: { major, minor },
       source: {
         dataStoreSlug: "ds1",
-        tables: ["table1"],
       },
       outputSchema: {
         type: "object",
         properties: {},
       },
-      transformations: [
-        {
-          transformationType: "postgresql" as const,
-          table: "table1",
-          sql,
-        },
-      ],
+      config: {
+        publicSchemaType: "postgres",
+        transformations: [
+          {
+            operation: "insert",
+            table: "table1",
+            sql,
+          },
+        ],
+      },
       definitionFile: `/path/to/someFile.ts`,
     });
 
@@ -433,11 +433,11 @@ describe("ManifestMerger", () => {
 
     const schema1 = result.find((s) => s.name === "schema1" && s.version.major === 1);
     expect(schema1?.version.minor).toBe(2);
-    expect(schema1?.transformations[0].sql).toBe("SELECT * FROM table1");
+    expect(schema1?.config.transformations[0].sql).toBe("SELECT * FROM table1");
 
     const schema2 = result.find((s) => s.name === "schema2" && s.version.major === 1);
     expect(schema2?.version.minor).toBe(1);
-    expect(schema2?.transformations[0].sql).toBe("SELECT * FROM table1");
+    expect(schema2?.config.transformations[0].sql).toBe("SELECT * FROM table1");
 
     // Verify diagnostics - should show overwrites for both schemas
     expect(diagnostics).toHaveLength(3); // Three overwrites: schema1@1.0->1.1->1.2 and schema2@1.0->1.1
@@ -492,13 +492,11 @@ describe("ManifestMerger", () => {
         name: publicSchemaName,
         majorVersion,
       },
-      destinationDataStoreSlug: "ds1",
-      transformations: [
-        {
-          transformationType: "postgresql" as const,
-          sql: transformSql,
-        },
-      ],
+      config: {
+        consumerSchemaType: "postgres",
+        destinationDataStoreSlug: "ds1",
+        sql: transformSql,
+      },
       definitionFile: `/path/to/${name}-consumer.ts`,
     });
 

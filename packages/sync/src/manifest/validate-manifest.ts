@@ -2,37 +2,23 @@ import { z } from "zod";
 
 import type {
   AnyIConsumerSchemaValidationAdapter,
-  ValidationError,
-  ValidationResult,
+  ConsumerSchemaValidationError,
+  ConsumerSchemaValidationResult,
 } from "@rejot-dev/contract/adapter";
 import type { SyncManifestSchema } from "@rejot-dev/contract/manifest";
 
 /**
  * Formats a validation error for display
  */
-function formatValidationError(error: ValidationError): string {
-  let message = `Error: ${error.message}`;
-
-  if (error.transformationIndex !== undefined) {
-    message += `\nTransformation index: ${error.transformationIndex}`;
-  }
-
-  if (error.placeholders && error.placeholders.length > 0) {
-    message += `\nPlaceholders: ${error.placeholders.join(", ")}`;
-  }
-
-  if (error.sql) {
-    const sqlPreview = error.sql.length > 50 ? `${error.sql.substring(0, 47)}...` : error.sql;
-    message += `\nSQL: ${sqlPreview}`;
-  }
-
-  return message;
+function formatValidationError(error: ConsumerSchemaValidationError<unknown>): string {
+  // TODO: Later we can use the adapter to format the error.
+  return `Error: ${error.message}`;
 }
 
 /**
  * Formats validation result for display
  */
-function formatValidationResult(result: ValidationResult): string {
+function formatValidationResult(result: ConsumerSchemaValidationResult): string {
   if (result.isValid) {
     return `✅ Validated consumer schema for public schema '${result.publicSchemaName}'.`;
   }
@@ -58,7 +44,7 @@ export async function validateManifest(
   const consumerSchemas = manifest.consumerSchemas ?? [];
   const publicSchemas = manifest.publicSchemas ?? [];
 
-  const validationResults: ValidationResult[] = [];
+  const validationResults: ConsumerSchemaValidationResult[] = [];
 
   for (const validationAdapter of consumerSchemaValidationAdapters) {
     for (const consumerSchema of consumerSchemas) {
@@ -73,12 +59,7 @@ export async function validateManifest(
       );
 
       if (matchingPublicSchema) {
-        // Check if any transformation matches the adapter's type
-        const hasMatchingTransformation = consumerSchema.transformations.some(
-          (t) => t.transformationType === validationAdapter.transformationType,
-        );
-
-        if (hasMatchingTransformation) {
+        if (consumerSchema.config.consumerSchemaType === validationAdapter.transformationType) {
           const result = await validationAdapter.validateConsumerSchema(
             matchingPublicSchema,
             consumerSchema,

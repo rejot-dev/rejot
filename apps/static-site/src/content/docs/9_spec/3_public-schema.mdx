@@ -34,11 +34,27 @@ Public schemas define how data is exposed from a data store managed by ReJot, se
   schemaRef="#/properties/publicSchemas/items/properties/version"
 />
 
-## Transformation
+## Config
 
-<span id="transformations"></span>
+The configuration of a public schema depends on its type, specified by the `publicSchemaType` field.
+Currently, the following types are supported:
+
+### Postgres
+
+Configuration for PostgreSQL-based public schemas.
+
 <ApiSchema
   version={"v0"}
   globalSchema={manifestSchema}
-  schemaRef="#/properties/publicSchemas/items/properties/transformations/items"
+  schemaRef="#/properties/publicSchemas/items/properties/config/anyOf/0"
+/>
+
+#### Transformations
+
+Transformations define how changes in source tables are reflected in the public schema.
+
+<ApiSchema
+  version={"v0"}
+  globalSchema={manifestSchema}
+  schemaRef="#/properties/publicSchemas/items/properties/config/anyOf/0/properties/transformations/items"
 />

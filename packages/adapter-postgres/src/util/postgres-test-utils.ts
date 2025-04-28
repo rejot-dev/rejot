@@ -1,13 +1,14 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe } from "bun:test";
 
 import {
+  type IPostgresClient,
   parsePostgresConnectionString,
   PostgresClient,
   type PostgresConfig,
 } from "./postgres-client.ts";
 
 export interface DbTestContext {
-  client: PostgresClient;
+  client: IPostgresClient;
 }
 
 export function getTestConnectionConfig(): PostgresConfig {
@@ -18,14 +19,14 @@ export function getTestConnectionConfig(): PostgresConfig {
   return parsePostgresConnectionString(connectionString);
 }
 
-export function getTestClient(): PostgresClient {
+export function getTestClient(): IPostgresClient {
   return PostgresClient.fromConfig(getTestConnectionConfig());
 }
 
 // Auto rollback any writes that happend during tests
 export function pgRollbackDescribe(name: string, fn: (ctx: DbTestContext) => void): void {
   let rollback: (() => Promise<void>) | null = null;
-  let ancestorClient: PostgresClient | null = null;
+  let ancestorClient: IPostgresClient | null = null;
 
   const context: DbTestContext = {
     client: null!,

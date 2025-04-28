@@ -4,11 +4,11 @@ import { type Cursor } from "../cursor/cursors.ts";
 import type { IEventStore, TransformedOperationWithSource } from "../event-store/event-store.ts";
 import {
   ConnectionConfigSchema,
+  type ConsumerSchemaConfigSchema,
   type ConsumerSchemaSchema,
-  ConsumerSchemaTransformationSchema,
   type DataStoreConfigSchema,
+  type PublicSchemaConfigSchema,
   type PublicSchemaSchema,
-  PublicSchemaTransformationSchema,
 } from "../manifest/manifest.ts";
 import type {
   IConnection,
@@ -18,10 +18,20 @@ import type {
   TransformedOperation,
 } from "../sync/sync.ts";
 
-// Define ValidationResult interface at the contract level
-export interface ValidationResult {
+export interface PublicSchemaValidationResult<T> {
   isValid: boolean;
-  errors: ValidationError[];
+  publicSchemaName: string;
+  errors: PublicSchemaValidationError<T>[];
+}
+
+export interface PublicSchemaValidationError<T = unknown> {
+  message: string;
+  info: T;
+}
+
+export interface ConsumerSchemaValidationResult<T = unknown> {
+  isValid: boolean;
+  errors: ConsumerSchemaValidationError<T>[];
   publicSchemaName: string;
   consumerSchemaInfo: {
     sourceManifestSlug: string;
@@ -29,11 +39,9 @@ export interface ValidationResult {
   };
 }
 
-export interface ValidationError {
+export interface ConsumerSchemaValidationError<T> {
   message: string;
-  transformationIndex?: number;
-  sql?: string;
-  placeholders?: string[];
+  info?: T;
 }
 
 export interface CreateSourceOptions {
@@ -42,10 +50,10 @@ export interface CreateSourceOptions {
 }
 
 export interface OperationTransformationPair<
-  TTransformation extends z.infer<typeof ConsumerSchemaTransformationSchema>,
+  TSchemaConfig extends z.infer<typeof ConsumerSchemaConfigSchema>,
 > {
   operation: TransformedOperationWithSource;
-  transformations: TTransformation[];
+  config: TSchemaConfig;
 }
 
 export interface IConnectionAdapter<
@@ -80,25 +88,25 @@ export type AnyIConnectionAdapter = IConnectionAdapter<
 >;
 
 export interface IPublicSchemaTransformationAdapter<
-  TTransformation extends z.infer<typeof PublicSchemaTransformationSchema>,
+  TSchemaConfig extends z.infer<typeof PublicSchemaConfigSchema>,
 > {
-  transformationType: TTransformation["transformationType"];
+  transformationType: TSchemaConfig["publicSchemaType"];
 
   applyPublicSchemaTransformation(
     sourceDataStoreSlug: string,
-    operation: TableOperation,
-    transformation: TTransformation,
-  ): Promise<TransformedOperation | null>;
+    operations: TableOperation[],
+    publicSchemas: Extract<z.infer<typeof PublicSchemaSchema>, { config: TSchemaConfig }>[],
+  ): Promise<TransformedOperation[]>;
 }
 
 export type AnyIPublicSchemaTransformationAdapter = IPublicSchemaTransformationAdapter<
-  z.infer<typeof PublicSchemaTransformationSchema>
+  z.infer<typeof PublicSchemaConfigSchema>
 >;
 
 export interface IConsumerSchemaTransformationAdapter<
-  TTransformation extends z.infer<typeof ConsumerSchemaTransformationSchema>,
+  TSchemaConfig extends z.infer<typeof ConsumerSchemaConfigSchema>,
 > {
-  transformationType: TTransformation["transformationType"];
+  transformationType: TSchemaConfig["consumerSchemaType"];
   connectionType: string;
 
   getCursors(destinationDataStoreSlug: string): Promise<Cursor[]>;
@@ -106,27 +114,47 @@ export interface IConsumerSchemaTransformationAdapter<
   applyConsumerSchemaTransformation(
     destinationDataStoreSlug: string,
     transactionId: string,
-    operationTransformationPairs: OperationTransformationPair<TTransformation>[],
+    operations: TransformedOperation[],
+    consumerSchemas: Extract<z.infer<typeof ConsumerSchemaSchema>, { config: TSchemaConfig }>[],
+    // operationTransformationPairs: OperationTransformationPair<TSchemaConfig>[],
   ): Promise<TransformedOperationWithSource[]>;
 }
 
 export type AnyIConsumerSchemaTransformationAdapter = IConsumerSchemaTransformationAdapter<
-  z.infer<typeof ConsumerSchemaTransformationSchema>
+  z.infer<typeof ConsumerSchemaConfigSchema>
 >;
 
 export interface IConsumerSchemaValidationAdapter<
-  TTransformation extends z.infer<typeof ConsumerSchemaTransformationSchema>,
+  TSchemaConfig extends z.infer<typeof ConsumerSchemaConfigSchema>,
+  TErrorInfo,
 > {
-  transformationType: TTransformation["transformationType"];
+  transformationType: TSchemaConfig["consumerSchemaType"];
 
   validateConsumerSchema(
     publicSchema: z.infer<typeof PublicSchemaSchema>,
     consumerSchema: z.infer<typeof ConsumerSchemaSchema>,
-  ): Promise<ValidationResult>;
+  ): Promise<ConsumerSchemaValidationResult<TErrorInfo>>;
 }
 
 export type AnyIConsumerSchemaValidationAdapter = IConsumerSchemaValidationAdapter<
-  z.infer<typeof ConsumerSchemaTransformationSchema>
+  z.infer<typeof ConsumerSchemaConfigSchema>,
+  unknown
+>;
+
+export interface IPublicSchemaValidationAdapter<
+  TSchemaConfig extends z.infer<typeof PublicSchemaConfigSchema>,
+  TErrorInfo,
+> {
+  transformationType: TSchemaConfig["publicSchemaType"];
+
+  validatePublicSchema(
+    publicSchema: z.infer<typeof PublicSchemaSchema>,
+  ): Promise<PublicSchemaValidationResult<TErrorInfo>>;
+}
+
+export type AnyIPublicSchemaValidationAdapter = IPublicSchemaValidationAdapter<
+  z.infer<typeof PublicSchemaConfigSchema>,
+  unknown
 >;
 
 export interface Column {

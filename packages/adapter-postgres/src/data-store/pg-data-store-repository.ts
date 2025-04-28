@@ -1,4 +1,4 @@
-import type { PostgresClient } from "../util/postgres-client.ts";
+import type { IPostgresClient } from "../util/postgres-client.ts";
 
 export type PublicSchemaReference = {
   manifestSlug: string;
@@ -11,7 +11,7 @@ export type PublicSchemaState = {
   lastSeenTransactionId: string | null;
 };
 
-export async function getPublicSchemaStates(client: PostgresClient): Promise<PublicSchemaState[]> {
+export async function getPublicSchemaStates(client: IPostgresClient): Promise<PublicSchemaState[]> {
   const result = await client.query(
     `SELECT manifest_slug, public_schema_name, public_schema_major_version, last_seen_transaction_id
      FROM rejot_data_store.public_schema_state`,
@@ -29,7 +29,7 @@ export async function getPublicSchemaStates(client: PostgresClient): Promise<Pub
 }
 
 export async function updatePublicSchemaState(
-  client: PostgresClient,
+  client: IPostgresClient,
   reference: PublicSchemaReference,
   lastSeenTransactionId: string,
 ): Promise<boolean> {

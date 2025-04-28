@@ -7,13 +7,11 @@ type OperationType = "insert" | "update" | "delete";
 /**
  * Table operations, i.e. data mutations to a table used to generate a public schema.
  *
- * @TODO tableSchema is postgres specific and should be removed.
  */
 export interface TableOperationBase {
   type: OperationType;
   keyColumns: string[];
   table: string;
-  tableSchema: string;
 }
 
 export interface TableOperationInsert extends TableOperationBase {
@@ -36,7 +34,14 @@ export type TableOperation = TableOperationInsert | TableOperationUpdate | Table
 /** Public schema operations, i.e. data mutations after the public schema transformations have been applied */
 export interface TransformedOperationBase {
   type: OperationType;
-  keyColumns: string[];
+  sourceManifestSlug: string;
+  sourcePublicSchema: {
+    name: string;
+    version: {
+      major: number;
+      minor: number;
+    };
+  };
 }
 
 export interface TransformedOperationInsert extends TransformedOperationBase {

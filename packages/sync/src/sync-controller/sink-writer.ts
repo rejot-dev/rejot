@@ -3,16 +3,29 @@ import { z } from "zod";
 import type {
   AnyIConnectionAdapter,
   AnyIConsumerSchemaTransformationAdapter,
-  OperationTransformationPair,
 } from "@rejot-dev/contract/adapter";
 import { Cursors } from "@rejot-dev/contract/cursor";
+import { ReJotError } from "@rejot-dev/contract/error";
 import type { TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
 import { getLogger } from "@rejot-dev/contract/logger";
-import type { ConsumerSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
-import type { IDataSink } from "@rejot-dev/contract/sync";
+import type {
+  ConsumerSchemaConfigSchema,
+  ConsumerSchemaSchema,
+} from "@rejot-dev/contract/manifest";
+import type { IDataSink, TransformedOperation } from "@rejot-dev/contract/sync";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
 const log = getLogger(import.meta.url);
+
+export class SinkWriterError extends ReJotError {
+  get name() {
+    return "SinkWriterError";
+  }
+
+  constructor(message: string) {
+    super(message);
+  }
+}
 
 export class SinkWriter {
   readonly #syncManifest: SyncManifest;
@@ -54,21 +67,34 @@ export class SinkWriter {
     operations,
     transactionId,
   }: {
-    operations: TransformedOperationWithSource[];
+    operations: TransformedOperation[];
     transactionId: string;
   }) {
-    // Group operations by destination and transformation type
     const operationsByDestinationAndType = this.#groupOperationsByDestinationAndType(operations);
 
     // Execute operations for each destination and type
     const allPromises: Promise<TransformedOperationWithSource[]>[] = [];
 
     for (const [destinationSlug, operationsByType] of operationsByDestinationAndType.entries()) {
-      for (const [transformationType, pairs] of operationsByType.entries()) {
-        const adapter = this.#getTransformationAdapter(transformationType);
+      const destinationDataStores = this.#syncManifest.getDestinationDataStores();
+      const destinationDataStore = destinationDataStores.find(
+        (ds) => ds.connectionSlug === destinationSlug,
+      );
+
+      if (!destinationDataStore) {
+        throw new SinkWriterError(`Destination data store not found: ${destinationSlug}`);
+      }
+
+      for (const [consumerSchemaType, operationSchemaPairs] of operationsByType.entries()) {
+        const adapter = this.#getConsumerSchemaAdapter(consumerSchemaType);
 
         allPromises.push(
-          adapter.applyConsumerSchemaTransformation(destinationSlug, transactionId, pairs),
+          adapter.applyConsumerSchemaTransformation(
+            destinationSlug,
+            transactionId,
+            operationSchemaPairs.map((pair) => pair.operation),
+            operationSchemaPairs.map((pair) => pair.consumerSchema),
+          ),
         );
       }
     }
@@ -77,66 +103,70 @@ export class SinkWriter {
     log.trace("written", { operations: operations.length });
   }
 
-  #groupOperationsByDestinationAndType(operations: TransformedOperationWithSource[]): Map<
+  #groupOperationsByDestinationAndType(operations: TransformedOperation[]): Map<
     string, // destinationSlug
     Map<
-      z.infer<typeof ConsumerSchemaTransformationSchema>["transformationType"],
-      OperationTransformationPair<z.infer<typeof ConsumerSchemaTransformationSchema>>[]
+      z.infer<typeof ConsumerSchemaConfigSchema>["consumerSchemaType"],
+      {
+        operation: TransformedOperation;
+        consumerSchema: z.infer<typeof ConsumerSchemaSchema>;
+      }[]
     >
   > {
-    // Maps destination slug -> transformation type -> array of operation-transformation pairs
+    // Maps destination slug -> consumer schema type -> array of operation-schema pairs
     const result = new Map<
       string,
       Map<
-        z.infer<typeof ConsumerSchemaTransformationSchema>["transformationType"],
-        OperationTransformationPair<z.infer<typeof ConsumerSchemaTransformationSchema>>[]
+        z.infer<typeof ConsumerSchemaConfigSchema>["consumerSchemaType"],
+        {
+          operation: TransformedOperation;
+          consumerSchema: z.infer<typeof ConsumerSchemaSchema>;
+        }[]
       >
     >();
 
     for (const operation of operations) {
       const consumerSchemas = this.#syncManifest.getConsumerSchemasForPublicSchema(operation);
 
-      // Group transformations by destination and type
+      // Group by destination and consumer schema type
       for (const consumerSchema of consumerSchemas) {
-        const destinationSlug = consumerSchema.destinationDataStoreSlug;
+        const destinationSlug = consumerSchema.config.destinationDataStoreSlug;
+        const consumerSchemaType = consumerSchema.config.consumerSchemaType;
 
+        // Ensure outer map has the destinationSlug
         if (!result.has(destinationSlug)) {
           result.set(destinationSlug, new Map());
         }
+        const operationsByType = result.get(destinationSlug)!;
 
-        const transformationsByType = result.get(destinationSlug)!;
-
-        // Group transformations by type
-        const transformationsByTransformationType = new Map<
-          z.infer<typeof ConsumerSchemaTransformationSchema>["transformationType"],
-          z.infer<typeof ConsumerSchemaTransformationSchema>[]
-        >();
-
-        for (const transformation of consumerSchema.transformations) {
-          const type = transformation.transformationType;
-
-          if (!transformationsByTransformationType.has(type)) {
-            transformationsByTransformationType.set(type, []);
-          }
-
-          transformationsByTransformationType.get(type)!.push(transformation);
+        // Ensure inner map has the consumerSchemaType
+        if (!operationsByType.has(consumerSchemaType)) {
+          operationsByType.set(consumerSchemaType, []);
         }
+        const operationSchemaPairs = operationsByType.get(consumerSchemaType)!;
 
-        // Add operation-transformation pairs to the result
-        for (const [type, transformations] of transformationsByTransformationType.entries()) {
-          if (!transformationsByType.has(type)) {
-            transformationsByType.set(type, []);
-          }
-
-          transformationsByType.get(type)!.push({
-            operation,
-            transformations,
-          });
-        }
+        // Add the operation and its corresponding schema
+        operationSchemaPairs.push({ operation, consumerSchema });
       }
     }
 
     return result;
+  }
+
+  #getConsumerSchemaAdapter(
+    consumerSchemaType: z.infer<typeof ConsumerSchemaConfigSchema>["consumerSchemaType"],
+  ) {
+    const adapter = this.#consumerSchemaTransformationAdapters.find(
+      (adapter) => adapter.transformationType === consumerSchemaType,
+    );
+
+    if (!adapter) {
+      throw new Error(
+        `No consumer schema adapter found for consumer schema type: ${consumerSchemaType}`,
+      );
+    }
+
+    return adapter;
   }
 
   #createSinks() {
@@ -165,21 +195,5 @@ export class SinkWriter {
   async close() {
     await Promise.all([...Array.from(this.#sinks.values()).map((sink) => sink.close())]);
     log.debug("SinkWriter closed");
-  }
-
-  #getTransformationAdapter(
-    transformationType: z.infer<typeof ConsumerSchemaTransformationSchema>["transformationType"],
-  ) {
-    const transformationAdapter = this.#consumerSchemaTransformationAdapters.find(
-      (adapter) => adapter.transformationType === transformationType,
-    );
-
-    if (!transformationAdapter) {
-      throw new Error(
-        `No transformation adapter found for transformation type: ${transformationType}`,
-      );
-    }
-
-    return transformationAdapter;
   }
 }
