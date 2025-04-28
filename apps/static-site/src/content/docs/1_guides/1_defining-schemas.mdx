@@ -167,6 +167,12 @@ This command will:
 2. Generate the corresponding manifest entries
 3. Update your manifest file (if `--write` is specified)
 
+The manifest includes a `definitionFile` key for each schema, which points to the actual source file
+and is re-used later on to update collected schemas.
+
+If you want to change a schema, edit the file referenced by `definitionFile` and run the collect
+command again.
+
 ## Next Steps
 
 Now that you know how to define schemas, you can
