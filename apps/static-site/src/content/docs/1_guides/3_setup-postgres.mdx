@@ -38,25 +38,24 @@ SET
 
 ## Creating a ReJot Database Role
 
-We recommend creating a separate role for ReJot and giving read only access to that user. If you
-want to get started quickly locally you can continue with the default `postgres` superuser.
+We recommend creating a separate role for ReJot and giving access to that user. If you want to get
+started quickly locally you can continue with the default `postgres` superuser.
 
-```sql
+{/* Some reason the sql formatter can't handle these sql queries */}
+
+```
 CREATE ROLE rejot_role
 WITH
   REPLICATION LOGIN PASSWORD '<some secure password>';
 
 GRANT
-SELECT
-,
-  INSERT,
-UPDATE,
-DELETE ON ALL TABLES IN SCHEMA public TO rejot_role;
+  SELECT, INSERT, UPDATE, DELETE
+ON ALL TABLES IN SCHEMA public TO rejot_role;
 ```
 
 ## Creating a PostgreSQL Publication
 
-A Postgres [Publication][pg-create-publication] is defined on a primary postgres node and defines
+A PostgreSQL [Publication][pg-create-publication] is defined on a primary postgres node and defines
 which set of tables in a database can be replicated to other systems.
 
 [Creating a publication][pg-create-publication] can be done as follows:
@@ -67,7 +66,7 @@ another_table;
 ```
 
 Often it is convenient to create a publication for all tables, a sync service will create this
-publication for you on first launch.
+default publication for you on first launch.
 
 ```sql
 CREATE PUBLICATION rejot_publication FOR ALL TABLES;
