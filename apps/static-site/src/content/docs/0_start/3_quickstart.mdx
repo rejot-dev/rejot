@@ -16,7 +16,8 @@ consuming data and configure it using a single manifest file.
 ## Initialize a ReJot Manifest
 
 First, we'll have to initialize a [Manifest](/docs/spec/manifest) file. This file contains all
-configuration that ReJot needs in order to sync between datastores.
+configuration that ReJot needs in order to sync between datastores. By default this will create a
+`rejot-manifest.json` file in the working directory.
 
 ```bash
 rejot-cli manifest init --slug "my-sync-project"
@@ -57,6 +58,10 @@ for transforming the internal schema to the public schema and must include a `WH
 the primary key for that table. Note that in the example query, the `$1` placeholder will be the
 primary key value for incoming updates.
 
+Public and Consumer Schemas can be created through Typescript code, create a `schemas.ts` file
+containing your schemas. See our full [guide on defining schemas](/docs/guides/defining-schemas) for
+more detailed description of the schema definition process.
+
 ```typescript
 // schemas.ts
 import { z } from "zod";
@@ -70,7 +75,7 @@ import { createPublicSchema } from "@rejot-dev/contract/public-schema";
 
 // Public schema definition for api_key table
 const apiKeyPublicSchema = createPublicSchema("my-public-schema", {
-  source: { dataStoreSlug: "source-db", tables: ["api_key"] },
+  source: { dataStoreSlug: "my-db", tables: ["api_key"] },
   outputSchema: z.object({
     id: z.string(),
     api_key: z.string(),
@@ -96,7 +101,7 @@ const apiKeyConsumerSchema = createConsumerSchema("my-consumer-schema", {
       majorVersion: 1,
     },
   },
-  destinationDataStoreSlug: "destination-db",
+  destinationDataStoreSlug: "my-db",
   transformations: [
     createPostgresConsumerSchemaTransformation(
       `INSERT INTO target_table (id, api_key) VALUES (:id, :api_key)
@@ -113,7 +118,8 @@ export default {
 
 ### Materialize Schemas to Manifest
 
-Update your manifest with the schema definitions:
+Before your newly defined schemas can be used, they must me collected into your manifest file. You
+can do this using the `collect` command in the CLI:
 
 ```bash
 rejot-cli collect schemas.ts --write
@@ -121,7 +127,7 @@ rejot-cli collect schemas.ts --write
 
 ## Create Target Table in Destination
 
-Before starting synchronization, create the target table in your destination database:
+Before launching the synchronization process, create the target table in your destination database:
 
 ```sql
 CREATE TABLE target_table (id SERIAL PRIMARY KEY, api_key TEXT NOT NULL);
@@ -135,4 +141,5 @@ Start the synchronization process:
 rejot-cli manifest sync rejot-manifest.json
 ```
 
-You're now set up to synchronize PostgreSQL databases with ReJot using manifests!
+Any new writes to your source tables in the source datastore should now be transformed and written
+into the destination datastore!
