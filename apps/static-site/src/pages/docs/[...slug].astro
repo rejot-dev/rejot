@@ -14,10 +14,12 @@ import SearchModal from "@/components/SearchModal.astro";
 
 export async function getStaticPaths() {
   const docsEntries = await getCollection("docs");
-  return docsEntries.map((entry) => ({
-    params: { slug: normalizeSlug(entry.id) || undefined },
-    props: entry,
-  }));
+  return docsEntries
+    .filter((entry) => !entry.filePath?.includes("index.md"))
+    .map((entry) => ({
+      params: { slug: normalizeSlug(entry.id) || undefined },
+      props: entry,
+    }));
 }
 
 type Props = CollectionEntry<"docs">;
