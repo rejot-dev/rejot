@@ -166,7 +166,12 @@ export const SyncManifestSchema = z.object({
     .describe("Consumer Schemas governed by this manifest.")
     .optional(),
 
-  workspaces: z.array(z.string()).optional(),
+  workspaces: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "(Relative) path(s) to other manifest files that should be combined to create the workspace.",
+    ),
 });
 
 export {

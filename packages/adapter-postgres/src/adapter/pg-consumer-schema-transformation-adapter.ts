@@ -19,17 +19,48 @@ import { type IPostgresConnectionAdapter } from "./pg-connection-adapter.ts";
 
 const log = getLogger(import.meta.url);
 
-// Define clearer type alias for the specific consumer schema structure we're dealing with
-type ConsumerSchemaWithPostgresConfig = Extract<
+export type ConsumerSchemaWithPostgresConfig = Extract<
   z.infer<typeof ConsumerSchemaSchema>,
   { config: z.infer<typeof PostgresConsumerSchemaConfigSchema> }
 >;
 
-// Define the Match type for operation-schema pairs
-type Match = {
+export type Match = {
   operation: TransformedOperation;
   consumerSchema: ConsumerSchemaWithPostgresConfig;
 };
+
+function sortMatches(a: Match, b: Match): number {
+  if (a.consumerSchema.sourceManifestSlug !== b.consumerSchema.sourceManifestSlug) {
+    return a.consumerSchema.sourceManifestSlug.localeCompare(b.consumerSchema.sourceManifestSlug);
+  }
+  if (a.consumerSchema.publicSchema.name !== b.consumerSchema.publicSchema.name) {
+    return a.consumerSchema.publicSchema.name.localeCompare(b.consumerSchema.publicSchema.name);
+  }
+  if (a.consumerSchema.publicSchema.majorVersion !== b.consumerSchema.publicSchema.majorVersion) {
+    return a.consumerSchema.publicSchema.majorVersion - b.consumerSchema.publicSchema.majorVersion;
+  }
+  return 0;
+}
+
+export function matchAndSortOperations(
+  operations: TransformedOperation[],
+  consumerSchemas: ConsumerSchemaWithPostgresConfig[],
+): Match[] {
+  const matches: Match[] = [];
+  for (const operation of operations) {
+    for (const consumerSchema of consumerSchemas) {
+      if (
+        operation.sourceManifestSlug === consumerSchema.sourceManifestSlug &&
+        operation.sourcePublicSchema.name === consumerSchema.publicSchema.name &&
+        operation.sourcePublicSchema.version.major === consumerSchema.publicSchema.majorVersion
+      ) {
+        matches.push({ operation, consumerSchema });
+      }
+    }
+  }
+  matches.sort(sortMatches);
+  return matches;
+}
 
 export class PostgresConsumerSchemaTransformationAdapter
   implements
@@ -71,44 +102,6 @@ export class PostgresConsumerSchemaTransformationAdapter
     }));
   }
 
-  static #sortMatches(a: Match, b: Match): number {
-    if (a.consumerSchema.sourceManifestSlug !== b.consumerSchema.sourceManifestSlug) {
-      return a.consumerSchema.sourceManifestSlug.localeCompare(b.consumerSchema.sourceManifestSlug);
-    }
-    if (a.consumerSchema.publicSchema.name !== b.consumerSchema.publicSchema.name) {
-      return a.consumerSchema.publicSchema.name.localeCompare(b.consumerSchema.publicSchema.name);
-    }
-    if (a.consumerSchema.publicSchema.majorVersion !== b.consumerSchema.publicSchema.majorVersion) {
-      return (
-        a.consumerSchema.publicSchema.majorVersion - b.consumerSchema.publicSchema.majorVersion
-      );
-    }
-
-    return 0;
-  }
-
-  // Helper function to match operations with applicable consumer schemas and sort them
-  static #matchAndSortOperations(
-    operations: TransformedOperation[],
-    consumerSchemas: ConsumerSchemaWithPostgresConfig[],
-  ): Match[] {
-    const matches: Match[] = [];
-    for (const operation of operations) {
-      for (const consumerSchema of consumerSchemas) {
-        // Match based on source manifest and schema version
-        if (
-          operation.sourceManifestSlug === consumerSchema.sourceManifestSlug &&
-          operation.sourcePublicSchema.name === consumerSchema.publicSchema.name &&
-          operation.sourcePublicSchema.version.major === consumerSchema.publicSchema.majorVersion
-        ) {
-          matches.push({ operation, consumerSchema });
-        }
-      }
-    }
-    matches.sort(PostgresConsumerSchemaTransformationAdapter.#sortMatches);
-    return matches;
-  }
-
   async applyConsumerSchemaTransformation(
     destinationDataStoreSlug: string,
     transactionId: string,
@@ -124,10 +117,7 @@ export class PostgresConsumerSchemaTransformationAdapter
       `Preparing consumer schema application to '${destinationDataStoreSlug}' for ${operations.length} operations and ${consumerSchemas.length} schemas.`,
     );
 
-    const sortedMatches = PostgresConsumerSchemaTransformationAdapter.#matchAndSortOperations(
-      operations,
-      consumerSchemas,
-    );
+    const sortedMatches = matchAndSortOperations(operations, consumerSchemas);
 
     if (sortedMatches.length === 0) {
       log.debug("No matching operations/consumer schemas found.");

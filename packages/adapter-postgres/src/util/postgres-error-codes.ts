@@ -10,6 +10,7 @@ export const PG_INVALID_TEXT_REPRESENTATION = "22P02";
 
 // Class 42 — Syntax Error or Access Rule Violation
 export const PG_DUPLICATE_OBJECT = "42710";
+export const PG_COULD_NOT_DETERMINE_DATA_TYPE = "42P18";
 
 // Class 55 - Object Not In Prerequisite State
 export const PG_INVALID_FUNCTION_OR_OPERATOR = "42883";

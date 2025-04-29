@@ -359,7 +359,8 @@
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "(Relative) path(s) to other manifest files that should be combined to create the workspace."
     }
   },
   "required": [

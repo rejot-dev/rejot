@@ -158,32 +158,43 @@ describe("PostgresConsumerSchemaValidationAdapter", () => {
 
       const result = await adapter.validateConsumerSchema(publicSchema, consumerSchema);
       expect(result.isValid).toBe(false);
-      expect(result.errors).toHaveLength(2);
+      expect(result.errors).toHaveLength(3);
 
       // First error should be about mixing placeholders
       const mixingError = result.errors[0];
       expect(mixingError.message).toContain("Mixing positional ($) and named (:) placeholders");
-
       if (
         !mixingError.info ||
         mixingError.info.type !== "MIXING_POSITIONAL_AND_NAMED_PLACEHOLDERS"
       ) {
         throw new Error("Expected MIXING_POSITIONAL_AND_NAMED_PLACEHOLDERS error");
       }
-
       expect(mixingError.info.sql).toContain("INSERT INTO users");
       expect(mixingError.info.inQuery).toBe("insertOrUpdate");
 
-      // Second error should be about invalid placeholders
-      const placeholderError = result.errors[1];
+      // Second error should be about positional placeholders not being sequential
+      const positionalError = result.errors[1];
+      expect(positionalError.message).toContain(
+        "Positional placeholders must be sequential and start at $1",
+      );
+      if (
+        !positionalError.info ||
+        positionalError.info.type !== "POSITIONAL_PLACEHOLDER_NOT_SEQUENTIAL"
+      ) {
+        throw new Error("Expected POSITIONAL_PLACEHOLDER_NOT_SEQUENTIAL error");
+      }
+      expect(positionalError.info.sql).toContain("INSERT INTO users");
+      expect(positionalError.info.placeholders).toEqual(["$1", ":name", "$3", ":created_at"]);
+      expect(positionalError.info.inQuery).toBe("insertOrUpdate");
+
+      // Third error should be about invalid placeholders
+      const placeholderError = result.errors[2];
       expect(placeholderError.message).toContain(
         "Transformation contains placeholders not available in the schema: $1, $3",
       );
-
       if (!placeholderError.info || placeholderError.info.type !== "NAMED_PLACEHOLDER_NOT_VALID") {
         throw new Error("Expected NAMED_PLACEHOLDER_NOT_VALID error");
       }
-
       expect(placeholderError.info.availableKeys).toEqual(["id", "name", "email", "created_at"]);
       expect(placeholderError.info.placeholders).toContain("$1");
       expect(placeholderError.info.placeholders).toContain("$3");

@@ -19,7 +19,7 @@ export type Match = {
   publicSchema: Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >;
+  > & { sourceManifestSlug: string };
   transformation: z.infer<typeof PostgresPublicSchemaConfigSchema>["transformations"][number];
 };
 
@@ -68,10 +68,10 @@ export class PostgresPublicSchemaTransformationAdapter
   async applyPublicSchemaTransformation(
     sourceDataStoreSlug: string,
     operations: TableOperation[],
-    publicSchemas: Extract<
+    publicSchemas: (Extract<
       z.infer<typeof PublicSchemaSchema>,
       { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-    >[],
+    > & { sourceManifestSlug: string })[],
   ): Promise<TransformedOperation[]> {
     const connection = this.#connectionAdapter.getConnection(sourceDataStoreSlug);
     if (!connection) {
@@ -102,8 +102,7 @@ export class PostgresPublicSchemaTransformationAdapter
       for (const { operation, publicSchema, transformation } of matches) {
         log.trace(
           `Applying transformation for ${publicSchema.name}@${publicSchema.version.major}.${publicSchema.version.minor}` +
-            ` on table ${operation.table}`,
-          operation,
+            ` on table '${operation.table}'.`,
         );
 
         const { sql, values } = await convertNamedToPositionalPlaceholders(
@@ -112,6 +111,12 @@ export class PostgresPublicSchemaTransformationAdapter
             ? operation.new
             : operation.oldKeys,
         );
+
+        log.trace("Executing Query", {
+          transformedSql: sql,
+          originalSql: transformation.sql,
+          values,
+        });
 
         try {
           const result = await txClient.query(sql, values);
@@ -125,7 +130,7 @@ export class PostgresPublicSchemaTransformationAdapter
             transformedOps.push({
               type: operation.type,
               object: result.rows[0],
-              sourceManifestSlug: publicSchema.source.dataStoreSlug,
+              sourceManifestSlug: publicSchema.sourceManifestSlug,
               sourcePublicSchema: {
                 name: publicSchema.name,
                 version: {
@@ -138,7 +143,7 @@ export class PostgresPublicSchemaTransformationAdapter
             transformedOps.push({
               type: "delete",
               objectKeys: operation.oldKeys,
-              sourceManifestSlug: publicSchema.source.dataStoreSlug,
+              sourceManifestSlug: publicSchema.sourceManifestSlug,
               sourcePublicSchema: {
                 name: publicSchema.name,
                 version: {

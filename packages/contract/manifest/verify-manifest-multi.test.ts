@@ -1629,4 +1629,96 @@ describe("verifyManifests - multiple", () => {
     );
     expect(dataStoreConfigErrors).toHaveLength(0);
   });
+
+  test("destination data store without config is valid", () => {
+    const manifest: Manifest = {
+      ...createBasicManifest("test-manifest"),
+      connections: [
+        {
+          slug: "source-conn",
+          config: {
+            connectionType: "postgres",
+            host: "localhost",
+            port: 5432,
+            database: "test",
+            user: "user",
+            password: "pass",
+          },
+        },
+        {
+          slug: "dest-conn",
+          config: {
+            connectionType: "postgres",
+            host: "localhost",
+            port: 5432,
+            database: "test",
+            user: "user",
+            password: "pass",
+          },
+        },
+      ],
+      dataStores: [
+        {
+          connectionSlug: "source-conn",
+          config: {
+            connectionType: "postgres",
+            slotName: "slot1",
+            publicationName: "pub1",
+            allTables: true,
+          },
+        },
+        {
+          // Destination data store without config is valid
+          connectionSlug: "dest-conn",
+        },
+      ],
+      publicSchemas: [
+        {
+          name: "users",
+          source: {
+            dataStoreSlug: "source-conn",
+          },
+          outputSchema: { type: "object", properties: {} },
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "users",
+                sql: "SELECT * FROM users",
+              },
+            ],
+          },
+          version: { major: 1, minor: 0 },
+        },
+      ],
+      consumerSchemas: [
+        {
+          name: "consume-users",
+          sourceManifestSlug: "test-manifest",
+          publicSchema: {
+            name: "users",
+            majorVersion: 1,
+          },
+          config: {
+            consumerSchemaType: "postgres",
+            destinationDataStoreSlug: "dest-conn",
+            sql: "INSERT INTO users_dest (id, name) VALUES (:id, :name)",
+          },
+          definitionFile: "test.ts",
+        },
+      ],
+    };
+
+    const result = verifyManifests([manifest]);
+
+    // Should not have any DATA_STORE_MISSING_CONFIG errors
+    const dataStoreConfigErrors = result.diagnostics.filter(
+      (e) => e.type === "DATA_STORE_MISSING_CONFIG",
+    );
+    expect(dataStoreConfigErrors).toHaveLength(0);
+
+    // Should be valid overall
+    expect(result.isValid).toBe(true);
+  });
 });

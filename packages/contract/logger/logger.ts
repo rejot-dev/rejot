@@ -178,6 +178,14 @@ export abstract class ILogger {
       namespace: undefined,
       args,
     });
+
+    if (args.length > 0) {
+      if (args[0] instanceof Error) {
+        this.logErrorInstance(args[0]);
+      } else if (typeof args[0] === "object" && args[0] !== null && "error" in args[0]) {
+        this.logErrorInstance(args[0].error);
+      }
+    }
   }
   debug(message: string, ...args: unknown[]): void {
     this._log({

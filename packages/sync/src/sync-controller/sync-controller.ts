@@ -87,8 +87,6 @@ export class SyncController implements ISyncController {
   }
 
   async start() {
-    log.debug("hello world");
-
     this.state = "started";
     await this.#httpController?.start();
 

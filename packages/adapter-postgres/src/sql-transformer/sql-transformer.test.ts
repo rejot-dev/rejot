@@ -4,6 +4,7 @@ import { initSqlparser } from "@rejot-dev/sqlparser";
 
 import {
   convertNamedToPositionalPlaceholders,
+  positionalPlaceholdersAreSequential,
   validateNamedPlaceholders,
 } from "./sql-transformer.ts";
 
@@ -145,6 +146,18 @@ describe("SQL Transformer", () => {
       expect(result.values).toEqual(Object.values(object));
     });
 
+    test("should throw error when positional placeholders are not sequential", async () => {
+      const sql = `
+        INSERT INTO users (id, name, email)
+        VALUES ($2, $3, $4)
+      `;
+      const object = { id: 1, name: "John", email: "john@example.com" };
+
+      await expect(convertNamedToPositionalPlaceholders(sql, object)).rejects.toThrow(
+        "Positional placeholders must be sequential and start at $1.",
+      );
+    });
+
     test("should throw error when object doesn't contain all named parameters", async () => {
       const sql = `
         INSERT INTO users (id, name, email, role)
@@ -174,6 +187,92 @@ describe("SQL Transformer", () => {
       expect(result.sql).toContain("u.email = $1");
       expect(result.sql).toContain("u.status = $2");
       expect(result.values).toEqual(["john@example.com", "active"]);
+    });
+
+    test("should truncate extra values if object has more properties than positional placeholders", async () => {
+      const sql = `
+        INSERT INTO users (id, name)
+        VALUES ($1, $2)
+      `;
+      // Object has extra property 'email' which should be ignored
+      const object = { id: 1, name: "John", email: "john@example.com" };
+
+      const result = await convertNamedToPositionalPlaceholders(sql, object);
+
+      // Only first two values should be used
+      expect(result.values).toEqual([1, "John"]);
+      expect(result.values.length).toBe(2);
+    });
+
+    test("should throw if not enough values for positional placeholders", async () => {
+      const sql = `
+        INSERT INTO users (id, name, email)
+        VALUES ($1, $2, $3)
+      `;
+      // Only two values provided, but three placeholders
+      const object = { id: 1, name: "John" };
+
+      await expect(convertNamedToPositionalPlaceholders(sql, object)).rejects.toThrow(
+        "Not enough values provided for positional placeholders.",
+      );
+    });
+  });
+
+  describe("positionalPlaceholdersAreSequential", () => {
+    test("returns true when placeholders are sequential and start at $1", () => {
+      const placeholders = [
+        { value: "$1", line: 1, column: 10 },
+        { value: "$2", line: 1, column: 20 },
+        { value: "$3", line: 1, column: 30 },
+      ];
+      expect(positionalPlaceholdersAreSequential(placeholders)).toBe(true);
+    });
+
+    test("returns false when placeholders start at $2", () => {
+      const placeholders = [
+        { value: "$2", line: 1, column: 10 },
+        { value: "$3", line: 1, column: 20 },
+      ];
+      expect(positionalPlaceholdersAreSequential(placeholders)).toBe(false);
+    });
+
+    test("returns false when lowest placeholder is $3", () => {
+      const placeholders = [
+        { value: "$3", line: 1, column: 10 },
+        { value: "$4", line: 1, column: 20 },
+      ];
+      expect(positionalPlaceholdersAreSequential(placeholders)).toBe(false);
+    });
+
+    test("returns false when placeholders are not sequential (e.g., $1, $3)", () => {
+      const placeholders = [
+        { value: "$1", line: 1, column: 10 },
+        { value: "$3", line: 1, column: 20 },
+      ];
+      expect(positionalPlaceholdersAreSequential(placeholders)).toBe(false);
+    });
+
+    test("returns true when there are no positional placeholders", () => {
+      const placeholders = [{ value: ":name", line: 1, column: 10 }];
+      expect(positionalPlaceholdersAreSequential(placeholders)).toBe(true);
+    });
+
+    test("returns false when both positional and named placeholders, and positional are not sequential", () => {
+      const placeholders = [
+        { value: "$1", line: 1, column: 10 },
+        { value: "$3", line: 1, column: 20 },
+        { value: ":name", line: 1, column: 30 },
+      ];
+      expect(positionalPlaceholdersAreSequential(placeholders)).toBe(false);
+    });
+
+    test("returns true when both positional and named placeholders, and positional are sequential from $1", () => {
+      const placeholders = [
+        { value: "$1", line: 1, column: 10 },
+        { value: "$2", line: 1, column: 20 },
+        { value: ":name", line: 1, column: 30 },
+      ];
+      expect(positionalPlaceholdersAreSequential(placeholders)).toBe(true);
     });
   });
 });

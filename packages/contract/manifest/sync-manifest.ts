@@ -159,7 +159,7 @@ export class SyncManifest {
 
   getPublicSchemasForOperation(
     dataStoreSlug: string,
-  ): (z.infer<typeof PublicSchemaSchema> & { source: { manifestSlug: string } })[] {
+  ): (z.infer<typeof PublicSchemaSchema> & { sourceManifestSlug: string })[] {
     return getPublicSchemasForDataStore(this.#manifests, dataStoreSlug);
   }
 
