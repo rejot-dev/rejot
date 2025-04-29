@@ -55,9 +55,9 @@
   },
   "type": "module",
   "dependencies": {
-    "@rejot-dev/contract": "*",
-    "@rejot-dev/sqlparser": "*",
-    "@rejot-dev/sync": "*",
+    "@rejot-dev/contract": "workspace:*",
+    "@rejot-dev/sqlparser": "workspace:*",
+    "@rejot-dev/sync": "workspace:*",
     "pg": "^8.11.3",
     "pg-logical-replication": "^2.0.7"
   },
