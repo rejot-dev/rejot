@@ -103,10 +103,12 @@
                   },
                   "slotName": {
                     "type": "string",
+                    "pattern": "^[a-z0-9_]+$",
                     "description": "Name of the replication slot."
                   },
                   "publicationName": {
                     "type": "string",
+                    "pattern": "^[a-z0-9_]+$",
                     "description": "Name of the publication."
                   },
                   "tables": {

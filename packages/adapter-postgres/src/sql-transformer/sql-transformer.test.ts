@@ -216,6 +216,32 @@ describe("SQL Transformer", () => {
         "Not enough values provided for positional placeholders.",
       );
     });
+
+    test("should accept repeated positional placeholders as valid", () => {
+      expect(
+        positionalPlaceholdersAreSequential([
+          { value: "$1", line: 1, column: 10 },
+          { value: "$2", line: 1, column: 20 },
+          { value: "$1", line: 1, column: 30 },
+          { value: "$3", line: 1, column: 40 },
+        ]),
+      ).toBe(true);
+    });
+
+    test("convertNamedToPositionalPlaceholders should work with repeated positional placeholders", async () => {
+      const sql = `
+        INSERT INTO rejot_integration_tests_one.person_email (person_id, email)
+        VALUES ($1, $2), ($1, $3)
+      `;
+      // Should not throw, and should use the first three values
+      const result = await convertNamedToPositionalPlaceholders(sql, {
+        0: 42,
+        1: "a@example.com",
+        2: "b@example.com",
+      });
+      expect(result.sql).toContain("($1, $2), ($1, $3)");
+      expect(result.values.length).toBe(3);
+    });
   });
 
   describe("positionalPlaceholdersAreSequential", () => {

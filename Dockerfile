@@ -25,6 +25,7 @@ COPY packages/contract/package.json packages/contract/package.json
 COPY packages/contract-tools/package.json packages/contract-tools/package.json
 COPY packages/sync/package.json packages/sync/package.json
 COPY packages/sqlparser/package.json packages/sqlparser/package.json
+COPY integration-tests/one/package.json integration-tests/one/package.json
 
 RUN bun install --filter ./apps/${REJOT_APP} --production --no-progress \
   || (echo "Hint: On lockfile is frozen error, ensure all workspace package.json files are copied into the Dockerfile!" && exit 1)
