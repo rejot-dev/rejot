@@ -2,7 +2,11 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import { DatabaseError } from "pg";
 
-import { PG_INVALID_TEXT_REPRESENTATION } from "./postgres-error-codes.ts";
+import {
+  isPostgresError,
+  PG_COULD_NOT_DETERMINE_DATA_TYPE,
+  PG_INVALID_TEXT_REPRESENTATION,
+} from "./postgres-error-codes.ts";
 import { getTestClient, pgRollbackDescribe } from "./postgres-test-utils.ts";
 
 describe("PostgresClient", () => {
@@ -160,6 +164,49 @@ describe("PostgresClient", () => {
       expect((error as Error).message).toMatch(/canceling statement due to statement timeout/i);
     }
 
+    await client.end();
+  });
+
+  test("query with positional parameters starting at $2, with same amount of inputs", async () => {
+    const client = getTestClient();
+    await client.connect();
+
+    // Insert a row using $2, $3, $4 (skipping $1)
+    const sql = `INSERT INTO ${randomTableName} (id, name) VALUES ($2, $3)`;
+    // id: 42, name: 'positional-gap'
+    // $2 = 42, $3 = 'positional-gap'
+    // $1 is intentionally missing
+    let error;
+    try {
+      await client.query(sql, [42, "positional-gap"]);
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeDefined();
+    expect(error).toBeInstanceOf(Error);
+    console.error(error);
+    expect(isPostgresError(error, PG_COULD_NOT_DETERMINE_DATA_TYPE)).toBe(true);
+    await client.end();
+  });
+
+  test("query with positional parameters starting at $2, with undefined in input", async () => {
+    const client = getTestClient();
+    await client.connect();
+
+    // Insert a row using $2, $3, $4 (skipping $1)
+    const sql = `INSERT INTO ${randomTableName} (id, name) VALUES ($2, $3)`;
+    // id: 42, name: 'positional-gap'
+    // $2 = 42, $3 = 'positional-gap'
+    // $1 is intentionally missing
+    let error;
+    try {
+      await client.query(sql, [undefined, 42, "positional-gap"]);
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeDefined();
+    expect(error).toBeInstanceOf(Error);
+    expect(isPostgresError(error, PG_COULD_NOT_DETERMINE_DATA_TYPE)).toBe(true);
     await client.end();
   });
 });

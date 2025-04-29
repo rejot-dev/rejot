@@ -146,7 +146,7 @@ export function getConsumerSchemasForPublicSchemaHelper(
 export function getPublicSchemasForDataStore(
   manifests: Manifest[],
   sourceDataStoreSlug: string,
-): (z.infer<typeof PublicSchemaSchema> & { source: { manifestSlug: string } })[] {
+): (z.infer<typeof PublicSchemaSchema> & { sourceManifestSlug: string })[] {
   return manifests.flatMap((manifest) =>
     (manifest.publicSchemas ?? [])
       .filter((schema) => {
@@ -158,9 +158,9 @@ export function getPublicSchemasForDataStore(
       })
       .map(({ name, source, config, version, outputSchema }) => ({
         name,
+        sourceManifestSlug: manifest.slug,
         source: {
           ...source,
-          manifestSlug: manifest.slug, // Add manifest slug to the source
         },
         config,
         version,

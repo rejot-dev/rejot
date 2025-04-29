@@ -101,6 +101,18 @@ export async function validatePublicSchema(
         },
       });
     }
+    const { placeholders } = await sqlTransformationCache.parseAndFindPlaceholders(sql);
+    if (!positionalPlaceholdersAreSequential(placeholders)) {
+      result.isValid = false;
+      result.errors.push({
+        message: "Positional placeholders must be sequential and start at $1",
+        info: {
+          type: "POSITIONAL_PLACEHOLDER_NOT_SEQUENTIAL",
+          sql: sql,
+          placeholders: placeholders.map((p) => p.value),
+        },
+      });
+    }
   }
 
   return result;
@@ -131,9 +143,20 @@ async function validateConsumerQuery(
       },
     });
   }
+  const { placeholders } = await sqlTransformationCache.parseAndFindPlaceholders(sql);
+  if (!positionalPlaceholdersAreSequential(placeholders)) {
+    errors.push({
+      message: "Positional placeholders must be sequential and start at $1",
+      info: {
+        type: "POSITIONAL_PLACEHOLDER_NOT_SEQUENTIAL",
+        sql,
+        placeholders: placeholders.map((p) => p.value),
+        inQuery,
+      },
+    });
+  }
   const missingKeys = await validateNamedPlaceholders(sql, availableKeys);
   if (missingKeys.length > 0) {
-    const { placeholders } = await sqlTransformationCache.parseAndFindPlaceholders(sql);
     const placeholderValues = placeholders.map((p) => p.value);
     errors.push({
       message: `Transformation contains placeholders not available in the schema: ${missingKeys.join(", ")}`,
@@ -232,7 +255,23 @@ export async function convertNamedToPositionalPlaceholders(
         "Mixing positional ($) and named (:) placeholders in the same SQL statement is not allowed",
       );
     }
-    return { sql, values: Object.values(object) };
+
+    if (!positionalPlaceholdersAreSequential(placeholders)) {
+      throw new Error("Positional placeholders must be sequential and start at $1.");
+    }
+
+    const values = Object.values(object);
+
+    if (values.length < placeholders.length) {
+      throw new Error("Not enough values provided for positional placeholders.");
+    }
+
+    if (values.length > placeholders.length) {
+      // Remove extra items from the end of the array to match the number of positional placeholders
+      values.splice(placeholders.length);
+    }
+
+    return { sql, values };
   }
 
   // Extract names and positions
@@ -282,4 +321,21 @@ export async function convertNamedToPositionalPlaceholders(
   }
 
   return { sql: convertedSql, values: orderedValues };
+}
+
+export function positionalPlaceholdersAreSequential(placeholders: PlaceholderInfo[]): boolean {
+  const positionalNumbers = placeholders
+    .filter((p) => /^\$\d+$/.test(p.value))
+    .map((p) => parseInt(p.value.slice(1), 10))
+    .filter((n) => !isNaN(n));
+  if (positionalNumbers.length === 0) {
+    return true;
+  }
+  positionalNumbers.sort((a, b) => a - b);
+  for (let i = 0; i < positionalNumbers.length; i++) {
+    if (positionalNumbers[i] !== i + 1) {
+      return false;
+    }
+  }
+  return true;
 }

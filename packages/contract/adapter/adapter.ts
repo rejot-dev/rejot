@@ -95,7 +95,9 @@ export interface IPublicSchemaTransformationAdapter<
   applyPublicSchemaTransformation(
     sourceDataStoreSlug: string,
     operations: TableOperation[],
-    publicSchemas: Extract<z.infer<typeof PublicSchemaSchema>, { config: TSchemaConfig }>[],
+    publicSchemas: (Extract<z.infer<typeof PublicSchemaSchema>, { config: TSchemaConfig }> & {
+      sourceManifestSlug: string;
+    })[],
   ): Promise<TransformedOperation[]>;
 }
 

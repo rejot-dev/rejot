@@ -1,22 +1,15 @@
-import { beforeEach, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
 
-import { z } from "zod";
-
-import type {
-  ConsumerSchemaSchema,
-  PostgresConsumerSchemaConfigSchema,
-} from "@rejot-dev/contract/manifest";
 import type { TransformedOperation } from "@rejot-dev/contract/sync";
 
 import { PostgresConsumerDataStoreSchemaManager } from "../data-store/pg-consumer-data-store-schema-manager.ts";
 import { getTestConnectionConfig, pgRollbackDescribe } from "../util/postgres-test-utils.ts";
 import { PostgresConnectionAdapter } from "./pg-connection-adapter.ts";
-import { PostgresConsumerSchemaTransformationAdapter } from "./pg-consumer-schema-transformation-adapter.ts";
-
-type ConsumerSchemaWithPostgresConfig = Extract<
-  z.infer<typeof ConsumerSchemaSchema>,
-  { config: z.infer<typeof PostgresConsumerSchemaConfigSchema> }
->;
+import {
+  matchAndSortOperations,
+  PostgresConsumerSchemaTransformationAdapter,
+} from "./pg-consumer-schema-transformation-adapter.ts";
+import { type ConsumerSchemaWithPostgresConfig } from "./pg-consumer-schema-transformation-adapter.ts";
 
 pgRollbackDescribe("PostgresConsumerSchemaTransformationAdapter", (ctx) => {
   let connectionAdapter: PostgresConnectionAdapter;
@@ -298,5 +291,184 @@ pgRollbackDescribe("PostgresConsumerSchemaTransformationAdapter", (ctx) => {
     const result = await ctx.client.query("SELECT * FROM test_transform_table WHERE id = '3'");
     expect(result.rows).toHaveLength(1);
     expect(result.rows[0]["name"]).toBe("Should Not Delete");
+  });
+});
+
+describe("matchAndSortOperations", () => {
+  test("returns empty array when no operations match consumer schemas", () => {
+    const operations: TransformedOperation[] = [
+      {
+        type: "insert",
+        object: {
+          id: 33,
+          email: "second@example.com",
+          name: "seconduser",
+        },
+        sourceManifestSlug: "default-postgres",
+        sourcePublicSchema: {
+          name: "public-account",
+          version: { major: 1, minor: 0 },
+        },
+      },
+    ];
+    const consumerSchemas: ConsumerSchemaWithPostgresConfig[] = [
+      {
+        name: "consume-public-account",
+        sourceManifestSlug: "@rejot/",
+        publicSchema: { name: "public-account", majorVersion: 1 },
+        definitionFile: "apps/rejot-cli/_test/example-schema.ts",
+        config: {
+          consumerSchemaType: "postgres",
+          destinationDataStoreSlug: "destination-conn",
+          sql: `INSERT INTO users_destination (id, full_name) VALUES (:id, :email || ' ' || :name) ON CONFLICT (id) DO UPDATE SET full_name = :email || ' ' || :name;`,
+          deleteSql: "DELETE FROM users_destination WHERE id = :id",
+        },
+      },
+    ];
+    const result = matchAndSortOperations(operations, consumerSchemas);
+    expect(result).toHaveLength(0);
+  });
+
+  test("returns a match when operation and consumer schema match on manifest, name, and version", () => {
+    const operations: TransformedOperation[] = [
+      {
+        type: "insert",
+        object: {
+          id: 33,
+          email: "second@example.com",
+          name: "seconduser",
+        },
+        sourceManifestSlug: "default-postgres",
+        sourcePublicSchema: {
+          name: "public-account",
+          version: { major: 1, minor: 0 },
+        },
+      },
+    ];
+    const consumerSchemas: ConsumerSchemaWithPostgresConfig[] = [
+      {
+        name: "consume-public-account",
+        sourceManifestSlug: "default-postgres",
+        publicSchema: { name: "public-account", majorVersion: 1 },
+        definitionFile: "apps/rejot-cli/_test/example-schema.ts",
+        config: {
+          consumerSchemaType: "postgres",
+          destinationDataStoreSlug: "destination-conn",
+          sql: `INSERT INTO users_destination (id, full_name) VALUES (:id, :email || ' ' || :name) ON CONFLICT (id) DO UPDATE SET full_name = :email || ' ' || :name;`,
+          deleteSql: "DELETE FROM users_destination WHERE id = :id",
+        },
+      },
+    ];
+    const result = matchAndSortOperations(operations, consumerSchemas);
+    expect(result).toHaveLength(1);
+    expect(result[0].operation).toEqual(operations[0]);
+    expect(result[0].consumerSchema).toEqual(consumerSchemas[0]);
+  });
+
+  test("returns multiple matches and sorts them by manifest, name, and version", () => {
+    const operations: TransformedOperation[] = [
+      {
+        type: "insert",
+        object: { id: 1 },
+        sourceManifestSlug: "b-manifest",
+        sourcePublicSchema: { name: "b", version: { major: 2, minor: 0 } },
+      },
+      {
+        type: "insert",
+        object: { id: 2 },
+        sourceManifestSlug: "a-manifest",
+        sourcePublicSchema: { name: "a", version: { major: 1, minor: 0 } },
+      },
+      {
+        type: "insert",
+        object: { id: 3 },
+        sourceManifestSlug: "a-manifest",
+        sourcePublicSchema: { name: "a", version: { major: 2, minor: 0 } },
+      },
+    ];
+    const consumerSchemas: ConsumerSchemaWithPostgresConfig[] = [
+      {
+        name: "a-v1",
+        sourceManifestSlug: "a-manifest",
+        publicSchema: { name: "a", majorVersion: 1 },
+        config: {
+          consumerSchemaType: "postgres",
+          destinationDataStoreSlug: "d",
+          sql: "",
+          deleteSql: "",
+        },
+      },
+      {
+        name: "a-v2",
+        sourceManifestSlug: "a-manifest",
+        publicSchema: { name: "a", majorVersion: 2 },
+        config: {
+          consumerSchemaType: "postgres",
+          destinationDataStoreSlug: "d",
+          sql: "",
+          deleteSql: "",
+        },
+      },
+      {
+        name: "b-v2",
+        sourceManifestSlug: "b-manifest",
+        publicSchema: { name: "b", majorVersion: 2 },
+        config: {
+          consumerSchemaType: "postgres",
+          destinationDataStoreSlug: "d",
+          sql: "",
+          deleteSql: "",
+        },
+      },
+    ];
+    const result = matchAndSortOperations(operations, consumerSchemas);
+    // Should be sorted: a-manifest/a/1, a-manifest/a/2, b-manifest/b/2
+    expect(result).toHaveLength(3);
+    expect(result[0].consumerSchema.name).toBe("a-v1");
+    expect(result[1].consumerSchema.name).toBe("a-v2");
+    expect(result[2].consumerSchema.name).toBe("b-v2");
+  });
+
+  test("ignores operations with mismatched version, name, or manifest", () => {
+    const operations: TransformedOperation[] = [
+      {
+        type: "insert",
+        object: { id: 1 },
+        sourceManifestSlug: "manifest-1",
+        sourcePublicSchema: { name: "schema-1", version: { major: 1, minor: 0 } },
+      },
+      {
+        type: "insert",
+        object: { id: 2 },
+        sourceManifestSlug: "manifest-2",
+        sourcePublicSchema: { name: "schema-2", version: { major: 2, minor: 0 } },
+      },
+    ];
+    const consumerSchemas: ConsumerSchemaWithPostgresConfig[] = [
+      {
+        name: "schema-1-v2",
+        sourceManifestSlug: "manifest-1",
+        publicSchema: { name: "schema-1", majorVersion: 2 }, // version mismatch
+        config: {
+          consumerSchemaType: "postgres",
+          destinationDataStoreSlug: "d",
+          sql: "",
+          deleteSql: "",
+        },
+      },
+      {
+        name: "schema-2-v2",
+        sourceManifestSlug: "manifest-2",
+        publicSchema: { name: "schema-x", majorVersion: 2 }, // name mismatch
+        config: {
+          consumerSchemaType: "postgres",
+          destinationDataStoreSlug: "d",
+          sql: "",
+          deleteSql: "",
+        },
+      },
+    ];
+    const result = matchAndSortOperations(operations, consumerSchemas);
+    expect(result).toHaveLength(0);
   });
 });

@@ -101,12 +101,13 @@ test("applyPublicSchemaTransformation applies transformations deterministically 
   );
 
   // Two public schemas, each with a transformation for table 'foo' and 'bar'
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaA",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -120,6 +121,7 @@ test("applyPublicSchemaTransformation applies transformations deterministically 
     },
     {
       name: "schemaB",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 1 },
@@ -197,12 +199,13 @@ test("delete operation is always ordered last when two public schemas operate on
   );
 
   // Two public schemas, both operate on table 'foo', one with insert, one with delete
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaInsert",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -215,6 +218,7 @@ test("delete operation is always ordered last when two public schemas operate on
     },
     {
       name: "schemaDelete",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -277,12 +281,13 @@ test("multiple operations and schemas on same table are ordered insert, update, 
   const adapter = new PostgresPublicSchemaTransformationAdapter(
     testConnectionAdapter as unknown as import("./pg-connection-adapter").PostgresConnectionAdapter,
   );
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaA",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -297,6 +302,7 @@ test("multiple operations and schemas on same table are ordered insert, update, 
     },
     {
       name: "schemaB",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -358,12 +364,13 @@ test("public schemas with different versions are ordered by version", async () =
   const adapter = new PostgresPublicSchemaTransformationAdapter(
     testConnectionAdapter as unknown as import("./pg-connection-adapter").PostgresConnectionAdapter,
   );
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaA",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 1 },
@@ -376,6 +383,7 @@ test("public schemas with different versions are ordered by version", async () =
     },
     {
       name: "schemaA",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -423,12 +431,13 @@ test("no matching transformations returns empty array", async () => {
   const adapter = new PostgresPublicSchemaTransformationAdapter(
     testConnectionAdapter as unknown as import("./pg-connection-adapter").PostgresConnectionAdapter,
   );
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaA",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -474,12 +483,13 @@ test("multiple tables are ordered by table name, then operation, then schema", a
   const adapter = new PostgresPublicSchemaTransformationAdapter(
     testConnectionAdapter as unknown as import("./pg-connection-adapter").PostgresConnectionAdapter,
   );
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaA",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -492,6 +502,7 @@ test("multiple tables are ordered by table name, then operation, then schema", a
     },
     {
       name: "schemaB",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -543,12 +554,13 @@ test("throws if query returns wrong row count", async () => {
   const adapter = new PostgresPublicSchemaTransformationAdapter(
     testConnectionAdapter as unknown as import("./pg-connection-adapter").PostgresConnectionAdapter,
   );
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaA",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -590,12 +602,13 @@ test("throws protocol violation error with helpful message", async () => {
   const adapter = new PostgresPublicSchemaTransformationAdapter(
     testConnectionAdapter as unknown as import("./pg-connection-adapter").PostgresConnectionAdapter,
   );
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaA",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -635,12 +648,13 @@ test("throws if transformation expects more parameters than provided", async () 
     getOrCreateConnection: () => testConnection,
   };
   const adapter = new PostgresPublicSchemaTransformationAdapter(testConnectionAdapter);
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaA",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -666,7 +680,7 @@ test("throws if transformation expects more parameters than provided", async () 
   ];
   await expect(
     adapter.applyPublicSchemaTransformation("mock", operations, publicSchemas),
-  ).rejects.toThrow(/protocol violation/i);
+  ).rejects.toThrow("Not enough values provided for positional placeholders.");
 });
 
 test("multiple matching transformations for one operation are all applied", async () => {
@@ -691,12 +705,13 @@ test("multiple matching transformations for one operation are all applied", asyn
   const adapter = new PostgresPublicSchemaTransformationAdapter(
     testConnectionAdapter as unknown as import("./pg-connection-adapter").PostgresConnectionAdapter,
   );
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaA",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -748,12 +763,13 @@ test("transaction is rolled back on error (no partial results)", async () => {
     getOrCreateConnection: () => testConnection,
   };
   const adapter = new PostgresPublicSchemaTransformationAdapter(testConnectionAdapter);
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaA",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -807,12 +823,13 @@ test("applyPublicSchemaTransformation supports named placeholders in SQL", async
   );
 
   // Transformation uses named placeholders
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaNamed",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -873,12 +890,13 @@ test("applyPublicSchemaTransformation supports delete operation with correct key
   const adapter = new PostgresPublicSchemaTransformationAdapter(testConnectionAdapter);
 
   // Transformation uses delete operation
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaDelete",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
@@ -935,12 +953,13 @@ test("applyPublicSchemaTransformation supports delete operation with named param
   const adapter = new PostgresPublicSchemaTransformationAdapter(testConnectionAdapter);
 
   // Transformation uses delete operation
-  const publicSchemas: Extract<
+  const publicSchemas: (Extract<
     z.infer<typeof PublicSchemaSchema>,
     { config: z.infer<typeof PostgresPublicSchemaConfigSchema> }
-  >[] = [
+  > & { sourceManifestSlug: string })[] = [
     {
       name: "schemaDelete",
+      sourceManifestSlug: "mock",
       source: { dataStoreSlug: "mock" },
       outputSchema: {},
       version: { major: 1, minor: 0 },
