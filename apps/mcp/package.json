@@ -24,10 +24,10 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.9.0",
-    "@rejot-dev/adapter-postgres": "*",
-    "@rejot-dev/contract": "*",
-    "@rejot-dev/contract-tools": "*",
-    "@rejot-dev/sync": "*",
+    "@rejot-dev/adapter-postgres": "workspace:*",
+    "@rejot-dev/contract": "workspace:*",
+    "@rejot-dev/contract-tools": "workspace:*",
+    "@rejot-dev/sync": "workspace:*",
     "pg": "^8.14.1"
   },
   "bin": {

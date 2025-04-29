@@ -60,7 +60,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@rejot-dev/contract": "*",
+    "@rejot-dev/contract": "workspace:*",
     "fastify": "^5.3.2"
   }
 }

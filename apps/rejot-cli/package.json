@@ -26,10 +26,10 @@
   },
   "dependencies": {
     "@oclif/core": "^4.2.8",
-    "@rejot-dev/adapter-postgres": "*",
-    "@rejot-dev/contract": "*",
-    "@rejot-dev/contract-tools": "*",
-    "@rejot-dev/sync": "*",
+    "@rejot-dev/adapter-postgres": "workspace:*",
+    "@rejot-dev/contract": "workspace:*",
+    "@rejot-dev/contract-tools": "workspace:*",
+    "@rejot-dev/sync": "workspace:*",
     "@types/debug": "^4.1.12",
     "debug": "^4.4.0",
     "oclif": "^4.17.34"
