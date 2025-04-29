@@ -145,7 +145,7 @@ export class PostgresConsumerSchemaTransformationAdapter
             : consumerSchema.config.sql;
 
         log.debug(
-          `Applying consumer schema ${consumerSchema.publicSchema.name}@${consumerSchema.publicSchema.majorVersion} ` +
+          `Applying consumer schema ${consumerSchema.name} ` +
             `(manifest: ${consumerSchema.sourceManifestSlug}) to operation from ` +
             `${operation.sourceManifestSlug}/${operation.sourcePublicSchema.name}@${operation.sourcePublicSchema.version.major} ` +
             `(${operation.type})`,
@@ -155,6 +155,8 @@ export class PostgresConsumerSchemaTransformationAdapter
 
         // Convert named placeholders to positional if necessary, and get the ordered values
         const { sql, values } = await convertNamedToPositionalPlaceholders(transformationSql, data);
+
+        log.trace(`Query: ${sql}`, { values });
 
         await client.query(sql, values);
         log.debug("Successfully applied transformation SQL.");

@@ -53,8 +53,14 @@ export const PostgresConsumerSchemaConfigSchema = z.object({
 
 export const PostgresDataStoreSchema = z.object({
   connectionType: z.literal("postgres").describe("Postgres connection type."),
-  slotName: z.string().describe("Name of the replication slot."),
-  publicationName: z.string().describe("Name of the publication."),
+  slotName: z
+    .string()
+    .describe("Name of the replication slot.")
+    .regex(/^[a-z0-9_]+$/),
+  publicationName: z
+    .string()
+    .describe("Name of the publication.")
+    .regex(/^[a-z0-9_]+$/),
   tables: z.array(z.string()).describe("Tables to replicate.").optional(),
   allTables: z.boolean().describe("When true, all tables are replicated.").optional(),
 });

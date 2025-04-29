@@ -106,7 +106,7 @@ describe("ManifestDataStore commands", () => {
     test("list all datastores", async () => {
       // Add some test datastores
       await runCommand(
-        `manifest:datastore:add --manifest ${manifestPath} --connection test-connection --publication test-pub1 --slot test-slot1`,
+        `manifest:datastore:add --manifest ${manifestPath} --connection test-connection --publication test_pub1 --slot test_slot1`,
       );
 
       // Capture console output
@@ -123,7 +123,7 @@ describe("ManifestDataStore commands", () => {
 
       expect(logString).toContain("Data Stores");
       expect(logString).toContain("test-connection");
-      expect(logString).toContain("test-pub1");
+      expect(logString).toContain("test_pub1");
     });
   });
 });

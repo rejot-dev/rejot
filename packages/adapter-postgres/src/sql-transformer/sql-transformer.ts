@@ -229,6 +229,15 @@ export async function validateConsumerSchema(
   return result;
 }
 
+function getUniquePositionalPlaceholderCount(placeholders: PlaceholderInfo[]): number {
+  return new Set(
+    placeholders
+      .filter((p) => /^\$\d+$/.test(p.value))
+      .map((p) => parseInt(p.value.slice(1), 10))
+      .filter((n) => !isNaN(n)),
+  ).size;
+}
+
 /**
  * Converts a SQL statement with named placeholders to one with positional placeholders,
  * and returns the ordered values for the object.
@@ -260,15 +269,16 @@ export async function convertNamedToPositionalPlaceholders(
       throw new Error("Positional placeholders must be sequential and start at $1.");
     }
 
+    const uniqueCount = getUniquePositionalPlaceholderCount(placeholders);
     const values = Object.values(object);
 
-    if (values.length < placeholders.length) {
+    if (values.length < uniqueCount) {
       throw new Error("Not enough values provided for positional placeholders.");
     }
 
-    if (values.length > placeholders.length) {
-      // Remove extra items from the end of the array to match the number of positional placeholders
-      values.splice(placeholders.length);
+    if (values.length > uniqueCount) {
+      // Remove extra items from the end of the array to match the number of unique positional placeholders
+      values.splice(uniqueCount);
     }
 
     return { sql, values };
@@ -324,10 +334,15 @@ export async function convertNamedToPositionalPlaceholders(
 }
 
 export function positionalPlaceholdersAreSequential(placeholders: PlaceholderInfo[]): boolean {
-  const positionalNumbers = placeholders
-    .filter((p) => /^\$\d+$/.test(p.value))
-    .map((p) => parseInt(p.value.slice(1), 10))
-    .filter((n) => !isNaN(n));
+  // Only consider unique positional placeholder numbers
+  const positionalNumbers = Array.from(
+    new Set(
+      placeholders
+        .filter((p) => /^\$\d+$/.test(p.value))
+        .map((p) => parseInt(p.value.slice(1), 10))
+        .filter((n) => !isNaN(n)),
+    ),
+  );
   if (positionalNumbers.length === 0) {
     return true;
   }

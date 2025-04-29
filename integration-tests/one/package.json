@@ -1,0 +1,26 @@
+{
+  "name": "@rejot-dev/integration-tests-one",
+  "module": "index.ts",
+  "type": "module",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rejot-dev/rejot.git",
+    "directory": "integration-tests/one"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@rejot-dev/adapter-postgres": "workspace:*",
+    "@rejot-dev/cli": "workspace:*",
+    "@rejot-dev/contract": "workspace:*",
+    "@rejot-dev/contract-tools": "workspace:*",
+    "@rejot-dev/sync": "workspace:*",
+    "pg": "^8.11.3",
+    "zod": "^3.24.2"
+  }
+}

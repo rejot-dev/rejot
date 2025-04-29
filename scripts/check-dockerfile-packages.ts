@@ -2,6 +2,7 @@
 
 import { readFileSync } from "fs";
 import { join } from "path";
+
 import { getAllWorkspacePackages } from "./workspace-utils";
 
 function getDockerfilePackages(dockerfilePath: string): string[] {
