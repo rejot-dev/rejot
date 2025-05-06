@@ -16,6 +16,10 @@
     "process-excalidraw-svgs": "tsx scripts/process-excalidraw-svgs.ts",
     "check:links": "echo 'Make sure the dev server is running with bun run dev!' && bun run build && lychee dist/ --base http://localhost:4321 --include '^http://localhost:4321/(docs|blog).*'"
   },
+  "engines": {
+    "bun": ">=1.2"
+  },
+  "packageManager": "bun@1.2.11",
   "dependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/mdx": "^4.0.2",

@@ -16,9 +16,9 @@
     "url": "git+https://github.com/rejot-dev/rejot.git"
   },
   "engines": {
-    "node": ">=22"
+    "bun": ">=1.2"
   },
-  "packageManager": "npm@10.9.2",
+  "packageManager": "bun@1.2.11",
   "workspaces": [
     "apps/*",
     "packages/*",
