@@ -21,7 +21,7 @@ import Check from "astro-heroicons/outline/Check.astro";
            text-gray-600 bg-gray-100
            peer-checked/sync:bg-rejot-red-600 peer-checked/sync:text-white"
       >
-        Synchronous
+        REST
       </label>
 
       <input type="radio" name="mode" id="mode-rejot" class="peer/rejot sr-only" />
@@ -40,7 +40,7 @@ import Check from "astro-heroicons/outline/Check.astro";
     <MicroserviceDiagram />
     {/* Synchronous mode */}
     <div id="sync-sidebar" class="flex flex-col space-y-2 max-w-96 justify-between">
-      <div class="flex-grow p-4 transition-transform hover:scale-105" id="high-latency-item">
+      <div class="flex-grow p-4" id="high-latency-item">
         <div class="flex flex-row space-x-2">
           <XMark class="size-6 text-rejot-red-600" />
           <h4 class="font-bold text-xl">Synchronous</h4>
@@ -51,15 +51,15 @@ import Check from "astro-heroicons/outline/Check.astro";
         </p>
       </div>
       <hr />
-      <div class="flex-grow p-4 transition-transform hover:scale-105" id="circuit-breaker-item">
+      <div class="flex-grow p-4" id="circuit-breaker-item">
         <div class="flex flex-row space-x-2">
           <XMark class="size-6 text-rejot-red-600" />
           <h4 class="font-bold text-xl">Brittle</h4>
         </div>
         <p>
           Uptime of a single service is directly tied to the uptime of all the services it depends
-          on, requiring additional infrastructure to prevent cascading failures like circuit
-          breakers.
+          on, requiring additional infrastructure like circuit breakers to prevent cascading
+          failures.
         </p>
       </div>
     </div>
@@ -96,14 +96,10 @@ import Check from "astro-heroicons/outline/Check.astro";
   const rejotRadio = document.getElementById("mode-rejot");
   const syncSidebar = document.getElementById("sync-sidebar");
   const rejotSidebar = document.getElementById("rejot-sidebar");
-  const circuitBreakerItem = document.getElementById("circuit-breaker-item");
-  const highLatencyItem = document.getElementById("high-latency-item");
 
   // Get SVG group elements - assuming MicroserviceDiagram is rendered in the same document
   const syncDiagramGroup = document.getElementById("synchronous");
   const rejotDiagramGroup = document.getElementById("with-rejot");
-  const circuitOverlayGroup = document.getElementById("circuit-overlay");
-  const latencyOverlayGroup = document.getElementById("overlay-latency");
 
   function updateVisibility() {
     // Ensure elements exist before proceeding
@@ -113,15 +109,9 @@ import Check from "astro-heroicons/outline/Check.astro";
       !syncSidebar ||
       !rejotSidebar ||
       !syncDiagramGroup ||
-      !rejotDiagramGroup ||
-      !circuitOverlayGroup ||
-      !latencyOverlayGroup
+      !rejotDiagramGroup
     )
       return;
-
-    // Hide overlays initially when changing modes
-    circuitOverlayGroup.style.display = "none";
-    latencyOverlayGroup.style.display = "none";
 
     // Check if rejotRadio is an input element and is checked
     if (rejotRadio instanceof HTMLInputElement && rejotRadio.checked) {
@@ -144,40 +134,12 @@ import Check from "astro-heroicons/outline/Check.astro";
     rejotRadio &&
     syncSidebar &&
     rejotSidebar &&
-    circuitBreakerItem &&
     syncDiagramGroup &&
-    rejotDiagramGroup &&
-    circuitOverlayGroup &&
-    highLatencyItem &&
-    latencyOverlayGroup
+    rejotDiagramGroup
   ) {
     // Add event listeners for radio buttons
     syncRadio.addEventListener("change", updateVisibility);
     rejotRadio.addEventListener("change", updateVisibility);
-
-    // Add hover listeners for circuit breaker item
-    circuitBreakerItem.addEventListener("mouseenter", () => {
-      // Show overlay only if sync mode is active
-      if (syncRadio instanceof HTMLInputElement && syncRadio.checked) {
-        circuitOverlayGroup.style.display = "inline"; // Or 'block'
-      }
-    });
-
-    circuitBreakerItem.addEventListener("mouseleave", () => {
-      circuitOverlayGroup.style.display = "none";
-    });
-
-    // Add hover listeners for high latency item
-    highLatencyItem.addEventListener("mouseenter", () => {
-      // Show overlay only if sync mode is active
-      if (syncRadio instanceof HTMLInputElement && syncRadio.checked) {
-        latencyOverlayGroup.style.display = "inline"; // Or 'block'
-      }
-    });
-
-    highLatencyItem.addEventListener("mouseleave", () => {
-      latencyOverlayGroup.style.display = "none";
-    });
 
     // Set initial state on page load
     updateVisibility();
