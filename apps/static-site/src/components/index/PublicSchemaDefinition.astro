@@ -1,0 +1,83 @@
+---
+import Newspaper from "astro-heroicons/outline/Newspaper.astro";
+
+import CodeExplanation from "@/components/index/code/CodeExplanation.astro";
+import CodeLineExplanation from "@/components/index/code/CodeLineExplanation.astro";
+
+type Props = {
+  class?: string;
+};
+
+const { class: className = "" } = Astro.props;
+---
+
+<div class={`${className}`}>
+  <CodeExplanation
+    code={`
+createPublicSchema("publish-account", {
+  source: { dataStoreSlug: "account-service-db" },
+  outputSchema: z.object({
+    id: z.number(),
+    emails: z.array(z.string()),
+    firstName: z.string(),
+    lastName: z.string(),
+  }),
+  config: new PostgresPublicSchemaConfigBuilder()
+    .addTransformation(
+      createPostgresPublicSchemaTransformations(
+        "insertOrUpdate",
+        "account",
+        \`SELECT 
+          a.id, 
+          (
+            SELECT ARRAY_AGG(e.email) 
+            FROM account_emails e 
+            WHERE e.account_id = a.id
+          ) as emails,
+          a.first_name as firstName,
+          a.last_name as lastName
+        FROM 
+          account a WHERE a.id = :id\`,
+      ),
+    ).build(),
+  version: { major: 1, minor: 0 },
+});
+    `}
+  >
+    <Fragment slot="icon">
+      <Newspaper class="size-8" />
+    </Fragment>
+
+    <Fragment slot="title" class="flex items-center gap-2 bg-clip-text text-2xl font-bold">
+      Public Schema Definition
+    </Fragment>
+
+    <Fragment slot="description">
+      Public Schemas are defined by the data owner. They describe the shape of the data that is
+      published to other teams. They are referenced by the combination of their name, data store,
+      and manifest.
+    </Fragment>
+
+    <Fragment slot="explanation">
+      <CodeLineExplanation title="Source" lines={2}>
+        The source specifies the originating data store (i.e., database) on which the schema is
+        based.
+      </CodeLineExplanation>
+      <CodeLineExplanation title="Output Schema" lines={{ start: 3, end: 8 }}>
+        The output schema describes the shape of the data that is published to other teams. In JSON
+        Schema format.
+      </CodeLineExplanation>
+      <CodeLineExplanation title="Config" lines={{ start: 9, end: 13 }}>
+        Database system specific configuration. In this case the Postgres specific configuration
+        defines what table we'll listen to for changes and what type of events we'll react to.
+      </CodeLineExplanation>
+      <CodeLineExplanation title="Transformation" lines={{ start: 14, end: 24 }}>
+        SQL-based transformation that encapsulates the internal schema to the public schema. Named
+        placeholders are based on the column names of the source table.
+      </CodeLineExplanation>
+      <CodeLineExplanation title="Version" lines={27}>
+        Schemas are explicitly versioned to ease the complexity of schema evolution.
+      </CodeLineExplanation>
+    </Fragment>
+  </CodeExplanation>
+</div>

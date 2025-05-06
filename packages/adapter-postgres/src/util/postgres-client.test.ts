@@ -259,4 +259,13 @@ pgRollbackDescribe("postgres-test-utils", (ctx) => {
     );
     expect(result.rows).toEqual([]);
   });
+
+  test("Insert using an array of values", async () => {
+    await ctx.client.query(`INSERT INTO ${randomTableName} (name) VALUES (($1::text[])[2])`, [
+      ["test-array-value-1", "test-array-value-2"],
+    ]);
+    const result = await ctx.client.query(`SELECT * FROM ${randomTableName}`);
+    expect(result.rows.length).toEqual(1);
+    expect(result.rows[0]["name"]).toEqual("test-array-value-2");
+  });
 });

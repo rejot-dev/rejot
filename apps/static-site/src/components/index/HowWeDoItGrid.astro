@@ -1,10 +1,17 @@
 ---
 import CpuChip from "astro-heroicons/outline/CpuChip.astro";
 import ShieldCheck from "astro-heroicons/outline/ShieldCheck.astro";
+
 import HowWeDoItGridCard from "./HowWeDoItGridCard.astro";
+
+type Props = {
+  class?: string;
+};
+
+const { class: className } = Astro.props;
 ---
 
-<div class="mb-6 space-y-10">
+<div class={`${className}`}>
   <div class="space-y-4">
     <h2 class="text-center text-4xl font-bold">How we integrate</h2>
     <p class="mx-auto max-w-prose text-center text-lg text-gray-600 dark:text-gray-400"></p>

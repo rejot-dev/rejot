@@ -14,6 +14,9 @@ export default defineConfig({
     ssr: {
       external: ["node:util", "node:path"],
     },
+    server: {
+      allowedHosts: ["localhost", ".trycloudflare.com"],
+    },
   },
   markdown: {
     // For some reason none of this actually works.

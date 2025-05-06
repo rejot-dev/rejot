@@ -1,0 +1,33 @@
+---
+type Props = {
+  class?: string;
+  title: string;
+  lines:
+    | {
+        start: number;
+        end?: number;
+      }
+    | number;
+};
+
+const { class: className = "", title, lines } = Astro.props;
+
+const start = typeof lines === "number" ? lines : lines.start;
+const end = typeof lines === "number" ? lines : (lines.end ?? lines.start);
+---
+
+<div
+  class={`${className} cursor-pointer space-y-2 rounded-lg border border-gray-200 bg-white 
+  p-3 hover:bg-rejot-orange-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700`}
+  data-highlight-lines={`${start + 1}-${end + 1}`}
+>
+  <div class="font-semibold">
+    {title}
+    <span class="text-gray-400">
+      ({start === end ? `Line ${start}` : `Lines ${start} - ${end}`})
+    </span>
+  </div>
+  <div class="max-w-prose">
+    <slot />
+  </div>
+</div>

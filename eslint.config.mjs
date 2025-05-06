@@ -1,6 +1,6 @@
 // @ts-check
-
 import eslintConfigPrettier from "eslint-config-prettier";
+import eslintPluginAstro from "eslint-plugin-astro";
 import eslintPluginReact from "eslint-plugin-react";
 import eslintPluginSimpleImportSort from "eslint-plugin-simple-import-sort";
 import eslintPluginTailwindcss from "eslint-plugin-tailwindcss";
@@ -11,7 +11,8 @@ import eslint from "@eslint/js";
 
 import localImportCheck from "./scripts/eslint-plugin-local-import-check.mjs";
 
-const frontendAppFiles = ["apps/controller-spa/**/*.{ts,tsx}"];
+const reactAppFiles = ["apps/controller-spa/**/*.{ts,tsx}"];
+const astroAppFiles = ["apps/static-site/**/*.{astro,astro.config.mjs}"];
 
 // TODO: We might start using this at a later point. https://github.com/sindresorhus/eslint-plugin-unicorn/tree/main
 const _unicornFixableRules = Object.fromEntries(
@@ -23,12 +24,15 @@ const _unicornFixableRules = Object.fromEntries(
 
 export default tseslint.config(
   {
-    ignores: ["**/node_modules/**", "**/dist/**", "apps/static-site/.astro/**"],
+    name: "Base Ignore",
+    ignores: ["**/node_modules/**", "**/dist/**", "**/.astro/**"],
   },
   eslint.configs.recommended,
   tseslint.configs.recommended,
   eslintConfigPrettier,
+  eslintPluginAstro.configs["flat/recommended"],
   {
+    name: "General Rules",
     plugins: {
       "simple-import-sort": eslintPluginSimpleImportSort,
       unicorn: eslintPluginUnicorn,
@@ -83,21 +87,23 @@ export default tseslint.config(
     },
   },
   {
-    // Disable the rule for apps/ and specific packages
+    name: "Disable require-relative-import-extension for apps/ and specific packages",
     files: ["scripts/**/*", "apps/**/*", "packages/api-interface-controller/**/*"],
     rules: {
       "local/require-relative-import-extension": "off",
     },
   },
   {
-    // React stuff
-    files: frontendAppFiles,
+    name: "Apps w/ React + Tailwind",
+    files: reactAppFiles,
     plugins: {
       react: eslintPluginReact,
+      tailwindcss: eslintPluginTailwindcss,
     },
     rules: {
       ...eslintPluginReact.configs.recommended.rules,
       ...eslintPluginReact.configs["jsx-runtime"].rules,
+      ...eslintPluginTailwindcss.configs["recommended"].rules,
       "react/react-in-jsx-scope": "off",
       "react/no-unknown-property": [
         "error",
@@ -110,28 +116,40 @@ export default tseslint.config(
       react: {
         version: "detect",
       },
+      tailwindcss: {
+        config: "./apps/controller-spa/tailwind.config.cjs",
+      },
     },
   },
   {
-    // Tailwind stuff
-    files: frontendAppFiles,
+    name: "Apps w/ Astro + Tailwind",
+    files: astroAppFiles,
     plugins: {
       tailwindcss: eslintPluginTailwindcss,
     },
     rules: {
       ...eslintPluginTailwindcss.configs["recommended"].rules,
-      // Fixed by prettier tailwind
-      "tailwindcss/classnames-order": "off",
       "tailwindcss/no-custom-classname": [
         "warn",
         {
-          whitelist: ["cf-turnstile"],
+          whitelist: [
+            "cf-.*",
+            "search-header",
+            "search-container",
+            "pagefind-ui",
+            "svg-.*",
+            "cls-.*",
+            "rejot-.*",
+          ],
         },
       ],
     },
     settings: {
+      astro: {
+        version: "detect",
+      },
       tailwindcss: {
-        config: "./apps/controller-spa/tailwind.config.cjs",
+        config: "./apps/static-site/tailwind.config.mjs",
       },
     },
   },

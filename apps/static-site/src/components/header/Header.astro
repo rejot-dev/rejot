@@ -1,16 +1,20 @@
 ---
-import ReJotLogo from "../icons/ReJotLogo.astro";
-import HeaderLink from "./HeaderLink.astro";
-
 import Bars3 from "astro-heroicons/outline/Bars3.astro";
 import XMark from "astro-heroicons/outline/XMark.astro";
+
+import ReJotLogo from "../icons/ReJotLogo.astro";
+import HeaderLink from "./HeaderLink.astro";
+import ScreenSizeIndicator from "./ScreenSizeIndicator.astro";
 ---
 
-<header class="mx-auto mb-12 min-h-10 w-full max-w-6xl">
+<header class="mx-auto mb-12 mt-2 max-w-7xl px-6 py-2">
   <nav class="flex items-center justify-between">
     <a href="/" aria-label="Go to homepage">
       <ReJotLogo class="min-w-32" />
     </a>
+
+    <ScreenSizeIndicator />
+
     <button id="menu-button" class="md:hidden" aria-label="Open Menu">
       <Bars3 class="size-6" />
     </button>
@@ -34,6 +38,7 @@ import XMark from "astro-heroicons/outline/XMark.astro";
         <!-- <HeaderLink href="/use-cases" activeClass="border-b-rejot-red-600">
           Use Cases
         </HeaderLink> -->
+        <HeaderLink href="/docs" activeClass="border-b-rejot-red-600">Docs</HeaderLink>
         <HeaderLink href="/blog" activeClass="border-b-rejot-red-600">Blog</HeaderLink>
         <HeaderLink href="/about" activeClass="border-b-rejot-red-600">About</HeaderLink>
         <HeaderLink href="/contact" activeClass="border-b-rejot-red-600">Contact</HeaderLink>

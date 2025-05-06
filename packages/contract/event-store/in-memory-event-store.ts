@@ -1,6 +1,6 @@
-import type { Cursor, PublicSchemaReference } from "@rejot-dev/contract/cursor";
-import type { IEventStore, TransformedOperationWithSource } from "@rejot-dev/contract/event-store";
-import type { OperationMessage } from "@rejot-dev/contract/message-bus";
+import type { Cursor, PublicSchemaReference } from "../cursor/cursors.ts";
+import type { OperationMessage } from "../message-bus/message-bus.ts";
+import type { IEventStore, TransformedOperationWithSource } from "./event-store.ts";
 
 export class InMemoryEventStore implements IEventStore {
   #operations: Map<string, TransformedOperationWithSource[]>;

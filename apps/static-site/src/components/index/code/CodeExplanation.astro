@@ -1,0 +1,195 @@
+---
+import { Code } from "astro:components";
+import type { ShikiTransformer } from "shiki";
+
+type Props = {
+  code: string;
+  class?: string;
+  align?: "left" | "right";
+};
+
+const { class: className = "", code, align = "left" } = Astro.props;
+
+const transformer: ShikiTransformer = {
+  postprocess(html) {
+    return html.replace(/background-color:.*;/g, "");
+  },
+  line(node, line) {
+    node.properties["data-line"] = line;
+  },
+  span(node, _line, _col) {
+    for (const child of node.children) {
+      if (child.type !== "text") {
+        continue;
+      }
+
+      const match = child.value.match(/\[!(.*)\]/);
+
+      if (match) {
+        const [, matchGroup1] = match;
+
+        const [command, ...args] = matchGroup1.split(" ");
+        if (command === "group" && args[0]) {
+          this.addClassToHast(node, ``);
+          node.children = [];
+          return;
+        }
+      }
+    }
+  },
+};
+---
+
+<div class={`rejot-code-explanation ${className} space-y-4`}>
+  <div class="flex-1 space-y-2">
+    <div
+      class={`flex items-center gap-2 bg-clip-text text-2xl font-bold ${align === "right" ? "md:flex-row-reverse" : ""}`}
+    >
+      <slot name="icon" />
+      <h1 class="">
+        <slot name="title" />
+      </h1>
+    </div>
+
+    <div class="w-full">
+      <p
+        class={`w-full max-w-prose text-lg text-gray-600 dark:text-gray-400 ${align === "right" ? "md:ml-auto md:text-right" : ""}`}
+      >
+        <slot name="description" />
+      </p>
+    </div>
+  </div>
+
+  <div
+    class={`flex gap-6 ${align === "right" ? "flex-col md:flex-row-reverse" : "flex-col md:flex-row"}`}
+  >
+    <div
+      class="grid w-full overflow-auto rounded-lg border border-gray-200 p-4 shadow-sm dark:border-gray-700"
+    >
+      <Code
+        class="mt-[-1.2rem] max-w-0"
+        lang="typescript"
+        themes={{
+          light: "github-light",
+          dark: "github-dark",
+        }}
+        code={code}
+        transformers={[transformer]}
+      />
+    </div>
+    <div class="flex grow flex-col gap-4">
+      <slot name="explanation" />
+    </div>
+  </div>
+</div>
+
+<script>
+  // Highlight code lines based on data-highlight-lines on hover/click, scoped to each .rejot-code-explanation root
+  function parseHighlightLines(attr: string | null): number[] {
+    if (!attr) return [];
+    const match = attr.match(/^\d+(?:-\d+)?$/) ? attr.match(/^(\d+)(?:-(\d+))?$/) : null;
+    if (!match) return [];
+    const start = parseInt(match[1], 10);
+    const end = match[2] ? parseInt(match[2], 10) : start;
+    if (isNaN(start) || isNaN(end)) return [];
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }
+
+  // Find all .rejot-code-explanation roots
+  document.querySelectorAll(".rejot-code-explanation").forEach((root) => {
+    // Find the code block (first <pre> with data-line children inside this root)
+    const codeBlock = root.querySelector("pre");
+    if (!codeBlock) return;
+
+    // Find all highlight boxes inside this root
+    const highlightBoxes = root.querySelectorAll("[data-highlight-lines]");
+
+    // Track the currently locked highlight (box and lines)
+    let lockedBox: HTMLElement | null = null;
+    let lockedLines: number[] = [];
+
+    // Remove highlight from all lines in this code block
+    function clearHighlights(): void {
+      if (!codeBlock) return;
+      codeBlock.querySelectorAll("[data-line]").forEach((line) => {
+        line.classList.remove("highlighted-line");
+      });
+    }
+
+    // Add highlight to given lines in this code block
+    function highlightLines(lines: number[]): void {
+      if (!codeBlock) return;
+      lines.forEach((lineNum) => {
+        const line = codeBlock.querySelector(`[data-line="${lineNum}"]`);
+        if (line) line.classList.add("highlighted-line");
+      });
+    }
+
+    // Add event listeners for highlight boxes in this root
+    highlightBoxes.forEach((box) => {
+      const htmlBox = box as HTMLElement;
+      const lines = parseHighlightLines(htmlBox.getAttribute("data-highlight-lines"));
+      // Mouse enter: highlight unless locked
+      htmlBox.addEventListener("mouseenter", () => {
+        if (lockedBox === htmlBox) return;
+        clearHighlights();
+        highlightLines(lines);
+      });
+      // Mouse leave: clear unless locked
+      htmlBox.addEventListener("mouseleave", () => {
+        if (lockedBox === htmlBox) return;
+        clearHighlights();
+        if (lockedBox && lockedLines.length) highlightLines(lockedLines);
+      });
+      // Click/tap: lock highlight, unlock if already locked
+      htmlBox.addEventListener("click", (e: MouseEvent) => {
+        e.preventDefault();
+        if (lockedBox === htmlBox) {
+          // Unlock
+          lockedBox = null;
+          lockedLines = [];
+          clearHighlights();
+          htmlBox.classList.remove("selected");
+        } else {
+          // Remove 'selected' from all boxes
+          highlightBoxes.forEach((b) => (b as HTMLElement).classList.remove("selected"));
+          lockedBox = htmlBox;
+          lockedLines = lines;
+          clearHighlights();
+          highlightLines(lines);
+          htmlBox.classList.add("selected");
+        }
+      });
+    });
+  });
+
+  if (!document.getElementById("rejot-highlighted-line-style")) {
+    const style = document.createElement("style");
+    style.id = "rejot-highlighted-line-style";
+    style.textContent = `
+        .highlighted-line {
+          background: #ffe9c6 !important;
+          transition: background 0.2s;
+          padding-top: 4px !important;
+          padding-bottom: 4px !important;
+        }
+        @media (prefers-color-scheme: dark) {
+          .highlighted-line {
+            background: #23436e !important;
+          }
+        }
+        .rejot-code-explanation [data-highlight-lines].selected {
+          border-color: #ff9800 !important;
+          background: #fff3e0 !important;
+          transition: border-color 0.2s, background 0.2s;
+        }
+        @media (prefers-color-scheme: dark) {
+          .rejot-code-explanation [data-highlight-lines].selected {
+            border-color: #ffb74d !important;
+            background: #2d2a1a !important;
+          }
+        }
+      `;
+    document.head.appendChild(style);
+  }
+</script>

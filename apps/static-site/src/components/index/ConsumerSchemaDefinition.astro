@@ -1,0 +1,76 @@
+---
+import ArrowDownOnSquareStack from "astro-heroicons/outline/ArrowDownOnSquareStack.astro";
+
+import CodeExplanation from "@/components/index/code/CodeExplanation.astro";
+import CodeLineExplanation from "@/components/index/code/CodeLineExplanation.astro";
+
+type Props = {
+  class?: string;
+};
+
+const { class: className = "" } = Astro.props;
+---
+
+<div class={`${className}`}>
+  <CodeExplanation
+    align="right"
+    code={`
+createConsumerSchema("consume-account", {
+  source: {
+    manifestSlug: "@rejot/",
+    publicSchema: {
+      name: "publish-account",
+      majorVersion: 1,
+    },
+  },
+  config: createPostgresConsumerSchemaConfig(
+    "default-postgres",
+    \`INSERT INTO account_destination 
+        (id, full_name, email)
+      VALUES (
+        :id, 
+        :firstName || ' ' || :lastName, 
+        (:emails::text[])[1] -- select first
+      ) ON CONFLICT (id) DO UPDATE
+        SET full_name = :firstName || ' ' || :lastName,
+            email = (:emails::text[])[1];\`,
+    {
+      deleteSql: \`
+        DELETE FROM 
+          account_destination 
+        WHERE id = :id\`,
+    },
+  ),
+});`}
+  >
+    <Fragment slot="icon">
+      <ArrowDownOnSquareStack class="size-8" />
+    </Fragment>
+
+    <Fragment slot="title" class="flex items-center gap-2 bg-clip-text text-2xl font-bold">
+      Consumer Schema Definition
+    </Fragment>
+
+    <Fragment slot="description">
+      Consumer Schemas are defined by the consuming team. They contain the query to execute when a
+      change is pushed from the source Public Schema.
+    </Fragment>
+
+    <Fragment slot="explanation">
+      <CodeLineExplanation title="Source" lines={{ start: 2, end: 8 }}>
+        The reference to the Public Schema that is being consumed.
+      </CodeLineExplanation>
+      <CodeLineExplanation title="Config" lines={{ start: 9, end: 10 }}>
+        Database system specific configuration. In this case we specify which Postgres data store
+        we'll write to.
+      </CodeLineExplanation>
+      <CodeLineExplanation title="Transformation" lines={{ start: 11, end: 19 }}>
+        SQL-based transformation that encapsulates the internal schema to the public schema. Named
+        placeholders are based on the column names of the source table.
+      </CodeLineExplanation>
+      <CodeLineExplanation title="Delete Transformation" lines={{ start: 21, end: 24 }}>
+        Optional transformation to execute when a row is deleted.
+      </CodeLineExplanation>
+    </Fragment>
+  </CodeExplanation>
+</div>

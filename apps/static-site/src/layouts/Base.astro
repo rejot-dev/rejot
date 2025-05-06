@@ -1,15 +1,16 @@
 ---
 import BaseHead from "../components/BaseHead.astro";
-import Header from "../components/header/Header.astro";
 import Footer from "../components/Footer.astro";
+import Header from "../components/header/Header.astro";
 
 type Props = {
   title: string;
   description: string;
   image?: string;
+  class?: string;
 };
 
-const { title, description, image } = Astro.props;
+const { title, description, image, class: className = "px-2 md:px-4 xl:px-8" } = Astro.props;
 ---
 
 <html lang="en">
@@ -18,9 +19,9 @@ const { title, description, image } = Astro.props;
     <BaseHead title={title} description={description} image={image} />
   </head>
 
-  <body class="mx-auto bg-gray-50 p-4 text-gray-800 dark:bg-rejot-black-950 dark:text-gray-200">
+  <body class="mx-auto bg-gray-50 text-gray-800 dark:bg-rejot-black-950 dark:text-gray-200">
     <Header />
-    <main class="flex min-h-[calc(100vh-40rem)] justify-center px-2 md:px-4 xl:px-8">
+    <main class={`flex min-h-[calc(100vh-40rem)] justify-center ${className}`}>
       <slot />
     </main>
     <Footer />
