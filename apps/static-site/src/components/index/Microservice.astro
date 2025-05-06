@@ -7,12 +7,12 @@ import XMark from "astro-heroicons/outline/XMark.astro";
 import Check from "astro-heroicons/outline/Check.astro";
 ---
 
-<div class="space-y-4 rounded-lg bg-white p-4 shadow-md md:p-8 dark:bg-gray-800">
-  <div class="flex flex-row justify-between">
+<div class="space-y-4 rounded-lg bg-white p-4 shadow-md md:p-8 dark:bg-gray-800 overflow-hidden">
+  <div class="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
     <h3 class="text-xl font-semibold">Microservices</h3>
 
     <div
-      class="inline-flex rounded-full overflow-hidden text-l font-medium shadow-sm border border-gray-300"
+      class="self-center inline-flex rounded-full overflow-hidden text-l font-medium shadow-sm border border-gray-300"
     >
       <input type="radio" name="mode" id="mode-sync" class="peer/sync sr-only" checked />
       <label
@@ -36,8 +36,13 @@ import Check from "astro-heroicons/outline/Check.astro";
     </div>
   </div>
 
-  <div class="flex flex-row justify-center space-x-4">
-    <MicroserviceDiagram />
+  <div
+    class="flex flex-col items-center space-y-4 md:flex-row md:space-y-0 md:space-x-4 md:items-start"
+  >
+    <div class="w-full flex justify-center">
+      <MicroserviceDiagram />
+    </div>
+
     {/* Synchronous mode */}
     <div id="sync-sidebar" class="flex flex-col space-y-2 max-w-96 justify-between">
       <div class="flex-grow p-4" id="high-latency-item">
