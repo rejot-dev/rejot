@@ -1,7 +1,4 @@
 ---
-// import CircleStack from "astro-heroicons/outline/CircleStack.astro";
-// import ReJotIconWireframe from "../icons/ReJotIconWireframe.astro";
-// import { Code } from "astro:components";
 import MicroserviceDiagram from "./MicroserviceDiagram.astro";
 import XMark from "astro-heroicons/outline/XMark.astro";
 import Check from "astro-heroicons/outline/Check.astro";
@@ -90,61 +87,45 @@ import Check from "astro-heroicons/outline/Check.astro";
           <Check class="size-6 text-green-600" />
           <h4 class="font-bold text-xl">Managed Replication</h4>
         </div>
-        <p>Rejot manages logical replication of data between your services</p>
+        <p>Rejot manages logical replication of data between your services.</p>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-  const syncRadio = document.getElementById("mode-sync");
-  const rejotRadio = document.getElementById("mode-rejot");
-  const syncSidebar = document.getElementById("sync-sidebar");
-  const rejotSidebar = document.getElementById("rejot-sidebar");
-
-  // Get SVG group elements - assuming MicroserviceDiagram is rendered in the same document
-  const syncDiagramGroup = document.getElementById("synchronous");
-  const rejotDiagramGroup = document.getElementById("with-rejot");
+  /**
+   * Group related elements to avoid repetitive, hard-coded logic.
+   * Each object represents a mode (sync / ReJot) with its associated
+   * radio button, sidebar container and SVG diagram group.
+   */
+  const modes = [
+    {
+      radio: document.getElementById("mode-sync"),
+      sidebar: document.getElementById("sync-sidebar"),
+      diagram: document.getElementById("synchronous"),
+    },
+    {
+      radio: document.getElementById("mode-rejot"),
+      sidebar: document.getElementById("rejot-sidebar"),
+      diagram: document.getElementById("with-rejot"),
+    },
+  ];
 
   function updateVisibility() {
-    // Ensure elements exist before proceeding
-    if (
-      !syncRadio ||
-      !rejotRadio ||
-      !syncSidebar ||
-      !rejotSidebar ||
-      !syncDiagramGroup ||
-      !rejotDiagramGroup
-    )
-      return;
+    modes.forEach(({ radio, sidebar, diagram }) => {
+      if (!radio || !sidebar || !diagram) return; // Skip if anything is missing
 
-    // Check if rejotRadio is an input element and is checked
-    if (rejotRadio instanceof HTMLInputElement && rejotRadio.checked) {
-      syncSidebar.style.display = "none";
-      rejotSidebar.style.display = "flex";
-      syncDiagramGroup.style.display = "none";
-      rejotDiagramGroup.style.display = "inline";
-    } else {
-      // Assume syncRadio is checked if rejotRadio isn't
-      syncSidebar.style.display = "flex";
-      rejotSidebar.style.display = "none";
-      syncDiagramGroup.style.display = "inline";
-      rejotDiagramGroup.style.display = "none";
-    }
+      const isActive = radio instanceof HTMLInputElement && radio.checked;
+      sidebar.style.display = isActive ? "flex" : "none";
+      diagram.style.display = isActive ? "inline" : "none";
+    });
   }
 
-  // Add event listeners only if all required elements are found
-  if (
-    syncRadio &&
-    rejotRadio &&
-    syncSidebar &&
-    rejotSidebar &&
-    syncDiagramGroup &&
-    rejotDiagramGroup
-  ) {
-    // Add event listeners for radio buttons
-    syncRadio.addEventListener("change", updateVisibility);
-    rejotRadio.addEventListener("change", updateVisibility);
+  if (modes.every(({ radio, sidebar, diagram }) => radio && sidebar && diagram)) {
+    modes.forEach(({ radio }) => {
+      if (radio) radio.addEventListener("change", updateVisibility);
+    });
 
     // Set initial state on page load
     updateVisibility();
