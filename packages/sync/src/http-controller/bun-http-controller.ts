@@ -23,13 +23,10 @@ export class BunHttpController extends HttpController {
     if (!this.#server) {
       throw new Error("Server is not listening");
     }
-    const assignedPort = this.#server.port;
-
-    if (!assignedPort) {
-      throw new Error("Server is not listening");
+    if (!this.#server.port) {
+      throw new Error("Server port is not assigned");
     }
-
-    return assignedPort;
+    return this.#server.port;
   }
 
   /**

@@ -1,0 +1,61 @@
+---
+const lanes = [{ title: "Lane 1" }, { title: "Lane 2" }, { title: "Lane 3" }];
+const nodes = [
+  { id: "A", lane: 0, top: 120, left: 60 },
+  { id: "B", lane: 1, top: 80, left: 320 },
+  { id: "C", lane: 1, top: 220, left: 320 },
+  { id: "D", lane: 2, top: 150, left: 580 },
+];
+const links = [
+  { from: "A", to: "B" },
+  { from: "A", to: "C" },
+  { from: "B", to: "D" },
+  { from: "C", to: "D" },
+];
+---
+
+<div
+  class="relative mx-auto my-8 flex h-[400px] w-[800px] overflow-visible rounded-3xl bg-[#f6f7fb] shadow-lg"
+>
+  {
+    lanes.map((lane) => (
+      <div class="relative z-0 mx-2 flex flex-1 flex-col items-center rounded-2xl bg-white/80">
+        <div class="mb-8 mt-4 text-lg font-semibold tracking-wide text-gray-700">{lane.title}</div>
+      </div>
+    ))
+  }
+  {
+    nodes.map((node) => (
+      <div
+        class="absolute z-20 flex h-16 w-32 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-md"
+        id={`node-${node.id}`}
+        style={`top:${node.top}px; left:${node.left}px;`}
+      />
+    ))
+  }
+  <svg class="pointer-events-none absolute left-0 top-0 z-10 size-full">
+    {
+      links.map((link) => {
+        const from = nodes.find((n) => n.id === link.from);
+        const to = nodes.find((n) => n.id === link.to);
+        if (!from || !to) return null;
+        const fromX = from.left + 64,
+          fromY = from.top + 32;
+        const toX = to.left + 64,
+          toY = to.top + 32;
+        return (
+          <line
+            x1={fromX}
+            y1={fromY}
+            x2={toX}
+            y2={toY}
+            stroke="#7b8bb7"
+            stroke-width="3"
+            stroke-linecap="round"
+            opacity="0.7"
+          />
+        );
+      })
+    }
+  </svg>
+</div>

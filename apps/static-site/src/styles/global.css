@@ -1,3 +1,6 @@
+:root {
+  --shiki-dark-bg: #fff !important;
+}
 @font-face {
   font-family: "Atkinson Hyperlegible";
   font-style: normal;
@@ -12,14 +15,15 @@
   font-display: swap;
   src: url("/fonts/atkinson-bold.woff") format("woff");
 }
+.astro-code,
+.astro-code span {
+  /* background-color: unset !important; */
+}
+
 @media (prefers-color-scheme: dark) {
   .astro-code,
   .astro-code span {
     color: var(--shiki-dark) !important;
-    background-color: var(--shiki-dark-bg) !important;
-    /* Optional, if you also want font styles */
-    font-style: var(--shiki-dark-font-style) !important;
-    font-weight: var(--shiki-dark-font-weight) !important;
-    text-decoration: var(--shiki-dark-text-decoration) !important;
+    /* background-color: unset !important; */
   }
 }

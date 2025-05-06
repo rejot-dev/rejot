@@ -1,0 +1,90 @@
+---
+import CircleStack from "astro-heroicons/outline/CircleStack.astro";
+
+interface NodeItem {
+  name: string;
+  type: string;
+}
+
+type DotPosition = "top" | "right" | "bottom" | "left";
+
+type Props = {
+  header: string;
+  class?: string;
+  nodes: NodeItem[];
+  color?: "blue" | "purple" | "green" | "orange" | "red";
+  dots?: DotPosition[];
+};
+
+const { nodes, color = "orange", class: className, dots = [], header } = Astro.props;
+
+// Create color class maps for each element
+const borderColorClass = {
+  blue: "border-blue-600 dark:border-blue-600 dark:bg-blue-900",
+  purple: "border-purple-600 dark:border-purple-600 dark:bg-purple-900",
+  green: "border-green-600 dark:border-green-600 dark:bg-green-900",
+  orange: "border-orange-600 dark:border-orange-600 dark:bg-orange-900",
+  red: "border-red-600 dark:border-red-600 dark:bg-red-900",
+}[color];
+
+const bgColorClass = {
+  blue: "bg-blue-200 dark:bg-blue-900",
+  purple: "bg-purple-200 dark:bg-purple-900",
+  green: "bg-green-200 dark:bg-green-900",
+  orange: "bg-orange-200 dark:bg-orange-900",
+  red: "bg-red-200 dark:bg-red-900",
+}[color];
+
+const dotColorClass = {
+  blue: "bg-blue-600",
+  purple: "bg-purple-600",
+  green: "bg-green-600",
+  orange: "bg-orange-600",
+  red: "bg-red-600",
+}[color];
+
+// Map of position to dot positioning classes
+const dotPositionClasses = {
+  top: "top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
+  right: "right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2",
+  bottom: "bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2",
+  left: "left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2",
+};
+---
+
+<div class=`${className}`>
+  <div
+    class={`max-w-56 mx-auto overflow-hidden rounded-md border shadow-lg xl:max-w-64 ${borderColorClass}`}
+  >
+    <div class={`flex items-center gap-2 p-2 font-semibold ${bgColorClass}`}>
+      <slot name="icon">
+        <CircleStack class="size-6" />
+      </slot>
+      <span>{header}</span>
+    </div>
+
+    <div class={`divide-y divide-gray-200 dark:divide-gray-600`}>
+      {
+        nodes.map((node) => (
+          <div
+            class={`group flex items-center justify-between p-2 font-mono text-sm odd:bg-white even:bg-gray-100 dark:odd:bg-gray-600 dark:even:bg-gray-700`}
+          >
+            <span class="">{node.name}</span>
+            <span class="ml-2 text-end text-xs text-gray-500 group-hover:font-semibold dark:text-gray-400">
+              {node.type}
+            </span>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  {/* Render dots in configured positions */}
+  {
+    dots.map((position) => (
+      <div
+        class={`absolute size-2 rounded-full ${dotColorClass} ${dotPositionClasses[position]}`}
+      />
+    ))
+  }
+</div>

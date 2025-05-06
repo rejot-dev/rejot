@@ -1,21 +1,31 @@
 ---
-import MicroserviceDiagram from "./MicroserviceDiagram.astro";
-import XMark from "astro-heroicons/outline/XMark.astro";
 import Check from "astro-heroicons/outline/Check.astro";
+import XMark from "astro-heroicons/outline/XMark.astro";
+
+import MicroserviceDiagram from "./MicroserviceDiagram.astro";
+
+type Props = {
+  class?: string;
+};
+
+const { class: className = "" } = Astro.props;
 ---
 
-<div class="space-y-4 rounded-lg bg-white p-4 shadow-md md:p-8 dark:bg-gray-800 overflow-hidden">
+<div
+  class={`${className} space-y-4 overflow-hidden rounded-lg bg-white p-4 shadow 
+  md:min-h-[544px] md:p-8 border dark:border-gray-700 dark:bg-gray-800`}
+>
   <div class="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
     <h3 class="text-xl font-semibold">Microservices</h3>
 
     <div
-      class="self-center inline-flex rounded-full overflow-hidden text-l font-medium shadow-sm border border-gray-300"
+      class="inline-flex self-center overflow-hidden rounded-full border border-gray-300 font-medium shadow-sm"
     >
       <input type="radio" name="mode" id="mode-sync" class="peer/sync sr-only" checked />
       <label
         for="mode-sync"
-        class="px-4 py-1 cursor-pointer transition-colors duration-300
-           text-gray-600 bg-gray-100
+        class="cursor-pointer bg-gray-100 px-4 py-1 text-gray-600
+           transition-colors duration-300
            peer-checked/sync:bg-rejot-red-600 peer-checked/sync:text-white"
       >
         REST
@@ -24,8 +34,8 @@ import Check from "astro-heroicons/outline/Check.astro";
       <input type="radio" name="mode" id="mode-rejot" class="peer/rejot sr-only" />
       <label
         for="mode-rejot"
-        class="px-4 py-1 cursor-pointer transition-colors duration-300
-           text-gray-600 bg-gray-100
+        class="cursor-pointer bg-gray-100 px-4 py-1 text-gray-600
+           transition-colors duration-300
            peer-checked/rejot:bg-rejot-red-600 peer-checked/rejot:text-white"
       >
         With ReJot
@@ -34,29 +44,29 @@ import Check from "astro-heroicons/outline/Check.astro";
   </div>
 
   <div
-    class="flex flex-col items-center space-y-4 md:flex-row md:space-y-0 md:space-x-4 md:items-start"
+    class="flex flex-col items-center space-y-4 md:flex-row md:items-start md:space-x-4 md:space-y-0"
   >
-    <div class="w-full flex justify-center">
-      <MicroserviceDiagram />
+    <div class="flex w-full justify-center">
+      <MicroserviceDiagram class="w-full" />
     </div>
 
     {/* Synchronous mode */}
-    <div id="sync-sidebar" class="flex flex-col space-y-2 max-w-96 justify-between">
-      <div class="flex-grow p-4" id="high-latency-item">
+    <div id="sync-sidebar" class="flex max-w-96 flex-col justify-between space-y-2">
+      <div class="grow p-4" id="high-latency-item">
         <div class="flex flex-row space-x-2">
           <XMark class="size-6 text-rejot-red-600" />
-          <h4 class="font-bold text-xl">Synchronous</h4>
+          <h4 class="text-xl font-bold">Synchronous</h4>
         </div>
         <p>
           To serve a single request, a request may need to flow through multiple chained services
           increasing latency for each service added.
         </p>
       </div>
-      <hr />
-      <div class="flex-grow p-4" id="circuit-breaker-item">
+      <hr class="dark:border-gray-700 mx-4" />
+      <div class="grow p-4" id="circuit-breaker-item">
         <div class="flex flex-row space-x-2">
           <XMark class="size-6 text-rejot-red-600" />
-          <h4 class="font-bold text-xl">Brittle</h4>
+          <h4 class="text-xl font-bold">Brittle</h4>
         </div>
         <p>
           Uptime of a single service is directly tied to the uptime of all the services it depends
@@ -69,34 +79,34 @@ import Check from "astro-heroicons/outline/Check.astro";
     <div
       id="rejot-sidebar"
       style="display: none;"
-      class="flex flex-col space-y-2 max-w-96 justify-between"
+      class="flex max-w-96 flex-col justify-between space-y-2"
     >
-      <div class="flex-grow p-4">
+      <div class="grow p-4">
         <div class="flex flex-row space-x-2">
           <Check class="size-6 text-green-600" />
-          <h4 class="font-bold text-xl">Asynchronous</h4>
+          <h4 class="text-xl font-bold">Asynchronous</h4>
         </div>
         <p>
           ReJot's asynchronous model decouples services allowing you to scale while keeping latency
           low.
         </p>
       </div>
-      <hr />
-      <div class="flex-grow p-4">
+      <hr class="dark:border-gray-700 mx-4" />
+      <div class="grow p-4">
         <div class="flex flex-row space-x-2">
           <Check class="size-6 text-green-600" />
-          <h4 class="font-bold text-xl">Reliable</h4>
+          <h4 class="text-xl font-bold">Reliable</h4>
         </div>
         <p>
           Each service stays available even when its dependencies are down, removing the need for
           circuit breakers and preventing cascading failures.
         </p>
       </div>
-      <hr />
-      <div class="flex-grow p-4">
+      <hr class="dark:border-gray-700 mx-4" />
+      <div class="grow p-4">
         <div class="flex flex-row space-x-2">
           <Check class="size-6 text-green-600" />
-          <h4 class="font-bold text-xl">Explicit Contract</h4>
+          <h4 class="text-xl font-bold">Explicit Contract</h4>
         </div>
         <p>
           Explicit versioned data contracts enable independent service evolution and deployment
