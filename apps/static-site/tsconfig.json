@@ -13,5 +13,13 @@
     "paths": {
       "@/*": ["./src/*"]
     }
-  }
+  },
+  "references": [
+    {
+      "path": "../../packages/contract"
+    },
+    {
+      "path": "../../packages/adapter-postgres"
+    }
+  ]
 }
