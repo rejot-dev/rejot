@@ -2,11 +2,13 @@
 title: Architecture
 ---
 
-- **Control plane**: Services publish their public schema to the data catalog for other services in
-  the organization to consume. Keeps track of clients subscribed to these schemas and orchestrates
-  the sync engine(s) to move data where needed.
-- **Sync Engine**: Consumes the write-ahead log of a data store and pushes updates to published
-  schemas to clients subscribed to those schemas. This data is made available to services in their
-  local data store.
+The overview below shows how ReJot would operate in a microservice architecture where each service
+has its own data store.
 
-![ReJot Architecture Overview](/content/docs/rejot-diagram.svg)
+- **Sync Engine**: Consumes the write-ahead log of a data store and applies the public schema
+  transformations to the rows mutated in that data store. Stores these public schema events/messages
+  into the event store and handles writing the mutation to the destination data store.
+
+- **Event Store**: Durable storage backend for public schema events.
+
+![ReJot Architecture Overview](/content/docs/rejot-architecture.svg)
