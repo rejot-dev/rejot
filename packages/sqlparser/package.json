@@ -1,6 +1,6 @@
 {
   "name": "@rejot-dev/sqlparser",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "exports": {
     ".": {
       "bun": "./index.ts",

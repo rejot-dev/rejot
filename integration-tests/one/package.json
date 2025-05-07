@@ -2,7 +2,7 @@
   "name": "@rejot-dev/integration-tests-one",
   "module": "index.ts",
   "type": "module",
-  "private": false,
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rejot-dev/rejot.git",
