@@ -77,17 +77,31 @@ import Check from "astro-heroicons/outline/Check.astro";
           <h4 class="font-bold text-xl">Asynchronous</h4>
         </div>
         <p>
-          Asynchronous services can serve a single request without waiting for other services to
-          reply, resulting in low latencies and reliable services. No need for circuit breakers.
+          ReJot's asynchronous model decouples services allowing you to scale while keeping latency
+          low.
         </p>
       </div>
       <hr />
       <div class="flex-grow p-4">
         <div class="flex flex-row space-x-2">
           <Check class="size-6 text-green-600" />
-          <h4 class="font-bold text-xl">Managed Replication</h4>
+          <h4 class="font-bold text-xl">Reliable</h4>
         </div>
-        <p>Rejot manages logical replication of data between your services.</p>
+        <p>
+          Each service stays available even when its dependencies are down, removing the need for
+          circuit breakers and preventing cascading failures.
+        </p>
+      </div>
+      <hr />
+      <div class="flex-grow p-4">
+        <div class="flex flex-row space-x-2">
+          <Check class="size-6 text-green-600" />
+          <h4 class="font-bold text-xl">Explicit Contract</h4>
+        </div>
+        <p>
+          Explicit versioned data contracts enable independent service evolution and deployment
+          without introducing unintended side effects.
+        </p>
       </div>
     </div>
   </div>
