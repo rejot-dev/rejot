@@ -53,4 +53,10 @@ for (const packageDir of publishablePackages) {
 // package-lock.json is automatically created, remove it
 await $`rm -f package-lock.json`.quiet().text();
 
+console.log("Updating bun.lock file...");
+
+// Lock file needs to be updated, because Bun resolves the "workspace:*" versions
+// during publishing based on the lockfile not the current package.json version.
+await $`bun update`.text();
+
 console.log("Version bumping process completed.");
