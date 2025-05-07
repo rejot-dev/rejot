@@ -4,6 +4,7 @@ title: "Defining Schemas"
 
 import { Code } from "astro:components";
 import Notice from "@/components/Notice.astro";
+import rawSchemaText from "./schema.ts?raw";
 
 ReJot allows you to define Public and Consumer Schemas using TypeScript code, which offers several
 benefits:
@@ -24,46 +25,14 @@ npm install --save @rejot-dev/contract @rejot-dev/adapter-postgres
 
 Create a new file called `schemas.ts` that will contain your public and consumer schemas:
 
-```typescript
-import { z } from "zod";
-
-import {
-  createPostgresPublicSchemaTransformation,
-  createPostgresConsumerSchemaConfig,
-} from "@rejot-dev/adapter-postgres";
-import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
-import { createPublicSchema } from "@rejot-dev/contract/public-schema";
-
-const myPublicSchema = createPublicSchema("my-public-schema", {
-  source: { dataStoreSlug: "my-source-datastore", tables: ["my_table"] },
-  outputSchema: z.object({
-    id: z.string(),
-    name: z.string(),
-  }),
-  transformations: [], // See next step
-  version: {
-    major: 1,
-    minor: 0,
-  },
-});
-
-const myConsumerSchema = createConsumerSchema({
-  source: {
-    manifestSlug: "my-manifest",
-    publicSchema: {
-      name: "my-public-schema",
-      majorVersion: 1,
-    },
-  },
-  destinationDataStoreSlug: "my-destination-datastore",
-  transformations: [], // See next step
-});
-
-export default {
-  myPublicSchema,
-  myConsumerSchema,
-};
-```
+<Code
+  code={rawSchemaText}
+  lang="ts"
+  themes={{
+    light: "github-light",
+    dark: "github-dark",
+  }}
+/>
 
 ### Transformations
 
