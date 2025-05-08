@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import { PostgresConsumerSchemaValidationAdapter } from "@rejot-dev/adapter-postgres";
 import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
-import { NoopLogger, setLogger } from "@rejot-dev/contract/logger";
+import { ConsoleLogger, getLogger, setLogger } from "@rejot-dev/contract/logger";
 import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
 import { SchemaCollector } from "@rejot-dev/contract-tools/collect/schema-collector";
 import {
@@ -14,6 +14,8 @@ import {
 } from "@rejot-dev/contract-tools/manifest";
 import { TypeStripper } from "@rejot-dev/contract-tools/type-stripper";
 import { validateManifest } from "@rejot-dev/sync/validate-manifest";
+
+const log = getLogger(import.meta.url);
 
 import { Args, Command, Flags } from "@oclif/core";
 
@@ -34,6 +36,11 @@ export default class Collect extends Command {
     "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --check",
   ];
   static override flags = {
+    "log-level": Flags.string({
+      description: "Set the log level (user, error, warn, info, debug, trace)",
+      options: ["user", "error", "warn", "info", "debug", "trace"],
+      default: "user",
+    }),
     manifest: Flags.string({
       description: "Path to the manifest file to write to.",
       required: false,
@@ -53,9 +60,10 @@ export default class Collect extends Command {
   };
 
   public async run(): Promise<void> {
-    setLogger(new NoopLogger());
     const { flags, argv } = await this.parse(Collect);
-    const { write, check, print } = flags;
+    const { write, check, print, "log-level": logLevel } = flags;
+
+    setLogger(new ConsoleLogger(logLevel.toUpperCase()));
 
     // Find manifest path - either from flag or by searching up directory tree
     const manifestPath = resolve(
@@ -70,7 +78,7 @@ export default class Collect extends Command {
     try {
       currentManifest = await readManifestOrGetEmpty(manifestPath);
     } catch (error) {
-      console.warn(`Pre-existing manifest file '${manifestPath}' has invalid format.`);
+      log.warn(`Pre-existing manifest file '${manifestPath}' has invalid format.`);
       throw error;
     }
 
@@ -84,7 +92,7 @@ export default class Collect extends Command {
       }
 
       if (!(await exists(schemaPath))) {
-        this.warn(`Schema file '${schemaPath}' does not exist.`);
+        log.warn(`Schema file '${schemaPath}' does not exist.`);
         continue;
       }
 
@@ -104,17 +112,21 @@ export default class Collect extends Command {
     };
 
     if (print) {
-      console.log(ManifestPrinter.printPublicSchema(allPublicSchemas).join("\n"));
-      console.log(ManifestPrinter.printConsumerSchema(allConsumerSchemas).join("\n"));
+      log.user(ManifestPrinter.printPublicSchema(allPublicSchemas).join("\n"));
+      log.user(ManifestPrinter.printConsumerSchema(allConsumerSchemas).join("\n"));
     }
 
     if (check) {
       await validateManifest(newManifest, [new PostgresConsumerSchemaValidationAdapter()]);
     }
 
+    log.user(
+      `Collected ${allPublicSchemas.length} public schemas and ${allConsumerSchemas.length} consumer schemas.`,
+    );
+
     if (write) {
       await writeManifest(newManifest, manifestPath);
-      console.log(`Public and consumer schemas collected and manifest written to ${manifestPath}`);
+      log.user(`Public and consumer schemas written to manifest in ${manifestPath}`);
     }
   }
 }
