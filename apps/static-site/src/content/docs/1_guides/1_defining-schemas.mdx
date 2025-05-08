@@ -53,12 +53,14 @@ These transformations:
 Here's an example of a public schema transformation:
 
 ```typescript
-transformations: [
-  createPostgresPublicSchemaTransformation(
-    "my_table",
-    `SELECT id, name FROM my_table WHERE id = $1`,
-  ),
-];
+import { createPostgresPublicSchemaTransformations } from "@rejot-dev/adapter-postgres";
+
+// ... in myPublicSchema
+transformations: createPostgresPublicSchemaTransformations(
+      "insertOrUpdate",
+      "my_table",
+      `SELECT id, name FROM my_table WHERE id = $1`,
+    ),
 ```
 
 #### Multi-table transformations
@@ -68,32 +70,37 @@ results ReJot should listen to updates to all of these tables. As a data produce
 define schema transformations for each table.
 
 ```typescript
+import { createPostgresPublicSchemaTransformations } from "@rejot-dev/adapter-postgres";
+
+// ... in myPublicSchema
 transformations: [
-    createPostgresPublicSchemaTransformation(
-      "accounts",
-      `SELECT
-          accounts.id,
-          accounts.name,
-          addresses.country
-        FROM
-          accounts
-          JOIN addresses ON accounts.id = addresses.account_id
-        WHERE
-          accounts.id = $1`,
-    ),
-    createPostgresPublicSchemaTransformation(
-      "addresses",
-      `SELECT
-          accounts.id,
-          accounts.name,
-          addresses.country
-        FROM
-          accounts
-          JOIN addresses ON accounts.id = addresses.account_id
-        WHERE
-          addresses.id = $1`,
-    ),
-  ],
+      ...createPostgresPublicSchemaTransformations(
+        "insertOrUpdate",
+        "accounts",
+        `SELECT
+            accounts.id,
+            accounts.name,
+            addresses.country
+          FROM
+            accounts
+            JOIN addresses ON accounts.id = addresses.account_id
+          WHERE
+            accounts.id = $1`,
+      ),
+      ...createPostgresPublicSchemaTransformations(
+        "insertOrUpdate",
+        "addresses",
+        `SELECT
+            accounts.id,
+            accounts.name,
+            addresses.country
+          FROM
+            accounts
+            JOIN addresses ON accounts.id = addresses.account_id
+          WHERE
+            addresses.id = $1`,
+      ),
+    ],
 ```
 
 <Notice type="WARNING">
@@ -114,11 +121,7 @@ destination data store. These transformations:
 Here's an example of a consumer schema transformation:
 
 ```typescript
-transformations: [
-  createPostgresConsumerSchemaConfig(
-    "INSERT INTO destination_table (id, name) VALUES (:id, :name) ON CONFLICT (id) DO UPDATE SET name = :name",
-  ),
-];
+sql: "INSERT INTO destination_table (id, name) VALUES (:id, :name) ON CONFLICT (id) DO UPDATE SET name = :name";
 ```
 
 ## Materializing Schemas
