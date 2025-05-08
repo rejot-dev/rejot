@@ -5,19 +5,22 @@ import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
 import { createPublicSchema } from "@rejot-dev/contract/public-schema";
 
 const myPublicSchema = createPublicSchema("my-public-schema", {
-  source: { dataStoreSlug: "my-source-datastore", tables: ["my_table"] },
+  source: { dataStoreSlug: "my-source-datastore" },
   outputSchema: z.object({
     id: z.string(),
     name: z.string(),
   }),
-  transformations: [], // See next step
+  config: {
+    publicSchemaType: "postgres",
+    transformations: [], // See next step
+  },
   version: {
     major: 1,
     minor: 0,
   },
 });
 
-const myConsumerSchema = createConsumerSchema({
+const myConsumerSchema = createConsumerSchema("my-consumer-schema", {
   source: {
     manifestSlug: "my-manifest",
     publicSchema: {
@@ -25,8 +28,11 @@ const myConsumerSchema = createConsumerSchema({
       majorVersion: 1,
     },
   },
-  destinationDataStoreSlug: "my-destination-datastore",
-  transformations: [], // See next step
+  config: {
+    consumerSchemaType: "postgres",
+    destinationDataStoreSlug: "my-destination-datastore",
+    sql: "", // See next step
+  },
 });
 
 export default {

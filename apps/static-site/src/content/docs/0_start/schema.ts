@@ -1,26 +1,27 @@
 // schemas.ts
 import { z } from "zod";
 
-import {
-  createPostgresConsumerSchemaTransformation,
-  createPostgresPublicSchemaTransformation,
-} from "@rejot-dev/adapter-postgres";
+import { createPostgresPublicSchemaTransformations } from "@rejot-dev/adapter-postgres";
 import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
 import { createPublicSchema } from "@rejot-dev/contract/public-schema";
 
 // Public schema definition for api_key table
 const apiKeyPublicSchema = createPublicSchema("my-public-schema", {
-  source: { dataStoreSlug: "my-db", tables: ["api_key"] },
+  source: { dataStoreSlug: "my-db" },
   outputSchema: z.object({
     id: z.string(),
     api_key: z.string(),
   }),
-  transformations: [
-    createPostgresPublicSchemaTransformation(
-      "api_key",
-      `SELECT id, key AS "api_key" FROM api_key WHERE id = $1`,
-    ),
-  ],
+  config: {
+    publicSchemaType: "postgres",
+    transformations: [
+      ...createPostgresPublicSchemaTransformations(
+        "insertOrUpdate",
+        "api_key",
+        `SELECT id, key AS "api_key" FROM api_key WHERE id = $1`,
+      ),
+    ],
+  },
   version: {
     major: 1,
     minor: 0,
@@ -36,13 +37,12 @@ const apiKeyConsumerSchema = createConsumerSchema("my-consumer-schema", {
       majorVersion: 1,
     },
   },
-  destinationDataStoreSlug: "my-db",
-  transformations: [
-    createPostgresConsumerSchemaTransformation(
-      `INSERT INTO target_table (id, api_key) VALUES (:id, :api_key)
-       ON CONFLICT (id) DO UPDATE SET api_key = :api_key`,
-    ),
-  ],
+  config: {
+    consumerSchemaType: "postgres",
+    destinationDataStoreSlug: "my-db",
+    sql: `INSERT INTO target_table (id, api_key) VALUES (:id, :api_key)
+          ON CONFLICT (id) DO UPDATE SET api_key = :api_key`,
+  },
 });
 
 export default {
