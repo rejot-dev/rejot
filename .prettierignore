@@ -5,6 +5,7 @@ coverage
 # Ignore generated files:
 **/drizzle/**
 packages/contract/schema.json
+**/.astro
 
 # Ignored symbolic links:
 apps/static-site/public/content/docs/rejot-architecture.svg

@@ -23,7 +23,7 @@ const _unicornFixableRules = Object.fromEntries(
 
 export default tseslint.config(
   {
-    ignores: ["**/node_modules/**", "**/dist/**", "apps/docs/.astro/**"],
+    ignores: ["**/node_modules/**", "**/dist/**", "apps/static-site/.astro/**"],
   },
   eslint.configs.recommended,
   tseslint.configs.recommended,
