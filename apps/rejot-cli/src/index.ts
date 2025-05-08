@@ -15,11 +15,9 @@ import { ManifestDataStoreRemoveCommand } from "./commands/manifest-datastore/ma
 import { ManifestEventStoreAddCommand } from "./commands/manifest-eventstore/manifest-eventstore-add.command.ts";
 import { ManifestEventStoreListCommand } from "./commands/manifest-eventstore/manifest-eventstore-list.command.ts";
 import { ManifestEventStoreRemoveCommand } from "./commands/manifest-eventstore/manifest-eventstore-remove.command.ts";
-import SyncCommand from "./commands/sync-command.ts";
 import { WorkspaceInfoCommand } from "./commands/workspace/workspace-info.command.ts";
 
 export const commands = {
-  sync: SyncCommand,
   collect: CollectCommand,
   "manifest:info": ManifestInfoCommand,
   "manifest:init": ManifestInitCommand,

@@ -42,7 +42,7 @@ export class ManifestSyncCommand extends Command {
 
   static override flags = {
     "log-level": Flags.string({
-      description: "Set the log level (error, warn, info, debug, trace)",
+      description: "Set the log level (user, error, warn, info, debug, trace)",
       options: ["user", "error", "warn", "info", "debug", "trace"],
       default: "warn", // TODO: Change to user for v1 release
     }),

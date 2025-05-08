@@ -5,7 +5,10 @@ import type {
   ConsumerSchemaValidationError,
   ConsumerSchemaValidationResult,
 } from "@rejot-dev/contract/adapter";
+import { getLogger } from "@rejot-dev/contract/logger";
 import type { SyncManifestSchema } from "@rejot-dev/contract/manifest";
+
+const log = getLogger(import.meta.url);
 
 /**
  * Formats a validation error for display
@@ -68,7 +71,7 @@ export async function validateManifest(
           validationResults.push(result);
 
           // Print individual validation result
-          console.log(formatValidationResult(result));
+          log.user(formatValidationResult(result));
         }
       }
     }
@@ -77,15 +80,15 @@ export async function validateManifest(
   // Summarize validation results
   const invalidResults = validationResults.filter((result) => !result.isValid);
   if (invalidResults.length > 0) {
-    console.error(
+    log.error(
       `❌ Found ${invalidResults.length} validation errors across ${validationResults.length} schema pairs.`,
     );
 
     throw new Error(`Schema validation failed for ${invalidResults.length} consumer schemas.`);
   } else if (validationResults.length > 0) {
-    console.log(`✅ Successfully validated ${validationResults.length} schema pairs.`);
+    log.user(`✅ Successfully validated ${validationResults.length} schema pairs.`);
   } else {
-    console.warn(
+    log.user(
       `⚠️ No schema pairs were validated. Check if schemas and transformations are correctly configured.`,
     );
   }
