@@ -1,0 +1,151 @@
+---
+import MicroserviceDiagram from "./MicroserviceDiagram.astro";
+import XMark from "astro-heroicons/outline/XMark.astro";
+import Check from "astro-heroicons/outline/Check.astro";
+---
+
+<div class="space-y-4 rounded-lg bg-white p-4 shadow-md md:p-8 dark:bg-gray-800 overflow-hidden">
+  <div class="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
+    <h3 class="text-xl font-semibold">Microservices</h3>
+
+    <div
+      class="self-center inline-flex rounded-full overflow-hidden text-l font-medium shadow-sm border border-gray-300"
+    >
+      <input type="radio" name="mode" id="mode-sync" class="peer/sync sr-only" checked />
+      <label
+        for="mode-sync"
+        class="px-4 py-1 cursor-pointer transition-colors duration-300
+           text-gray-600 bg-gray-100
+           peer-checked/sync:bg-rejot-red-600 peer-checked/sync:text-white"
+      >
+        REST
+      </label>
+
+      <input type="radio" name="mode" id="mode-rejot" class="peer/rejot sr-only" />
+      <label
+        for="mode-rejot"
+        class="px-4 py-1 cursor-pointer transition-colors duration-300
+           text-gray-600 bg-gray-100
+           peer-checked/rejot:bg-rejot-red-600 peer-checked/rejot:text-white"
+      >
+        With ReJot
+      </label>
+    </div>
+  </div>
+
+  <div
+    class="flex flex-col items-center space-y-4 md:flex-row md:space-y-0 md:space-x-4 md:items-start"
+  >
+    <div class="w-full flex justify-center">
+      <MicroserviceDiagram />
+    </div>
+
+    {/* Synchronous mode */}
+    <div id="sync-sidebar" class="flex flex-col space-y-2 max-w-96 justify-between">
+      <div class="flex-grow p-4" id="high-latency-item">
+        <div class="flex flex-row space-x-2">
+          <XMark class="size-6 text-rejot-red-600" />
+          <h4 class="font-bold text-xl">Synchronous</h4>
+        </div>
+        <p>
+          To serve a single request, a request may need to flow through multiple chained services
+          increasing latency for each service added.
+        </p>
+      </div>
+      <hr />
+      <div class="flex-grow p-4" id="circuit-breaker-item">
+        <div class="flex flex-row space-x-2">
+          <XMark class="size-6 text-rejot-red-600" />
+          <h4 class="font-bold text-xl">Brittle</h4>
+        </div>
+        <p>
+          Uptime of a single service is directly tied to the uptime of all the services it depends
+          on, requiring additional infrastructure like circuit breakers to prevent cascading
+          failures.
+        </p>
+      </div>
+    </div>
+    {/* With ReJot mode */}
+    <div
+      id="rejot-sidebar"
+      style="display: none;"
+      class="flex flex-col space-y-2 max-w-96 justify-between"
+    >
+      <div class="flex-grow p-4">
+        <div class="flex flex-row space-x-2">
+          <Check class="size-6 text-green-600" />
+          <h4 class="font-bold text-xl">Asynchronous</h4>
+        </div>
+        <p>
+          ReJot's asynchronous model decouples services allowing you to scale while keeping latency
+          low.
+        </p>
+      </div>
+      <hr />
+      <div class="flex-grow p-4">
+        <div class="flex flex-row space-x-2">
+          <Check class="size-6 text-green-600" />
+          <h4 class="font-bold text-xl">Reliable</h4>
+        </div>
+        <p>
+          Each service stays available even when its dependencies are down, removing the need for
+          circuit breakers and preventing cascading failures.
+        </p>
+      </div>
+      <hr />
+      <div class="flex-grow p-4">
+        <div class="flex flex-row space-x-2">
+          <Check class="size-6 text-green-600" />
+          <h4 class="font-bold text-xl">Explicit Contract</h4>
+        </div>
+        <p>
+          Explicit versioned data contracts enable independent service evolution and deployment
+          without introducing unintended side effects.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /**
+   * Group related elements to avoid repetitive, hard-coded logic.
+   * Each object represents a mode (sync / ReJot) with its associated
+   * radio button, sidebar container and SVG diagram group.
+   */
+  const modes = [
+    {
+      radio: document.getElementById("mode-sync"),
+      sidebar: document.getElementById("sync-sidebar"),
+      diagram: document.getElementById("synchronous"),
+    },
+    {
+      radio: document.getElementById("mode-rejot"),
+      sidebar: document.getElementById("rejot-sidebar"),
+      diagram: document.getElementById("with-rejot"),
+    },
+  ];
+
+  function updateVisibility() {
+    modes.forEach(({ radio, sidebar, diagram }) => {
+      if (!radio || !sidebar || !diagram) return; // Skip if anything is missing
+
+      const isActive = radio instanceof HTMLInputElement && radio.checked;
+      sidebar.style.display = isActive ? "flex" : "none";
+      diagram.style.display = isActive ? "inline" : "none";
+    });
+  }
+
+  if (modes.every(({ radio, sidebar, diagram }) => radio && sidebar && diagram)) {
+    modes.forEach(({ radio }) => {
+      if (radio) radio.addEventListener("change", updateVisibility);
+    });
+
+    // Set initial state on page load
+    updateVisibility();
+  } else {
+    console.error(
+      "One or more elements required for microservice diagram interactivity not found.",
+    );
+  }
+</script>
