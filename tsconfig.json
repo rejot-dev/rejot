@@ -11,6 +11,7 @@
     { "path": "apps/rejot-cli" },
     { "path": "apps/controller-spa" },
     { "path": "apps/controller" },
+    { "path": "apps/static-site" },
     { "path": "integration-tests/one" }
   ]
 }

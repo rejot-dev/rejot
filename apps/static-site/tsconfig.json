@@ -10,6 +10,8 @@
     ],
     "strictNullChecks": true,
     "baseUrl": ".",
+    "noEmit": true,
+    "outDir": "./dist",
     "paths": {
       "@/*": ["./src/*"]
     }
