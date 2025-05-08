@@ -195,6 +195,7 @@ jobs:
             packages/*/dist
             apps/*/dist
             **/tsconfig.tsbuildinfo
+            **/.astro
           key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
       - name: Create Database Schema
