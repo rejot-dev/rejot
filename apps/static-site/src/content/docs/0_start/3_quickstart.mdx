@@ -48,14 +48,21 @@ Define a data store and attach it to the connection we just created.
 ```bash
 # Source data store
 rejot-cli manifest datastore add \
-        --connection my-db
+        --connection my-db \
+        --publication rejot_publication \
+        --slot rejot_slot
 ```
+
+<Notice type="TIP">
+  Quickly inspect your current manifest config using ```rejot-cli manifest info ```
+</Notice>
 
 ### Set Up Event store
 
-We'll need to define an event store, in this case we will use the same postgres database for the
-event store. ReJot CLI will create the appropriate schemas on first launch. For production workloads
-you might consider an event store distinct from your source/destination databases.
+Next up we'll define an event store, an event store is used by ReJot to store Public Schema events
+before replicating them to consumers. For demonstration purposes we'll use the same postgres
+database connection we created before but generally a separate dedicated database is better suited.
+The appropriate schemas and tables will be created on first launch.
 
 ```bash
 rejot-cli manifest eventstore add \
@@ -87,7 +94,14 @@ more detailed description of the schema definition process.
 ### Collect Schemas to Manifest
 
 Before your newly defined schemas can be used, they must me collected into your manifest file. You
-can do this using the `collect` command in the CLI:
+can do this using the `collect` command in the CLI. It might be nice to check your schemas are
+correct first using the `--check` flag.
+
+```bash
+rejot-cli collect schemas.ts --check
+```
+
+If all looks good, you can materialize the schemas into your manifest.
 
 ```bash
 rejot-cli collect schemas.ts --write
@@ -106,7 +120,7 @@ CREATE TABLE target_table (id SERIAL PRIMARY KEY, api_key TEXT NOT NULL);
 Start the synchronization process:
 
 ```bash
-rejot-cli manifest sync rejot-manifest.json
+rejot-cli manifest sync --log-level info rejot-manifest.json
 ```
 
 Any new writes to your source tables in the source datastore should now be transformed and written

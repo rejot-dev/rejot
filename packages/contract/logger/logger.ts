@@ -393,6 +393,13 @@ function getNamespaceFromFilePath(namespace?: string): string | undefined {
   }
 
   const path = fileURLToPath(namespace);
+  // Handle node_modules (global/local npm installs)
+  const nodeModulesIndex = path.lastIndexOf("/node_modules/");
+  if (nodeModulesIndex !== -1) {
+    // Extract after the last /node_modules/
+    return path.substring(nodeModulesIndex + "/node_modules/".length);
+  }
+
   // Find either packages or apps directory in the path
   const packagesIndex = path.indexOf("/packages/");
   const appsIndex = path.indexOf("/apps/");
