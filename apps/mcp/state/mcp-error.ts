@@ -1,5 +1,6 @@
-import type { CallToolResult, ReadResourceResult } from "@modelcontextprotocol/sdk/types.js";
 import { ReJotError } from "@rejot-dev/contract/error";
+
+import type { CallToolResult, ReadResourceResult } from "@modelcontextprotocol/sdk/types.js";
 
 export abstract class ReJotMcpError extends ReJotError {
   constructor(message: string, cause?: Error) {

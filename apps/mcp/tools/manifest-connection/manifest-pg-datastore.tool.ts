@@ -11,9 +11,10 @@ import type { IManifestFileManager } from "@rejot-dev/contract-tools/manifest/ma
 import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 import { getManifestBySlug } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 
-import type { IFactory, IRejotMcp } from "@/rejot-mcp";
-import type { McpState } from "@/state/mcp-state";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+
+import type { IFactory, IRejotMcp } from "../../rejot-mcp.ts";
+import type { McpState } from "../../state/mcp-state.ts";
 
 export class ManifestPostgresDataStoreTool implements IFactory {
   #workspaceService: IWorkspaceService;

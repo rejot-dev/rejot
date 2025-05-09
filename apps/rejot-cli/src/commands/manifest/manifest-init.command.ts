@@ -1,6 +1,8 @@
-import { Command, Flags } from "@oclif/core";
 import path from "node:path";
+
 import { initManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { Command, Flags } from "@oclif/core";
 
 export class ManifestInitCommand extends Command {
   static override id = "manifest init";

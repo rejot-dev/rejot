@@ -88,7 +88,13 @@ export default tseslint.config(
   },
   {
     name: "Disable require-relative-import-extension for apps/ and specific packages",
-    files: ["scripts/**/*", "apps/**/*", "packages/api-interface-controller/**/*"],
+    files: [
+      "scripts/**/*",
+      "apps/controller/**/*",
+      "apps/controller-spa/**/*",
+      "apps/static-site/**/*",
+      "packages/api-interface-controller/**/*",
+    ],
     rules: {
       "local/require-relative-import-extension": "off",
     },

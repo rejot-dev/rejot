@@ -19,7 +19,6 @@ export default defineConfig({
     },
   },
   markdown: {
-    // For some reason none of this actually works.
     syntaxHighlight: "shiki",
     shikiConfig: {
       themes: {

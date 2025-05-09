@@ -7,8 +7,8 @@ import {
   workspaceToSyncManifest,
 } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 
-import { MockRejotMcp } from "../_test/mock-mcp-server";
-import { WorkspaceResources } from "./workspace.resources";
+import { MockRejotMcp } from "../_test/mock-mcp-server.ts";
+import { WorkspaceResources } from "./workspace.resources.ts";
 
 // Create a sample manifest
 const createBasicManifest = (slug: string) => ({

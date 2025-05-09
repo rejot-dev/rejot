@@ -8,8 +8,7 @@ import process from "node:process";
 import { parseArgs } from "node:util";
 
 import { FileLogger, setLogger } from "@rejot-dev/contract/logger";
-
-import { rejotMcp } from "../index";
+import { rejotMcp } from "@rejot-dev/mcp";
 
 const { values: argValues } = parseArgs({
   args: process.argv.slice(2),
@@ -25,6 +24,7 @@ if (!("project" in argValues) || !argValues.project) {
   console.error("Invalid usage. Use `rejot-mcp --project <path>` to specify the project.");
 
   console.info(`
+
 To use the ReJot MCP server in your editor, you can add (something like) the following to the 
 appropriate config file:
 

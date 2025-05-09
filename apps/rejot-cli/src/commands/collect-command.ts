@@ -1,4 +1,4 @@
-import { exists } from "node:fs/promises";
+import { stat } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { PostgresConsumerSchemaValidationAdapter } from "@rejot-dev/adapter-postgres";
@@ -91,7 +91,9 @@ export default class Collect extends Command {
         this.error(`Invalid schema path: '${schemaPath}'.`);
       }
 
-      if (!(await exists(schemaPath))) {
+      try {
+        await stat(schemaPath);
+      } catch {
         log.warn(`Schema file '${schemaPath}' does not exist.`);
         continue;
       }

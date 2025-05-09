@@ -3,7 +3,7 @@ export {
   initManifest,
   readManifestOrGetEmpty,
   writeManifest,
-} from "./manifest.fs";
+} from "./manifest.fs.ts";
 export { ManifestPrinter } from "./manifest-printer.ts";
 export type {
   IManifestWorkspaceResolver,

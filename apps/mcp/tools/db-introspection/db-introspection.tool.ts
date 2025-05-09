@@ -2,9 +2,9 @@ import { z } from "zod";
 
 import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 
-import type { IFactory } from "@/rejot-mcp";
-import type { IRejotMcp } from "@/rejot-mcp";
-import type { McpState } from "@/state/mcp-state";
+import type { IFactory } from "../../rejot-mcp.ts";
+import type { IRejotMcp } from "../../rejot-mcp.ts";
+import type { McpState } from "../../state/mcp-state.ts";
 
 const CONNECTION_SLUG_DESCRIPTION =
   "The slug of the connection to get information about. This can be found in the connection array of the manifest.";

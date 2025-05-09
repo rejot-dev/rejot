@@ -10,11 +10,17 @@ import type {
   ReadResourceTemplateCallback,
   ResourceTemplate,
   ToolCallback,
-} from "../interfaces/mcp-server.interface";
-import type { ResourceGetHandler, ResourceListHandler } from "../interfaces/mcp-server.interface";
-import { type IFactory, type IRejotMcp, RejotMcp } from "../rejot-mcp";
-import { rejotErrorToCallToolContent, rejotErrorToReadResourceContent } from "../state/mcp-error";
-import { McpState } from "../state/mcp-state";
+} from "../interfaces/mcp-server.interface.ts";
+import type {
+  ResourceGetHandler,
+  ResourceListHandler,
+} from "../interfaces/mcp-server.interface.ts";
+import { type IFactory, type IRejotMcp, RejotMcp } from "../rejot-mcp.ts";
+import {
+  rejotErrorToCallToolContent,
+  rejotErrorToReadResourceContent,
+} from "../state/mcp-error.ts";
+import { McpState } from "../state/mcp-state.ts";
 
 /**
  * Represents a registered tool in the MCP server

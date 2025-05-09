@@ -6,9 +6,9 @@ import { verifyManifests } from "@rejot-dev/contract/manifest";
 import { readManifestOrGetEmpty } from "@rejot-dev/contract-tools/manifest";
 import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
 
-import type { IFactory, IRejotMcp } from "@/rejot-mcp";
-import type { McpState } from "@/state/mcp-state";
-import { ensurePathRelative } from "@/util/fs.util";
+import type { IFactory, IRejotMcp } from "../../rejot-mcp.ts";
+import type { McpState } from "../../state/mcp-state.ts";
+import { ensurePathRelative } from "../../util/fs.util.ts";
 
 export class ManifestInfoTool implements IFactory {
   async initialize(_state: McpState): Promise<void> {

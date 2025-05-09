@@ -4,7 +4,7 @@ import { ManifestPrinter, readManifestOrGetEmpty } from "@rejot-dev/contract-too
 
 import { Command } from "@oclif/core";
 
-import { manifestFlags } from "./manifest-datastore-config";
+import { manifestFlags } from "./manifest-datastore-config.ts";
 
 export class ManifestDataStoreListCommand extends Command {
   static override id = "manifest:datastore:list";
