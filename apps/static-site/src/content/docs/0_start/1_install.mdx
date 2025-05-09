@@ -2,20 +2,44 @@
 title: "Install"
 ---
 
+import LanguageVariants from "@/components/LanguageVariants.astro";
+
 ## ReJot CLI
 
 The ReJot CLI is used to create and validate manifest files, as well as starting sync services. The
 `rejot-cli` is published to [npmjs.com](https://www.npmjs.com/package/@rejot-dev/cli). You can use
 your package manager of choice, including **Bun**, to install the CLI.
 
-### NPM
-
-```bash
-npm install -g @rejot-dev/cli
-
-# You should now have the rejot-cli command on your PATH
-rejot-cli --help
-```
+<LanguageVariants
+  languages={[
+    {
+      title: "NPM",
+      lang: "bash",
+      code: `npm install -g @rejot-dev/cli
+npx rejot-cli --help`,
+    },
+    {
+      title: "Yarn",
+      lang: "bash",
+      code: `yarn global add @rejot-dev/cli
+rejot-cli --help`,
+    },
+    {
+      title: "Bun",
+      lang: "bash",
+      code: `bun add @rejot-dev/cli
+rejot-cli --help`,
+    },
+    {
+      title: "Build From Source",
+      lang: "bash",
+      code: `git clone git@github.com:rejot-dev/rejot.git
+cd ./rejot
+npm install
+npx rejot-cli --help`,
+    },
+  ]}
+/>
 
 ### Container Image
 
