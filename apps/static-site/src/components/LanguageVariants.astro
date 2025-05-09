@@ -2,6 +2,8 @@
 import { Code } from "astro:components";
 import type { BuiltinLanguage } from "shiki";
 
+import PreWithCopy from "./PreWithCopy.astro";
+
 interface Props {
   class?: string;
   languages: {
@@ -13,7 +15,10 @@ interface Props {
 
 const { class: className = "", languages = [] } = Astro.props;
 
-/* 
+// Generate a unique id for this instance, this is used to identify the instance in the script
+const uniqueId = `lang-variants-${Math.random().toString(36).slice(2, 10)}`;
+
+/*
 <LanguageVariants
   languages={[
     {
@@ -33,13 +38,14 @@ const { class: className = "", languages = [] } = Astro.props;
 
 <div
   class={`not-prose rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 ${className}`}
+  data-unique-id={uniqueId}
 >
   <div class="mb-4 flex gap-2 border-b border-gray-200 dark:border-gray-700">
     {
       languages.map((lang) => (
         <button
           class="rounded-t-lg px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-          data-tab={`${lang.lang}-${lang.title}`}
+          data-tab={`${uniqueId}-${lang.lang}-${lang.title}`}
         >
           {lang.title}
         </button>
@@ -49,46 +55,51 @@ const { class: className = "", languages = [] } = Astro.props;
   <div>
     {
       languages.map((lang) => (
-        <div class="hidden" data-content={`${lang.lang}-${lang.title}`}>
-          <Code
-            code={lang.code}
-            lang={lang.lang}
-            themes={{
-              light: "github-light",
-              dark: "github-dark",
-            }}
-          />
+        <div class="hidden" data-content={`${uniqueId}-${lang.lang}-${lang.title}`}>
+          <PreWithCopy>
+            <Code
+              code={lang.code}
+              lang={lang.lang}
+              themes={{
+                light: "github-light",
+                dark: "github-dark",
+              }}
+            />
+          </PreWithCopy>
         </div>
       ))
     }
   </div>
 </div>
 
-<script>
-  const tabs = document.querySelectorAll<HTMLButtonElement>("[data-tab]");
-  const contents = document.querySelectorAll<HTMLDivElement>("[data-content]");
+<script define:vars={{ uniqueId }}>
+  const root = document.querySelector(`[data-unique-id="${uniqueId}"]`);
 
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      // Remove active class from all tabs
-      tabs.forEach((t) =>
-        t.classList.remove("text-rejot-red-600", "border-b-2", "border-rejot-red-600"),
-      );
-      // Add active class to clicked tab
-      tab.classList.add("text-rejot-red-600", "border-b-2", "border-rejot-red-600");
+  if (root) {
+    const tabs = root.querySelectorAll("[data-tab]");
+    const contents = root.querySelectorAll("[data-content]");
 
-      // Hide all contents
-      contents.forEach((content) => content.classList.add("hidden"));
-      // Show selected content
-      const content = document.querySelector<HTMLDivElement>(
-        `[data-content="${tab.dataset["tab"]}"]`,
-      );
-      if (content) content.classList.remove("hidden");
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        // Remove active class from all tabs
+        tabs.forEach((t) =>
+          t.classList.remove("text-rejot-red-600", "border-b-2", "border-rejot-red-600"),
+        );
+        // Add active class to clicked tab
+        tab.classList.add("text-rejot-red-600", "border-b-2", "border-rejot-red-600");
+
+        // Hide all contents
+        contents.forEach((content) => content.classList.add("hidden"));
+
+        // Show selected content
+        const content = root.querySelector(`[data-content="${tab.dataset["tab"]}"]`);
+        if (content) content.classList.remove("hidden");
+      });
     });
-  });
-
-  // Activate first tab by default
-  if (tabs.length > 0) {
-    tabs[0].click();
+    console.log(tabs, contents);
+    // Activate first tab by default
+    if (tabs.length > 0) {
+      tabs[0].click();
+    }
   }
 </script>
