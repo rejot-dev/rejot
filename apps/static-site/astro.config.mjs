@@ -9,7 +9,14 @@ import tailwind from "@astrojs/tailwind";
 // https://astro.build/config
 export default defineConfig({
   site: "https://rejot.dev",
-  integrations: [mdx(), sitemap(), tailwind(), pagefind()],
+  integrations: [
+    mdx(),
+    sitemap({
+      filter: (page) => !page.endsWith("/llms.txt") && !page.endsWith("/llms-full.txt"),
+    }),
+    tailwind(),
+    pagefind(),
+  ],
   vite: {
     ssr: {
       external: ["node:util", "node:path"],
