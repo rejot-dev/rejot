@@ -1,9 +1,11 @@
+#!/usr/bin/env node
+
 /*global console*/
 // @ts-check
 
 import { join } from "node:path";
-import { parseArgs } from "node:util";
 import process from "node:process";
+import { parseArgs } from "node:util";
 
 import { FileLogger, setLogger } from "@rejot-dev/contract/logger";
 
