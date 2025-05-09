@@ -8,7 +8,7 @@ import {
   manifestFlags,
   validateConnection,
   validateUniqueConnection,
-} from "./manifest-datastore-config";
+} from "./manifest-datastore-config.ts";
 
 export class ManifestDataStoreAddCommand extends Command {
   static override id = "manifest:datastore:add";

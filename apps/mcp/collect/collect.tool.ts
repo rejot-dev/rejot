@@ -6,8 +6,8 @@ import { ManifestMerger } from "@rejot-dev/contract/manifest-merger";
 import { type IVibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
 import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 
-import type { IFactory, IRejotMcp } from "@/rejot-mcp";
-import type { McpState } from "@/state/mcp-state";
+import type { IFactory, IRejotMcp } from "../rejot-mcp.ts";
+import type { McpState } from "../state/mcp-state.ts";
 
 export class CollectTool implements IFactory {
   readonly #workspaceService: IWorkspaceService;

@@ -14,9 +14,9 @@ import type {
   ReadResourceTemplateCallback,
   ResourceTemplate,
   ToolCallback,
-} from "./interfaces/mcp-server.interface";
-import { rejotErrorToCallToolContent, rejotErrorToReadResourceContent } from "./state/mcp-error";
-import { McpState } from "./state/mcp-state";
+} from "./interfaces/mcp-server.interface.ts";
+import { rejotErrorToCallToolContent, rejotErrorToReadResourceContent } from "./state/mcp-error.ts";
+import { McpState } from "./state/mcp-state.ts";
 
 // Factory interface for initializers
 export interface IFactory {

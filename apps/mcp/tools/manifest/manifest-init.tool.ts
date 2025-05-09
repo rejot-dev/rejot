@@ -1,14 +1,15 @@
 import { join } from "node:path";
 
+import { z } from "zod";
+
 import { getLogger } from "@rejot-dev/contract/logger";
 import { initManifest } from "@rejot-dev/contract-tools/manifest";
 import { mergeAndUpdateManifest } from "@rejot-dev/contract-tools/manifest/manifest.fs";
 import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
-import { z } from "zod";
 
-import type { IFactory, IRejotMcp } from "@/rejot-mcp";
-import type { McpState } from "@/state/mcp-state";
-import { ensurePathRelative } from "@/util/fs.util";
+import type { IFactory, IRejotMcp } from "../../rejot-mcp.ts";
+import type { McpState } from "../../state/mcp-state.ts";
+import { ensurePathRelative } from "../../util/fs.util.ts";
 
 const log = getLogger(import.meta.url);
 

@@ -1,8 +1,10 @@
-import { test, expect, describe, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, rm, readFile } from "node:fs/promises";
+import { runCommand } from "@oclif/test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { runCommand } from "@oclif/test";
+
 import { initManifest } from "@rejot-dev/contract-tools/manifest";
 
 describe("ManifestEventStore commands", () => {

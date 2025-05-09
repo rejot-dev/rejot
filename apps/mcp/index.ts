@@ -12,16 +12,16 @@ import { TypeStripper } from "@rejot-dev/contract-tools/type-stripper";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { CollectTool } from "./collect/collect.tool";
-import { RejotMcp } from "./rejot-mcp";
-import { DbIntrospectionTool } from "./tools/db-introspection/db-introspection.tool";
-import { ManifestInfoTool } from "./tools/manifest/manifest-info.tool";
-import { ManifestInitTool } from "./tools/manifest/manifest-init.tool";
-import { ManifestConnectionTool } from "./tools/manifest-connection/manifest-connection.tool";
-import { ManifestPostgresDataStoreTool } from "./tools/manifest-connection/manifest-pg-datastore.tool";
-import { SchemasTool } from "./tools/schemas/schema.tool";
-import { WorkspaceResources } from "./workspace/workspace.resources";
-import { WorkspaceTool } from "./workspace/workspace.tool";
+import { CollectTool } from "./collect/collect.tool.ts";
+import { RejotMcp } from "./rejot-mcp.ts";
+import { DbIntrospectionTool } from "./tools/db-introspection/db-introspection.tool.ts";
+import { ManifestInfoTool } from "./tools/manifest/manifest-info.tool.ts";
+import { ManifestInitTool } from "./tools/manifest/manifest-init.tool.ts";
+import { ManifestConnectionTool } from "./tools/manifest-connection/manifest-connection.tool.ts";
+import { ManifestPostgresDataStoreTool } from "./tools/manifest-connection/manifest-pg-datastore.tool.ts";
+import { SchemasTool } from "./tools/schemas/schema.tool.ts";
+import { WorkspaceResources } from "./workspace/workspace.resources.ts";
+import { WorkspaceTool } from "./workspace/workspace.tool.ts";
 
 const server = new McpServer(
   {

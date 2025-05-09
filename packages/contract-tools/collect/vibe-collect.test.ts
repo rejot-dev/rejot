@@ -8,9 +8,9 @@ import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
 import type { MergeDiagnostic } from "@rejot-dev/contract/manifest-merger";
 import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
 
-import { CURRENT_MANIFEST_FILE_VERSION } from "../manifest/manifest.fs";
-import { MockManifestFileManager } from "../manifest/manifest-file-manager.mock";
-import { MockFileFinder } from "./file-finder.mock";
+import { CURRENT_MANIFEST_FILE_VERSION } from "../manifest/manifest.fs.ts";
+import { MockManifestFileManager } from "../manifest/manifest-file-manager.mock.ts";
+import { MockFileFinder } from "./file-finder.mock.ts";
 import type { CollectedSchemas, ISchemaCollector } from "./schema-collector.ts";
 import { type VibeCollectedSchemas, VibeCollector } from "./vibe-collect.ts";
 

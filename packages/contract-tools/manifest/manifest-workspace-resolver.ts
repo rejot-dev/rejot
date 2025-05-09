@@ -8,8 +8,8 @@ import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
 import { SyncManifest, type SyncManifestOptions } from "@rejot-dev/contract/sync-manifest";
 import type { ManifestWithPath, WorkspaceDefinition } from "@rejot-dev/contract/workspace";
 
-import { DEFAULT_MANIFEST_FILENAME, readManifest, readManifestOrGetEmpty } from "./manifest.fs";
-import { findManifestPath } from "./manifest.fs";
+import { DEFAULT_MANIFEST_FILENAME, readManifest, readManifestOrGetEmpty } from "./manifest.fs.ts";
+import { findManifestPath } from "./manifest.fs.ts";
 
 const log = getLogger(import.meta.url);
 

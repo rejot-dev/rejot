@@ -31,7 +31,7 @@ function findPackageJson(startDir) {
   }
 }
 
-const PATH_HAS_EXT_RE = /\.[a-z0-9]+$/i;
+const PATH_HAS_EXT_RE = /\.(c|m)?js|\.ts$/i;
 
 const packageRule = {
   meta: {

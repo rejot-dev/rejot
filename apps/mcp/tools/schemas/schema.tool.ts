@@ -3,9 +3,10 @@ import { z } from "zod";
 import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
 import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 
-import type { IFactory, IRejotMcp } from "@/rejot-mcp";
-import { McpState } from "@/state/mcp-state";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+
+import type { IFactory, IRejotMcp } from "../../rejot-mcp.ts";
+import type { McpState } from "../../state/mcp-state.ts";
 
 export class SchemasTool implements IFactory {
   #workspaceService: IWorkspaceService;

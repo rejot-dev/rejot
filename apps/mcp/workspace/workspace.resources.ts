@@ -6,8 +6,8 @@ import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manif
 
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import type { IFactory, IRejotMcp } from "../rejot-mcp";
-import type { McpState } from "../state/mcp-state";
+import type { IFactory, IRejotMcp } from "../rejot-mcp.ts";
+import type { McpState } from "../state/mcp-state.ts";
 const log = getLogger(import.meta.url);
 
 export class WorkspaceResources implements IFactory {

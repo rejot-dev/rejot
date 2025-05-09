@@ -8,8 +8,8 @@ import { mergeAndUpdateManifest } from "@rejot-dev/contract-tools/manifest/manif
 import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 import { getManifestBySlug } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 
-import type { IFactory, IRejotMcp } from "@/rejot-mcp";
-import type { McpState } from "@/state/mcp-state";
+import type { IFactory, IRejotMcp } from "../../rejot-mcp.ts";
+import type { McpState } from "../../state/mcp-state.ts";
 
 export class ManifestConnectionTool implements IFactory {
   #workspaceService: IWorkspaceService;

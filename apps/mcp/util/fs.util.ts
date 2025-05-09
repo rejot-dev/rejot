@@ -1,5 +1,7 @@
-import { ReJotMcpError } from "@/state/mcp-error";
 import { isAbsolute } from "node:path";
+
+import { ReJotMcpError } from "../state/mcp-error.ts";
+
 export class PathNotRelativeError extends ReJotMcpError {
   #path: string;
 

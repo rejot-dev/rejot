@@ -1,14 +1,15 @@
+import type { ZodOptional, ZodRawShape, ZodType } from "zod";
+
 import type {
-  ResourceTemplate,
-  ResourceMetadata as ActualResourceMetadata,
+  ListResourcesCallback as ActualListResourcesCallback,
+  PromptCallback as ActualPromptCallback,
   ReadResourceCallback as ActualReadResourceCallback,
   ReadResourceTemplateCallback as ActualReadResourceTemplateCallback,
-  ListResourcesCallback as ActualListResourcesCallback,
+  ResourceMetadata as ActualResourceMetadata,
+  ResourceTemplate,
   ToolCallback as ActualToolCallback,
-  PromptCallback as ActualPromptCallback,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import type { ZodRawShape, ZodType, ZodOptional } from "zod";
 
 /**
  * URL variables from a resource template

@@ -9,7 +9,7 @@ import type { ConnectionConfigSchema } from "@rejot-dev/contract/manifest";
 import { getConnectionBySlugHelper } from "@rejot-dev/contract/manifest-helpers";
 import type { WorkspaceDefinition } from "@rejot-dev/contract/workspace";
 
-import { CombinedRejotMcpError, ReJotMcpError } from "./mcp-error";
+import { CombinedRejotMcpError, ReJotMcpError } from "./mcp-error.ts";
 
 const log = getLogger(import.meta.url);
 

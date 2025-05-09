@@ -58,10 +58,10 @@
     "@rejot-dev/contract": "workspace:*",
     "@rejot-dev/sqlparser": "workspace:*",
     "@rejot-dev/sync": "workspace:*",
-    "pg": "^8.11.3",
+    "pg": "^8.15.6",
     "pg-logical-replication": "^2.0.7"
   },
   "devDependencies": {
-    "@types/pg": "^8.11.0"
+    "@types/pg": "^8.15.1"
   }
 }

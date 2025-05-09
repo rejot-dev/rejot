@@ -10,8 +10,8 @@
     "directory": "apps/rejot-cli"
   },
   "scripts": {
-    "check": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test **/*.test.ts",
+    "check": "tsc --noEmit"
   },
   "bin": {
     "rejot-cli": "./bin/run.js"
@@ -38,7 +38,7 @@
     "bin": "rejot-cli",
     "commands": {
       "strategy": "explicit",
-      "target": "./src/index.ts",
+      "target": "./dist/src/index.js",
       "identifier": "commands"
     },
     "dirname": "rejot-cli",

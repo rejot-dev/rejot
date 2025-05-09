@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { CURRENT_MANIFEST_FILE_VERSION, DEFAULT_MANIFEST_FILENAME } from "./manifest.fs";
+import { CURRENT_MANIFEST_FILE_VERSION, DEFAULT_MANIFEST_FILENAME } from "./manifest.fs.ts";
 import { ManifestWorkspaceResolver } from "./manifest-workspace-resolver.ts";
 
 // Helper function to create manifest files

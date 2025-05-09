@@ -7,7 +7,7 @@ import { readManifestOrGetEmpty, writeManifest } from "@rejot-dev/contract-tools
 
 import { Args, Command } from "@oclif/core";
 
-import { manifestFlags, validateDataStoreExists } from "./manifest-datastore-config";
+import { manifestFlags, validateDataStoreExists } from "./manifest-datastore-config.ts";
 
 export class ManifestDataStoreRemoveCommand extends Command {
   static override id = "manifest:datastore:remove";

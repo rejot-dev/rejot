@@ -13,7 +13,7 @@ import {
   mergeAndUpdateManifest,
   readManifestOrGetEmpty,
   writeManifest,
-} from "./manifest.fs";
+} from "./manifest.fs.ts";
 
 type Manifest = z.infer<typeof SyncManifestSchema>;
 
