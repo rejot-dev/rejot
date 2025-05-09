@@ -12,14 +12,14 @@ const { class: className = "" } = Astro.props;
 ---
 
 <div
-  class={`${className} space-y-4 overflow-hidden rounded-lg border bg-white p-4 
+  class={`${className} space-y-4 overflow-hidden rounded-lg border bg-white p-4
   shadow md:min-h-[544px] md:p-8 dark:border-gray-700 dark:bg-gray-800`}
 >
   <div class="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
     <h3 class="text-xl font-semibold">Microservices</h3>
 
     <div
-      class="inline-flex self-center overflow-hidden rounded-full border border-gray-300 font-medium shadow-sm"
+      class="inline-flex select-none self-center overflow-hidden rounded-full border border-gray-300 font-medium shadow-sm"
     >
       <input type="radio" name="mode" id="mode-sync" class="peer/sync sr-only" checked />
       <label
@@ -42,9 +42,13 @@ const { class: className = "" } = Astro.props;
       </label>
     </div>
   </div>
+  <p class="max-w-prose">
+    ReJot shines in microservice architectures where data is siloed in separate databases and
+    REST/RPC API's are the gateway for the data between them.
+  </p>
 
   <div
-    class="flex flex-col items-center space-y-4 md:flex-row md:items-start md:space-x-4 md:space-y-0"
+    class="flex flex-col items-center justify-between space-y-4 md:flex-row md:items-start md:space-x-4 md:space-y-0"
   >
     <div class="flex w-full justify-center">
       <MicroserviceDiagram class="w-full" />
