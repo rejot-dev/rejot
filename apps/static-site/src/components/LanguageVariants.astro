@@ -39,18 +39,25 @@ const { class: className = "", languages = [] } = Astro.props;
       languages.map((lang) => (
         <button
           class="rounded-t-lg px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-          data-tab={lang.lang}
+          data-tab={`${lang.lang}-${lang.title}`}
         >
           {lang.title}
         </button>
       ))
     }
   </div>
-  <div class="min-h-[100px]">
+  <div>
     {
       languages.map((lang) => (
-        <div class="hidden" data-content={lang.lang}>
-          <Code code={lang.code} lang={lang.lang} />
+        <div class="hidden" data-content={`${lang.lang}-${lang.title}`}>
+          <Code
+            code={lang.code}
+            lang={lang.lang}
+            themes={{
+              light: "github-light",
+              dark: "github-dark",
+            }}
+          />
         </div>
       ))
     }
@@ -73,7 +80,9 @@ const { class: className = "", languages = [] } = Astro.props;
       // Hide all contents
       contents.forEach((content) => content.classList.add("hidden"));
       // Show selected content
-      const content = document.querySelector<HTMLDivElement>(`[data-content="${tab.dataset.tab}"]`);
+      const content = document.querySelector<HTMLDivElement>(
+        `[data-content="${tab.dataset["tab"]}"]`,
+      );
       if (content) content.classList.remove("hidden");
     });
   });
