@@ -88,6 +88,10 @@ const currentIndex = docNavigationEntriesWithoutIndex.findIndex((entry) => {
 
       <!-- Main content -->
       <div class="w-full max-w-none space-y-4">
+        <!-- Table of contents for small screens (above content) -->
+        <div class="mb-4 block w-full border-b border-gray-200 pb-4 xl:hidden dark:border-gray-700">
+          <TableOfContents headings={headings} showButton={true} />
+        </div>
         <!-- Mobile navigation header - visible only on mobile -->
         <div class="flex items-center space-x-2 border-gray-200 lg:space-x-0 dark:border-gray-700">
           <button id="mobile-nav-toggle" class="p-2 lg:hidden dark:bg-gray-800">
@@ -138,7 +142,7 @@ const currentIndex = docNavigationEntriesWithoutIndex.findIndex((entry) => {
         }
       </div>
 
-      <!-- Table of contents -->
+      <!-- Table of contents for large screens (sidebar) -->
       <aside
         class="hidden w-full border-l border-gray-200 px-4 xl:block xl:w-80 dark:border-gray-700"
       >
