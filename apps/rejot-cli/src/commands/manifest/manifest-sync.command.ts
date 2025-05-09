@@ -44,7 +44,7 @@ export class ManifestSyncCommand extends Command {
     "log-level": Flags.string({
       description: "Set the log level (user, error, warn, info, debug, trace)",
       options: ["user", "error", "warn", "info", "debug", "trace"],
-      default: "warn", // TODO: Change to user for v1 release
+      default: "info",
     }),
     "api-port": Flags.integer({
       description: "Set the port for the sync HTTP service",
