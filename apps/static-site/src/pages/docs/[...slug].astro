@@ -1,17 +1,19 @@
 ---
 import { type CollectionEntry, getCollection } from "astro:content";
 import { render } from "astro:content";
-import Prose from "../../components/Prose.astro";
-import TableOfContents from "../../components/TableOfContents.astro";
-import CollectionNavigation from "../../components/CollectionNavigation.astro";
-import Base from "../../layouts/Base.astro";
-import { pageTitle } from "../../consts";
-import { type CollectionNavigationEntry } from "../../components/CollectionNavigation.astro";
-import { normalizeSlug } from "../../util/helpers";
 import Bars3BottomLeftIcon from "astro-heroicons/mini/Bars3BottomLeft.astro";
 import XMarkIcon from "astro-heroicons/mini/XMark.astro";
+
+import PreWithCopy from "@/components/PreWithCopy.astro";
 import SearchModal from "@/components/SearchModal.astro";
 
+import CollectionNavigation from "../../components/CollectionNavigation.astro";
+import { type CollectionNavigationEntry } from "../../components/CollectionNavigation.astro";
+import Prose from "../../components/Prose.astro";
+import TableOfContents from "../../components/TableOfContents.astro";
+import { pageTitle } from "../../consts";
+import Base from "../../layouts/Base.astro";
+import { normalizeSlug } from "../../util/helpers";
 export async function getStaticPaths() {
   const docsEntries = await getCollection("docs");
   return docsEntries
@@ -81,7 +83,11 @@ const docNavigationEntries: CollectionNavigationEntry[] = collection
           <h1 class="text-4xl font-bold">{post.data.title}</h1>
         </div>
         <Prose>
-          <Content />
+          <Content
+            components={{
+              pre: PreWithCopy,
+            }}
+          />
         </Prose>
       </div>
 

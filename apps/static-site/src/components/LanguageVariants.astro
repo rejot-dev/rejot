@@ -52,24 +52,22 @@ const uniqueId = `lang-variants-${Math.random().toString(36).slice(2, 10)}`;
       ))
     }
   </div>
-  <div>
-    {
-      languages.map((lang) => (
-        <div class="hidden" data-content={`${uniqueId}-${lang.lang}-${lang.title}`}>
-          <PreWithCopy>
-            <Code
-              code={lang.code}
-              lang={lang.lang}
-              themes={{
-                light: "github-light",
-                dark: "github-dark",
-              }}
-            />
-          </PreWithCopy>
-        </div>
-      ))
-    }
-  </div>
+  {
+    languages.map((lang) => (
+      <div class="hidden p-2" data-content={`${uniqueId}-${lang.lang}-${lang.title}`}>
+        <PreWithCopy noWrapper>
+          <Code
+            code={lang.code}
+            lang={lang.lang}
+            themes={{
+              light: "github-light",
+              dark: "github-dark",
+            }}
+          />
+        </PreWithCopy>
+      </div>
+    ))
+  }
 </div>
 
 <script define:vars={{ uniqueId }}>
@@ -96,7 +94,7 @@ const uniqueId = `lang-variants-${Math.random().toString(36).slice(2, 10)}`;
         if (content) content.classList.remove("hidden");
       });
     });
-    console.log(tabs, contents);
+
     // Activate first tab by default
     if (tabs.length > 0) {
       tabs[0].click();
