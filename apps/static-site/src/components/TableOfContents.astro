@@ -1,13 +1,16 @@
 ---
+import ChevronDownIcon from "astro-heroicons/mini/ChevronDown.astro";
+import ChevronUpIcon from "astro-heroicons/mini/ChevronUp.astro";
 interface Props {
   headings: {
     depth: number;
     slug: string;
     text: string;
   }[];
+  showButton?: boolean;
 }
 
-const { headings } = Astro.props;
+const { headings, showButton } = Astro.props;
 
 for (const heading of headings) {
   if (heading.slug === "footnote-label") {
@@ -17,9 +20,32 @@ for (const heading of headings) {
 ---
 
 {
+  showButton && (
+    <button
+      type="button"
+      id="toc-button"
+      class="mb-2 flex items-center rounded bg-gray-200 px-4 py-2 text-sm font-semibold hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+    >
+      <span class="relative mr-1 inline-block size-4">
+        <span class="absolute inset-0 transition-opacity duration-300" id="toc-button-icon-down">
+          <ChevronDownIcon class="size-4" />
+        </span>
+        <span
+          class="absolute inset-0 opacity-0 transition-opacity duration-300"
+          id="toc-button-icon-up"
+        >
+          <ChevronUpIcon class="size-4" />
+        </span>
+      </span>
+      On this page
+    </button>
+  )
+}
+
+{
   headings.length > 0 && (
-    <nav class="sticky top-4 w-full">
-      <h3 class="mb-2 text-lg font-semibold">On this page</h3>
+    <nav class="sticky top-4 w-full" id="toc">
+      {!showButton && <h3 class="mb-2 text-lg font-semibold">On this page</h3>}
       <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
         {headings.flatMap((heading) => {
           if (heading.depth > 3) {
@@ -41,3 +67,28 @@ for (const heading of headings) {
     </nav>
   )
 }
+
+<script define:vars={{ showButton }}>
+  if (showButton) {
+    let showToc = false;
+
+    const toc = document.getElementById("toc");
+    const button = document.getElementById("toc-button");
+
+    button.addEventListener("click", () => {
+      showToc = !showToc;
+
+      if (showToc) {
+        toc?.classList.remove("hidden");
+        button.querySelector("#toc-button-icon-down")?.classList.add("opacity-0");
+        button.querySelector("#toc-button-icon-up")?.classList.remove("opacity-0");
+      } else {
+        toc?.classList.add("hidden");
+        button.querySelector("#toc-button-icon-down")?.classList.remove("opacity-0");
+        button.querySelector("#toc-button-icon-up")?.classList.add("opacity-0");
+      }
+    });
+
+    toc?.classList.add("hidden");
+  }
+</script>
