@@ -50,12 +50,16 @@ export interface LogLine {
   args?: unknown[];
 }
 
+export function isValidLogLevel(logLevel: string): boolean {
+  return logLevel in LogLevel;
+}
+
 export abstract class ILogger {
   #logLevel: LogLevel;
 
   constructor(logLevel: LogLevel | string = LogLevel.INFO) {
     if (typeof logLevel === "string") {
-      if (!(logLevel in LogLevel)) {
+      if (!isValidLogLevel(logLevel)) {
         throw new Error(`Invalid log level: ${logLevel}`);
       }
 

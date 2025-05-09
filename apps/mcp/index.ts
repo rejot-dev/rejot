@@ -1,7 +1,3 @@
-import { join } from "node:path";
-import { parseArgs } from "node:util";
-
-import { FileLogger, setLogger } from "@rejot-dev/contract/logger";
 import { FileFinder } from "@rejot-dev/contract-tools/collect/file-finder";
 import { SchemaCollector } from "@rejot-dev/contract-tools/collect/schema-collector";
 import { VibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
@@ -149,32 +145,5 @@ const rejotMcp = new RejotMcp(server, [
   new ManifestPostgresDataStoreTool(workspaceService, manifestFileManager),
   new SchemasTool(workspaceService),
 ]);
-
-if (import.meta.main) {
-  const { values: argValues } = parseArgs({
-    args: process.argv.slice(2),
-    options: {
-      project: {
-        type: "string",
-        short: "p",
-      },
-    },
-  });
-
-  if (!("project" in argValues) || !argValues.project) {
-    console.error("Invalid usage. Use `rejot-mcp --project <path>` to specify the project.");
-    process.exit(1);
-  }
-
-  const log = setLogger(new FileLogger(join(argValues.project, "mcp.log"), "DEBUG"));
-
-  rejotMcp
-    .connect(argValues.project)
-    .then(() => {})
-    .catch((err) => {
-      log.error(`Server error: ${err.message}`);
-      log.logErrorInstance(err);
-    });
-}
 
 export { rejotMcp };
