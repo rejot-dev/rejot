@@ -1,7 +1,7 @@
 {
   "name": "@rejot-dev/mcp",
   "type": "module",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "license": "Apache-2.0",
   "private": false,
   "repository": {
@@ -9,9 +9,16 @@
     "url": "git+https://github.com/rejot-dev/rejot.git",
     "directory": "apps/mcp"
   },
+  "exports": {
+    ".": {
+      "bun": "./index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "bun test",
+    "test": "bun test **/*.test.ts",
     "inspect": "mcp-inspector bun run \"$PWD/index.ts\" --project \"$PWD/../..\""
   },
   "devDependencies": {
@@ -31,6 +38,6 @@
     "pg": "^8.14.1"
   },
   "bin": {
-    "rejot-mcp": "./index.ts"
+    "rejot-mcp": "./bin/run.js"
   }
 }

@@ -12,8 +12,8 @@ const { class: className = "" } = Astro.props;
 ---
 
 <div
-  class={`${className} space-y-4 overflow-hidden rounded-lg bg-white p-4 shadow 
-  md:min-h-[544px] md:p-8 border dark:border-gray-700 dark:bg-gray-800`}
+  class={`${className} space-y-4 overflow-hidden rounded-lg border bg-white p-4 
+  shadow md:min-h-[544px] md:p-8 dark:border-gray-700 dark:bg-gray-800`}
 >
   <div class="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
     <h3 class="text-xl font-semibold">Microservices</h3>
@@ -62,7 +62,7 @@ const { class: className = "" } = Astro.props;
           increasing latency for each service added.
         </p>
       </div>
-      <hr class="dark:border-gray-700 mx-4" />
+      <hr class="mx-4 dark:border-gray-700" />
       <div class="grow p-4" id="circuit-breaker-item">
         <div class="flex flex-row space-x-2">
           <XMark class="size-6 text-rejot-red-600" />
@@ -91,7 +91,7 @@ const { class: className = "" } = Astro.props;
           low.
         </p>
       </div>
-      <hr class="dark:border-gray-700 mx-4" />
+      <hr class="mx-4 dark:border-gray-700" />
       <div class="grow p-4">
         <div class="flex flex-row space-x-2">
           <Check class="size-6 text-green-600" />
@@ -102,7 +102,7 @@ const { class: className = "" } = Astro.props;
           circuit breakers and preventing cascading failures.
         </p>
       </div>
-      <hr class="dark:border-gray-700 mx-4" />
+      <hr class="mx-4 dark:border-gray-700" />
       <div class="grow p-4">
         <div class="flex flex-row space-x-2">
           <Check class="size-6 text-green-600" />

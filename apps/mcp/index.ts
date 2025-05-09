@@ -23,23 +23,6 @@ import { SchemasTool } from "./tools/schemas/schema.tool";
 import { WorkspaceResources } from "./workspace/workspace.resources";
 import { WorkspaceTool } from "./workspace/workspace.tool";
 
-const { values: argValues } = parseArgs({
-  args: process.argv.slice(2),
-  options: {
-    project: {
-      type: "string",
-      short: "p",
-    },
-  },
-});
-
-if (!("project" in argValues) || !argValues.project) {
-  console.error("Invalid usage. Use `rejot-mcp --project <path>` to specify the project.");
-  process.exit(1);
-}
-
-const log = setLogger(new FileLogger(join(argValues.project, "mcp.log"), "DEBUG"));
-
 const server = new McpServer(
   {
     name: "@rejot-dev/mcp",
@@ -155,7 +138,7 @@ const vibeCollector = new VibeCollector(
   manifestFileManager,
 );
 
-const rejotMcp = new RejotMcp(argValues.project, server, [
+const rejotMcp = new RejotMcp(server, [
   new WorkspaceResources(workspaceService),
   new DbIntrospectionTool(workspaceService),
   new ManifestInfoTool(),
@@ -167,10 +150,31 @@ const rejotMcp = new RejotMcp(argValues.project, server, [
   new SchemasTool(workspaceService),
 ]);
 
-rejotMcp
-  .connect()
-  .then(() => {})
-  .catch((err) => {
-    log.error(`Server error: ${err.message}`);
-    log.logErrorInstance(err);
+if (import.meta.main) {
+  const { values: argValues } = parseArgs({
+    args: process.argv.slice(2),
+    options: {
+      project: {
+        type: "string",
+        short: "p",
+      },
+    },
   });
+
+  if (!("project" in argValues) || !argValues.project) {
+    console.error("Invalid usage. Use `rejot-mcp --project <path>` to specify the project.");
+    process.exit(1);
+  }
+
+  const log = setLogger(new FileLogger(join(argValues.project, "mcp.log"), "DEBUG"));
+
+  rejotMcp
+    .connect(argValues.project)
+    .then(() => {})
+    .catch((err) => {
+      log.error(`Server error: ${err.message}`);
+      log.logErrorInstance(err);
+    });
+}
+
+export { rejotMcp };
