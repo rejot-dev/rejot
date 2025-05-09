@@ -1,0 +1,55 @@
+---
+import { Code } from "astro:components";
+import type { ComponentProps } from "astro:types";
+
+import PreWithCopy from "./PreWithCopy.astro";
+
+interface Props {
+  code: string;
+  lang: ComponentProps<typeof Code>["lang"];
+  part: string;
+}
+
+const props: Props = Astro.props;
+const code = props.code;
+const lang = props.lang;
+const part = props.part;
+
+// Part must start with // part: <name>
+// Part must end with // end: <name>
+
+// Everything in between should be shown in this component
+
+let include = false;
+
+const parts = code
+  .split("\n")
+  .filter((line) => {
+    const trimmedLine = line.trimStart();
+    if (trimmedLine === "// part: " + part) {
+      include = true;
+    }
+    if (trimmedLine === "// end: " + part) {
+      include = false;
+    }
+
+    // Skip lines that start with // part: or // end:
+    if (trimmedLine.startsWith("// part:") || trimmedLine.startsWith("// end:")) {
+      return false;
+    }
+
+    return include;
+  })
+  .join("\n");
+---
+
+<PreWithCopy noWrapper>
+  <Code
+    code={parts}
+    lang={lang}
+    themes={{
+      light: "github-light",
+      dark: "github-dark",
+    }}
+  />
+</PreWithCopy>
