@@ -317,7 +317,6 @@ export class ManifestPrinter {
         );
       }
       output.push("");
-      throw new Error(`Cannot sync: invalid manifest configuration.`);
     }
 
     return output;

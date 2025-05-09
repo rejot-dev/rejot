@@ -42,7 +42,6 @@ export class ManifestInfoCommand extends Command {
   public async run(): Promise<void> {
     const { flags } = await this.parse(ManifestInfoCommand);
     const manifestPath = path.resolve(flags.manifest);
-
     try {
       const manifest = await readManifestOrGetEmpty(manifestPath);
 
@@ -50,6 +49,7 @@ export class ManifestInfoCommand extends Command {
 
       if (!errors.isValid) {
         const errorOutput = ManifestPrinter.printManifestDiagnosticsSummary(errors.diagnostics);
+
         for (const line of errorOutput) {
           this.log(line);
         }
@@ -59,6 +59,12 @@ export class ManifestInfoCommand extends Command {
       // Use the ManifestPrinter for the main display
       const output = ManifestPrinter.printManifest(manifest);
       for (const line of output) {
+        this.log(line);
+      }
+
+      // Print public and consumer schemas summary
+      const schemaSummary = ManifestPrinter.printSchemasSummary(manifest);
+      for (const line of schemaSummary) {
         this.log(line);
       }
 

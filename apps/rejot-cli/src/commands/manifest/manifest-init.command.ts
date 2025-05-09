@@ -33,9 +33,9 @@ export class ManifestInitCommand extends Command {
       await initManifest(manifestPath, slug);
       this.log(`Created new manifest file at ${manifestPath}`);
       this.log("\nNext steps:");
-      this.log("1. Add a connection:    rejot manifest connection add --slug my-db ...");
-      this.log("2. Add a data store:    rejot manifest datastore add --connection my-db ...");
-      this.log("3. Add an event store:  rejot manifest eventstore add --connection my-target");
+      this.log("1. Add a connection:    rejot-cli manifest connection add --slug my-db ...");
+      this.log("2. Add a data store:    rejot-cli manifest datastore add --connection my-db ...");
+      this.log("3. Add an event store:  rejot-cli manifest eventstore add --connection my-target");
     } catch (error) {
       if (error instanceof Error) {
         if ("code" in error && error.code === "EEXIST") {
