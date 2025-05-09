@@ -8,7 +8,7 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": ["**/*.ts", "**/*.tsx", "bin/**/*.js"],
   "exclude": ["dist"],
   "references": [
     {

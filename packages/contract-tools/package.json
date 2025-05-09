@@ -1,6 +1,6 @@
 {
   "name": "@rejot-dev/contract-tools",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "private": false,
   "license": "Apache-2.0",
   "repository": {
@@ -9,6 +9,7 @@
     "directory": "packages/contract-tools"
   },
   "scripts": {
+    "test": "bun test **/*.test.ts",
     "check": "tsc --noEmit"
   },
   "exports": {

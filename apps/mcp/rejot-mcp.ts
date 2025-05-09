@@ -1,19 +1,22 @@
+import type { ZodRawShape } from "zod";
+
+import { ReJotError } from "@rejot-dev/contract/error";
+import { getLogger, LogLevel } from "@rejot-dev/contract/logger";
+
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
+import type { ReadResourceResult } from "@modelcontextprotocol/sdk/types.js";
+
 import type {
   IMcpServer,
   ReadResourceTemplateCallback,
   ResourceTemplate,
   ToolCallback,
 } from "./interfaces/mcp-server.interface";
-import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { McpState } from "./state/mcp-state";
-import type { ZodRawShape } from "zod";
 import { rejotErrorToCallToolContent, rejotErrorToReadResourceContent } from "./state/mcp-error";
-import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
-import { getLogger, LogLevel } from "@rejot-dev/contract/logger";
-import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
-import type { ReadResourceResult } from "@modelcontextprotocol/sdk/types.js";
-import { ReJotError } from "@rejot-dev/contract/error";
+import { McpState } from "./state/mcp-state";
 
 // Factory interface for initializers
 export interface IFactory {
@@ -37,7 +40,7 @@ export interface IRejotMcp {
   workspaceDirectoryPath: string;
   server: IMcpServer;
   state: McpState;
-  connect(transport: Transport): Promise<void>;
+  connect(projectDir: string, transport: Transport): Promise<void>;
 
   registerTool<Args extends ZodRawShape>(
     name: string,
@@ -58,15 +61,17 @@ const log = getLogger(import.meta.url);
 export class RejotMcp implements IRejotMcp {
   #server: IMcpServer;
   #factories: IFactory[];
-  #state: McpState;
+  #state: McpState | undefined;
 
-  constructor(projectDir: string, server: IMcpServer, factories: IFactory[]) {
+  constructor(server: IMcpServer, factories: IFactory[]) {
     this.#factories = factories;
-    this.#state = new McpState(projectDir);
     this.#server = server;
   }
 
   get workspaceDirectoryPath(): string {
+    if (!this.#state) {
+      throw new Error("ReJotMcp not connected.");
+    }
     return this.#state.workspaceDirectoryPath;
   }
 
@@ -75,6 +80,10 @@ export class RejotMcp implements IRejotMcp {
   }
 
   get state(): McpState {
+    if (!this.#state) {
+      throw new Error("ReJotMcp not connected.");
+    }
+
     return this.#state;
   }
 
@@ -145,6 +154,10 @@ export class RejotMcp implements IRejotMcp {
   }
 
   async #initialize(): Promise<void> {
+    if (!this.#state) {
+      throw new Error("State not set.");
+    }
+
     for (const factory of this.#factories) {
       try {
         await factory.initialize(this.#state);
@@ -162,6 +175,10 @@ export class RejotMcp implements IRejotMcp {
   }
 
   async #register(): Promise<void> {
+    if (!this.#state) {
+      throw new Error("State not set.");
+    }
+
     for (const factory of this.#factories) {
       try {
         await factory.register(this);
@@ -175,7 +192,9 @@ export class RejotMcp implements IRejotMcp {
     }
   }
 
-  async connect(transport: Transport = new StdioServerTransport()) {
+  async connect(projectDir: string, transport: Transport = new StdioServerTransport()) {
+    this.#state = new McpState(projectDir);
+
     // Initialize state first
     await this.#initialize();
 

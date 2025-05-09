@@ -43,15 +43,21 @@ started quickly locally you can continue with the default `postgres` superuser.
 
 {/* Some reason the sql formatter can't handle these sql queries */}
 
-```
+```sql
 CREATE ROLE rejot_role
 WITH
   REPLICATION LOGIN PASSWORD '<some secure password>';
 
 GRANT
-  SELECT, INSERT, UPDATE, DELETE
-ON ALL TABLES IN SCHEMA public TO rejot_role;
+SELECT
+,
+  INSERT,
+UPDATE,
+DELETE ON ALL TABLES IN SCHEMA public TO rejot_role;
 ```
+
+{/* TODO: Say something about creating a replication slot */}
+{/* TODO: Say something about ReJot automatically creating these */}
 
 ## Creating a PostgreSQL Publication
 

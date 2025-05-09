@@ -1,18 +1,20 @@
+import type { ZodRawShape } from "zod";
 import { z } from "zod";
+
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
+
 import type {
   IMcpServer,
-  ToolCallback,
-  ResourceTemplate,
   ReadResourceTemplateCallback,
+  ResourceTemplate,
+  ToolCallback,
 } from "../interfaces/mcp-server.interface";
-import type { ResourceListHandler, ResourceGetHandler } from "../interfaces/mcp-server.interface";
-import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import type { ZodRawShape } from "zod";
-import { type IRejotMcp, type IFactory, RejotMcp } from "../rejot-mcp";
-import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
-import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
-import { McpState } from "../state/mcp-state";
+import type { ResourceGetHandler, ResourceListHandler } from "../interfaces/mcp-server.interface";
+import { type IFactory, type IRejotMcp, RejotMcp } from "../rejot-mcp";
 import { rejotErrorToCallToolContent, rejotErrorToReadResourceContent } from "../state/mcp-error";
+import { McpState } from "../state/mcp-state";
 
 /**
  * Represents a registered tool in the MCP server
@@ -281,7 +283,7 @@ export class MockRejotMcp extends RejotMcp implements IRejotMcp {
       },
     );
 
-    super(projectDir, mockServer, factories);
+    super(mockServer, factories);
 
     this.#state = new McpState(projectDir);
     this.#projectDir = projectDir;

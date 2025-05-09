@@ -5,7 +5,8 @@ title: "Install"
 ## ReJot CLI
 
 The ReJot CLI is used to create and validate manifest files, as well as starting sync services. The
-`rejot-cli` is published to [npmjs.com](https://www.npmjs.com/package/@rejot-dev/cli).
+`rejot-cli` is published to [npmjs.com](https://www.npmjs.com/package/@rejot-dev/cli). You can use
+your package manager of choice, including **Bun**, to install the CLI.
 
 ### NPM
 
@@ -14,15 +15,6 @@ npm install -g @rejot-dev/cli
 
 # You should now have the rejot-cli command on your PATH
 rejot-cli --help
-```
-
-### Build From Source
-
-```bash
-git clone git@github.com:rejot-dev/rejot.git
-cd ./rejot
-npm install
-npx rejot-cli --help
 ```
 
 ### Container Image
@@ -34,7 +26,18 @@ The CLI tool is also available as a
 docker run --rm ghcr.io/rejot-dev/rejot-cli:main --help
 ```
 
-## MCP
+### Build From Source
+
+We use Bun as our primary runtime.
+
+```bash
+git clone git@github.com:rejot-dev/rejot.git
+cd ./rejot
+bun install
+bun run rejot-cli --help
+```
+
+## Model Context Protocol (MCP)
 
 The ReJot Model Context Protocol (MCP) server gives AI based code editors the ability to manipulate,
 inspect and use ReJot's tooling.
