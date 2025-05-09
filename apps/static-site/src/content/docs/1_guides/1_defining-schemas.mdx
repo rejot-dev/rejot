@@ -6,6 +6,8 @@ import { Code } from "astro:components";
 import PreWithCopy from "@/components/PreWithCopy.astro";
 import Notice from "@/components/Notice.astro";
 import rawSchemaText from "./schema.ts?raw";
+import rawFullSchemaText from "./finishedSchema.ts?raw";
+import PartialCode from "@/components/PartialCode.astro";
 
 ReJot allows you to define Public and Consumer Schemas using TypeScript code, which offers several
 benefits:
@@ -55,16 +57,7 @@ These transformations:
 
 Here's an example of a public schema transformation:
 
-```typescript
-import { createPostgresPublicSchemaTransformations } from "@rejot-dev/adapter-postgres";
-
-// ... in myPublicSchema
-transformations: createPostgresPublicSchemaTransformations(
-      "insertOrUpdate",
-      "my_table",
-      `SELECT id, name FROM my_table WHERE id = $1`,
-    ),
-```
+<PartialCode code={rawFullSchemaText} lang="ts" part="publicSchemaTransformations" />
 
 #### Multi-table transformations
 
@@ -72,39 +65,7 @@ A common case is to (partially) de-normalize your data for the public schema, to
 results ReJot should listen to updates to all of these tables. As a data producer you will have to
 define schema transformations for each table.
 
-```typescript
-import { createPostgresPublicSchemaTransformations } from "@rejot-dev/adapter-postgres";
-
-// ... in myPublicSchema
-transformations: [
-      ...createPostgresPublicSchemaTransformations(
-        "insertOrUpdate",
-        "accounts",
-        `SELECT
-            accounts.id,
-            accounts.name,
-            addresses.country
-          FROM
-            accounts
-            JOIN addresses ON accounts.id = addresses.account_id
-          WHERE
-            accounts.id = $1`,
-      ),
-      ...createPostgresPublicSchemaTransformations(
-        "insertOrUpdate",
-        "addresses",
-        `SELECT
-            accounts.id,
-            accounts.name,
-            addresses.country
-          FROM
-            accounts
-            JOIN addresses ON accounts.id = addresses.account_id
-          WHERE
-            addresses.id = $1`,
-      ),
-    ],
-```
+<PartialCode code={rawFullSchemaText} lang="ts" part="publicSchemaTransformationsMultiTable" />
 
 <Notice type="WARNING">
   Note that your public schema transformation must always return one result, in case there is a
@@ -123,9 +84,7 @@ destination data store. These transformations:
 
 Here's an example of a consumer schema transformation:
 
-```typescript
-sql: "INSERT INTO destination_table (id, name) VALUES (:id, :name) ON CONFLICT (id) DO UPDATE SET name = :name";
-```
+<PartialCode code={rawFullSchemaText} lang="ts" part="consumerSchemaSql" />
 
 ## Materializing Schemas
 
