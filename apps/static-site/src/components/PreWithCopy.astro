@@ -1,0 +1,87 @@
+---
+import Check from "astro-heroicons/outline/Check.astro";
+import ClipboardDocument from "astro-heroicons/outline/ClipboardDocument.astro";
+
+interface Props {
+  noWrapper?: boolean;
+}
+
+const props: Props = Astro.props;
+const noWrapper = props.noWrapper ?? false;
+---
+
+<div class="relative w-full">
+  <button
+    type="button"
+    aria-label="Copy code"
+    class=`absolute right-6 ${noWrapper ? '' : 'top-2'} z-20 m-0 cursor-pointer border-none p-0 focus:outline-none`
+    id="copy-code-button"
+    data-copied="false"
+  >
+    <span class="relative inline-block size-6">
+      <span
+        class="absolute inset-0 size-full scale-100 opacity-100 transition-all duration-300 will-change-[opacity,transform]"
+        data-show="clipboard"
+      >
+        <ClipboardDocument class="inline size-full text-gray-500" />
+      </span>
+      <span
+        class="absolute inset-0 size-full scale-75 opacity-0 transition-all duration-300 will-change-[opacity,transform]"
+        data-show="check"
+      >
+        <Check class="inline size-full text-lime-500" />
+      </span>
+    </span>
+  </button>
+  {
+    noWrapper ? (
+      <slot />
+    ) : (
+      <pre id="code-content" {...props}>
+        <slot />
+      </pre>
+    )
+  }
+</div>
+
+<script>
+  const copyCodeButtons = document.querySelectorAll("#copy-code-button");
+  copyCodeButtons.forEach((button) => {
+    button.addEventListener("click", () => copyCode(button));
+  });
+
+  /**
+   * Copy the code to the clipboard, and add a checkmark to the button
+   * @param {Element} button
+   */
+  function copyCode(button: Element) {
+    let code = button.parentElement!.querySelector("#code-content")! satisfies HTMLElement;
+    if (!code) {
+      code = button.parentElement!.querySelector("code")! satisfies HTMLElement;
+    }
+
+    const text = code.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      button.setAttribute("aria-label", "Copied!");
+      button.setAttribute("data-copied", "true");
+
+      const clipboardIcon = button.querySelector('[data-show="clipboard"]')!;
+      const checkIcon = button.querySelector('[data-show="check"]')!;
+
+      clipboardIcon.classList.remove("opacity-100", "scale-100", "pointer-events-auto");
+      clipboardIcon.classList.add("opacity-0", "scale-75", "pointer-events-none");
+
+      checkIcon.classList.remove("opacity-0", "scale-75", "pointer-events-none");
+      checkIcon.classList.add("opacity-100", "scale-100", "pointer-events-auto");
+
+      setTimeout(() => {
+        button.setAttribute("aria-label", "Copy code");
+        button.setAttribute("data-copied", "false");
+        clipboardIcon.classList.remove("opacity-0", "scale-75", "pointer-events-none");
+        clipboardIcon.classList.add("opacity-100", "scale-100", "pointer-events-auto");
+        checkIcon.classList.remove("opacity-100", "scale-100", "pointer-events-auto");
+        checkIcon.classList.add("opacity-0", "scale-75", "pointer-events-none");
+      }, 1500);
+    });
+  }
+</script>

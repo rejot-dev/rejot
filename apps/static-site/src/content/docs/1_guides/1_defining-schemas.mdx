@@ -3,6 +3,7 @@ title: "Defining Schemas"
 ---
 
 import { Code } from "astro:components";
+import PreWithCopy from "@/components/PreWithCopy.astro";
 import Notice from "@/components/Notice.astro";
 import rawSchemaText from "./schema.ts?raw";
 
@@ -25,14 +26,16 @@ npm install --save @rejot-dev/contract @rejot-dev/adapter-postgres
 
 Create a new file called `schemas.ts` that will contain your public and consumer schemas:
 
-<Code
-  code={rawSchemaText}
-  lang="ts"
-  themes={{
-    light: "github-light",
-    dark: "github-dark",
-  }}
-/>
+<PreWithCopy noWrapper>
+  <Code
+    code={rawSchemaText}
+    lang="ts"
+    themes={{
+      light: "github-light",
+      dark: "github-dark",
+    }}
+  />
+</PreWithCopy>
 
 ### Transformations
 
