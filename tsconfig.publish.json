@@ -1,0 +1,17 @@
+{
+  // This excludes apps/static-site
+  "files": [],
+  "references": [
+    { "path": "packages/contract" },
+    { "path": "packages/contract-tools" },
+    { "path": "packages/sqlparser" },
+    { "path": "packages/sync" },
+    { "path": "packages/adapter-postgres" },
+    { "path": "packages/api-interface-controller" },
+    { "path": "apps/mcp" },
+    { "path": "apps/rejot-cli" },
+    { "path": "apps/controller-spa" },
+    { "path": "apps/controller" },
+    { "path": "integration-tests/one" }
+  ]
+}

@@ -6,8 +6,9 @@
     "lint:fix": "eslint --fix .",
     "pre-commit": "bunx lefthook run pre-commit",
     "check-ts-changes": "bun run scripts/check-ts-changes.ts",
-    "clean": "rm -rf packages/*/dist apps/*/dist **/tsconfig.tsbuildinfo",
+    "clean": "rm -rf packages/*/dist apps/*/dist **/tsconfig.tsbuildinfo **/.astro",
     "build": "tsc --build",
+    "build:publish": "tsc --build tsconfig.publish.json",
     "build:watch": "tsc --build --watch"
   },
   "type": "module",
