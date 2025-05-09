@@ -1,0 +1,49 @@
+---
+import { Code } from "astro:components";
+
+interface Props {
+  code: string;
+  lang: string;
+  part: string;
+}
+
+const props: Props = Astro.props;
+const code = props.code;
+const lang = props.lang;
+const part = props.part;
+
+// Part must start with // part: <name>
+// Part must end with // end: <name>
+
+// Everything in between should be shown in this component
+
+let include = false;
+
+const parts = code
+  .split("\n")
+  .filter((line) => {
+    if (line.trimStart() === "// part: " + part) {
+      include = true;
+    }
+    if (line.trimStart() === "// end: " + part) {
+      include = false;
+    }
+
+    // Skip lines that start with // part: or // end:
+    if (line.trimStart().startsWith("// part:") || line.trimStart().startsWith("// end:")) {
+      return false;
+    }
+
+    return include;
+  })
+  .join("\n");
+---
+
+<Code
+  code={parts}
+  lang={lang}
+  themes={{
+    light: "github-light",
+    dark: "github-dark",
+  }}
+/>
