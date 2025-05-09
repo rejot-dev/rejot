@@ -5,6 +5,7 @@ title: "Quickstart"
 import { Code } from "astro:components";
 import Notice from "@/components/Notice.astro";
 import rawSchemaText from "./schema.ts?raw";
+import PreWithCopy from "@/components/PreWithCopy.astro";
 
 This guide helps you quickly set up replication between PostgreSQL database instances using ReJot.
 For demonstration purposes we'll use one Postgres database for both publishing and consuming data
@@ -82,14 +83,16 @@ Public and Consumer Schemas can be created through Typescript code, create a `sc
 containing your schemas. See our full [guide on defining schemas](/docs/guides/defining-schemas) for
 more detailed description of the schema definition process.
 
-<Code
-  code={rawSchemaText}
-  lang="ts"
-  themes={{
-    light: "github-light",
-    dark: "github-dark",
-  }}
-/>
+<PreWithCopy noWrapper>
+  <Code
+    code={rawSchemaText}
+    lang="ts"
+    themes={{
+      light: "github-light",
+      dark: "github-dark",
+    }}
+  />
+</PreWithCopy>
 
 ### Collect Schemas to Manifest
 
