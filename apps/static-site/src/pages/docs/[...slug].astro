@@ -2,6 +2,8 @@
 import { type CollectionEntry, getCollection } from "astro:content";
 import { render } from "astro:content";
 import Bars3BottomLeftIcon from "astro-heroicons/mini/Bars3BottomLeft.astro";
+import ChevronLeftIcon from "astro-heroicons/mini/ChevronLeft.astro";
+import ChevronRightIcon from "astro-heroicons/mini/ChevronRight.astro";
 import XMarkIcon from "astro-heroicons/mini/XMark.astro";
 
 import PreWithCopy from "@/components/PreWithCopy.astro";
@@ -41,6 +43,17 @@ const docNavigationEntries: CollectionNavigationEntry[] = collection
     slug: normalizeSlug(entry.id),
     item: entry,
   }));
+
+docNavigationEntries.sort((a, b) => {
+  return (a.item.filePath ?? "").localeCompare(b.item.filePath ?? "");
+});
+
+const docNavigationEntriesWithoutIndex = docNavigationEntries.filter((entry) => {
+  return entry.item.filePath?.includes("index.md") === false;
+});
+const currentIndex = docNavigationEntriesWithoutIndex.findIndex((entry) => {
+  return entry.slug === normalizeSlug(post.id);
+});
 ---
 
 <Base title={pageTitle(post.data.title)} description="">
@@ -89,6 +102,40 @@ const docNavigationEntries: CollectionNavigationEntry[] = collection
             }}
           />
         </Prose>
+        {
+          (() => {
+            const prev =
+              currentIndex > 0 ? docNavigationEntriesWithoutIndex[currentIndex - 1] : null;
+            const next =
+              currentIndex < docNavigationEntriesWithoutIndex.length - 1
+                ? docNavigationEntriesWithoutIndex[currentIndex + 1]
+                : null;
+            return (
+              <div class="mt-8 flex items-center justify-between">
+                {prev ? (
+                  <a
+                    href={`/docs/${prev.slug}`}
+                    class="inline-flex items-center rounded p-6 text-lg font-semibold text-gray-500 transition-all hover:text-gray-800 dark:text-gray-200 dark:hover:text-gray-400"
+                  >
+                    <ChevronLeftIcon class="mr-2 size-6" /> Previous: {prev.title}
+                  </a>
+                ) : (
+                  <span />
+                )}
+                {next ? (
+                  <a
+                    href={`/docs/${next.slug}`}
+                    class="inline-flex items-center rounded p-6 text-lg font-semibold text-gray-500 transition-all hover:text-gray-800 dark:text-gray-200 dark:hover:text-gray-400"
+                  >
+                    Next: {next.title} <ChevronRightIcon class="size-6" />
+                  </a>
+                ) : (
+                  <span />
+                )}
+              </div>
+            );
+          })()
+        }
       </div>
 
       <!-- Table of contents -->
