@@ -4,7 +4,12 @@
     "outDir": "./dist",
     "rootDir": "."
   },
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../../packages/contract/cli/cli-schema.test.ts",
+    "../../packages/contract/cli/cli-schema.ts"
+  ],
   "exclude": ["dist"],
   "references": [
     {

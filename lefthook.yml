@@ -27,3 +27,11 @@ pre-commit:
           exit 1
         fi
       glob: "packages/contract/*.ts"
+    - name: cli-schema-check
+      run: |
+        cd apps/rejot-cli && bun run cli:schema
+        if ! git diff --quiet cli-schema.json; then
+          echo "Error: Running 'bun run cli:schema' in apps/rejot-cli produced changes. Please stage these changes and try committing again."
+          exit 1
+        fi
+      glob: "apps/rejot-cli/src/**/*.ts"

@@ -5,6 +5,7 @@ coverage
 # Ignore generated files:
 **/drizzle/**
 packages/contract/schema.json
+apps/rejot-cli/cli-schema.json
 **/.astro
 
 # Ignored symbolic links:

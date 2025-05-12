@@ -11,8 +11,8 @@ export class WorkspaceInfoCommand extends Command {
     "Display information about the current workspace configuration and diagnostics";
 
   static override examples = [
-    "<%= config.bin %> workspace:info",
-    "<%= config.bin %> workspace:info --filename custom-manifest.json",
+    "<%= config.bin %> workspace info",
+    "<%= config.bin %> workspace info --filename custom-manifest.json",
   ];
 
   static override flags = {
@@ -32,7 +32,9 @@ export class WorkspaceInfoCommand extends Command {
     );
 
     if (!workspaceFilePath) {
-      this.error(`Workspace manifest file not found. Use 'rejot workspace:init' to create one.`);
+      this.error(
+        `Workspace manifest file not found. Use 'rejot manifest init --slug <slug>' to create one.`,
+      );
     }
 
     // Resolve the workspace
@@ -43,7 +45,7 @@ export class WorkspaceInfoCommand extends Command {
     });
 
     if (!workspace) {
-      this.error(`No workspace found. Use 'rejot workspace:init' to create one.`);
+      this.error(`No workspace found. Use 'rejot manifest init --slug <slug>' to create one.`);
     }
 
     // Print workspace information

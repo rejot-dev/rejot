@@ -1,0 +1,24 @@
+---
+title: "Manifest"
+---
+
+import CliSchema from "@/components/schema/CliSchema.astro";
+import { commands } from "@/content/cli/cli-schema_v0.json";
+
+## Get manifest information
+
+The `manifest:info` command is used to display information about a specific manifest.
+
+<CliSchema command={commands["manifest:info"]} />
+
+## Initialize a new manifest
+
+The `manifest:init` command is used to initialize a new manifest file at the specified path.
+
+<CliSchema command={commands["manifest:init"]} />
+
+## Synchronize manifest configurations
+
+The `manifest:sync` command is used to synchronize manifest configurations.
+
+<CliSchema command={commands["manifest:sync"]} />

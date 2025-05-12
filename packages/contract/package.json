@@ -32,6 +32,11 @@
       "types": "./dist/collect/mock-schema-collector.d.ts",
       "default": "./dist/collect/mock-schema-collector.js"
     },
+    "./cli-schema": {
+      "bun": "./cli/cli-schema.ts",
+      "types": "./dist/cli/cli-schema.d.ts",
+      "default": "./dist/cli/cli-schema.js"
+    },
     "./consumer-schema": {
       "bun": "./consumer-schema/consumer-schema.ts",
       "types": "./dist/consumer-schema/consumer-schema.d.ts",

@@ -106,7 +106,7 @@ describe.skipIf(!process.env["REJOT_SYNC_CLI_TEST_CONNECTION"])("MCP Integration
     // Initialize client
     const transport = new StdioClientTransport({
       command: "bun",
-      args: ["./index.ts", "--project", tmpDir],
+      args: ["./bin/run.js", "--project", tmpDir],
     });
 
     client = new Client({

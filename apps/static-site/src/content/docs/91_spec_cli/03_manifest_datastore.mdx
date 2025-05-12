@@ -1,0 +1,24 @@
+---
+title: "Manifest Datastore"
+---
+
+import CliSchema from "@/components/schema/CliSchema.astro";
+import { commands } from "@/content/cli/cli-schema_v0.json";
+
+## Add a datastore to a manifest
+
+The `manifest:datastore:add` command is used to add a datastore to a manifest.
+
+<CliSchema command={commands["manifest:datastore:add"]} />
+
+## Remove a datastore from a manifest
+
+The `manifest:datastore:remove` command is used to remove a datastore from a manifest.
+
+<CliSchema command={commands["manifest:datastore:remove"]} />
+
+## List all datastores in a manifest
+
+The `manifest:datastore:list` command is used to list all datastores in a manifest.
+
+<CliSchema command={commands["manifest:datastore:list"]} />

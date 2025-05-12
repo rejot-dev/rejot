@@ -1,0 +1,30 @@
+---
+title: "Manifest Connection"
+---
+
+import CliSchema from "@/components/schema/CliSchema.astro";
+import { commands } from "@/content/cli/cli-schema_v0.json";
+
+## Add a connection to a manifest
+
+The `manifest:connection:add` command is used to add a connection to a manifest.
+
+<CliSchema command={commands["manifest:connection:add"]} />
+
+## Remove a connection from a manifest
+
+The `manifest:connection:remove` command is used to remove a connection from a manifest.
+
+<CliSchema command={commands["manifest:connection:remove"]} />
+
+## List all connections in a manifest
+
+The `manifest:connection:list` command is used to list all connections in a manifest.
+
+<CliSchema command={commands["manifest:connection:list"]} />
+
+## Update a connection in a manifest
+
+The `manifest:connection:update` command is used to update a connection in a manifest.
+
+<CliSchema command={commands["manifest:connection:update"]} />
