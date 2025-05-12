@@ -9,17 +9,6 @@ commands. ReJot uses [Manifests](/docs/spec/manifest) as a central configuration
 your data synchronization setup. Think of it as a "lockfile" for your data contracts - it specifies
 what data should be synced, where it should be synced, and in what format.
 
-## Why Use Manifests?
-
-Manifests provide several key benefits:
-
-- **Centralized Configuration**: All your sync settings are in one place
-- **Version Control**: Manifests can be committed to version control, making your data contracts
-  reproducible
-- **Network Discovery**: Other sync services can discover and use your public schemas
-- **Environment Management**: Different manifests can be used for development, staging, and
-  production
-
 ## Manifest Components
 
 A manifest definition contains (a subset of) the following components:
@@ -29,6 +18,7 @@ A manifest definition contains (a subset of) the following components:
 - [Public Schemas](/docs/spec/public-schema): Define what data is exposed from your data stores
 - [Consumer Schemas](/docs/spec/consumer-schema): Define how data is transformed and stored in
   target systems
+- Workspaces: Group multiple manifests into a single project.
 
 <Notice type="TIP">
   For AI-native code editors, the [ReJot MCP](/docs/start/install#mcp) server makes managing

@@ -4,6 +4,8 @@ import { z } from "zod";
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
+import type { ServerNotification } from "@modelcontextprotocol/sdk/types.js";
+import type { ServerRequest } from "@modelcontextprotocol/sdk/types.js";
 
 import type {
   IMcpServer,
@@ -307,7 +309,10 @@ export class MockRejotMcp extends RejotMcp implements IRejotMcp {
       name,
       description,
       paramsSchema,
-      (data: { [x: string]: unknown }, extra: RequestHandlerExtra) => {
+      (
+        data: { [x: string]: unknown },
+        extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+      ) => {
         try {
           return cb(data, extra);
         } catch (error) {
@@ -344,7 +349,11 @@ export class MockRejotMcp extends RejotMcp implements IRejotMcp {
     this.server.resource(
       name,
       template,
-      async (uri: URL, variables: Variables, extra: RequestHandlerExtra) => {
+      async (
+        uri: URL,
+        variables: Variables,
+        extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+      ) => {
         try {
           return await handler(uri, variables, extra);
         } catch (error) {

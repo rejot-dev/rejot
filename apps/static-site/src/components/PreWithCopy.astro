@@ -10,20 +10,22 @@ const props: Props = Astro.props;
 const noWrapper = props.noWrapper ?? false;
 ---
 
-<div class="relative w-full">
+<div class="group relative w-full">
   <button
     type="button"
     aria-label="Copy code"
-    class=`absolute right-6 ${noWrapper ? '' : 'top-2'} z-20 m-0 cursor-pointer border-none p-0 focus:outline-none`
+    class={`group absolute ${noWrapper ? "right-0 top-0" : "right-4 top-2"} z-20 m-0 cursor-pointer border-none p-0 focus:outline-none dark:border-gray-700`}
     id="copy-code-button"
     data-copied="false"
   >
     <span class="relative inline-block size-6">
       <span
-        class="absolute inset-0 size-full scale-100 opacity-100 transition-all duration-300 will-change-[opacity,transform]"
+        class="pointer-events-none absolute inset-0 size-full scale-100 opacity-0 transition-all duration-300 will-change-[opacity,transform] group-hover:pointer-events-auto group-hover:opacity-100"
         data-show="clipboard"
       >
-        <ClipboardDocument class="inline size-full text-gray-500" />
+        <ClipboardDocument
+          class="inline size-full text-gray-500 transition-all hover:text-gray-700 hover:brightness-125 hover:drop-shadow"
+        />
       </span>
       <span
         class="absolute inset-0 size-full scale-75 opacity-0 transition-all duration-300 will-change-[opacity,transform]"
@@ -78,7 +80,7 @@ const noWrapper = props.noWrapper ?? false;
         button.setAttribute("aria-label", "Copy code");
         button.setAttribute("data-copied", "false");
         clipboardIcon.classList.remove("opacity-0", "scale-75", "pointer-events-none");
-        clipboardIcon.classList.add("opacity-100", "scale-100", "pointer-events-auto");
+        clipboardIcon.classList.add("opacity-0", "scale-100", "pointer-events-none");
         checkIcon.classList.remove("opacity-100", "scale-100", "pointer-events-auto");
         checkIcon.classList.add("opacity-0", "scale-75", "pointer-events-none");
       }, 1500);

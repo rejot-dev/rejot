@@ -30,14 +30,6 @@ rejot-cli --help`,
       code: `bun add @rejot-dev/cli
 rejot-cli --help`,
     },
-    {
-      title: "Build From Source",
-      lang: "bash",
-      code: `git clone git@github.com:rejot-dev/rejot.git
-cd ./rejot
-npm install
-npx rejot-cli --help`,
-    },
   ]}
 />
 
@@ -64,56 +56,49 @@ bun run rejot-cli --help
 ## Model Context Protocol (MCP)
 
 The ReJot Model Context Protocol (MCP) server gives AI based code editors the ability to manipulate,
-inspect and use ReJot's tooling.
-
-The MCP can be installed through NPM:
+inspect and use ReJot's tooling. The MCP can be installed through your package manager of choice.
 
 <LanguageVariants
   languages={[
     {
       title: "NPM",
       lang: "bash",
-      code: `npm install @rejot-dev/mcp`,
+      code: `npm install -g @rejot-dev/mcp`,
     },
     {
       title: "Yarn",
       lang: "bash",
-      code: `yarn add @rejot-dev/mcp`,
+      code: `yarn global add @rejot-dev/mcp`,
     },
     {
       title: "Bun",
       lang: "bash",
-      code: `bun add @rejot-dev/mcp`,
+      code: `bun add -g @rejot-dev/mcp`,
     },
   ]}
 />
 
-Then the server can be started with:
+After installation, the MCP server will be available as `rejot-mcp`. You can configure your editor
+to use the MCP server by adding the following configuration to your editor's configuration file.
 
-<LanguageVariants
-  languages={[
-    {
-      title: "NPM",
-      lang: "bash",
-      code: `npx rejot-mcp`,
-    },
-    {
-      title: "Yarn",
-      lang: "bash",
-      code: `yarn rejot-mcp`,
-    },
-    {
-      title: "Bun",
-      lang: "bash",
-      code: `bun rejot-mcp`,
-    },
-  ]}
-/>
+```json
+{
+  "mcpServers": {
+    "rejot-mcp": {
+      "command": "rejot-mcp",
+      "args": ["--project", "."]
+    }
+  }
+}
+```
 
-For AI IDE integration see the respective docs:
+Note that not all editors automatically substitute the project root for the "." placeholder. You
+might have to manually specify the absolute project root.
+
+For more information, see the documentation for your editor of choice:
 
 - [Cursor](https://docs.cursor.com/context/model-context-protocol#configuring-mcp-servers)
-- [Windsurf](https://docs.windsurf.com/windsurf/mcp#adding-a-new-server)
+- [Windsurf](https://docs.windsurf.com/windsurf/cascade/mcp)
 - [VS Code + Github Copilot](https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server)
 
 ## Manifest JSON Schema
@@ -124,7 +109,7 @@ included in the `@rejot-dev/contract` npm package. You can find it in either of 
 - Local path: `node_modules/@rejot-dev/contract/schema.json`
 - URL: https://unpkg.com/@rejot-dev/contract@latest/schema.json
 
-### VS Code
+### VSCode / Cursor
 
 Add the following configuration to your `.vscode/settings.json` workspace file:
 

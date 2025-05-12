@@ -52,6 +52,12 @@
           "description": "Print the names of the public and consumer schemas.",
           "required": false,
           "type": "boolean"
+        },
+        "verbose": {
+          "name": "verbose",
+          "description": "Verbose output.",
+          "required": false,
+          "type": "boolean"
         }
       },
       "strict": false
@@ -464,7 +470,7 @@
         "log-level": {
           "name": "log-level",
           "description": "Set the log level (user, error, warn, info, debug, trace)",
-          "default": "warn",
+          "default": "info",
           "type": "option",
           "options": [
             "user",
@@ -520,8 +526,8 @@
       "id": "workspace:init",
       "description": "Initialize a new ReJot workspace",
       "examples": [
-        "<%= config.bin %> workspace:init --slug @myorg/",
-        "<%= config.bin %> workspace:init --slug @myorg/ --filename custom-manifest.json"
+        "<%= config.bin %> workspace init --slug @myorg/",
+        "<%= config.bin %> workspace init --slug @myorg/ --filename custom-manifest.json"
       ],
       "flags": {
         "filename": {

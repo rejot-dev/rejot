@@ -1,3 +1,4 @@
+import { rm } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 
 import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
@@ -18,12 +19,8 @@ export interface ISchemaCollector {
   collectSchemas(manifestPath: string, modulePath: string): Promise<CollectedSchemas>;
 }
 
-function isPublicSchemaData(obj: unknown): obj is PublicSchemaData {
-  return PublicSchemaSchema.safeParse(obj).success;
-}
-
-function isConsumerSchemaData(obj: unknown): obj is ConsumerSchemaData {
-  return ConsumerSchemaSchema.safeParse(obj).success;
+export interface CollectSchemaOptions {
+  verbose?: boolean;
 }
 
 interface ModuleWithDefault {
@@ -38,7 +35,13 @@ export class SchemaCollector implements ISchemaCollector {
     this.#typeStripper = typeStripper;
   }
 
-  async collectSchemas(manifestPath: string, modulePath: string): Promise<CollectedSchemas> {
+  async collectSchemas(
+    manifestPath: string,
+    modulePath: string,
+    options: CollectSchemaOptions = {},
+  ): Promise<CollectedSchemas> {
+    const { verbose = false } = options;
+
     const result: CollectedSchemas = {
       publicSchemas: [],
       consumerSchemas: [],
@@ -55,16 +58,24 @@ export class SchemaCollector implements ISchemaCollector {
         return;
       }
 
-      if (isPublicSchemaData(schema)) {
+      const parsedAsPublicSchema = PublicSchemaSchema.safeParse(schema);
+      const parsedAsConsumerSchema = ConsumerSchemaSchema.safeParse(schema);
+
+      if (parsedAsPublicSchema.success) {
         const definitionFile = relative(dirname(manifestPath), modulePath);
-        result.publicSchemas.push({ ...schema, definitionFile });
-      } else if (isConsumerSchemaData(schema)) {
+        result.publicSchemas.push({ ...parsedAsPublicSchema.data, definitionFile });
+      } else if (parsedAsConsumerSchema.success) {
         const definitionFile = relative(dirname(manifestPath), modulePath);
-        result.consumerSchemas.push({ ...schema, definitionFile });
+        result.consumerSchemas.push({ ...parsedAsConsumerSchema.data, definitionFile });
       } else if (typeof schema === "object" && schema !== null && !Array.isArray(schema)) {
         // Recursively check object properties for schemas, but only one level deep
         for (const value of Object.values(schema)) {
           processSchema(value, depth + 1);
+        }
+      } else {
+        // No match
+        if (verbose) {
+          log.user(`Skipping ${modulePath} because it doesn't contain a valid schema.`);
         }
       }
     };
@@ -78,7 +89,6 @@ export class SchemaCollector implements ISchemaCollector {
 
     const defaultExport = module.default;
 
-    // Case 1: Default export is a schema itself
     if (typeof defaultExport === "object" && defaultExport !== null) {
       if (Array.isArray(defaultExport)) {
         processArray(defaultExport);
@@ -96,6 +106,7 @@ export class SchemaCollector implements ISchemaCollector {
 
   async #importModule(modulePath: string): Promise<ModuleWithDefault> {
     const resolvedModulePath = resolve(process.cwd(), modulePath);
+    const jsModulePath = resolvedModulePath + ".js";
 
     try {
       if (this.#typeStripper.processSupportsTypeStripping()) {
@@ -108,9 +119,12 @@ export class SchemaCollector implements ISchemaCollector {
 
         return module;
       } else if (this.#typeStripper) {
-        const jsPath = await this.#typeStripper.stripTypes(resolvedModulePath);
-        const module = (await import(jsPath)) as ModuleWithDefault;
-        Object.keys(module);
+        log.warn("Type stripping not supported.");
+
+        await this.#typeStripper.stripTypes(resolvedModulePath, jsModulePath);
+        log.trace("jsModulePath", jsModulePath);
+
+        const module = (await import(jsModulePath)) as ModuleWithDefault;
 
         return module;
       }
@@ -121,17 +135,22 @@ export class SchemaCollector implements ISchemaCollector {
           " Alternatively, Bun can be used.",
       );
     } catch (error) {
+      log.logErrorInstance(error);
+
       if (error instanceof Error) {
-        if (error.message.includes("test") || error.message.includes("before initialization")) {
+        if (error.message.includes("before initialization")) {
           if (!modulePath.includes("test")) {
             log.warn(
               `Skipping ${modulePath} because it couldn't be initialized. This might be because it contains test code.`,
             );
           }
+          log.warn("returning null");
           return { default: null };
         }
       }
       throw error;
+    } finally {
+      await rm(jsModulePath, { force: true });
     }
   }
 }

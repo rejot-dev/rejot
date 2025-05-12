@@ -56,11 +56,15 @@ export default class Collect extends Command {
       description: "Print the names of the public and consumer schemas.",
       required: false,
     }),
+    verbose: Flags.boolean({
+      description: "Verbose output.",
+      required: false,
+    }),
   };
 
   public async run(): Promise<void> {
     const { flags, argv } = await this.parse(Collect);
-    const { write, check, print, "log-level": logLevel } = flags;
+    const { write, check, print, "log-level": logLevel, verbose } = flags;
 
     setLogger(new ConsoleLogger(logLevel.toUpperCase()));
 
@@ -77,7 +81,7 @@ export default class Collect extends Command {
     try {
       currentManifest = await readManifestOrGetEmpty(manifestPath);
     } catch (error) {
-      log.warn(`Pre-existing manifest file '${manifestPath}' has invalid format.`);
+      log.user(`Pre-existing manifest file '${manifestPath}' has invalid format.`);
       throw error;
     }
 
@@ -93,14 +97,16 @@ export default class Collect extends Command {
       try {
         await stat(schemaPath);
       } catch {
-        log.warn(`Schema file '${schemaPath}' does not exist.`);
+        log.user(`Schema file '${schemaPath}' does not exist.`);
         continue;
       }
 
       const resolvedPath = resolve(schemaPath);
       const { publicSchemas, consumerSchemas } = await new SchemaCollector(
         new TypeStripper(),
-      ).collectSchemas(manifestPath, resolvedPath);
+      ).collectSchemas(manifestPath, resolvedPath, {
+        verbose,
+      });
 
       allPublicSchemas.push(...publicSchemas);
       allConsumerSchemas.push(...consumerSchemas);

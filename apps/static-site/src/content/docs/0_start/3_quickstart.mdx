@@ -76,7 +76,7 @@ Our public and consumer schemas define what data is exposed from the datastore a
 data should be synced to the destination. For the publishing side, this is done through a simple
 select query that will be run each time the source table is updated. The select query is responsible
 for transforming the internal schema to the public schema and must include a `WHERE` clause using
-the primary key for that table. Note that in the example query, the `$1` placeholder will be the
+the primary key for that table. Note that in the example query, the `:id` placeholder will be the
 primary key value for incoming updates.
 
 Public and Consumer Schemas can be created through Typescript code, create a `schemas.ts` file

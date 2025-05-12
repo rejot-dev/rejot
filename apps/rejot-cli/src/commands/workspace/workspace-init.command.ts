@@ -9,8 +9,8 @@ export class WorkspaceInitCommand extends Command {
   static override description = "Initialize a new ReJot workspace";
 
   static override examples = [
-    "<%= config.bin %> workspace:init --slug @myorg/",
-    "<%= config.bin %> workspace:init --slug @myorg/ --filename custom-manifest.json",
+    "<%= config.bin %> workspace init --slug @myorg/",
+    "<%= config.bin %> workspace init --slug @myorg/ --filename custom-manifest.json",
   ];
 
   static override flags = {

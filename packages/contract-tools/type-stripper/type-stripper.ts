@@ -10,26 +10,28 @@ const log = getLogger(import.meta.url);
 
 export interface ITypeStripper {
   processSupportsTypeStripping(): boolean;
-  stripTypes(typescriptFilePath: string): Promise<string>;
+  stripTypes(typescriptFilePath: string, outFilePath?: string): Promise<string>;
 }
 
 export class TypeStripper implements ITypeStripper {
-  async stripTypes(typescriptFilePath: string): Promise<string> {
-    const tmpDir = await mkdtemp(join(tmpdir(), "type-stripper-"));
-    const outFile = join(tmpDir, typescriptFilePath + ".js");
+  async stripTypes(typescriptFilePath: string, outFilePath?: string): Promise<string> {
+    if (!outFilePath) {
+      const tmpDir = await mkdtemp(join(tmpdir(), "type-stripper-"));
+      outFilePath = join(tmpDir, typescriptFilePath + ".js");
+    }
 
     await esbuild.build({
       entryPoints: [typescriptFilePath],
-      outfile: outFile,
+      outfile: outFilePath,
       bundle: true,
       platform: "node",
       packages: "external",
       format: "esm",
     });
 
-    log.debug(`Stripped types from ${typescriptFilePath} to ${outFile}`);
+    log.debug(`Stripped types from ${typescriptFilePath} to ${outFilePath}`);
 
-    return outFile;
+    return outFilePath;
   }
 
   processSupportsTypeStripping(): boolean {
