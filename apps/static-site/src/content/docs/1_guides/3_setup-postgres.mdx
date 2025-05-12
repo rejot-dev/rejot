@@ -109,12 +109,11 @@ CREATE SCHEMA IF NOT EXISTS rejot_events;
 CREATE SCHEMA IF NOT EXISTS rejot_data_store;
 
 -- Grant access to these new schemas to your unprivileged user
-GRANT USAGE ON SCHEMA rejot_events TO rejot_role;
+GRANT CREATE, USAGE ON SCHEMA rejot_events TO rejot_role;
+GRANT CREATE, USAGE ON SCHEMA rejot_data_store TO rejot_role;
 
-GRANT USAGE ON SCHEMA rejot_data_store TO rejot_role;
 
 GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA rejot_data_store TO rejot_role;
-
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA rejot_data_store TO rejot_role;
 
 GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA rejot_events TO rejot_role;
