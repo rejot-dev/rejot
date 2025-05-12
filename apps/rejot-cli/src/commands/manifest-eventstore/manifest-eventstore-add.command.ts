@@ -8,7 +8,7 @@ export class ManifestEventStoreAddCommand extends Command {
   static override id = "manifest:eventstore:add";
   static override description = "Add an event store to the manifest file";
 
-  static override examples = ["<%= config.bin %> manifest:eventstore:add --connection my-db"];
+  static override examples = ["<%= config.bin %> manifest eventstore add --connection my-db"];
 
   static override flags = {
     manifest: Flags.string({

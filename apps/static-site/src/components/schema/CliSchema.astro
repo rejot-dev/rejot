@@ -1,0 +1,148 @@
+---
+import type { CommandMetadata } from "@rejot-dev/contract/cli-schema";
+
+interface Props {
+  bin?: string;
+  command: CommandMetadata;
+}
+
+const { bin = "rejot-cli", command } = Astro.props as Props;
+---
+
+<div class="not-prose space-y-4">
+  <div class="rounded-lg p-4">
+    <!-- Command Header -->
+    <div class="mb-3">
+      <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">{command.id}</h3>
+      {
+        command.description && (
+          <p class="mt-1 text-gray-600 dark:text-gray-300">{command.description}</p>
+        )
+      }
+    </div>
+
+    <!-- Examples Section -->
+    {
+      command.examples && command.examples.length > 0 && (
+        <div>
+          <h4 class="mb-2 font-semibold text-gray-800 dark:text-gray-200">Examples</h4>
+          <div class="space-y-2">
+            {command.examples.map((example) => {
+              let exampleText = "";
+
+              if (typeof example === "string") {
+                exampleText = example;
+              } else {
+                exampleText = example.command;
+              }
+
+              // Replace template variables with actual values
+              exampleText = exampleText
+                .replace(/<%= config\.bin %>/g, bin)
+                .replace(/<%= command\.id %>/g, command.id.replace(/:/g, " "));
+
+              return (
+                <div class="rounded p-2 ">
+                  {typeof example === "string" ? (
+                    <div class="font-mono text-sm">$ {exampleText}</div>
+                  ) : (
+                    <>
+                      <div class="font-mono text-sm">$ {exampleText}</div>
+                      {example.description && (
+                        <div class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                          {example.description}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )
+    }
+
+    <!-- Arguments Section -->
+    {
+      command.args && Object.keys(command.args).length > 0 && (
+        <div class="mb-4">
+          <h4 class="mb-2 font-semibold text-gray-800 dark:text-gray-200">Arguments</h4>
+          <div class="space-y-2">
+            {Object.entries(command.args).map(([name, arg]) => (
+              <div class="rounded bg-gray-100 p-2 dark:bg-gray-700">
+                <div class="flex flex-wrap items-center">
+                  <span class="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {name}
+                  </span>
+
+                  {arg.required && (
+                    <span class="ml-2 rounded text-xs font-medium text-red-600">required</span>
+                  )}
+                </div>
+
+                {arg.description && (
+                  <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{arg.description}</p>
+                )}
+
+                {arg.options && (
+                  <div class="ml-4 mt-1 font-mono text-sm text-gray-500 dark:text-gray-400">
+                    Options: {arg.options.map((opt) => `"${opt}"`).join(" | ")}
+                  </div>
+                )}
+
+                {arg.default !== undefined && (
+                  <div class="ml-4 mt-1 font-mono text-sm text-gray-500 dark:text-gray-400">
+                    Default: {JSON.stringify(arg.default)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    <!-- Flags Section -->
+    {
+      command.flags && Object.keys(command.flags).length > 0 && (
+        <div class="mb-4">
+          <h4 class="mb-2 font-semibold text-gray-800 dark:text-gray-200">Flags</h4>
+          <div class="space-y-2">
+            {Object.entries(command.flags).map(([name, flag]) => (
+              <div class="rounded bg-gray-100 p-2 dark:bg-gray-700">
+                <div class="flex flex-wrap items-center">
+                  <span class="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
+                    --{name}
+                  </span>
+
+                  <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">{flag.type}</span>
+
+                  {flag.required && (
+                    <span class="ml-2 rounded text-xs font-medium text-red-600">required</span>
+                  )}
+                </div>
+
+                {flag.description && (
+                  <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{flag.description}</p>
+                )}
+
+                {flag.options && (
+                  <div class="ml-4 mt-1 font-mono text-sm text-gray-500 dark:text-gray-400">
+                    Options: {flag.options.map((opt) => `"${opt}"`).join(" | ")}
+                  </div>
+                )}
+
+                {flag.default !== undefined && (
+                  <div class="ml-4 mt-1 font-mono text-sm text-gray-500 dark:text-gray-400">
+                    Default: {JSON.stringify(flag.default)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+  </div>
+</div>

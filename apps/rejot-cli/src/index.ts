@@ -16,6 +16,7 @@ import { ManifestEventStoreAddCommand } from "./commands/manifest-eventstore/man
 import { ManifestEventStoreListCommand } from "./commands/manifest-eventstore/manifest-eventstore-list.command.ts";
 import { ManifestEventStoreRemoveCommand } from "./commands/manifest-eventstore/manifest-eventstore-remove.command.ts";
 import { WorkspaceInfoCommand } from "./commands/workspace/workspace-info.command.ts";
+import { WorkspaceInitCommand } from "./commands/workspace/workspace-init.command.ts";
 
 export const commands = {
   collect: CollectCommand,
@@ -33,6 +34,7 @@ export const commands = {
   "manifest:eventstore:list": ManifestEventStoreListCommand,
   "manifest:sync": ManifestSyncCommand,
   "workspace:info": WorkspaceInfoCommand,
+  "workspace:init": WorkspaceInitCommand,
 };
 
 setLogger(new ConsoleLogger("DEBUG"));

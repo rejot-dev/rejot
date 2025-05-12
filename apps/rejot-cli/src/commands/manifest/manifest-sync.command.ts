@@ -36,8 +36,8 @@ export class ManifestSyncCommand extends Command {
     and stores the events in the configured event store.`;
 
   static override examples = [
-    "<%= config.bin %> manifest:sync ./rejot-manifest.json",
-    "<%= config.bin %> manifest:sync ./manifest1.json ./manifest2.json",
+    "<%= config.bin %> manifest sync ./rejot-manifest.json",
+    "<%= config.bin %> manifest sync ./manifest1.json ./manifest2.json",
   ];
 
   static override flags = {

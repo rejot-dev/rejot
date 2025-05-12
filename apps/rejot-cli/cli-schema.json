@@ -1,0 +1,543 @@
+{
+  "commands": {
+    "collect": {
+      "id": "collect",
+      "description": "Collect public and consumer schemas from TypeScript files.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --print",
+        "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --write --check"
+      ],
+      "args": {
+        "schemas": {
+          "name": "schemas",
+          "description": "The schema (TypeScript) files to collect, separated by spaces.",
+          "required": true
+        }
+      },
+      "flags": {
+        "log-level": {
+          "name": "log-level",
+          "description": "Set the log level.",
+          "default": "user",
+          "type": "option",
+          "options": [
+            "user",
+            "error",
+            "warn",
+            "info",
+            "debug",
+            "trace"
+          ]
+        },
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to the manifest file to write to.",
+          "required": false,
+          "type": "string"
+        },
+        "write": {
+          "name": "write",
+          "description": "Write the manifest to the file.",
+          "required": false,
+          "type": "boolean"
+        },
+        "check": {
+          "name": "check",
+          "description": "Type check the consumer schemas against the public schemas.",
+          "required": false,
+          "type": "boolean"
+        },
+        "print": {
+          "name": "print",
+          "description": "Print the names of the public and consumer schemas.",
+          "required": false,
+          "type": "boolean"
+        }
+      },
+      "strict": false
+    },
+    "manifest:info": {
+      "id": "manifest:info",
+      "description": "Display and manage Rejot manifest file for configuring data synchronization.\n  \n  The manifest file defines:\n  - Connections: Database connection details\n  - Data Stores: Source databases for replication\n  - Event Stores: Target databases for replication\n  \n  Use subcommands to manage each component:\n  - manifest init: Create a new manifest file\n  - manifest connection: Manage database connections\n  - manifest datastore: Manage data stores (replication sources)\n  - manifest eventstore: Manage event stores (replication targets)",
+      "examples": [
+        "<%= config.bin %> manifest",
+        "<%= config.bin %> manifest --manifest ./custom-manifest.json",
+        "<%= config.bin %> manifest init",
+        "<%= config.bin %> manifest connection add --slug my-source --connection-string \"postgresql://user:pass@host:5432/db\"",
+        "<%= config.bin %> manifest datastore add --connection my-source --publication my-pub",
+        "<%= config.bin %> manifest eventstore add --connection my-target"
+      ],
+      "flags": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file",
+          "default": "./rejot-manifest.json",
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "manifest:init": {
+      "id": "manifest:init",
+      "description": "Initialize a new manifest file",
+      "examples": [
+        "<%= config.bin %> manifest init",
+        "<%= config.bin %> manifest init --manifest ./custom-manifest.json"
+      ],
+      "flags": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file",
+          "default": "./rejot-manifest.json",
+          "type": "string"
+        },
+        "slug": {
+          "name": "slug",
+          "description": "The slug for the manifest",
+          "required": true,
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "manifest:connection:add": {
+      "id": "manifest:connection:add",
+      "description": "Add a connection to the manifest file",
+      "examples": [
+        "<%= config.bin %> manifest connection add --slug my-db --connection-string \"postgresql://user:pass@host:5432/db\"",
+        "<%= config.bin %> manifest connection add --slug my-db --type postgres --host localhost --port 5432 --user postgres --password secret --database mydb"
+      ],
+      "flags": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file",
+          "default": "./rejot-manifest.json",
+          "type": "string"
+        },
+        "connection-string": {
+          "name": "connection-string",
+          "description": "Connection string (format: postgresql://user[:pass]@host[:port]/db)",
+          "required": false,
+          "type": "string"
+        },
+        "type": {
+          "name": "type",
+          "description": "Connection type (required if not using connection-string)",
+          "required": false,
+          "type": "option",
+          "options": [
+            "postgres"
+          ]
+        },
+        "host": {
+          "name": "host",
+          "description": "Host address (required if not using connection-string)",
+          "required": false,
+          "type": "string"
+        },
+        "port": {
+          "name": "port",
+          "description": "Port number (required if not using connection-string)",
+          "required": false,
+          "type": "string"
+        },
+        "user": {
+          "name": "user",
+          "description": "Username (required if not using connection-string)",
+          "required": false,
+          "type": "string"
+        },
+        "password": {
+          "name": "password",
+          "description": "Password (required if not using connection-string)",
+          "required": false,
+          "type": "string"
+        },
+        "database": {
+          "name": "database",
+          "description": "Database name (required if not using connection-string)",
+          "required": false,
+          "type": "string"
+        },
+        "slug": {
+          "name": "slug",
+          "description": "Connection slug",
+          "required": true,
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "manifest:connection:remove": {
+      "id": "manifest:connection:remove",
+      "description": "Remove a connection from the manifest file",
+      "examples": [
+        "<%= config.bin %> manifest connection remove my-db"
+      ],
+      "args": {
+        "slug": {
+          "name": "slug",
+          "description": "Connection slug to remove",
+          "required": true
+        }
+      },
+      "flags": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file",
+          "default": "./rejot-manifest.json",
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "manifest:connection:list": {
+      "id": "manifest:connection:list",
+      "description": "List all connections in the manifest file",
+      "examples": [
+        "<%= config.bin %> manifest connection list"
+      ],
+      "flags": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file",
+          "default": "./rejot-manifest.json",
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "manifest:connection:update": {
+      "id": "manifest:connection:update",
+      "description": "Update an existing connection in the manifest file",
+      "examples": [
+        "<%= config.bin %> manifest connection update my-db --connection-string \"postgresql://user:pass@host:5432/db\"",
+        "<%= config.bin %> manifest connection update my-db --type postgres --host localhost --port 5432 --user postgres --password secret --database mydb"
+      ],
+      "args": {
+        "slug": {
+          "name": "slug",
+          "description": "Connection slug to update",
+          "required": true
+        }
+      },
+      "flags": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file",
+          "default": "./rejot-manifest.json",
+          "type": "string"
+        },
+        "connection-string": {
+          "name": "connection-string",
+          "description": "Connection string (format: postgresql://user[:pass]@host[:port]/db)",
+          "required": false,
+          "type": "string"
+        },
+        "type": {
+          "name": "type",
+          "description": "Connection type (required if not using connection-string)",
+          "required": false,
+          "type": "option",
+          "options": [
+            "postgres"
+          ]
+        },
+        "host": {
+          "name": "host",
+          "description": "Host address (required if not using connection-string)",
+          "required": false,
+          "type": "string"
+        },
+        "port": {
+          "name": "port",
+          "description": "Port number (required if not using connection-string)",
+          "required": false,
+          "type": "string"
+        },
+        "user": {
+          "name": "user",
+          "description": "Username (required if not using connection-string)",
+          "required": false,
+          "type": "string"
+        },
+        "password": {
+          "name": "password",
+          "description": "Password (required if not using connection-string)",
+          "required": false,
+          "type": "string"
+        },
+        "database": {
+          "name": "database",
+          "description": "Database name (required if not using connection-string)",
+          "required": false,
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "manifest:datastore:add": {
+      "id": "manifest:datastore:add",
+      "description": "Add a data store to the manifest file",
+      "examples": [
+        "<%= config.bin %> manifest datastore add --connection my-db --publication my-pub"
+      ],
+      "flags": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file",
+          "default": "./rejot-manifest.json",
+          "type": "string"
+        },
+        "connection": {
+          "name": "connection",
+          "description": "Connection slug (required for add)",
+          "required": false,
+          "type": "string"
+        },
+        "publication": {
+          "name": "publication",
+          "description": "Publication name",
+          "required": false,
+          "type": "string"
+        },
+        "slot": {
+          "name": "slot",
+          "description": "Slot name",
+          "required": false,
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "manifest:datastore:remove": {
+      "id": "manifest:datastore:remove",
+      "description": "Remove a data store from the manifest file",
+      "examples": [
+        "<%= config.bin %> manifest datastore remove my-db"
+      ],
+      "args": {
+        "connectionSlug": {
+          "name": "connectionSlug",
+          "description": "Connection slug to remove",
+          "required": true
+        }
+      },
+      "flags": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file",
+          "default": "./rejot-manifest.json",
+          "type": "string"
+        },
+        "connection": {
+          "name": "connection",
+          "description": "Connection slug (required for add)",
+          "required": false,
+          "type": "string"
+        },
+        "publication": {
+          "name": "publication",
+          "description": "Publication name",
+          "required": false,
+          "type": "string"
+        },
+        "slot": {
+          "name": "slot",
+          "description": "Slot name",
+          "required": false,
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "manifest:datastore:list": {
+      "id": "manifest:datastore:list",
+      "description": "List all data stores in the manifest file",
+      "examples": [
+        "<%= config.bin %> manifest datastore list"
+      ],
+      "flags": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file",
+          "default": "./rejot-manifest.json",
+          "type": "string"
+        },
+        "connection": {
+          "name": "connection",
+          "description": "Connection slug (required for add)",
+          "required": false,
+          "type": "string"
+        },
+        "publication": {
+          "name": "publication",
+          "description": "Publication name",
+          "required": false,
+          "type": "string"
+        },
+        "slot": {
+          "name": "slot",
+          "description": "Slot name",
+          "required": false,
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "manifest:eventstore:add": {
+      "id": "manifest:eventstore:add",
+      "description": "Add an event store to the manifest file",
+      "examples": [
+        "<%= config.bin %> manifest eventstore add --connection my-db"
+      ],
+      "flags": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file",
+          "default": "./rejot-manifest.json",
+          "type": "string"
+        },
+        "connection": {
+          "name": "connection",
+          "description": "Connection slug",
+          "required": true,
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "manifest:eventstore:remove": {
+      "id": "manifest:eventstore:remove",
+      "description": "Remove an event store from the manifest file",
+      "examples": [
+        "<%= config.bin %> manifest:eventstore:remove my-db"
+      ],
+      "args": {
+        "slug": {
+          "name": "slug",
+          "description": "Event store connection slug",
+          "required": true
+        }
+      },
+      "flags": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file",
+          "default": "./rejot-manifest.json",
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "manifest:eventstore:list": {
+      "id": "manifest:eventstore:list",
+      "description": "List event stores in the manifest file",
+      "examples": [
+        "<%= config.bin %> manifest:eventstore:list"
+      ],
+      "flags": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file",
+          "default": "./rejot-manifest.json",
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "manifest:sync": {
+      "id": "manifest:sync",
+      "description": "Start syncing based on one or more manifest files.\n\n    Opens replication slots in the source data stores, transforms writes using public schemas,\n    and stores the events in the configured event store.",
+      "examples": [
+        "<%= config.bin %> manifest sync ./rejot-manifest.json",
+        "<%= config.bin %> manifest sync ./manifest1.json ./manifest2.json"
+      ],
+      "args": {
+        "manifest": {
+          "name": "manifest",
+          "description": "Path to manifest file(s)",
+          "required": true
+        }
+      },
+      "flags": {
+        "log-level": {
+          "name": "log-level",
+          "description": "Set the log level (user, error, warn, info, debug, trace)",
+          "default": "warn",
+          "type": "option",
+          "options": [
+            "user",
+            "error",
+            "warn",
+            "info",
+            "debug",
+            "trace"
+          ]
+        },
+        "api-port": {
+          "name": "api-port",
+          "description": "Set the port for the sync HTTP service",
+          "default": 3000,
+          "type": "string"
+        },
+        "hostname": {
+          "name": "hostname",
+          "description": "Set the hostname for the sync HTTP service",
+          "default": "localhost",
+          "type": "string"
+        },
+        "resolver": {
+          "name": "resolver",
+          "description": "Set the resolver for the sync HTTP service",
+          "default": "localhost",
+          "type": "option",
+          "options": [
+            "localhost",
+            "env"
+          ]
+        }
+      },
+      "strict": false
+    },
+    "workspace:info": {
+      "id": "workspace:info",
+      "description": "Display information about the current workspace configuration and diagnostics",
+      "examples": [
+        "<%= config.bin %> workspace info",
+        "<%= config.bin %> workspace info --filename custom-manifest.json"
+      ],
+      "flags": {
+        "filename": {
+          "name": "filename",
+          "description": "Filename of the manifest file",
+          "type": "string"
+        }
+      },
+      "strict": true
+    },
+    "workspace:init": {
+      "id": "workspace:init",
+      "description": "Initialize a new ReJot workspace",
+      "examples": [
+        "<%= config.bin %> workspace:init --slug @myorg/",
+        "<%= config.bin %> workspace:init --slug @myorg/ --filename custom-manifest.json"
+      ],
+      "flags": {
+        "filename": {
+          "name": "filename",
+          "description": "Filename of the workspace manifest file",
+          "default": "rejot-manifest.json",
+          "type": "string"
+        },
+        "slug": {
+          "name": "slug",
+          "description": "The slug for the workspace (typically follows @organization/ format)",
+          "required": true,
+          "type": "string"
+        }
+      },
+      "strict": true
+    }
+  }
+}

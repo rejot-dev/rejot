@@ -31,15 +31,14 @@ export default class Collect extends Command {
 
   static override description = "Collect public and consumer schemas from TypeScript files.";
   static override examples = [
-    "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts",
-    "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --write",
-    "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --check",
+    "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --print",
+    "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --write --check",
   ];
   static override flags = {
     "log-level": Flags.string({
-      description: "Set the log level (user, error, warn, info, debug, trace)",
-      options: ["user", "error", "warn", "info", "debug", "trace"],
-      default: "user",
+      description: "Set the log level.",
+      options: ["user", "error", "warn", "info", "debug", "trace"] as const,
+      default: "user" as const,
     }),
     manifest: Flags.string({
       description: "Path to the manifest file to write to.",

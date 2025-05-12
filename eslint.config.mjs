@@ -149,6 +149,7 @@ export default tseslint.config(
           ],
         },
       ],
+      "tailwindcss/classnames-order": "warn", // TODO: Change to error
     },
     settings: {
       astro: {

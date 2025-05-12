@@ -5,7 +5,7 @@
     "rootDir": ".",
     "baseUrl": "."
   },
-  "include": ["**/*.ts", "**/*.tsx", "bin/**/*.js"],
+  "include": ["**/*.ts", "**/*.tsx", "bin/*.js"],
   "exclude": ["dist"],
   "references": [
     {

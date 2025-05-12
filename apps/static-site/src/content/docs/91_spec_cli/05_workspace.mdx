@@ -1,0 +1,20 @@
+---
+title: "Workspace"
+---
+
+import CliSchema from "@/components/schema/CliSchema.astro";
+import { commands } from "@/content/cli/cli-schema_v0.json";
+
+## Get workspace information
+
+The `workspace:info` command is used to display information about the current workspace
+configuration.
+
+<CliSchema command={commands["workspace:info"]} />
+
+## Initialize a new workspace
+
+The `workspace:init` command is used to initialize a new ReJot workspace by creating a root manifest
+file.
+
+<CliSchema command={commands["workspace:init"]} />
