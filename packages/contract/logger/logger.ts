@@ -1,4 +1,5 @@
 import process from "node:process";
+import { inspect } from "node:util";
 
 import fs from "fs";
 import { fileURLToPath } from "url";
@@ -24,7 +25,10 @@ function serializeArg(arg: unknown): unknown {
   if (arg instanceof Map) {
     return Object.fromEntries(arg.entries());
   }
-  return arg;
+  if (arg instanceof Error) {
+    return arg;
+  }
+  return inspect(arg);
 }
 
 export function shouldLog(type: LogLevel, currentLogLevel: LogLevel): boolean {
