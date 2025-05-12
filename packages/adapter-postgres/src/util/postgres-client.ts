@@ -185,7 +185,6 @@ export class PostgresClient implements IPostgresClient {
 
         // We purposely don't copy dbError.stack, column, and line because that somehow
         // screws with the stack trace.
-
         throw dbError;
       }
 
@@ -195,7 +194,6 @@ export class PostgresClient implements IPostgresClient {
         // to the object, we can at least see the stack trace.
         (e as Error & { newStack: string }).newStack = obj.stack;
       }
-
       throw e;
     }
   }

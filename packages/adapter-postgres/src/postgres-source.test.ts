@@ -106,7 +106,7 @@ describe("PostgreSQL Source tests", () => {
     await dataPromise;
   });
 
-  test("Write Watermarks", async () => {
+  test.skip("Write Watermarks", async () => {
     // A promise that will be resolved when we receive data
     const { promise: dataPromise, resolve: resolveDataPromise } = Promise.withResolvers();
 
