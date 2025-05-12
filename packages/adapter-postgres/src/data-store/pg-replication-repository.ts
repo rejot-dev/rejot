@@ -1,7 +1,6 @@
 import { getLogger } from "@rejot-dev/contract/logger";
 
 import type { IPostgresClient } from "../util/postgres-client.ts";
-import { isPostgresError, PG_DUPLICATE_OBJECT } from "../util/postgres-error-codes.ts";
 
 const log = getLogger(import.meta.url);
 
@@ -141,18 +140,19 @@ export async function ensurePublication(
     log.debug(`Publication '${publicationName}' created successfully`);
   } else {
     // Ensure watermarks table is in publication
-    try {
-      await client.query(`
-        ALTER PUBLICATION ${publicationName} ADD TABLE rejot.watermarks
-      `);
-      log.debug(`Added rejot.watermarks table to publication '${publicationName}'`);
-    } catch (error) {
-      if (isPostgresError(error, PG_DUPLICATE_OBJECT)) {
-        log.debug(`ReJot watermark table already in '${publicationName}' publication`);
-      } else {
-        throw error;
-      }
-    }
+    // TODO(jan): required for backfill support, don't impose additional schema on users for now.
+    // try {
+    //   await client.query(`
+    //     ALTER PUBLICATION ${publicationName} ADD TABLE rejot.watermarks
+    //   `);
+    //   log.debug(`Added rejot.watermarks table to publication '${publicationName}'`);
+    // } catch (error) {
+    //   if (isPostgresError(error, PG_DUPLICATE_OBJECT)) {
+    //     log.debug(`ReJot watermark table already in '${publicationName}' publication`);
+    //   } else {
+    //     throw error;
+    //   }
+    // }
     log.debug(`Publication '${publicationName}' already exists`);
   }
 }

@@ -33,8 +33,22 @@ export class PgMigrationManager {
     await this.#runPendingMigrations();
   }
 
+  async #getExistingSchemas(): Promise<Set<string>> {
+    const result = await this.#client.query<{ schema_name: string }>(
+      `SELECT schema_name FROM information_schema.schemata;`,
+    );
+    return new Set(result.rows.map((row) => row.schema_name));
+  }
+
   async #ensureMigrationsTable(): Promise<void> {
-    await this.#client.query(`CREATE SCHEMA IF NOT EXISTS ${this.#schemaName}`);
+    // Not using "CREATE IF NOT EXISTS" because it requires elevated privileges.
+    const existingSchemas = await this.#getExistingSchemas();
+    if (!existingSchemas.has(this.#schemaName)) {
+      log.debug(`Creating schema ${this.#schemaName}`);
+      await this.#client.query(`CREATE SCHEMA ${this.#schemaName}`);
+    } else {
+      log.debug(`Schema ${this.#schemaName} already exists`);
+    }
 
     await this.#client.query(`
       CREATE TABLE IF NOT EXISTS ${this.#schemaName}.${this.#migrationsTableName} (
