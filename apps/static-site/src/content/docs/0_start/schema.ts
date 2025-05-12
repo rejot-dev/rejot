@@ -18,7 +18,7 @@ const apiKeyPublicSchema = createPublicSchema("my-public-schema", {
       ...createPostgresPublicSchemaTransformations(
         "insertOrUpdate",
         "api_key",
-        `SELECT id, key AS "api_key" FROM api_key WHERE id = $1`,
+        `SELECT id, key AS "api_key" FROM api_key WHERE id = :id`,
       ),
     ],
   },

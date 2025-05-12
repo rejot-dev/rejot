@@ -7,7 +7,11 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { Variables } from "@modelcontextprotocol/sdk/shared/uriTemplate.js";
-import type { ReadResourceResult } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  ReadResourceResult,
+  ServerNotification,
+  ServerRequest,
+} from "@modelcontextprotocol/sdk/types.js";
 
 import type {
   IMcpServer,
@@ -131,7 +135,7 @@ export class RejotMcp implements IRejotMcp {
       async (
         uri: URL,
         variables: Variables,
-        extra: RequestHandlerExtra,
+        extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
       ): Promise<ReadResourceResult> => {
         try {
           return handler(uri, variables, extra);

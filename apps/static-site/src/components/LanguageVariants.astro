@@ -37,10 +37,10 @@ const uniqueId = `lang-variants-${Math.random().toString(36).slice(2, 10)}`;
 ---
 
 <div
-  class={`not-prose rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-[#24292e] ${className}`}
+  class={`not-prose rounded-lg border border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-[#24292e] ${className}`}
   data-unique-id={uniqueId}
 >
-  <div class="mb-4 flex gap-2 border-b border-gray-200 dark:border-gray-700">
+  <div class="mb-1 flex gap-2 border-b border-gray-200 dark:border-gray-700">
     {
       languages.map((lang) => (
         <button
