@@ -1,31 +1,50 @@
 ---
-title: "Setup Source Postgres"
+title: "Set Up Postgres Data Store"
 ---
 
 import Notice from "@/components/Notice.astro";
 
-This guide explains how to prepare your PostgreSQL database as a Source for use with ReJot. ReJot
+This guide explains how to prepare your PostgreSQL database as a Data Source or Event Store for use
+with ReJot.
+
+## Creating a ReJot Database Role
+
+We recommend creating a separate role for ReJot and granting access to that user for production use
+cases. If you want to get started quickly, you can use an admin user instead. ReJot will create the
+necessary schemas, databases, and tables automatically.
+{/* Some reason the sql formatter can't handle these sql queries */}
+
+```sql
+CREATE ROLE rejot_role
+WITH
+  REPLICATION LOGIN PASSWORD '<some secure password>';
+```
+
+## As a Source Data Store
+
+Using a Postgres data store as a Source Data Store means that ReJot will listen to the logical
+replication stream of that store and apply Public Schema transformations to its messages. ReJot
 leverages PostgreSQL's logical replication stream using the `pgoutput` native plugin to capture
 database changes.
 
-## Enabling Logical Replication
+### Enabling Logical Replication
 
 Logical replication is not enabled by default in PostgreSQL. The configuration that manages logical
-replication is called the [`wal_level`][pg-wal-level], which must be set to `logical`. Note that
+replication is called [`wal_level`][pg-wal-level], which must be set to `logical`. Note that
 changing this config requires a database restart.
 
-There are two methods to enable this config, either through the `postgresql.conf` config file:
+There are two methods to enable this config: either through the `postgresql.conf` file,
 
 ```
 wal_level = 'logical'
 ```
 
-Or you can set it through SQL directly:
+or by setting it through SQL directly:
 
 ```sql
 SHOW wal_level;
 
--- inspect current setting
+-- Inspect current setting
 ALTER SYSTEM
 SET
   wal_level = 'logical';
@@ -36,18 +55,12 @@ SET
   own dashboards.
 </Notice>
 
-## Creating a ReJot Database Role
+### Permissions Needed
 
-We recommend creating a separate role for ReJot and giving access to that user. If you want to get
-started quickly locally you can continue with the default `postgres` superuser.
-
-{/* Some reason the sql formatter can't handle these sql queries */}
+To apply Public Schema transformations, the user must have the following permissions for the schema
+your data is in. For admin users, this does not need to be applied.
 
 ```sql
-CREATE ROLE rejot_role
-WITH
-  REPLICATION LOGIN PASSWORD '<some secure password>';
-
 GRANT
 SELECT
 ,
@@ -56,26 +69,65 @@ UPDATE,
 DELETE ON ALL TABLES IN SCHEMA public TO rejot_role;
 ```
 
-{/* TODO: Say something about creating a replication slot */}
-{/* TODO: Say something about ReJot automatically creating these */}
+### Creating a PostgreSQL Publication
 
-## Creating a PostgreSQL Publication
+A PostgreSQL [Publication][pg-create-publication] is defined on a primary Postgres node and
+specifies which set of tables in a database can be replicated to other systems.
 
-A PostgreSQL [Publication][pg-create-publication] is defined on a primary postgres node and defines
-which set of tables in a database can be replicated to other systems.
+On first starting a Sync service, a default publication called `rejot_publication` is automatically
+created if it doesn't exist yet. This publication includes all tables and is equivalent to:
 
-[Creating a publication][pg-create-publication] can be done as follows:
+```sql
+CREATE PUBLICATION rejot_publication FOR ALL TABLES;
+```
+
+If you prefer to control which tables are included in the publication, you can create the
+publication [manually through SQL][pg-create-publication]:
 
 ```sql
 CREATE PUBLICATION rejot_publication FOR TABLE some_table,
 another_table;
 ```
 
-Often it is convenient to create a publication for all tables, a sync service will create this
-default publication for you on first launch.
+### Replication Slots
+
+A PostgreSQL replication slot is a mechanism that keeps track of changes replicated from a
+publication for each subscriber, ensuring no changes are missed even if a subscriber disconnects
+temporarily. It maintains a record of which changes have been consumed by subscribers and prevents
+the deletion of Write-Ahead Log (WAL) segments until all subscribers have processed them.
+
+Replication slots for ReJot are also automatically created by the Sync service on launch (if not
+already present) and have a default name of `rejot_slot`.
+
+## As an Event Store
+
+To use PostgreSQL as an event store, the user used to connect to the database must be able to create
+new schemas called `rejot_events` and `rejot_data_store`. The `rejot-cli` will create these schemas
+for you on launch. If you don't want to give the `rejot_role` access to create schemas, you'll have
+to manually create these schemas and assign the following roles to the `rejot_role`.
 
 ```sql
-CREATE PUBLICATION rejot_publication FOR ALL TABLES;
+-- Create the schemas using a privileged user
+CREATE SCHEMA IF NOT EXISTS rejot_events;
+
+CREATE SCHEMA IF NOT EXISTS rejot_data_store;
+
+-- Grant access to these new schemas to your unprivileged user
+GRANT USAGE ON SCHEMA rejot_events TO rejot_role;
+
+GRANT USAGE ON SCHEMA rejot_data_store TO rejot_role;
+
+GRANT
+SELECT
+,
+  INSERT,
+UPDATE ON ALL TABLES IN SCHEMA rejot_data_store TO rejot_role;
+
+GRANT
+SELECT
+,
+  INSERT,
+UPDATE ON ALL TABLES IN SCHEMA rejot_events TO rejot_role;
 ```
 
 [pg-wal-level]: https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-WAL-LEVEL
