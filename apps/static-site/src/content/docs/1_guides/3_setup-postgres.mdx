@@ -12,7 +12,6 @@ with ReJot.
 We recommend creating a separate role for ReJot and granting access to that user for production use
 cases. If you want to get started quickly, you can use an admin user instead. ReJot will create the
 necessary schemas, databases, and tables automatically.
-{/* Some reason the sql formatter can't handle these sql queries */}
 
 ```sql
 CREATE ROLE rejot_role
@@ -60,13 +59,9 @@ SET
 To apply Public Schema transformations, the user must have the following permissions for the schema
 your data is in. For admin users, this does not need to be applied.
 
+{/* prettier-ignore */}
 ```sql
-GRANT
-SELECT
-,
-  INSERT,
-UPDATE,
-DELETE ON ALL TABLES IN SCHEMA public TO rejot_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO rejot_role;
 ```
 
 ### Creating a PostgreSQL Publication
@@ -106,6 +101,7 @@ new schemas called `rejot_events` and `rejot_data_store`. The `rejot-cli` will c
 for you on launch. If you don't want to give the `rejot_role` access to create schemas, you'll have
 to manually create these schemas and assign the following roles to the `rejot_role`.
 
+{/* prettier-ignore */}
 ```sql
 -- Create the schemas using a privileged user
 CREATE SCHEMA IF NOT EXISTS rejot_events;
@@ -117,17 +113,11 @@ GRANT USAGE ON SCHEMA rejot_events TO rejot_role;
 
 GRANT USAGE ON SCHEMA rejot_data_store TO rejot_role;
 
-GRANT
-SELECT
-,
-  INSERT,
-UPDATE ON ALL TABLES IN SCHEMA rejot_data_store TO rejot_role;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA rejot_data_store TO rejot_role;
 
-GRANT
-SELECT
-,
-  INSERT,
-UPDATE ON ALL TABLES IN SCHEMA rejot_events TO rejot_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA rejot_data_store TO rejot_role;
+
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA rejot_events TO rejot_role;
 ```
 
 [pg-wal-level]: https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-WAL-LEVEL
