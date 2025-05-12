@@ -174,7 +174,7 @@ export class PostgresClient implements IPostgresClient {
         dbError.hint = e.hint;
         dbError.position = e.position;
         dbError.internalPosition = e.internalPosition;
-        dbError.internalQuery = e.internalQuery;
+        dbError.internalQuery = e.internalQuery || queryText;
         dbError.where = e.where;
         dbError.schema = e.schema;
         dbError.table = e.table;

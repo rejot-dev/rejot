@@ -31,7 +31,7 @@ describe("Logger", () => {
 
     expect(message).toMatch(/^\[ERROR\] \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/); // Check timestamp format
     expect(message).toContain("test message");
-    expect(message).toContain('{"detail":"some detail"}');
+    expect(message).toContain("{ detail: 'some detail' }");
     expect(message.endsWith("\n")).toBe(true);
   });
 
