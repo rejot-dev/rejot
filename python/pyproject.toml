@@ -1,0 +1,27 @@
+[project]
+name = "rejot-contracts"
+version = "0.0.7"
+description = "Rejot contracts for Python"
+authors = [
+  { name="Rejot", email="rejot@rejot.dev" },
+]
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "Apache-2.0"
+license-files = ["LICEN[CS]E*"]
+
+dependencies = [
+    "pydantic>=2.11.4",
+]
+
+[project.urls]
+Homepage = "https://github.com/rejot-dev/rejot"
+Issues = "https://github.com/rejot-dev/rejot/issues"
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
