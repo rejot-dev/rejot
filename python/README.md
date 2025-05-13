@@ -16,17 +16,17 @@ for use with the Rejot platform.
 Requires Python 3.9 or higher.
 
 ```bash
-pip install rejot-contracts
+pip install rejot-contract
 ```
 
 ## Usage
 
 ```python
 from pydantic import BaseModel
-from rejot_contracts.public_schema import (
+from rejot_contract.public_schema import (
     create_public_schema, PublicSchemaConfig, PostgresPublicSchemaConfigTransformation, Source, Version
 )
-from rejot_contracts.consumer_schema import (
+from rejot_contract.consumer_schema import (
     create_consumer_schema, ConsumerSchemaConfig, SourceManifest, PublicSchema
 )
 
@@ -91,9 +91,8 @@ consumer = create_consumer_schema(
 
 ## Project Structure
 
-- `src/public_schema.py` — Public schema definitions and helpers
-- `src/consumer_schema.py` — Consumer schema definitions and helpers
-- `testing.py` — Example usage
+- `src/rejot_contract/public_schema.py` — Public schema definitions and helpers
+- `src/rejot_contract/consumer_schema.py` — Consumer schema definitions and helpers
 
 ## License
 
