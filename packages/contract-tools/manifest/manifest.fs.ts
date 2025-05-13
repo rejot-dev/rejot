@@ -112,8 +112,14 @@ async function findContractPackageVersion(): Promise<string | null> {
 }
 
 export async function writeManifest(manifest: Manifest, path: string) {
+  const parseResult = SyncManifestSchema.safeParse(manifest);
+  if (!parseResult.success) {
+    // This is a shitty way to surface this to the user
+    throw new Error("Manifest failed to validate.");
+  }
+
   await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, JSON.stringify(manifest, null, 2));
+  await writeFile(path, JSON.stringify(parseResult.data, null, 2));
   log.info("file written", { path });
 }
 

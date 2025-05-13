@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { z } from "zod";
 
 import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
+import type { PostgresPublicSchemaConfigTransformation } from "@rejot-dev/contract/public-schema";
 import { createPublicSchema } from "@rejot-dev/contract/public-schema";
 import { initSqlparser } from "@rejot-dev/sqlparser";
 
@@ -214,6 +215,60 @@ describe("PostgresConsumerSchemaValidationAdapter", () => {
       expect(result.publicSchemaName).toBe("test-schema");
       expect(result.consumerSchemaInfo.sourceManifestSlug).toBe(consumerSchema.sourceManifestSlug);
       expect(result.consumerSchemaInfo.destinationDataStore).toBe("test-destination");
+    });
+  });
+
+  describe("validatePublicSchema", () => {
+    const adapter = new PostgresConsumerSchemaValidationAdapter();
+    const outputSchema = z.object({ id: z.string() });
+
+    function makePublicSchema(transformations: PostgresPublicSchemaConfigTransformation[]) {
+      return createPublicSchema("public-schema", {
+        source: { dataStoreSlug: "test-datastore" },
+        outputSchema,
+        config: new PostgresPublicSchemaConfigBuilder().addTransformation(transformations).build(),
+        version: { major: 1, minor: 0 },
+      });
+    }
+
+    test("should report error for mixing positional and named placeholders", async () => {
+      const transformations: PostgresPublicSchemaConfigTransformation = {
+        operation: "insert",
+        table: "users",
+        sql: "INSERT INTO users (id, name) VALUES ($1, :name)",
+      };
+      const publicSchema = makePublicSchema([transformations]);
+      const result = await adapter.validatePublicSchema(publicSchema);
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some((e) => e.info.type === "MIXING_POSITIONAL_AND_NAMED_PLACEHOLDERS"),
+      ).toBe(true);
+    });
+
+    test("should report error for non-sequential positional placeholders", async () => {
+      const transformations: PostgresPublicSchemaConfigTransformation = {
+        operation: "insert",
+        table: "users",
+        sql: "INSERT INTO users (id, name) VALUES ($1, $3)",
+      };
+      const publicSchema = makePublicSchema([transformations]);
+      const result = await adapter.validatePublicSchema(publicSchema);
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some((e) => e.info.type === "POSITIONAL_PLACEHOLDER_NOT_SEQUENTIAL"),
+      ).toBe(true);
+    });
+
+    test("should validate a correct transformation", async () => {
+      const transformations: PostgresPublicSchemaConfigTransformation = {
+        operation: "insert",
+        table: "users",
+        sql: "INSERT INTO users (id) VALUES ($1)",
+      };
+      const publicSchema = makePublicSchema([transformations]);
+      const result = await adapter.validatePublicSchema(publicSchema);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
   });
 });

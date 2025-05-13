@@ -29,7 +29,7 @@ describe("ManifestDataStore commands", () => {
   describe("add datastore", () => {
     test("add datastore with valid connection", async () => {
       await runCommand(
-        `manifest:datastore:add --manifest ${manifestPath} --connection test-connection --publication test-pub --slot test-slot`,
+        `manifest:datastore:add --manifest ${manifestPath} --connection test-connection --publication test_pub --slot test_slot`,
       );
 
       // Read and verify manifest contents
@@ -39,15 +39,15 @@ describe("ManifestDataStore commands", () => {
         connectionSlug: "test-connection",
         config: {
           connectionType: "postgres",
-          publicationName: "test-pub",
-          slotName: "test-slot",
+          publicationName: "test_pub",
+          slotName: "test_slot",
         },
       });
     });
 
     test("error on non-existent connection", async () => {
       const result = await runCommand(
-        `manifest:datastore:add --manifest ${manifestPath} --connection non-existent --publication test-pub --slot test-slot`,
+        `manifest:datastore:add --manifest ${manifestPath} --connection non-existent --publication test_pub --slot test_slot`,
       );
 
       expect(result.error?.message).toContain("Connection 'non-existent' not found in manifest");
@@ -57,6 +57,40 @@ describe("ManifestDataStore commands", () => {
       const result = await runCommand(`manifest:datastore:add --manifest ${manifestPath}`);
 
       expect(result.error?.message).toContain("--connection is required for add");
+    });
+
+    test("error on invalid publication name", async () => {
+      const result = await runCommand(
+        `manifest:datastore:add --manifest ${manifestPath} --connection test-connection --publication InvalidPub --slot test_slot`,
+      );
+      expect(result.error?.message).toContain(
+        "--publication must be a valid PostgreSQL identifier. Only lowercase letters, numbers, and underscores are allowed.",
+      );
+    });
+
+    test("error on invalid slot name", async () => {
+      const result = await runCommand(
+        `manifest:datastore:add --manifest ${manifestPath} --connection test-connection --publication test_pub --slot InvalidSlot`,
+      );
+      expect(result.error?.message).toContain(
+        "--slot must be a valid PostgreSQL identifier. Only lowercase letters, numbers, and underscores are allowed.",
+      );
+    });
+
+    test("add datastore with underscores and numbers in publication and slot", async () => {
+      await runCommand(
+        `manifest:datastore:add --manifest ${manifestPath} --connection test-connection --publication pub_123 --slot slot_456`,
+      );
+      const manifestContent = JSON.parse(await readFile(manifestPath, "utf-8"));
+      expect(manifestContent.dataStores).toHaveLength(1);
+      expect(manifestContent.dataStores[0]).toEqual({
+        connectionSlug: "test-connection",
+        config: {
+          connectionType: "postgres",
+          publicationName: "pub_123",
+          slotName: "slot_456",
+        },
+      });
     });
   });
 
