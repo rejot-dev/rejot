@@ -25,7 +25,7 @@ class Source(BaseModel):
 class PublicSchemaData(BaseModel):
     name: str
     source: Source
-    outputSchema: dict
+    outputSchema: dict[str, Any]
     version: Version
     config: PublicSchemaConfig
 
