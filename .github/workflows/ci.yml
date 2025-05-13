@@ -186,6 +186,11 @@ jobs:
         with:
           bun-version: 1.2.8
 
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
       - name: Restore dependencies
         uses: actions/cache/restore@v4
         with:
@@ -232,6 +237,18 @@ jobs:
 
       - name: Run adapter-postgres (database) tests
         working-directory: packages/adapter-postgres
+        env:
+          REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
+        run: bun test
+
+      - name: Run integration test one
+        working-directory: integration-tests/one
+        env:
+          REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
+        run: bun test
+
+      - name: Run python-bun integration test
+        working-directory: integration-tests/python-bun
         env:
           REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
         run: bun test

@@ -1,0 +1,30 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["dist"],
+  "references": [
+    {
+      "path": "../../packages/contract"
+    },
+    {
+      "path": "../../packages/contract-tools"
+    },
+    {
+      "path": "../../packages/sync"
+    },
+    {
+      "path": "../../packages/adapter-postgres"
+    },
+    {
+      "path": "../../apps/rejot-cli"
+    }
+  ]
+}

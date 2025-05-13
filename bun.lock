@@ -220,6 +220,24 @@
         "typescript": "^5",
       },
     },
+    "integration-tests/python-bun": {
+      "name": "@rejot-dev/integration-tests-python-bun",
+      "dependencies": {
+        "@rejot-dev/adapter-postgres": "workspace:*",
+        "@rejot-dev/cli": "workspace:*",
+        "@rejot-dev/contract": "workspace:*",
+        "@rejot-dev/contract-tools": "workspace:*",
+        "@rejot-dev/sync": "workspace:*",
+        "pg": "^8.11.3",
+        "zod": "^3.24.2",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
     "packages/adapter-postgres": {
       "name": "@rejot-dev/adapter-postgres",
       "version": "0.1.0",
@@ -977,6 +995,8 @@
     "@rejot-dev/controller": ["@rejot-dev/controller@workspace:apps/controller"],
 
     "@rejot-dev/integration-tests-one": ["@rejot-dev/integration-tests-one@workspace:integration-tests/one"],
+
+    "@rejot-dev/integration-tests-python-bun": ["@rejot-dev/integration-tests-python-bun@workspace:integration-tests/python-bun"],
 
     "@rejot-dev/mcp": ["@rejot-dev/mcp@workspace:apps/mcp"],
 
