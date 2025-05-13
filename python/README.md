@@ -1,8 +1,8 @@
-# Rejot Python Contracts
+# ReJot Python Contracts
 
-This directory contains the Python variant for defining and working with Rejot public and consumer
+This directory contains the Python variant for defining and working with ReJot public and consumer
 schemas. It is intended for use in projects that need to define data contracts and transformations
-for use with the Rejot platform.
+for use with the ReJot platform.
 
 ## Features
 
