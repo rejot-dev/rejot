@@ -68,8 +68,5 @@ jobs:
           name: python-package-distributions
           path: dist/
 
-      - name: Upload rejot-python-package
-        working-directory: python
-        run: |
-          source venv/bin/activate
-          python -m twine upload dist/*
+      - name: Upload to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
