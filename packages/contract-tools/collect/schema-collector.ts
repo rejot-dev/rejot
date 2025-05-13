@@ -87,12 +87,11 @@ export class PythonSchemaCollector implements ISchemaCollector {
     });
 
     if (exitCode !== 0) {
+      log.user(`Python process failed: ${stdout}\n${stderr}`);
+
       log.logErrorInstance(
         new Error(`Python process exited with code ${exitCode}: ${stdout}\n${stderr}`),
       );
-      if (verbose) {
-        log.user(`Python process failed: ${stdout}\n${stderr}`);
-      }
       return result;
     }
 
