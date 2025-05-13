@@ -716,7 +716,7 @@ describe("verifyManifests - multiple", () => {
 
   test("undefined source manifest slug", () => {
     const manifest: Manifest = {
-      slug: "@rejot/",
+      slug: "rejot",
       manifestVersion: 0,
       consumerSchemas: [
         {
@@ -748,7 +748,7 @@ describe("verifyManifests - multiple", () => {
 
   test("undefined source manifest slug with checkPublicSchemaReferences=false", () => {
     const manifest1: Manifest = {
-      slug: "@rejot/",
+      slug: "rejot",
       manifestVersion: 0,
       consumerSchemas: [
         {

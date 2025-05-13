@@ -46,7 +46,7 @@ const onePersonSchema = createPublicSchema("one-person", {
 
 const testConsumerSchema = createConsumerSchema("consume-one-person", {
   source: {
-    manifestSlug: "@rejot-dev/integration-tests-one",
+    manifestSlug: "integration-tests-one",
     publicSchema: {
       name: "one-person",
       majorVersion: 1,

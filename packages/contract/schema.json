@@ -3,6 +3,7 @@
   "properties": {
     "slug": {
       "type": "string",
+      "pattern": "^[a-z0-9-]+$",
       "description": "Unique identifier for this sync manifest, only use hyphens and alphanumeric characters."
     },
     "manifestVersion": {

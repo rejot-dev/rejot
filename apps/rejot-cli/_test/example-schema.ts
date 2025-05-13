@@ -32,7 +32,7 @@ const testPublicSchema = createPublicSchema("public-account", {
 
 const testConsumerSchema = createConsumerSchema("consume-public-account", {
   source: {
-    manifestSlug: "@rejot/",
+    manifestSlug: "rejot",
     publicSchema: {
       name: "public-account",
       majorVersion: 1,

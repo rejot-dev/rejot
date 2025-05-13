@@ -134,7 +134,7 @@ describe.skipIf(!process.env["REJOT_SYNC_CLI_TEST_CONNECTION"])("MCP Integration
   describe("Workspace Setup", () => {
     test("should initialize workspace", async () => {
       const initResult = await assertToolCall("rejot_workspace_init", {
-        slug: "@test-org/",
+        slug: "test-org-",
       });
       expectContentErrorFree(initResult.content);
       expect(initResult.content[0].type).toBe("text");
@@ -148,7 +148,7 @@ describe.skipIf(!process.env["REJOT_SYNC_CLI_TEST_CONNECTION"])("MCP Integration
 
       const subManifestResult = await assertToolCall("rejot_manifest_init", {
         relativeManifestFilePath: join(subDir, "rejot-manifest.json"),
-        slug: "@test-org/service1",
+        slug: "test-org-service1",
       });
       expectContentErrorFree(subManifestResult.content);
       expect(subManifestResult.content[0].type).toBe("text");
@@ -158,8 +158,8 @@ describe.skipIf(!process.env["REJOT_SYNC_CLI_TEST_CONNECTION"])("MCP Integration
       const infoResult = await assertToolCall("rejot_workspace_info", {});
       expectContentErrorFree(infoResult.content);
       expect(infoResult.content[0].type).toBe("text");
-      expect(infoResult.content[0].text).toContain("@test-org/"); // Root manifest
-      expect(infoResult.content[0].text).toContain("@test-org/service1"); // Sub manifest
+      expect(infoResult.content[0].text).toContain("test-org-"); // Root manifest
+      expect(infoResult.content[0].text).toContain("test-org-service1"); // Sub manifest
     });
   });
 
@@ -170,7 +170,7 @@ describe.skipIf(!process.env["REJOT_SYNC_CLI_TEST_CONNECTION"])("MCP Integration
       }
 
       const connectionResult = await assertToolCall("rejot_manifest_connection_add_postgres", {
-        manifestSlug: "@test-org/service1",
+        manifestSlug: "test-org-service1",
         newConnectionSlug: "test-postgres",
         postgresConnection: {
           connectionType: "postgres",
@@ -237,7 +237,7 @@ describe.skipIf(!process.env["REJOT_SYNC_CLI_TEST_CONNECTION"])("MCP Integration
   describe("Cleanup", () => {
     test("should remove connection", async () => {
       const removeResult = await assertToolCall("rejot_manifest_connection_remove", {
-        manifestSlug: "@test-org/service1",
+        manifestSlug: "test-org-service1",
         connectionSlug: "test-postgres",
       });
       expectContentErrorFree(removeResult.content);
@@ -246,8 +246,8 @@ describe.skipIf(!process.env["REJOT_SYNC_CLI_TEST_CONNECTION"])("MCP Integration
       // Verify connection was removed
       const finalInfoResult = await assertToolCall("rejot_workspace_info", {});
       expectContentErrorFree(finalInfoResult.content);
-      expect(finalInfoResult.content[0].text).toContain("@test-org/"); // Root manifest still there
-      expect(finalInfoResult.content[0].text).toContain("@test-org/service1"); // Sub manifest still there
+      expect(finalInfoResult.content[0].text).toContain("test-org-"); // Root manifest still there
+      expect(finalInfoResult.content[0].text).toContain("test-org-service1"); // Sub manifest still there
       expect(finalInfoResult.content[0].text).not.toContain("test-postgres"); // Verify connection is no longer listed
     });
   });

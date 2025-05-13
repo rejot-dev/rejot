@@ -417,7 +417,7 @@ describe("verifyManifests", () => {
 
   test("undefined source manifest slug", () => {
     const manifest: Manifest = {
-      slug: "@rejot/",
+      slug: "rejot",
       manifestVersion: 0,
       consumerSchemas: [
         {
@@ -449,7 +449,7 @@ describe("verifyManifests", () => {
 
   test("undefined source manifest slug with checkPublicSchemaReferences=false", () => {
     const manifest: Manifest = {
-      slug: "@rejot/",
+      slug: "rejot",
       manifestVersion: 0,
       consumerSchemas: [
         {
