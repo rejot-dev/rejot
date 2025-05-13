@@ -44,7 +44,7 @@ jobs:
     needs: build-rejot-python-package
     environment:
       name: pypi
-      url: https://pypi.org/p/rejot-contracts
+      url: https://pypi.org/p/rejot-contract
     permissions:
       id-token: write
     if: startsWith(github.ref, 'refs/tags/v')
