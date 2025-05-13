@@ -1,5 +1,5 @@
-from typing import Optional, TypeVar, Literal
-from pydantic import BaseModel, Field, ValidationError
+from typing import Optional, TypeVar, Literal, Any
+from pydantic import BaseModel
 
 class InvalidConsumerSchemaError(Exception):
     def __init__(self, message: str):
@@ -53,7 +53,7 @@ def create_consumer_schema(
     source: SourceManifest,
     config: ConsumerSchemaConfig,
     definitionFile: Optional[str] = None
-) -> ConsumerSchemaData:
+) -> dict[str, Any]:
     validate_consumer_schema(source, config, definitionFile)
     return ConsumerSchemaData(
         name=name,

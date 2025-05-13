@@ -1,5 +1,5 @@
-from typing import List, Literal, Union, Optional, Type, TypeVar
-from pydantic import BaseModel, Field, ValidationError
+from typing import List, Literal, Type, TypeVar, Any
+from pydantic import BaseModel
 
 class InvalidPublicSchemaError(Exception):
     def __init__(self, message: str):
@@ -37,7 +37,7 @@ def create_public_schema(
     output_schema: Type[T],
     version: Version,
     config: PublicSchemaConfig
-) -> PublicSchemaData:
+) -> dict[str, Any]:
     if not config.transformations:
         raise InvalidPublicSchemaError("Public schema must have at least one transformation")
 
