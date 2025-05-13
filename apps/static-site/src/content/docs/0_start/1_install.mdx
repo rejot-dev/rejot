@@ -3,6 +3,7 @@ title: "Install"
 ---
 
 import LanguageVariants from "@/components/LanguageVariants.astro";
+import Notice from "@/components/Notice.astro";
 
 ## ReJot CLI
 
@@ -15,23 +16,26 @@ your package manager of choice, including **Bun**, to install the CLI.
     {
       title: "NPM",
       lang: "bash",
-      code: `npm install -g @rejot-dev/cli
-npx rejot-cli --help`,
+      code: `npm install -g @rejot-dev/cli`,
     },
     {
       title: "Yarn",
       lang: "bash",
-      code: `yarn global add @rejot-dev/cli
-rejot-cli --help`,
+      code: `yarn global add @rejot-dev/cli`,
     },
     {
       title: "Bun",
       lang: "bash",
-      code: `bun add @rejot-dev/cli
-rejot-cli --help`,
+      code: `bun add -g @rejot-dev/cli`,
     },
   ]}
 />
+
+After installation, the CLI should be available on your path.
+
+```bash
+rejot-cli --help
+```
 
 ### Container Image
 
@@ -55,8 +59,8 @@ bun run rejot-cli --help
 
 ## Model Context Protocol (MCP)
 
-The ReJot Model Context Protocol (MCP) server gives AI based code editors the ability to manipulate,
-inspect and use ReJot's tooling. The MCP can be installed through your package manager of choice.
+The ReJot Model Context Protocol (MCP) server gives LLMs the ability to manipulate, inspect and use
+ReJot's tooling. The MCP can be installed through your package manager of choice.
 
 <LanguageVariants
   languages={[
@@ -92,8 +96,10 @@ to use the MCP server by adding the following configuration to your editor's con
 }
 ```
 
-Note that not all editors automatically substitute the project root for the "." placeholder. You
-might have to manually specify the absolute project root.
+<Notice type="NOTE">
+  Not all editors automatically substitute relative paths, such as "." for the project root. You
+  might have to manually specify the absolute project root. This should work in Cursor.
+</Notice>
 
 For more information, see the documentation for your editor of choice:
 

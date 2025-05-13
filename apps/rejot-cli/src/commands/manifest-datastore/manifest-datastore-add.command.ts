@@ -36,6 +36,18 @@ export class ManifestDataStoreAddCommand extends Command {
       this.error("--slot is required for add");
     }
 
+    if (!/^[a-z0-9_]+$/.test(flags.publication)) {
+      this.error(
+        "--publication must be a valid PostgreSQL identifier. Only lowercase letters, numbers, and underscores are allowed.",
+      );
+    }
+
+    if (!/^[a-z0-9_]+$/.test(flags.slot)) {
+      this.error(
+        "--slot must be a valid PostgreSQL identifier. Only lowercase letters, numbers, and underscores are allowed.",
+      );
+    }
+
     await validateConnection(manifestPath, flags.connection);
     await validateUniqueConnection(manifestPath, flags.connection);
 

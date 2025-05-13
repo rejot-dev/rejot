@@ -70,12 +70,12 @@ const currentIndex = docNavigationEntriesWithoutIndex.findIndex((entry) => {
       <!-- Navigation sidebar - hidden on mobile by default, shown when toggled -->
       <aside
         id="sidebar"
-        class="fixed inset-y-0 -left-full z-40 w-96 -translate-x-full overflow-y-auto border-r border-gray-200 bg-gray-50 transition-transform duration-300 ease-in-out lg:sticky lg:left-0 lg:top-16 lg:z-0 lg:translate-x-0 dark:border-gray-700 dark:bg-rejot-black-950"
+        class="fixed inset-y-0 -left-full z-40 w-2/3 -translate-x-full overflow-y-auto border-r border-gray-200 bg-gray-50 pt-2 transition-transform duration-300 ease-in-out md:w-96 lg:sticky lg:left-0 lg:top-16 lg:z-0 lg:translate-x-0 dark:border-gray-700 dark:bg-rejot-black-950"
       >
         <!-- Close button for mobile -->
-        <div class="flex justify-end">
+        <div class="absolute right-0 top-0">
           <button id="close-sidebar" class="rounded p-1 lg:hidden">
-            <XMarkIcon class="size-6" />
+            <XMarkIcon class="size-8" />
           </button>
         </div>
 

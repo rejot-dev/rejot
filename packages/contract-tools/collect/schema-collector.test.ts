@@ -374,6 +374,7 @@ describe("collect", () => {
         };
       `;
       await writeFile(schemaFile, schemaContent);
+      console.log("schemaFile", schemaFile);
 
       const result = await collector.collectSchemas(manifestPath, schemaFile);
       expect(result.publicSchemas).toHaveLength(1);

@@ -124,16 +124,25 @@ export default class Collect extends Command {
     }
 
     if (check) {
-      await validateManifest(newManifest, [new PostgresConsumerSchemaValidationAdapter()]);
+      await validateManifest(
+        newManifest,
+        [new PostgresConsumerSchemaValidationAdapter()],
+        [new PostgresConsumerSchemaValidationAdapter()],
+      );
     }
 
-    log.user(
-      `Collected ${allPublicSchemas.length} public schemas and ${allConsumerSchemas.length} consumer schemas.`,
-    );
-
     if (write) {
+      log.user(
+        `Collected ${allPublicSchemas.length} public schemas and ${allConsumerSchemas.length} consumer schemas.`,
+      );
       await writeManifest(newManifest, manifestPath);
-      log.user(`Public and consumer schemas written to manifest in ${manifestPath}`);
+      log.user(`Written to manifest in ${manifestPath}`);
+    }
+
+    if (!print && !write && !check) {
+      this.warn(
+        "No operations given. Please specify --print, --write, or --check to see the results.",
+      );
     }
   }
 }

@@ -31,7 +31,7 @@ export type SchemaItem =
   | {
       type: "ref";
       key: string;
-      valueType: string; // "object" or "array"
+      valueType: string; // "string" or "object" or "object | object" or "array[string]"
       valueRefName: string;
       valueRef: string;
       required: boolean;

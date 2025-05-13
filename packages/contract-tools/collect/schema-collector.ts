@@ -125,6 +125,8 @@ export class SchemaCollector implements ISchemaCollector {
         log.trace("jsModulePath", jsModulePath);
 
         const module = (await import(jsModulePath)) as ModuleWithDefault;
+        // Touch the module
+        Object.keys(module);
 
         return module;
       }

@@ -77,7 +77,7 @@ export function createPublicSchema<T extends z.ZodSchema>(
 ): PublicSchemaData {
   // Transform the Zod schema to JSON Schema if it's a Zod schema
   const jsonSchema =
-    options.outputSchema instanceof z.ZodSchema
+    "~standard" in options.outputSchema && options.outputSchema["~standard"]["vendor"] === "zod"
       ? zodToJsonSchema(options.outputSchema)
       : options.outputSchema;
 

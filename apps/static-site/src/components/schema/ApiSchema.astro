@@ -71,8 +71,13 @@ function deriveInfoFromKey(key: string): { name: string; path: string } {
                         {isArray ? "[]" : ""}
                       </a>
                     );
-                  } else if (item.valueType === "object" && item.type === "key") {
-                    // Handle inline objects
+                  } else if (
+                    item.type === "key" &&
+                    item.valueType.split(" | ").every((part) => part.trim() === "object")
+                  ) {
+                    // TODO: This now only shows the first item in the discriminated union.
+
+                    // Handle inline objects (including discriminated unions of objects)
                     return (
                       <a href={linkHref} class={linkClass}>
                         {derivedName}
@@ -85,6 +90,12 @@ function deriveInfoFromKey(key: string): { name: string; path: string } {
                         {derivedName}[]
                       </a>
                     );
+                  } else if (item.valueType.match(/array\[.*\]/)) {
+                    const match = item.valueType.match(/array\[(.*)\]/);
+                    if (match) {
+                      const type = match[1];
+                      return <span>{type}[]</span>;
+                    }
                   } else {
                     // Handle simple types (string, number, array[string], etc.)
                     return <span>{item.valueType}</span>;

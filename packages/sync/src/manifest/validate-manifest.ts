@@ -2,8 +2,10 @@ import { z } from "zod";
 
 import type {
   AnyIConsumerSchemaValidationAdapter,
+  AnyIPublicSchemaValidationAdapter,
   ConsumerSchemaValidationError,
   ConsumerSchemaValidationResult,
+  PublicSchemaValidationResult,
 } from "@rejot-dev/contract/adapter";
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { SyncManifestSchema } from "@rejot-dev/contract/manifest";
@@ -15,6 +17,13 @@ const log = getLogger(import.meta.url);
  */
 function formatValidationError(error: ConsumerSchemaValidationError<unknown>): string {
   // TODO: Later we can use the adapter to format the error.
+  return `Error: ${error.message}`;
+}
+
+/**
+ * Formats a public schema validation error for display
+ */
+function formatPublicSchemaValidationError(error: { message: string }): string {
   return `Error: ${error.message}`;
 }
 
@@ -39,16 +48,47 @@ function formatValidationResult(result: ConsumerSchemaValidationResult): string 
   return output;
 }
 
+function formatPublicSchemaValidationResult(result: {
+  isValid: boolean;
+  publicSchemaName: string;
+  errors: { message: string }[];
+}): string {
+  if (result.isValid) {
+    return `✅ Validated public schema '${result.publicSchemaName}'.`;
+  }
+  let output = `❌ Validation failed for public schema '${result.publicSchemaName}':`;
+  if (result.errors.length > 0) {
+    output += `\n\nErrors:`;
+    const formattedErrors = result.errors.map(formatPublicSchemaValidationError);
+    output += `\n${formattedErrors.join("\n\n")}`;
+  }
+  return output;
+}
+
 export async function validateManifest(
   manifest: z.infer<typeof SyncManifestSchema>,
   consumerSchemaValidationAdapters: AnyIConsumerSchemaValidationAdapter[],
+  publicSchemaValidationAdapters: AnyIPublicSchemaValidationAdapter[],
 ): Promise<void> {
   // Get all consumer schemas from the manifest
   const consumerSchemas = manifest.consumerSchemas ?? [];
   const publicSchemas = manifest.publicSchemas ?? [];
 
-  const validationResults: ConsumerSchemaValidationResult[] = [];
+  const consumerSchemaValidationResults: ConsumerSchemaValidationResult[] = [];
+  const publicSchemaValidationResults: PublicSchemaValidationResult<unknown>[] = [];
 
+  // Validate public schemas
+  for (const validationAdapter of publicSchemaValidationAdapters) {
+    for (const publicSchema of publicSchemas) {
+      if (publicSchema.config.publicSchemaType === validationAdapter.transformationType) {
+        const result = await validationAdapter.validatePublicSchema(publicSchema);
+        publicSchemaValidationResults.push(result);
+        log.user(formatPublicSchemaValidationResult(result));
+      }
+    }
+  }
+
+  // Validate consumer schemas
   for (const validationAdapter of consumerSchemaValidationAdapters) {
     for (const consumerSchema of consumerSchemas) {
       // Skip consumer schemas that reference external manifests
@@ -68,7 +108,7 @@ export async function validateManifest(
             consumerSchema,
           );
 
-          validationResults.push(result);
+          consumerSchemaValidationResults.push(result);
 
           // Print individual validation result
           log.user(formatValidationResult(result));
@@ -78,15 +118,31 @@ export async function validateManifest(
   }
 
   // Summarize validation results
-  const invalidResults = validationResults.filter((result) => !result.isValid);
-  if (invalidResults.length > 0) {
-    log.error(
-      `❌ Found ${invalidResults.length} validation errors across ${validationResults.length} schema pairs.`,
-    );
+  const invalidConsumerSchemaResults = consumerSchemaValidationResults.filter(
+    (result) => !result.isValid,
+  );
+  const invalidPublicSchemaResults = publicSchemaValidationResults.filter(
+    (result) => !result.isValid,
+  );
 
-    throw new Error(`Schema validation failed for ${invalidResults.length} consumer schemas.`);
-  } else if (validationResults.length > 0) {
-    log.user(`✅ Successfully validated ${validationResults.length} schema pairs.`);
+  if (invalidPublicSchemaResults.length > 0) {
+    log.error(
+      `❌ Found ${invalidPublicSchemaResults.length} invalid public schemas out of ${publicSchemaValidationResults.length}.`,
+    );
+    throw new Error(
+      `Schema validation failed for ${invalidPublicSchemaResults.length} public schemas.`,
+    );
+  }
+
+  if (invalidConsumerSchemaResults.length > 0) {
+    log.error(
+      `❌ Found ${invalidConsumerSchemaResults.length} validation errors across ${consumerSchemaValidationResults.length} schema pairs.`,
+    );
+    throw new Error(
+      `Schema validation failed for ${invalidConsumerSchemaResults.length} consumer schemas.`,
+    );
+  } else if (consumerSchemaValidationResults.length > 0) {
+    log.user(`✅ Successfully validated ${consumerSchemaValidationResults.length} schema pairs.`);
   } else {
     log.user(
       `⚠️ No schema pairs were validated. Check if schemas and transformations are correctly configured.`,
