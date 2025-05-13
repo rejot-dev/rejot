@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { JsonSchemaSchema } from "../json-schema/json-schema.ts";
 
+export const slugRegex = /^[a-z0-9-]+$/;
+
 export const PostgresConnectionSchema = z.object({
   connectionType: z.literal("postgres").describe("Postgres connection type."),
   host: z.string(),
@@ -153,6 +155,7 @@ export const SyncManifestSchema = z.object({
   /** Identifier of this sync manifest. */
   slug: z
     .string()
+    .regex(slugRegex)
     .describe(
       "Unique identifier for this sync manifest, only use hyphens and alphanumeric characters.",
     ),

@@ -285,7 +285,7 @@ describe("vibe-collect", () => {
       const manifestPath = join(tmpDir, "rejot-manifest.json");
       await writeFile(
         manifestPath,
-        JSON.stringify({ slug: "@test/", manifestVersion: CURRENT_MANIFEST_FILE_VERSION }),
+        JSON.stringify({ slug: "test", manifestVersion: CURRENT_MANIFEST_FILE_VERSION }),
       );
 
       const mixedSchema = {
@@ -604,7 +604,7 @@ describe("vibe-collect", () => {
         const manifestPath = join(tmpDir, "rejot-manifest.json");
         await writeFile(
           manifestPath,
-          JSON.stringify({ slug: "@test/", manifestVersion: CURRENT_MANIFEST_FILE_VERSION }),
+          JSON.stringify({ slug: "test", manifestVersion: CURRENT_MANIFEST_FILE_VERSION }),
         );
 
         // Create two schema files with the same schema
@@ -682,7 +682,7 @@ describe("vibe-collect", () => {
         await writeFile(
           manifestPath,
           JSON.stringify({
-            slug: "@test/",
+            slug: "test",
             manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
             publicSchemas: [
               {
@@ -813,7 +813,7 @@ describe("vibe-collect", () => {
         const manifestPath = join(tmpDir, "rejot-manifest.json");
         await writeFile(
           manifestPath,
-          JSON.stringify({ slug: "@test/", manifestVersion: CURRENT_MANIFEST_FILE_VERSION }),
+          JSON.stringify({ slug: "test", manifestVersion: CURRENT_MANIFEST_FILE_VERSION }),
         );
 
         // Create schema content with both public and consumer schemas
@@ -1111,7 +1111,7 @@ describe("vibe-collect", () => {
 
       // Set up existing manifest content
       const existingManifest = {
-        slug: "@test/",
+        slug: "test",
         manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
         publicSchemas: [
           {
@@ -1254,7 +1254,7 @@ describe("vibe-collect", () => {
 
       // Set up existing manifest content
       const existingManifest = {
-        slug: "@test/",
+        slug: "test",
         manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
         publicSchemas: [publicSchema],
       };
@@ -1316,7 +1316,7 @@ describe("vibe-collect", () => {
 
       // Set up existing manifest content
       const existingManifest = {
-        slug: "@test/",
+        slug: "test",
         manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
         consumerSchemas: [consumerSchema],
       };
@@ -1421,7 +1421,7 @@ describe("vibe-collect", () => {
 
       // Set up existing manifest with custom properties
       const existingManifest = {
-        slug: "@test/",
+        slug: "test",
         manifestVersion: CURRENT_MANIFEST_FILE_VERSION,
         connections: [
           {

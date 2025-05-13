@@ -314,7 +314,7 @@ describe("matchAndSortOperations", () => {
     const consumerSchemas: ConsumerSchemaWithPostgresConfig[] = [
       {
         name: "consume-public-account",
-        sourceManifestSlug: "@rejot/",
+        sourceManifestSlug: "rejot",
         publicSchema: { name: "public-account", majorVersion: 1 },
         definitionFile: "apps/rejot-cli/_test/example-schema.ts",
         config: {

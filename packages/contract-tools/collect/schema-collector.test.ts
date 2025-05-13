@@ -17,7 +17,7 @@ describe("collect", () => {
   beforeEach(async () => {
     tmpDir = await mkdtemp(join(tmpdir(), "collect-test-"));
     manifestPath = join(tmpDir, "rejot-manifest.json");
-    await writeFile(manifestPath, JSON.stringify({ slug: "@test/", manifestVersion: 0 }));
+    await writeFile(manifestPath, JSON.stringify({ slug: "test", manifestVersion: 0 }));
     collector = new SchemaCollector(new TypeStripper());
   });
 

@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { z } from "zod";
 
 import { getLogger } from "@rejot-dev/contract/logger";
-import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
+import { slugRegex, SyncManifestSchema } from "@rejot-dev/contract/manifest";
 import { ManifestMerger, type MergedManifest } from "@rejot-dev/contract/manifest-merger";
 
 const log = getLogger(import.meta.url);
@@ -198,6 +198,11 @@ export async function initManifest(
     workspace: false,
   },
 ): Promise<Manifest> {
+  // Validate slug is valid
+  if (!slugRegex.test(slug)) {
+    throw new Error("Invalid slug, only alphanumeric characters, and hyphens are allowed.");
+  }
+
   // Try to create the directory first
   await mkdir(dirname(path), { recursive: true });
 
