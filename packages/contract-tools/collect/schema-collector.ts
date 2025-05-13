@@ -8,6 +8,20 @@ import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
 
 import type { ITypeStripper } from "../type-stripper/type-stripper.ts";
 
+// A short wrapper, that prints the output in a format that can be parsed by the collector.
+// Ignores private variables and only prints objects and arrays.
+const pythonWrapper = (modulePath: string) => `
+import json
+import sys
+
+module = __import__("${modulePath}")
+
+for key, value in module.__dict__.items():
+    if not key.startswith('_') and (isinstance(value, dict) or isinstance(value, list)):
+        print(json.dumps(value, indent=2))
+        print("--- rejot-next-schema ---")
+`;
+
 const log = getLogger(import.meta.url);
 
 export interface CollectedSchemas {
@@ -16,7 +30,11 @@ export interface CollectedSchemas {
 }
 
 export interface ISchemaCollector {
-  collectSchemas(manifestPath: string, modulePath: string): Promise<CollectedSchemas>;
+  collectSchemas(
+    manifestPath: string,
+    modulePath: string,
+    options: CollectSchemaOptions,
+  ): Promise<CollectedSchemas>;
 }
 
 export interface CollectSchemaOptions {
@@ -28,7 +46,114 @@ interface ModuleWithDefault {
   default: any;
 }
 
-export class SchemaCollector implements ISchemaCollector {
+export class PythonSchemaCollector implements ISchemaCollector {
+  async collectSchemas(
+    manifestPath: string,
+    modulePath: string,
+    options: CollectSchemaOptions,
+  ): Promise<CollectedSchemas> {
+    const { verbose = false } = options;
+    const result: CollectedSchemas = {
+      publicSchemas: [],
+      consumerSchemas: [],
+    };
+
+    // Use child_process to run the Python wrapper script
+    const { spawn } = await import("node:child_process");
+    const { dirname, relative } = await import("node:path");
+
+    // Module path without .py, and without the cwd
+    const modulePathWithoutPy = modulePath.replace(/\.py$/, "");
+
+    // TODO: Add a flag to change the python executable path.
+
+    // Call wrapper.py and pass the module path as an argument
+    const pythonProcess = spawn("python3", ["-c", pythonWrapper(modulePathWithoutPy)], {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    pythonProcess.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+    pythonProcess.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    const exitCode: number = await new Promise((resolve) => {
+      pythonProcess.on("close", resolve);
+    });
+
+    if (exitCode !== 0) {
+      log.logErrorInstance(
+        new Error(`Python process exited with code ${exitCode}: ${stdout}\n${stderr}`),
+      );
+      if (verbose) {
+        log.user(`Python process failed: ${stdout}\n${stderr}`);
+      }
+      return result;
+    }
+
+    let parsed: unknown[];
+    try {
+      const lines = stdout.split("--- rejot-next-schema ---");
+      lines.pop();
+      parsed = lines.map((line) => JSON.parse(line));
+    } catch (error) {
+      log.logErrorInstance(error);
+      if (verbose) {
+        log.user(`Failed to parse JSON from Python output: ${stdout}`);
+      }
+      return result;
+    }
+
+    // Helper to validate and push schemas
+    // TODO: This can be refactored to use a single function for both typescript and python
+    const processSchema = (schema: unknown, depth = 0) => {
+      if (depth > 1) {
+        return;
+      }
+
+      const parsedAsPublicSchema = PublicSchemaSchema.safeParse(schema);
+      const parsedAsConsumerSchema = ConsumerSchemaSchema.safeParse(schema);
+
+      if (parsedAsPublicSchema.success) {
+        const definitionFile = relative(dirname(manifestPath), modulePath);
+        result.publicSchemas.push({ ...parsedAsPublicSchema.data, definitionFile });
+      } else if (parsedAsConsumerSchema.success) {
+        const definitionFile = relative(dirname(manifestPath), modulePath);
+        result.consumerSchemas.push({ ...parsedAsConsumerSchema.data, definitionFile });
+      } else if (typeof schema === "object" && schema !== null && !Array.isArray(schema)) {
+        // Recursively check object properties for schemas, but only one level deep
+        for (const value of Object.values(schema)) {
+          processSchema(value, depth + 1);
+        }
+      } else if (Array.isArray(schema)) {
+        for (const value of schema) {
+          processSchema(value, depth + 1);
+        }
+      } else {
+        // No match
+        if (verbose) {
+          log.user(`Skipping ${modulePath} because it doesn't contain a valid schema.`);
+        }
+      }
+    };
+
+    for (const schema of parsed) {
+      processSchema(schema);
+    }
+
+    log.info(
+      `Collected ${result.publicSchemas.length} public and ${result.consumerSchemas.length} consumer schemas from Python`,
+    );
+    return result;
+  }
+}
+
+export class TypescriptSchemaCollector implements ISchemaCollector {
   readonly #typeStripper: ITypeStripper;
 
   constructor(typeStripper: ITypeStripper) {

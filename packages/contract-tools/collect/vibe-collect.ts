@@ -125,6 +125,9 @@ export class VibeCollector implements IVibeCollector {
       const collectedSchemas: CollectedSchemas = await this.#schemaCollector.collectSchemas(
         nearestManifestPath,
         filePath,
+        {
+          verbose: true,
+        },
       );
 
       log.debug(

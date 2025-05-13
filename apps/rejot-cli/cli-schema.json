@@ -10,7 +10,7 @@
       "args": {
         "schemas": {
           "name": "schemas",
-          "description": "The schema (TypeScript) files to collect, separated by spaces.",
+          "description": "The schema (TypeScript/Python) files to collect, separated by spaces.",
           "required": true
         }
       },

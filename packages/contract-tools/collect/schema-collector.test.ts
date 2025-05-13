@@ -7,18 +7,18 @@ import { join } from "node:path";
 import { ConsoleLogger, setLogger } from "@rejot-dev/contract/logger";
 
 import { TypeStripper } from "../type-stripper/type-stripper.ts";
-import { SchemaCollector } from "./schema-collector.ts";
+import { TypescriptSchemaCollector } from "./schema-collector.ts";
 
 describe("collect", () => {
   let tmpDir: string;
   let manifestPath: string;
-  let collector: SchemaCollector;
+  let collector: TypescriptSchemaCollector;
 
   beforeEach(async () => {
     tmpDir = await mkdtemp(join(tmpdir(), "collect-test-"));
     manifestPath = join(tmpDir, "rejot-manifest.json");
     await writeFile(manifestPath, JSON.stringify({ slug: "test", manifestVersion: 0 }));
-    collector = new SchemaCollector(new TypeStripper());
+    collector = new TypescriptSchemaCollector(new TypeStripper());
   });
 
   afterEach(async () => {
@@ -332,7 +332,7 @@ describe("collect", () => {
         }
       }
 
-      collector = new SchemaCollector(new TypeStripperAlways());
+      collector = new TypescriptSchemaCollector(new TypeStripperAlways());
     });
 
     it("should collect a single public schema", async () => {

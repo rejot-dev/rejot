@@ -5,7 +5,11 @@ import { PostgresConsumerSchemaValidationAdapter } from "@rejot-dev/adapter-post
 import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
 import { ConsoleLogger, getLogger, setLogger } from "@rejot-dev/contract/logger";
 import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
-import { SchemaCollector } from "@rejot-dev/contract-tools/collect/schema-collector";
+import {
+  type ISchemaCollector,
+  PythonSchemaCollector,
+  TypescriptSchemaCollector,
+} from "@rejot-dev/contract-tools/collect/schema-collector";
 import {
   findManifestPath,
   ManifestPrinter,
@@ -22,7 +26,7 @@ import { Args, Command, Flags } from "@oclif/core";
 export default class Collect extends Command {
   static override args = {
     schemas: Args.string({
-      description: "The schema (TypeScript) files to collect, separated by spaces.",
+      description: "The schema (TypeScript/Python) files to collect, separated by spaces.",
       required: true,
     }),
   };
@@ -94,19 +98,37 @@ export default class Collect extends Command {
         this.error(`Invalid schema path: '${schemaPath}'.`);
       }
 
-      try {
-        await stat(schemaPath);
-      } catch {
-        log.user(`Schema file '${schemaPath}' does not exist.`);
-        continue;
+      let collector: ISchemaCollector;
+      let path = schemaPath;
+
+      const extension = schemaPath.split(".").pop();
+      switch (extension) {
+        case "ts":
+        case "js":
+          try {
+            await stat(schemaPath);
+          } catch {
+            log.user(`Schema file '${schemaPath}' does not exist.`);
+            continue;
+          }
+
+          path = resolve(schemaPath);
+          collector = new TypescriptSchemaCollector(new TypeStripper());
+          break;
+        case "py":
+          collector = new PythonSchemaCollector();
+          break;
+        default:
+          this.error(`Unsupported schema file extension: '${extension}'.`);
       }
 
-      const resolvedPath = resolve(schemaPath);
-      const { publicSchemas, consumerSchemas } = await new SchemaCollector(
-        new TypeStripper(),
-      ).collectSchemas(manifestPath, resolvedPath, {
-        verbose,
-      });
+      const { publicSchemas, consumerSchemas } = await collector.collectSchemas(
+        manifestPath,
+        path,
+        {
+          verbose,
+        },
+      );
 
       allPublicSchemas.push(...publicSchemas);
       allConsumerSchemas.push(...consumerSchemas);
