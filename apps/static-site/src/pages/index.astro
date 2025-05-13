@@ -1,7 +1,4 @@
 ---
-import ArrowDownOnSquareStack from "astro-heroicons/outline/ArrowDownOnSquareStack.astro";
-import ArrowPath from "astro-heroicons/outline/ArrowPath.astro";
-import Newspaper from "astro-heroicons/outline/Newspaper.astro";
 import ArrowRight from "astro-heroicons/solid/ArrowRight.astro";
 
 import BackgroundGradient from "@/components/index/BackgroundGradient.astro";
@@ -12,12 +9,11 @@ import Microservice from "@/components/index/Microservice.astro";
 import PublicSchemaDefinition from "@/components/index/PublicSchemaDefinition.astro";
 import NewsletterForm from "@/components/NewsletterForm.astro";
 
-import FeatureItem from "../components/index/FeatureItem.astro";
 import LinkButton from "../components/LinkButton.astro";
 import { pageTitle, REJOT_DESCRIPTION, REJOT_TAG_LINE } from "../consts";
 import Base from "../layouts/Base.astro";
 
-const iconProps = { class: "-ml-2 size-14 text-rejot-red-600 md:size-18", "stroke-width": "1" };
+// const iconProps = { class: "-ml-2 size-14 text-rejot-red-600 md:size-18", "stroke-width": "1" };
 const description = `${REJOT_TAG_LINE}: ${REJOT_DESCRIPTION}`;
 ---
 
@@ -32,7 +28,18 @@ const description = `${REJOT_TAG_LINE}: ${REJOT_DESCRIPTION}`;
       <span class="min-h-full self-center">Backed by Y Combinator</span>
     </div>
 
-    <div id="steps" class="flex flex-col justify-between gap-12 px-6 md:flex-row md:px-8">
+    <div class="gap-12 space-y-4 px-6 md:flex-row md:px-8">
+      <h2 class="text-center text-4xl font-bold xl:text-5xl xl:leading-tight">Why ReJot?</h2>
+      <p class="mx-auto max-w-prose text-center text-lg text-gray-600 dark:text-gray-400">
+        ReJot addresses latency and reliability issues in microservice architectures by replacing
+        synchronous API calls with asynchronous replication. Developer-defined data contracts give
+        developers control over data flows and help uphold domain boundaries. ReJot integrates with
+        your applications using the database tooling you're already using.
+      </p>
+    </div>
+    <hr class="dark:border-gray-600" />
+
+    <!-- <div id="steps" class="flex flex-col justify-between gap-12 px-6 md:flex-row md:px-8">
       <FeatureItem title="Define">
         <Newspaper {...iconProps} slot="icon" />
         Teams own their data like they own their code. Data owners define a contract, add transformations,
@@ -50,7 +57,7 @@ const description = `${REJOT_TAG_LINE}: ${REJOT_DESCRIPTION}`;
         ReJot's synchronization engine moves data between teams as soon as it's created. Manual data
         fetching and integration tasks are a thing of the past.
       </FeatureItem>
-    </div>
+    </div> -->
 
     <!--     <hr class="dark:border-gray-600" />
 
