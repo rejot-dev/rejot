@@ -1,0 +1,3 @@
+# only used for local tests, but bun doesn't load .env.local during tests
+.env.test
+rejot-manifest.json
