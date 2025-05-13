@@ -134,11 +134,6 @@ export class PythonSchemaCollector implements ISchemaCollector {
         for (const value of schema) {
           processSchema(value, depth + 1);
         }
-      } else {
-        // No match
-        if (verbose) {
-          log.user(`Skipping ${modulePath} because it doesn't contain a valid schema.`);
-        }
       }
     };
 
