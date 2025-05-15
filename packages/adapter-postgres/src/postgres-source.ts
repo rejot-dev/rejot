@@ -71,11 +71,10 @@ export class PostgresSource implements IDataSource {
     // TODO(jan): required for backfill support, don't impose additional schema on users for now.
     // await this.#ensureWatermarkTable();
 
+    await ensurePublication(this.#client, this.#publicationName, this.#createPublication);
+
     // Create replication slot if it doesn't exist
     await ensureReplicationSlot(this.#client, this.#slotName);
-
-    // Create publication if it doesn't exist
-    await ensurePublication(this.#client, this.#publicationName, this.#createPublication);
 
     log.info("PostgresSource prepared");
   }

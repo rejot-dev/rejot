@@ -154,8 +154,8 @@ describe("Integration Test - One", () => {
         stderr: "pipe",
       });
 
-      // Making sure the replication slot is ready...
-      await sleep(100);
+      // TODO: Make sure the replication slot is created before we start writing data
+      await sleep(1000);
 
       try {
         // Insert a person and two emails in a single transaction
