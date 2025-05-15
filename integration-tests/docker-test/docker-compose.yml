@@ -6,6 +6,7 @@ services:
       - "5433:5432"
     volumes:
       - ./postgres.conf:/etc/postgresql/postgresql.conf
+      - ./data:/data
     command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
     environment:
       POSTGRES_PASSWORD: postgres
@@ -22,6 +23,7 @@ services:
       - "5434:5432"
     volumes:
       - ./postgres.conf:/etc/postgresql/postgresql.conf
+      - ./data:/data
     command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
     environment:
       POSTGRES_PASSWORD: postgres
@@ -34,6 +36,8 @@ services:
   bun-published:
     image: oven/bun:1.2.6
     container_name: bun-published
+    volumes:
+      - ./data:/home/bun/app/data
     environment:
       REJOT_DB_1: "postgres://postgres:postgres@postgres_source:5432/postgres"
       REJOT_DB_2: "postgres://postgres:postgres@postgres_sink:5432/postgres"
@@ -47,6 +51,7 @@ services:
     image: oven/bun:1.2.6
     container_name: bun-local
     volumes:
+      - ./data:/home/bun/app/data
       - ../..:/opt
       - ./rejot-cli.sh:/usr/local/bin/rejot-cli
     environment:

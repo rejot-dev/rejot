@@ -120,6 +120,9 @@ export class PostgresPublicSchemaTransformationAdapter
 
         try {
           const result = await txClient.query(sql, values);
+
+          log.trace("Query result", result.rows[0]);
+
           if (result.rows.length !== 1) {
             throw new Error(
               `Expected 1 row from public schema transformation, got ${result.rows.length}, operation: ${JSON.stringify(operation)}`,

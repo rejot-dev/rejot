@@ -10,10 +10,10 @@ consumers.
 Data producers can publish their data through a [Public Schema](/docs/spec/public-schema), while
 consumers can subscribe to datasets through a [Consumer Schema](/docs/spec/consumer-schema).
 
-## One-to-Many Relations
+## Fan-out Replication
 
-ReJot is designed to support one-to-many relationships between data producers and consumers. Each
-public and consumer schema is versioned to accommodate changes in these data models. Note that this
+ReJot is designed to support fan-out replication between data producers and consumers. Each public
+and consumer schema is versioned to accommodate changes in these data models. Note that this
 requires an [Event Store](/docs/spec/event-store) in your setup.
 
 import DarkImage from "@/components/DarkImage.astro";

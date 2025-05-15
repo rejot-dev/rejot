@@ -32,7 +32,7 @@ manifest requires a unique slug, which is used to identify where public schemas 
 where sync services can locate them on the network.
 
 ```bash
-rejot-cli manifest init --slug "my-sync-slug"
+rejot-cli manifest init --slug "@my-org/my-sync-slug"
 ```
 
 ## Setting Up Data and Event Stores
@@ -75,7 +75,7 @@ rejot-cli manifest connection add \
 
 ### Configuring Data Stores
 
-Next, link the connection to a data store:
+Next, link a data store to the connection:
 
 ```bash
 rejot-cli manifest datastore add \
@@ -84,24 +84,40 @@ rejot-cli manifest datastore add \
             --slot rejot_slot
 ```
 
-### Setting Up Event Stores
+There's an (implicit) difference between data stores with or without a publication and slot. Data
+stores without these can only be used as a destination, while data stores with these can be used as
+either a source or destination.
 
-To operate ReJot, you need at least one event store configured. You can create this connection the
-same way as for any other data store. Ensure the database user has permissions to create schemas and
-tables. Then, link the event store to that connection:
+A data store can be removed from the manifest in the following way:
 
 ```bash
-rejot-cli manifest eventstore add \
-            --connection my-eventstore-connection
+rejot-cli manifest datastore remove my-datastore
+```
+
+### Configuring Event Stores
+
+Event stores are also based on a connection, but they don't require a publication or slot.
+
+```bash
+rejot-cli manifest eventstore add --connection my-eventstore
+```
+
+Similar to data stores, an event store can be removed from the manifest in the following way:
+
+```bash
+rejot-cli manifest eventstore remove my-eventstore
 ```
 
 ## Verifying Your Configuration
 
-You can use the `info` command to display a parsed version of the manifest:
+You can use the `info` command to display a parsed version of the manifest. When errors or warnings
+are detected, they will be printed to the console.
 
 ```bash
-rejot-cli manifest info
+$ rejot-cli manifest info
+```
 
+```
 Manifest Configuration:
 
 Connections:
@@ -116,8 +132,40 @@ Data Stores (Replication Sources):
     Publication / slot: rejot_publication / rejot_slot
 
 Event Stores (Replication Targets):
-  - Connection: my-datastore
+  - Connection: my-eventstore
 ```
+
+## Workspaces
+
+A ReJot workspace is a collection of manifests that are managed together. It's useful for local
+development use cases where you're typically only using a single event store and only want to run a
+single sync service.
+
+A manifest can link to other manifests using the `workspaces` field. This field should contain the
+relative path to other manifest files.
+
+```json
+{
+  "slug": "@my-org/my-sync-slug",
+  "workspaces": ["./service-one/rejot-manifest.json", "./service-two/rejot-manifest.json"]
+}
+```
+
+The workspace manifest is typically in a parent directory related to other manifests. An example
+structure might look like this:
+
+```
+my-monorepo/
+├── service-one/
+│   ├── rejot-manifest.json
+│   └── ...
+├── service-two/
+│   ├── rejot-manifest.json
+│   └── ...
+└── rejot-manifest.json
+```
+
+When using the `collect` command, schemas are collected into the nearest manifest.
 
 ## Next Steps
 

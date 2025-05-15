@@ -2,7 +2,7 @@ export const REJOT_TITLE = "ReJot";
 export const REJOT_TAG_LINE = "Developer Defined Replication";
 export const REJOT_DESCRIPTION =
   // "Open source database to database sync engine for enterprises with distributed architectures and teams.";
-  "Open source database to database replication for distributed architectures.";
+  "Open source database replication defined from your code";
 export function pageTitle(title: string) {
   const titleLength = title.length;
 

@@ -1,7 +1,7 @@
 import path from "node:path";
 
 import { verifyManifests } from "@rejot-dev/contract/manifest";
-import { readManifestOrGetEmpty } from "@rejot-dev/contract-tools/manifest";
+import { readManifest } from "@rejot-dev/contract-tools/manifest/manifest.fs";
 import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
 
 import { Command, Flags } from "@oclif/core";
@@ -28,7 +28,7 @@ export class ManifestInfoCommand extends Command {
     // Other commands
     "<%= config.bin %> manifest init",
     '<%= config.bin %> manifest connection add --slug my-source --connection-string "postgresql://user:pass@host:5432/db"',
-    "<%= config.bin %> manifest datastore add --connection my-source --publication my-pub",
+    "<%= config.bin %> manifest datastore add --connection my-source --publication my_pub --slot my_rejot_slot",
     "<%= config.bin %> manifest eventstore add --connection my-target",
   ];
 
@@ -43,7 +43,13 @@ export class ManifestInfoCommand extends Command {
     const { flags } = await this.parse(ManifestInfoCommand);
     const manifestPath = path.resolve(flags.manifest);
     try {
-      const manifest = await readManifestOrGetEmpty(manifestPath);
+      const manifest = await readManifest(manifestPath);
+
+      if (!manifest) {
+        this.error(
+          `Manifest file not found at ${manifestPath}. Use 'rejot-cli manifest init' to create one.`,
+        );
+      }
 
       const errors = verifyManifests([manifest]);
 
@@ -71,7 +77,8 @@ export class ManifestInfoCommand extends Command {
       if (
         (manifest.connections ?? []).length === 0 &&
         (manifest.dataStores ?? []).length === 0 &&
-        (manifest.eventStores ?? []).length === 0
+        (manifest.eventStores ?? []).length === 0 &&
+        (manifest.workspaces ?? []).length === 0
       ) {
         this.log("\nTo configure the manifest, use the following commands:");
         this.log("1. Add a connection:    rejot manifest connection add --slug my-db ...");

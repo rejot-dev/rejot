@@ -14,7 +14,7 @@ and configure it using a single manifest file and with no external event store.
 ## Prerequisites
 
 - [Install the ReJot CLI](/docs/start/install)
-- [Prepare a Postgres source database](/docs/guides/setup-postgres)
+- [A Postgres database with logical replication enabled](/docs/guides/setup-postgres)
 
 ## Create a ReJot Manifest
 
@@ -61,7 +61,7 @@ rejot-cli manifest datastore add \
 ### Set Up Event store
 
 Next up we'll define an event store, an event store is used by ReJot to store Public Schema events
-before replicating them to consumers. For demonstration purposes we'll use the same postgres
+before replicating them to consumers. For demonstration purposes we'll use the same Postgres
 database connection we created before but generally a separate dedicated database is better suited.
 The appropriate schemas and tables will be created on first launch.
 
@@ -69,6 +69,12 @@ The appropriate schemas and tables will be created on first launch.
 rejot-cli manifest eventstore add \
         --connection my-db
 ```
+
+<Notice type="NOTE">
+  ReJot can function without an event store, but this means changes to a Public Schema are not
+  stored durably and will be lost if the sync service is stopped or crashes. For local development
+  this is usually fine.
+</Notice>
 
 ### Define Public and Consumer Schemas
 
@@ -101,7 +107,7 @@ can do this using the `collect` command in the CLI. It might be nice to check yo
 correct first using the `--check` flag.
 
 ```bash
-rejot-cli collect schemas.ts --check
+rejot-cli collect schemas.ts --check --print
 ```
 
 If all looks good, you can materialize the schemas into your manifest.
@@ -123,7 +129,7 @@ CREATE TABLE target_table (id SERIAL PRIMARY KEY, api_key TEXT NOT NULL);
 Start the synchronization process:
 
 ```bash
-rejot-cli manifest sync --log-level info rejot-manifest.json
+rejot-cli manifest sync ./rejot-manifest.json
 ```
 
 Any new writes to your source tables in the source datastore should now be transformed and written

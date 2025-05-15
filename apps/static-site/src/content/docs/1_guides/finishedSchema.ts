@@ -24,7 +24,7 @@ const myPublicSchema = createPublicSchema("my-public-schema", {
     transformations: createPostgresPublicSchemaTransformations(
       "insertOrUpdate",
       "my_table",
-      `SELECT id, name FROM my_table WHERE id = $1`,
+      `SELECT id, name FROM my_table WHERE id = :id`,
     ),
     // end: publicSchemaTransformations
   },
@@ -39,6 +39,7 @@ const myMultiTablePublicSchema = createPublicSchema("my-multi-table-public-schem
   outputSchema: z.object({
     id: z.string(),
     name: z.string(),
+    country: z.string(),
   }),
   config: {
     publicSchemaType: "postgres",
@@ -49,27 +50,27 @@ const myMultiTablePublicSchema = createPublicSchema("my-multi-table-public-schem
         "insertOrUpdate",
         "accounts",
         `SELECT
-            accounts.id,
-            accounts.name,
-            addresses.country
+            accounts.id AS "id",
+            accounts.name AS "name",
+            addresses.country AS "country"
           FROM
             accounts
             JOIN addresses ON accounts.id = addresses.account_id
           WHERE
-            accounts.id = $1`,
+            accounts.id = :id`,
       ),
       ...createPostgresPublicSchemaTransformations(
         "insertOrUpdate",
         "addresses",
         `SELECT
-            accounts.id,
-            accounts.name,
-            addresses.country
+            accounts.id AS "id",
+            accounts.name AS "name",
+            addresses.country AS "country"
           FROM
             accounts
             JOIN addresses ON accounts.id = addresses.account_id
           WHERE
-            addresses.id = $1`,
+            addresses.id = :id`,
       ),
     ],
     // end: publicSchemaTransformationsMultiTable

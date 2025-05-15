@@ -28,21 +28,17 @@ export class ManifestDataStoreAddCommand extends Command {
       this.error("--connection is required for add");
     }
 
-    if (!flags.publication) {
-      this.error("--publication is required for add");
+    if (!!flags.publication !== !!flags.slot) {
+      this.error("either --publication and --slot must both be provided or neither");
     }
 
-    if (!flags.slot) {
-      this.error("--slot is required for add");
-    }
-
-    if (!/^[a-z0-9_]+$/.test(flags.publication)) {
+    if (flags.publication && !/^[a-z0-9_]+$/.test(flags.publication)) {
       this.error(
         "--publication must be a valid PostgreSQL identifier. Only lowercase letters, numbers, and underscores are allowed.",
       );
     }
 
-    if (!/^[a-z0-9_]+$/.test(flags.slot)) {
+    if (flags.slot && !/^[a-z0-9_]+$/.test(flags.slot)) {
       this.error(
         "--slot must be a valid PostgreSQL identifier. Only lowercase letters, numbers, and underscores are allowed.",
       );
@@ -51,15 +47,20 @@ export class ManifestDataStoreAddCommand extends Command {
     await validateConnection(manifestPath, flags.connection);
     await validateUniqueConnection(manifestPath, flags.connection);
 
+    const config =
+      flags.publication && flags.slot
+        ? {
+            connectionType: "postgres" as const,
+            publicationName: flags.publication,
+            slotName: flags.slot,
+          }
+        : undefined;
+
     const manifest = await readManifestOrGetEmpty(manifestPath);
     manifest.dataStores = manifest.dataStores ?? [];
     manifest.dataStores.push({
       connectionSlug: flags.connection,
-      config: {
-        connectionType: "postgres",
-        publicationName: flags.publication,
-        slotName: flags.slot,
-      },
+      config,
     });
 
     await writeManifest(manifest, manifestPath);

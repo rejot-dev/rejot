@@ -4,10 +4,10 @@ interface Props {
   title?: string;
 }
 
-import InformationCircle from "astro-heroicons/outline/InformationCircle.astro";
-import LightBulb from "astro-heroicons/outline/LightBulb.astro";
 import ExclamationCircle from "astro-heroicons/outline/ExclamationCircle.astro";
 import ExclamationTriangle from "astro-heroicons/outline/ExclamationTriangle.astro";
+import InformationCircle from "astro-heroicons/outline/InformationCircle.astro";
+import LightBulb from "astro-heroicons/outline/LightBulb.astro";
 import XCircle from "astro-heroicons/outline/XCircle.astro";
 
 const { type, title = type } = Astro.props;
@@ -62,8 +62,6 @@ const color = colors[type];
       </div>
       <div class={`font-bold ${color.title}`}>{title}</div>
     </div>
-    <div>
-      <slot />
-    </div>
+    <slot />
   </div>
 </div>
