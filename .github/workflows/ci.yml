@@ -242,6 +242,12 @@ jobs:
           REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
         run: bun test _test/mcp.integration.test.ts
 
+      - name: Run integration test one
+        working-directory: integration-tests/one
+        env:
+          REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
+        run: bun test
+
   build-rejot-cli-image:
     if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
