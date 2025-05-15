@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+
 import init, {
   find_placeholders_wasm,
   parse_sql,
@@ -6,15 +9,51 @@ import init, {
 } from "@rejot-dev/sqlparser-wasm";
 
 import type { Query } from "./types.ts";
-
 let initialized = false;
+
 export async function initSqlparser(): Promise<void> {
   if (initialized) {
     return;
   }
 
-  await init();
+  if (isNode()) {
+    await initWasmWorkaround();
+  } else {
+    await init();
+  }
+
   initialized = true;
+}
+
+function isNode(): boolean {
+  return !process.versions["bun"] && !process.versions["deno"];
+}
+
+// WORKAROUND: Initializing wasm on nodejs doesn't work if packaged with --target=web
+// This is only for nodejs, bun and deno work fine.
+// See: https://github.com/nodejs/undici/issues/2751
+async function initWasmWorkaround() {
+  // Save the original fetch implementation
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async function (resource: URL, options) {
+      if (resource.protocol === "file:") {
+        const filePath = fileURLToPath(resource);
+        const buffer = await readFile(filePath);
+        return new Response(buffer, {
+          headers: {
+            "Content-Type": "application/wasm",
+          },
+        });
+      }
+      return originalFetch(resource, options);
+    } as typeof fetch;
+
+    await init();
+  } finally {
+    // Restore the original fetch implementation
+    globalThis.fetch = originalFetch;
+  }
 }
 
 // The typing on this is super incomplete.
