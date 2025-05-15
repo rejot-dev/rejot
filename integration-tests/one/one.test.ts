@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
-import { $ } from "bun";
+import { $, sleep } from "bun";
 import { rm } from "fs/promises";
 
 import {
@@ -38,7 +38,7 @@ describe("Integration Test - One", () => {
 
     try {
       await client.query(
-        `DELETE FROM rejot_data_store.public_schema_state WHERE manifest_slug = '@rejot-dev/integration-tests-one'`,
+        `DELETE FROM rejot_data_store.public_schema_state WHERE manifest_slug = 'integration-tests-one'`,
       );
     } catch {
       // ignore if the table doesn't exist
@@ -108,31 +108,31 @@ describe("Integration Test - One", () => {
 
   test("Initialize Manifest", async () => {
     const manifest =
-      await $`bunx rejot-cli manifest init --slug @rejot-dev/integration-tests-one`.text();
+      await $`bunx --bun rejot-cli manifest init --slug integration-tests-one`.text();
     expect(manifest).toBeDefined();
   });
 
   test("Add a database connection", async () => {
     const connector =
-      await $`bunx rejot-cli manifest connection add --slug main-connection --connection-string ${connectionString}`.text();
+      await $`bunx --bun rejot-cli manifest connection add --slug main-connection --connection-string ${connectionString}`.text();
     expect(connector).toBeDefined();
   });
 
   test("Add a data store", async () => {
     const dataStore =
-      await $`bunx rejot-cli manifest datastore add --connection main-connection --publication rejot_integration_tests_one --slot rejot_integration_tests_one_data_store`.text();
+      await $`bunx --bun rejot-cli manifest datastore add --connection main-connection --publication rejot_integration_tests_one --slot rejot_integration_tests_one_data_store`.text();
     expect(dataStore).toBeDefined();
   });
 
   test("Add an event store", async () => {
     const eventStore =
-      await $`bunx rejot-cli manifest eventstore add --connection main-connection`.text();
+      await $`bunx --bun rejot-cli manifest eventstore add --connection main-connection`.text();
     expect(eventStore).toBeDefined();
   });
 
   test("Collect Schemas", async () => {
     const collect =
-      await $`bunx rejot-cli collect --print --check --write schemas/one-schema.ts`.text();
+      await $`bunx --bun  rejot-cli collect --print --check --write schemas/one-schema.ts`.text();
     expect(collect).toContain("Successfully validated 1 schema pairs.");
   });
 
@@ -143,6 +143,7 @@ describe("Integration Test - One", () => {
       const syncProcess = Bun.spawn({
         cmd: [
           "bunx",
+          "--bun",
           "rejot-cli",
           "manifest",
           "sync",
@@ -152,6 +153,9 @@ describe("Integration Test - One", () => {
         stdout: "pipe",
         stderr: "pipe",
       });
+
+      // Making sure the replication slot is ready...
+      await sleep(100);
 
       try {
         // Insert a person and two emails in a single transaction
