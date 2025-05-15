@@ -2,7 +2,25 @@ import { z } from "zod";
 
 import { JsonSchemaSchema } from "../json-schema/json-schema.ts";
 
-export const slugRegex = /^[a-z0-9-]+$/;
+/**
+ * Regex for validating slugs with or without an organization prefix.
+ *
+ * Allowed:
+ *   - 'foo' (plain slug)
+ *   - '@org/' (organization with empty slug)
+ *   - '@org/bar' (organization with slug)
+ *
+ * Not allowed:
+ *   - '@org' (missing trailing slash)
+ *   - '@org//bar' (double slash)
+ *   - '/foo' (leading slash)
+ *   - '' (empty string)
+ *
+ * Structure:
+ *   - If an organization is present (starts with '@org/'), the slug after the slash may be empty or contain lowercase letters, numbers, or hyphens.
+ *   - If no organization is present, the slug must be one or more lowercase letters, numbers, or hyphens.
+ */
+export const slugRegex = /^(@[a-z0-9-]+\/([a-z0-9-]*)|[a-z0-9-]+)$/;
 
 export const PostgresConnectionSchema = z.object({
   connectionType: z.literal("postgres").describe("Postgres connection type."),

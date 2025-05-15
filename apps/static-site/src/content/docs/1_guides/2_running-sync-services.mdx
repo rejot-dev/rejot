@@ -4,42 +4,42 @@ title: "Running Sync Services"
 
 import DarkImage from "@/components/DarkImage.astro";
 
-A Sync service is responsible for monitoring changes in data stores, applying necessary
+A sync service is responsible for monitoring changes in data stores, applying necessary
 transformations, and propagating these changes to consumers as mutation events.
 
-When starting a Sync service, you can supply any number of manifests. The service will be
+When starting a sync service, you can supply any number of manifests. The service will be
 responsible for all Public schemas defined in those manifests. Consumer schemas that reference
-Public schemas in other manifests can be retrieved over the network from other Sync services.
+Public schemas in other manifests can be retrieved over the network from other sync services.
 
 ## Prerequisites
 
 - You need to have your manifest(s) ready. For more information, see the
-  [Managing Manifests](/docs/guides/managing-manifests) guide.
-- You need to have an Event Store deployed and configured in your manifest.
+  [Managing Manifests](/docs/guides/managing-manifests) and
+  [Defining Schemas](/docs/guides/defining-schemas) guides.
 
 ## Single Sync Service
 
-If you're deploying a single Sync service, you can start the service from the `rejot-cli` and pass
+If you're deploying a single sync service, you can start the service from the `rejot-cli` and pass
 all your manifests:
 
 ```bash
 rejot-cli manifest sync rejot-manifest.json another-rejot-manifest.json
 ```
 
-Upon startup, the Sync service will verify connections to all data stores and open replication slots
+Upon startup, the sync service will verify connections to all data stores and open replication slots
 to begin monitoring for changes.
 
 ## Multiple Sync Services
 
-It can be beneficial to set up separate Sync services in cases where you expect high load or you
-prefer to split service by domain. If you have data dependencies between Sync services, they can
-exchange data over the network. For this purpose, each Sync service exposes a web server that other
-Sync services can communicate with.
+It can be beneficial to set up separate sync services in cases where you expect high load or you
+prefer to split service by domain. If you have data dependencies between sync services, they can
+exchange data over the network. For this purpose, each sync service exposes a web server that other
+sync services can communicate with.
 
-You can configure the endpoint that a Sync service exposes through the `rejot-cli` arguments.
+You can configure the endpoint that a sync service exposes through the `rejot-cli` arguments.
 
-To enable external Sync service discovery, you must specify a [Resolver](/docs/reference/resolvers)
-that helps the Sync service locate manifest slugs on the network. The simplest resolver is the
+To enable external sync service discovery, you must specify a [Resolver](/docs/reference/resolvers)
+that helps the sync service locate manifest slugs on the network. The simplest resolver is the
 environment resolver, where you supply a mapping of manifest to hostname through environment
 variables:
 

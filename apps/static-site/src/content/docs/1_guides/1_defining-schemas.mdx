@@ -8,21 +8,37 @@ import Notice from "@/components/Notice.astro";
 import rawSchemaText from "./schema.ts?raw";
 import rawFullSchemaText from "./finishedSchema.ts?raw";
 import PartialCode from "@/components/PartialCode.astro";
+import LanguageVariants from "@/components/LanguageVariants.astro";
 
-ReJot allows you to define Public and Consumer Schemas using TypeScript code, which offers several
-benefits:
+When using ReJot, you define Public and Consumer schemas right from your codebase. This allows you
+to group related pieces of code together. In this case you can define your public schemas close to
+where you define the underlying database tables.
 
-- Type safety and validation
-- Better code organization and reusability
-- Integration with your existing development workflow
+This guide will show you how to define (Postgres) schemas in your TypeScript codebase.
+
+<Notice type="NOTE">
+  If you want to use ReJot with a non-TypeScript codebase, you can modify your manifest directly to
+  create schemas, or you can choose to define your schemas in TypeScript anyway.
+</Notice>
 
 ## Setting Up
 
 First, add the required dependencies to your project:
 
-```bash
-npm install --save @rejot-dev/contract @rejot-dev/adapter-postgres
-```
+<LanguageVariants
+  languages={[
+    {
+      title: "NPM",
+      lang: "bash",
+      code: `npm install --save @rejot-dev/contract @rejot-dev/adapter-postgres`,
+    },
+    {
+      title: "Bun",
+      lang: "bash",
+      code: `bun add @rejot-dev/contract @rejot-dev/adapter-postgres`,
+    },
+  ]}
+/>
 
 ## Creating Public and Consumer Schema Definitions
 
@@ -39,6 +55,11 @@ Create a new file called `schemas.ts` that will contain your public and consumer
   />
 </PreWithCopy>
 
+<Notice type="TIP">
+  Make sure you adjust the data store and manifest slugs in this example to the manifest you've
+  created.
+</Notice>
+
 ### Transformations
 
 Transformations are a crucial part of schema definitions that specify how data is transformed
@@ -52,12 +73,21 @@ transformation maps the public schema back into an internal representation for t
 For public schemas, you need to create a SQL transformation for each table referenced in the schema.
 These transformations:
 
-- Take a primary key as input parameter(s) (`$1`, `$2`, etc)
-- Return exactly one row that matches the public schema's output structure
+- Take the modified row as input parameters. They can be accessed in column order using positional
+  parameters (e.g., `$1`, `$2`, etc). We also provide support for named parameters, using the name
+  of the column. E.g. `:id`.
+- MUST return exactly one row that matches the public schema's output structure.
 
 Here's an example of a public schema transformation:
 
 <PartialCode code={rawFullSchemaText} lang="ts" part="publicSchemaTransformations" />
+
+<Notice type="IMPORTANT">
+  The row returned from the transformation query must exactly match the public schema's output
+  structure, including casing in column names. In Postgres, when not double-quoting column names,
+  they are always returned in lowercase. It's recommended to always add an explicit "AS" statement,
+  to ensure the casing is correct. E.g. `SELECT id, first_name AS "firstName" FROM my_table`.
+</Notice>
 
 #### Multi-table transformations
 
@@ -67,7 +97,7 @@ define schema transformations for each table.
 
 <PartialCode code={rawFullSchemaText} lang="ts" part="publicSchemaTransformationsMultiTable" />
 
-<Notice type="WARNING">
+<Notice type="NOTE">
   Note that your public schema transformation must always return one result, in case there is a
   one-to-many relationship between tables you cannot include them in your ReJot public schema
   without doing some kind aggregation in your query. For PostgreSQL, use one of the [aggregation
@@ -92,14 +122,15 @@ Code-based schemas need to be materialized into your manifest file to be usable 
 This is done using the `collect` command:
 
 ```bash
-rejot-cli collect schemas.ts --write
+rejot-cli collect --write --check schemas.ts
 ```
 
 This command will:
 
-1. Read your schema definitions from `schemas.ts`
-2. Generate the corresponding manifest entries
-3. Update your manifest file (if `--write` is specified)
+- Read your schema definitions from `schemas.ts`.
+- Generate the corresponding manifest entries.
+- Check that all consumer schemas are referencing valid public schemas (if `--check` is specified).
+- Update your manifest file (if `--write` is specified).
 
 The manifest includes a `definitionFile` key for each schema, which points to the actual source file
 and is re-used later on to update collected schemas.

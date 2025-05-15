@@ -7,26 +7,14 @@ import Notice from "@/components/Notice.astro";
 This guide explains how to prepare your PostgreSQL database as a Data Source or Event Store for use
 with ReJot.
 
-## Creating a ReJot Database Role
+## Enabling Logical Replication
 
-We recommend creating a separate role for ReJot and granting access to that user for production use
-cases. If you want to get started quickly, you can use an admin user instead. ReJot will create the
-necessary schemas, databases, and tables automatically.
-
-```sql
-CREATE ROLE rejot_role
-WITH
-  REPLICATION LOGIN PASSWORD '<some secure password>';
-```
-
-## As a Source Data Store
-
-Using a Postgres data store as a Source Data Store means that ReJot will listen to the logical
-replication stream of that store and apply Public Schema transformations to its messages. ReJot
-leverages PostgreSQL's logical replication stream using the `pgoutput` native plugin to capture
-database changes.
-
-### Enabling Logical Replication
+<Notice type="TIP">
+  The only step absolutely required for ReJot to work is to enable logical replication. Creating
+  custom roles and permissions is recommended for production use cases, but not necessary for
+  development. ReJot will automatically create a replication slot, publication, schemas, and tables
+  when the sync process is started.
+</Notice>
 
 Logical replication is not enabled by default in PostgreSQL. The configuration that manages logical
 replication is called [`wal_level`][pg-wal-level], which must be set to `logical`. Note that
@@ -51,38 +39,16 @@ SET
 
 <Notice type="NOTE">
   Hosted PostgreSQL providers like Supabase, Neon, or Google Cloud SQL manage this setting via their
-  own dashboards.
+  own dashboards. When given the option to choose from a pooled connection or a dedicated
+  connection, choose the dedicated connection.
 </Notice>
 
-### Permissions Needed
+## Postgres as a Source Data Store
 
-To apply Public Schema transformations, the user must have the following permissions for the schema
-your data is in. For admin users, this does not need to be applied.
-
-{/* prettier-ignore */}
-```sql
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO rejot_role;
-```
-
-### Creating a PostgreSQL Publication
-
-A PostgreSQL [Publication][pg-create-publication] is defined on a primary Postgres node and
-specifies which set of tables in a database can be replicated to other systems.
-
-On first starting a Sync service, a default publication called `rejot_publication` is automatically
-created if it doesn't exist yet. This publication includes all tables and is equivalent to:
-
-```sql
-CREATE PUBLICATION rejot_publication FOR ALL TABLES;
-```
-
-If you prefer to control which tables are included in the publication, you can create the
-publication [manually through SQL][pg-create-publication]:
-
-```sql
-CREATE PUBLICATION rejot_publication FOR TABLE some_table,
-another_table;
-```
+Using a Postgres data store as a Source Data Store means that ReJot will listen to the logical
+replication stream of that store and apply Public Schema transformations to its messages. ReJot
+leverages PostgreSQL's logical replication stream using the `pgoutput` native plugin to capture
+database changes.
 
 ### Replication Slots
 
@@ -91,15 +57,85 @@ publication for each subscriber, ensuring no changes are missed even if a subscr
 temporarily. It maintains a record of which changes have been consumed by subscribers and prevents
 the deletion of Write-Ahead Log (WAL) segments until all subscribers have processed them.
 
-Replication slots for ReJot are also automatically created by the Sync service on launch (if not
-already present) and have a default name of `rejot_slot`.
+<Notice type="TIP">
+  In most cases it is **not** necessary to create a replication slot manually. ReJot will create a
+  slot if it doesn't exist yet based on the data store config in your manifest.
+</Notice>
 
-## As an Event Store
+### Creating a PostgreSQL Publication
+
+A PostgreSQL [Publication][pg-create-publication] is defined on a primary Postgres node and
+specifies which set of tables in a database can be replicated to other systems.
+
+On first starting a Sync service, a publication is automatically created if it doesn't exist yet.
+This publication includes all tables and is equivalent to:
+
+```sql
+CREATE PUBLICATION rejot_publication FOR ALL TABLES;
+```
+
+If you prefer to control which tables are included in the publication, you can create the
+publication manually:
+
+{/* prettier-ignore */}
+```sql
+CREATE PUBLICATION rejot_publication FOR TABLE some_table, another_table;
+```
+
+See the [PostgreSQL docs][pg-create-publication] for more details.
+
+## Postgres as an Event Store
 
 To use PostgreSQL as an event store, the user used to connect to the database must be able to create
-new schemas called `rejot_events` and `rejot_data_store`. The `rejot-cli` will create these schemas
-for you on launch. If you don't want to give the `rejot_role` access to create schemas, you'll have
-to manually create these schemas and assign the following roles to the `rejot_role`.
+a schema called `rejot_events`. The `rejot-cli` will create these schemas for you on launch. If you
+don't want to give the `rejot_role` access to create schemas, you'll have to manually create these
+schemas and assign the following roles to the `rejot_role`.
+
+## Hardening the ReJot Database Role
+
+We recommend creating a separate role for ReJot and granting access to that user for production use
+cases. If you want to get started quickly, you can use an admin user instead. ReJot will create the
+necessary schemas, databases, and tables automatically.
+
+```sql
+CREATE ROLE rejot_role
+WITH
+  REPLICATION LOGIN PASSWORD '<some secure password>';
+```
+
+### Source Data Store Permissions
+
+To be able to read data from a source data store, ReJot must be able to create a replication slot,
+publication, and must be able to issue `SELECT` statements on the tables being replicated.
+
+To apply Public Schema transformations, the ReJot Postgres user must have the `SELECT` permission on
+the relevant schemas (`public` by default).
+
+{/* prettier-ignore */}
+```sql
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO rejot_role;
+```
+
+### Destination Data Store Permissions
+
+For ReJot's replication to function, we must be able to keep track of the last seen transaction ID
+and the state of Public Schema transformations. This is done in the `rejot_data_store` schema. When
+starting the sync service, ReJot will automatically run migrations to create the necessary schema
+and tables. To do this, write permissions on the `rejot_data_store` schema are required.
+
+### Event Store Permissions
+
+Similar to the destination data store, ReJot will automatically run migrations to create the
+necessary schema and tables needed for the event store. This is the `rejot_events` schema.
+
+### Recommendations
+
+For maximum security we recommend creating a separate role for ReJot and granting specific
+permissions to that role. The replication slot, publication and schemas should be created manually
+by a system administrator. Then the necessary permissions for the use case should be granted to the
+ReJot role.
+
+### Reference
 
 {/* prettier-ignore */}
 ```sql

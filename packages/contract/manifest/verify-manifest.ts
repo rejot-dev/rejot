@@ -263,7 +263,9 @@ export function verifyPublicSchemaReferences(
           errors.push({
             type: "DATA_STORE_MISSING_CONFIG",
             severity: "error",
-            message: `Public schema '${publicSchema.name}' references data store '${publicSchema.source.dataStoreSlug}' which does not have a configuration`,
+            message:
+              `Public schema '${publicSchema.name}' references data store ` +
+              `'${publicSchema.source.dataStoreSlug}' which does not have a configuration.`,
             location: {
               manifestSlug: manifest.slug,
               manifestPath,

@@ -34,8 +34,8 @@ createPublicSchema("publish-account", {
             FROM account_emails e 
             WHERE e.account_id = a.id
           ) as emails,
-          a.first_name as firstName,
-          a.last_name as lastName
+          a.first_name as "firstName",
+          a.last_name as "lastName"
         FROM 
           account a WHERE a.id = :id\`,
       ),

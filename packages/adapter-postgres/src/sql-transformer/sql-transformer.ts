@@ -5,6 +5,7 @@ import type {
   PublicSchemaValidationResult,
 } from "@rejot-dev/contract/adapter";
 import { extractSchemaKeys } from "@rejot-dev/contract/json-schema";
+import { getLogger } from "@rejot-dev/contract/logger";
 import type {
   ConsumerSchemaSchema,
   PostgresConsumerSchemaConfigSchema,
@@ -18,6 +19,8 @@ import type {
   PostgresPublicSchemaValidationErrorInfo,
 } from "../adapter/pg-consumer-schema-validation-adapter.ts";
 import { sqlTransformationCache } from "./sql-transformation-cache.ts";
+
+const log = getLogger(import.meta.url);
 
 export async function isMixingPositionalAndNamedPlaceholders(sql: string): Promise<boolean> {
   const { placeholders } = await sqlTransformationCache.parseAndFindPlaceholders(sql);
@@ -314,6 +317,7 @@ export async function convertNamedToPositionalPlaceholders(
     // If we haven't seen this parameter yet, add it to our ordered values
     if (!nameToPositionMap.has(name)) {
       if (!(name in object)) {
+        log.debug("nameToPositionMap", nameToPositionMap);
         throw new Error(`Named parameter ':${name}' has no corresponding value in the object`);
       }
 

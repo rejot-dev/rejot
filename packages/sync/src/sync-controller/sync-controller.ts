@@ -115,6 +115,8 @@ export class SyncController implements ISyncController {
           transaction,
         );
 
+        log.trace("Transformed operations", operations);
+
         await this.#publishMessageBus.publish({
           transactionId: transaction.id,
           operations,

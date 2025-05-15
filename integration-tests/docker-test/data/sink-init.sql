@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS account_destination (
+  id INTEGER PRIMARY KEY,
+  full_name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL
+);

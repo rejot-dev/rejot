@@ -70,7 +70,7 @@
         "<%= config.bin %> manifest --manifest ./custom-manifest.json",
         "<%= config.bin %> manifest init",
         "<%= config.bin %> manifest connection add --slug my-source --connection-string \"postgresql://user:pass@host:5432/db\"",
-        "<%= config.bin %> manifest datastore add --connection my-source --publication my-pub",
+        "<%= config.bin %> manifest datastore add --connection my-source --publication my_pub --slot my_rejot_slot",
         "<%= config.bin %> manifest eventstore add --connection my-target"
       ],
       "flags": {
