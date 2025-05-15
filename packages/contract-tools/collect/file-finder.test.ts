@@ -28,10 +28,9 @@ describe("file-finder", () => {
 
       const results = await fileFinder.searchInDirectory(tmpDir, ["console"]);
       expect(results).toHaveLength(2);
-      expect(results.map((r) => r.match.trim())).toEqual([
-        "console.log('hello');",
-        "console.error('world');",
-      ]);
+      expect(
+        results.sort((a, b) => a.file.localeCompare(b.file)).map((r) => r.match.trim()),
+      ).toEqual(["console.log('hello');", "console.error('world');"]);
     });
 
     it("should handle multiple search terms", async () => {
