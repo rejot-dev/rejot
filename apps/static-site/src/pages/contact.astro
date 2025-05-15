@@ -1,7 +1,7 @@
 ---
-import Base from "../layouts/Base.astro";
 import ContactForm from "../components/ContactForm.astro";
 import { pageTitle } from "../consts";
+import Base from "../layouts/Base.astro";
 ---
 
 <Base title={pageTitle("Contact")} description="Contact us">
@@ -21,11 +21,19 @@ import { pageTitle } from "../consts";
         </div>
         <div class="mt-4 space-y-4 md:mt-0">
           <div>
-            <h4 class="text-xl font-bold">Mailing Address</h4>
+            <h4 class="text-xl font-bold">US</h4>
             <div class="text-gray-600 dark:text-gray-400">
               <p>ReJot, Inc.</p>
               <p>1111B S Governors Ave STE 25611</p>
               <p>Dover, DE 19904</p>
+            </div>
+          </div>
+          <div>
+            <h4 class="text-xl font-bold">The Netherlands</h4>
+            <div class="text-gray-600 dark:text-gray-400">
+              <p>ReJot Nederland B.V.</p>
+              <p>KvK: 96241047</p>
+              <p>Amsterdam</p>
             </div>
           </div>
 
