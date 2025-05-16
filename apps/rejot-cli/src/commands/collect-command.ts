@@ -159,11 +159,15 @@ export default class Collect extends Command {
     }
 
     if (check) {
-      await validateManifest(
-        newManifest,
-        [new PostgresConsumerSchemaValidationAdapter()],
-        [new PostgresConsumerSchemaValidationAdapter()],
-      );
+      try {
+        await validateManifest(
+          newManifest,
+          [new PostgresConsumerSchemaValidationAdapter()],
+          [new PostgresConsumerSchemaValidationAdapter()],
+        );
+      } catch (error) {
+        log.error(error instanceof Error ? error.message : "Failed to validate manifest.");
+      }
     }
 
     if (write) {

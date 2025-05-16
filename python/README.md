@@ -24,7 +24,7 @@ pip install rejot-contract
 ```python
 from pydantic import BaseModel
 from rejot_contract.public_schema import (
-    create_public_schema, PublicSchemaConfig, PostgresPublicSchemaConfigTransformation, Source, Version
+    create_public_schema, PublicSchemaConfig, PostgresPublicSchemaConfigTransformation, Source, Version, create_postgres_public_schema_transformation
 )
 from rejot_contract.consumer_schema import (
     create_consumer_schema, ConsumerSchemaConfig, SourceManifest, PublicSchema
@@ -35,6 +35,13 @@ class Account(BaseModel):
     email: str
     name: str
 
+# Use the helper to create transformations for insertOrUpdate
+transformations = create_postgres_public_schema_transformation(
+    operation="insertOrUpdate",
+    table="account",
+    sql="INSERT INTO account (id, email, name) VALUES (:id, :email, :name)",
+)
+
 # Define a public schema
 public = create_public_schema(
     public_schema_name="public-account",
@@ -43,13 +50,7 @@ public = create_public_schema(
     version=Version(major=1, minor=0),
     config=PublicSchemaConfig(
         publicSchemaType="postgres",
-        transformations=[
-            PostgresPublicSchemaConfigTransformation(
-                operation="insert",
-                table="account",
-                sql="INSERT INTO account (id, email, name) VALUES (:id, :email, :name)",
-            )
-        ],
+        transformations=transformations,
     ),
 )
 
@@ -77,6 +78,8 @@ consumer = create_consumer_schema(
 ### Public Schema
 
 - `create_public_schema(...)` — Create a public schema definition
+- `create_postgres_public_schema_transformation(...)` — Helper to generate transformation steps for
+  common Postgres operations
 - `PublicSchemaConfig` — Configuration for public schema (type, transformations)
 - `PostgresPublicSchemaConfigTransformation` — Transformation step for Postgres
 - `Source` — Source data store slug
@@ -88,6 +91,34 @@ consumer = create_consumer_schema(
 - `ConsumerSchemaConfig` — Configuration for consumer schema (type, destination, SQL)
 - `SourceManifest` — Reference to a public schema in a manifest
 - `PublicSchema` — Reference to a public schema
+
+### create_postgres_public_schema_transformation
+
+Helper to generate transformation steps for common Postgres operations.
+
+**Signature:**
+
+```python
+def create_postgres_public_schema_transformation(
+    operation: Literal["insertOrUpdate", "delete"],
+    table: str,
+    sql: str
+) -> List[PostgresPublicSchemaConfigTransformation]
+```
+
+- For `insertOrUpdate`, returns both insert and update transformations.
+- For `delete`, returns a delete transformation.
+- Raises `ValueError` for invalid operations.
+
+**Example:**
+
+```python
+transformations = create_postgres_public_schema_transformation(
+    operation="insertOrUpdate",
+    table="account",
+    sql="INSERT INTO account (id, email, name) VALUES (:id, :email, :name)",
+)
+```
 
 ## Project Structure
 

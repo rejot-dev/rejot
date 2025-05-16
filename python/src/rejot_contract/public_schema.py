@@ -31,6 +31,35 @@ class PublicSchemaData(BaseModel):
 
 T = TypeVar('T', bound=BaseModel)
 
+def create_postgres_public_schema_transformation(
+    operation: Literal["insertOrUpdate", "delete"],
+    table: str,
+    sql: str
+) -> List[PostgresPublicSchemaConfigTransformation]:
+    """
+    Create a list of PostgresPublicSchemaConfigTransformation objects for a given operation.
+
+    Args:
+        operation: The operation to create the transformation for.
+        table: The table to create the transformation for.
+        sql: The SQL statement to create the transformation for.
+
+    Returns:
+        A list of PostgresPublicSchemaConfigTransformation objects.
+    """
+
+    if operation == "insertOrUpdate":
+        return [
+            PostgresPublicSchemaConfigTransformation(operation="insert", table=table, sql=sql),
+            PostgresPublicSchemaConfigTransformation(operation="update", table=table, sql=sql),
+        ]
+    elif operation == "delete":
+        return [
+            PostgresPublicSchemaConfigTransformation(operation="delete", table=table, sql=sql),
+        ]
+    else:
+        raise ValueError(f"Invalid operation: {operation}")
+
 def create_public_schema(
     public_schema_name: str,
     source: Source,
@@ -38,6 +67,20 @@ def create_public_schema(
     version: Version,
     config: PublicSchemaConfig
 ) -> dict[str, Any]:
+    """
+    Create a public schema definition for a given output schema.
+
+    Args:
+        public_schema_name: The name of the public schema.
+        source: The source of the public schema.
+        output_schema: The output schema of the public schema.
+        version: The version of the public schema.
+        config: The configuration of the public schema.
+
+    Returns:
+        A json schema dictionary representing the public schema.
+    """
+
     if not config.transformations:
         raise InvalidPublicSchemaError("Public schema must have at least one transformation")
 

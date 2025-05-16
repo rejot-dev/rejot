@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List
 from rejot_contract.public_schema import (
-    create_public_schema, Source, Version, PublicSchemaConfig, PostgresPublicSchemaConfigTransformation
+    create_public_schema, Source, Version, PublicSchemaConfig, create_postgres_public_schema_transformation
 )
 from rejot_contract.consumer_schema import (
     create_consumer_schema, SourceManifest, PublicSchema, Version as ConsumerVersion, ConsumerSchemaConfig
@@ -23,8 +23,8 @@ one_person_schema = create_public_schema(
     config=PublicSchemaConfig(
         publicSchemaType="postgres",
         transformations=[
-            PostgresPublicSchemaConfigTransformation(
-                operation="insert",
+            *create_postgres_public_schema_transformation(
+                operation="insertOrUpdate",
                 table="person",
                 sql=(
                     'SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", ' +
@@ -35,32 +35,8 @@ one_person_schema = create_public_schema(
                     'GROUP BY p.id, p.first_name, p.last_name'
                 )
             ),
-            PostgresPublicSchemaConfigTransformation(
-                operation="update",
-                table="person",
-                sql=(
-                    'SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", ' +
-                    'COALESCE(array_agg(e.email) FILTER (WHERE e.email IS NOT NULL), \'{}\') as emails ' +
-                    'FROM rejot_integration_tests_python_bun.person p ' +
-                    'LEFT JOIN rejot_integration_tests_python_bun.person_email e ON p.id = e.person_id ' +
-                    'WHERE p.id = :id ' +
-                    'GROUP BY p.id, p.first_name, p.last_name'
-                )
-            ),
-            PostgresPublicSchemaConfigTransformation(
-                operation="insert",
-                table="person_email",
-                sql=(
-                    'SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", ' +
-                    'COALESCE(array_agg(e.email) FILTER (WHERE e.email IS NOT NULL), \'{}\') as emails ' +
-                    'FROM rejot_integration_tests_python_bun.person p ' +
-                    'LEFT JOIN rejot_integration_tests_python_bun.person_email e ON p.id = e.person_id ' +
-                    'WHERE p.id = (SELECT person_id FROM rejot_integration_tests_python_bun.person_email WHERE id = :id) ' +
-                    'GROUP BY p.id, p.first_name, p.last_name'
-                )
-            ),
-            PostgresPublicSchemaConfigTransformation(
-                operation="update",
+            *create_postgres_public_schema_transformation(
+                operation="insertOrUpdate",
                 table="person_email",
                 sql=(
                     'SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", ' +
