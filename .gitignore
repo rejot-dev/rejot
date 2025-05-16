@@ -49,3 +49,7 @@ yarn-error.log*
 *.log
 
 rejot-manifest.json
+
+
+**/venv
+**/__pycache__
