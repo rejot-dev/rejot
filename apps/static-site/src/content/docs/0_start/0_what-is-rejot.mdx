@@ -2,24 +2,27 @@
 title: "What is ReJot"
 ---
 
-ReJot is a database to database synchronization engine and data catalog for enterprises with
-distributed architectures and teams. Our aim is to replace event sourcing and gRPC/REST as a means
-of sharing data between (micro)services.
+ReJot is a database-to-database synchronization engine designed for teams operating in distributed
+architectures. It lets you decouple service communication by allowing data to flow asynchronously
+between services, using your database's changelog/WAL as the queue. ReJot's asynchronous model
+improves reliability and reduces latency compared to synchronous inter-service communication.
 
-Services use their existing database as an interface for remote datasets. Data owners can publish
-datasets in a shared catalog, allowing other teams to consume them. Our sync engine tracks changes
-to these datasets and propagates updates to consumer database in real time.
+With data contracts expressed in code, developers retain full control over what data is shared and
+how it is shared. Define what to publish and consume using your database's query language, just like
+defining tables or writing migrations. ReJot fits naturally into your development workflow.
 
 ## How does it work?
 
 - Data dependencies in ReJot are modeled through [Data Contracts](/docs/concepts/data-contracts)
   known as **[Public Schemas](/docs/spec/public-schema)** and
-  **[Consumer Schemas](/docs/spec/consumer-schema)**.
+  **[Consumer Schemas](/docs/spec/consumer-schema)**. These contracts are defined by developers in
+  code.
 - Public Schemas define how internal datasets are exposed, allowing teams to independently evolve
   their internal data models while maintaining the contract with consumers.
-- ReJot automatically tracks dependencies on these Public Schemas and manages version deprecation.
-- Consumers may require different data structures, such as for optimizing specific lookups, which is
-  why they establish their own schemas to explicitly define these mappings.
+- Consumers at the same time can ingest these data sources by setting up a Consumer Schema.
+- ReJot connects to the publishing data store's write-ahead-log and pushes changes to Public schemas
+  to the data stores on the consuming side.
+- An intermediate event store is used as durable storage to store these updates.
 
 ## How to get started
 
