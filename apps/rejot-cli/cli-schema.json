@@ -58,6 +58,12 @@
           "description": "Verbose output.",
           "required": false,
           "type": "boolean"
+        },
+        "python-executable": {
+          "name": "python-executable",
+          "description": "The Python executable to use.",
+          "required": false,
+          "type": "string"
         }
       },
       "strict": false

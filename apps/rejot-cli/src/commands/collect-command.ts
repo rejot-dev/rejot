@@ -64,11 +64,24 @@ export default class Collect extends Command {
       description: "Verbose output.",
       required: false,
     }),
+    "python-executable": Flags.string({
+      description: "The Python executable to use.",
+      required: false,
+
+      aliases: ["py"],
+    }),
   };
 
   public async run(): Promise<void> {
     const { flags, argv } = await this.parse(Collect);
-    const { write, check, print, "log-level": logLevel, verbose } = flags;
+    const {
+      write,
+      check,
+      print,
+      "log-level": logLevel,
+      verbose,
+      "python-executable": pythonExecutable,
+    } = flags;
 
     setLogger(new ConsoleLogger(logLevel.toUpperCase()));
 
@@ -116,7 +129,7 @@ export default class Collect extends Command {
           collector = new TypescriptSchemaCollector(new TypeStripper());
           break;
         case "py":
-          collector = new PythonSchemaCollector();
+          collector = new PythonSchemaCollector(pythonExecutable ?? "python3");
           break;
         default:
           this.error(`Unsupported schema file extension: '${extension}'.`);

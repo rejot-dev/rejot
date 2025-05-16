@@ -48,6 +48,12 @@ interface ModuleWithDefault {
 }
 
 export class PythonSchemaCollector implements ISchemaCollector {
+  readonly #pythonExecutable: string;
+
+  constructor(pythonExecutable: string) {
+    this.#pythonExecutable = pythonExecutable;
+  }
+
   async collectSchemas(
     manifestPath: string,
     modulePath: string,
@@ -59,6 +65,10 @@ export class PythonSchemaCollector implements ISchemaCollector {
       consumerSchemas: [],
     };
 
+    if (verbose) {
+      log.user(`Collecting schemas from ${modulePath} using ${this.#pythonExecutable}`);
+    }
+
     // Use child_process to run the Python wrapper script
     const { spawn } = await import("node:child_process");
     const { dirname, relative } = await import("node:path");
@@ -69,9 +79,13 @@ export class PythonSchemaCollector implements ISchemaCollector {
     // TODO: Add a flag to change the python executable path.
 
     // Call wrapper.py and pass the module path as an argument
-    const pythonProcess = spawn("python3", ["-c", pythonWrapper(modulePathWithoutPy)], {
-      stdio: ["ignore", "pipe", "pipe"],
-    });
+    const pythonProcess = spawn(
+      this.#pythonExecutable,
+      ["-c", pythonWrapper(modulePathWithoutPy)],
+      {
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
 
     let stdout = "";
     let stderr = "";
