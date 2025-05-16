@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
-import { $ } from "bun";
+import { $, sleep } from "bun";
 import { rm } from "fs/promises";
 
 import {
@@ -161,6 +161,9 @@ describe("Integration Test - Python and Bun", () => {
         stdout: "pipe",
         stderr: "pipe",
       });
+
+      // TODO: Make sure the replication slot is created before we start writing data
+      await sleep(1000);
 
       try {
         // Insert a person and two emails in a single transaction

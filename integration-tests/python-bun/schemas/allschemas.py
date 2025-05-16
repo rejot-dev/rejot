@@ -36,7 +36,31 @@ one_person_schema = create_public_schema(
                 )
             ),
             PostgresPublicSchemaConfigTransformation(
+                operation="update",
+                table="person",
+                sql=(
+                    'SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", ' +
+                    'COALESCE(array_agg(e.email) FILTER (WHERE e.email IS NOT NULL), \'{}\') as emails ' +
+                    'FROM rejot_integration_tests_python_bun.person p ' +
+                    'LEFT JOIN rejot_integration_tests_python_bun.person_email e ON p.id = e.person_id ' +
+                    'WHERE p.id = :id ' +
+                    'GROUP BY p.id, p.first_name, p.last_name'
+                )
+            ),
+            PostgresPublicSchemaConfigTransformation(
                 operation="insert",
+                table="person_email",
+                sql=(
+                    'SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", ' +
+                    'COALESCE(array_agg(e.email) FILTER (WHERE e.email IS NOT NULL), \'{}\') as emails ' +
+                    'FROM rejot_integration_tests_python_bun.person p ' +
+                    'LEFT JOIN rejot_integration_tests_python_bun.person_email e ON p.id = e.person_id ' +
+                    'WHERE p.id = (SELECT person_id FROM rejot_integration_tests_python_bun.person_email WHERE id = :id) ' +
+                    'GROUP BY p.id, p.first_name, p.last_name'
+                )
+            ),
+            PostgresPublicSchemaConfigTransformation(
+                operation="update",
                 table="person_email",
                 sql=(
                     'SELECT p.id, p.first_name as "firstName", p.last_name as "lastName", ' +
