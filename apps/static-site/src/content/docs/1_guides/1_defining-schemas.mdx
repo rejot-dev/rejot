@@ -2,12 +2,11 @@
 title: "Defining Schemas"
 ---
 
-import { Code } from "astro:components";
-import PreWithCopy from "@/components/PreWithCopy.astro";
 import Notice from "@/components/Notice.astro";
-import rawSchemaText from "./schema.ts?raw";
-import rawFullSchemaText from "./finishedSchema.ts?raw";
-import PartialCode from "@/components/PartialCode.astro";
+import rawSchemaTextTs from "./schema.ts?raw";
+import rawSchemaTextPython from "./schema.py?raw";
+import rawFullSchemaTextTs from "./finishedSchema.ts?raw";
+import rawFullSchemaTextPython from "./finishedSchema.py?raw";
 import LanguageVariants from "@/components/LanguageVariants.astro";
 
 When using ReJot, you define Public and Consumer schemas right from your codebase. This allows you
@@ -28,37 +27,17 @@ First, add the required dependencies to your project:
 <LanguageVariants
   languages={[
     {
-      title: "NPM",
-      lang: "bash",
-      code: `npm install --save @rejot-dev/contract @rejot-dev/adapter-postgres`,
+      title: "TypeScript",
+      lang: "ts",
+      code: rawSchemaTextTs,
     },
     {
-      title: "Bun",
-      lang: "bash",
-      code: `bun add @rejot-dev/contract @rejot-dev/adapter-postgres`,
+      title: "Python",
+      lang: "py",
+      code: rawSchemaTextPython,
     },
   ]}
 />
-
-## Creating Public and Consumer Schema Definitions
-
-Create a new file called `schemas.ts` that will contain your public and consumer schemas:
-
-<PreWithCopy noWrapper>
-  <Code
-    code={rawSchemaText}
-    lang="ts"
-    themes={{
-      light: "github-light",
-      dark: "github-dark",
-    }}
-  />
-</PreWithCopy>
-
-<Notice type="TIP">
-  Make sure you adjust the data store and manifest slugs in this example to the manifest you've
-  created.
-</Notice>
 
 ### Transformations
 
@@ -80,14 +59,22 @@ These transformations:
 
 Here's an example of a public schema transformation:
 
-<PartialCode code={rawFullSchemaText} lang="ts" part="publicSchemaTransformations" />
-
-<Notice type="IMPORTANT">
-  The row returned from the transformation query must exactly match the public schema's output
-  structure, including casing in column names. In Postgres, when not double-quoting column names,
-  they are always returned in lowercase. It's recommended to always add an explicit "AS" statement,
-  to ensure the casing is correct. E.g. `SELECT id, first_name AS "firstName" FROM my_table`.
-</Notice>
+<LanguageVariants
+  languages={[
+    {
+      title: "TypeScript",
+      lang: "ts",
+      code: rawFullSchemaTextTs,
+      part: "publicSchemaTransformations",
+    },
+    {
+      title: "Python",
+      lang: "py",
+      code: rawFullSchemaTextPython,
+      part: "publicSchemaTransformations",
+    },
+  ]}
+/>
 
 #### Multi-table transformations
 
@@ -95,7 +82,22 @@ A common case is to (partially) de-normalize your data for the public schema, to
 results ReJot should listen to updates to all of these tables. As a data producer you will have to
 define schema transformations for each table.
 
-<PartialCode code={rawFullSchemaText} lang="ts" part="publicSchemaTransformationsMultiTable" />
+<LanguageVariants
+  languages={[
+    {
+      title: "TypeScript",
+      lang: "ts",
+      code: rawFullSchemaTextTs,
+      part: "publicSchemaTransformationsMultiTable",
+    },
+    {
+      title: "Python",
+      lang: "py",
+      code: rawFullSchemaTextPython,
+      part: "publicSchemaTransformationsMultiTable",
+    },
+  ]}
+/>
 
 <Notice type="NOTE">
   Note that your public schema transformation must always return one result, in case there is a
@@ -114,7 +116,22 @@ destination data store. These transformations:
 
 Here's an example of a consumer schema transformation:
 
-<PartialCode code={rawFullSchemaText} lang="ts" part="consumerSchemaSql" />
+<LanguageVariants
+  languages={[
+    {
+      title: "TypeScript",
+      lang: "ts",
+      code: rawFullSchemaTextTs,
+      part: "consumerSchemaSql",
+    },
+    {
+      title: "Python",
+      lang: "py",
+      code: rawFullSchemaTextPython,
+      part: "consumerSchemaSql",
+    },
+  ]}
+/>
 
 ## Materializing Schemas
 

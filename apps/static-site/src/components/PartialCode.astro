@@ -26,15 +26,20 @@ const parts = code
   .split("\n")
   .filter((line) => {
     const trimmedLine = line.trimStart();
-    if (trimmedLine === "// part: " + part) {
+    if (trimmedLine === "// part: " + part || trimmedLine === "# part: " + part) {
       include = true;
     }
-    if (trimmedLine === "// end: " + part) {
+    if (trimmedLine === "// end: " + part || trimmedLine === "# end: " + part) {
       include = false;
     }
 
     // Skip lines that start with // part: or // end:
-    if (trimmedLine.startsWith("// part:") || trimmedLine.startsWith("// end:")) {
+    if (
+      trimmedLine.startsWith("// part:") ||
+      trimmedLine.startsWith("// end:") ||
+      trimmedLine.startsWith("# part:") ||
+      trimmedLine.startsWith("# end:")
+    ) {
       return false;
     }
 
