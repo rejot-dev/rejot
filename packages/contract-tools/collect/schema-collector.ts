@@ -272,7 +272,7 @@ export class TypescriptSchemaCollector implements ISchemaCollector {
       log.logErrorInstance(error);
 
       if (error instanceof Error) {
-        if (error.message.includes("before initialization")) {
+        if (error.message.includes("before initialization") || error.message.includes("bun test")) {
           if (!modulePath.includes("test")) {
             log.warn(
               `Skipping ${modulePath} because it couldn't be initialized. This might be because it contains test code.`,
