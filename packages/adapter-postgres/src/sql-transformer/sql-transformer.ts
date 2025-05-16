@@ -12,7 +12,7 @@ import type {
   PostgresPublicSchemaConfigSchema,
 } from "@rejot-dev/contract/manifest";
 import type { PublicSchemaSchema } from "@rejot-dev/contract/manifest";
-import { type PlaceholderInfo } from "@rejot-dev/sqlparser";
+import { initSqlparser, parseSql, type PlaceholderInfo } from "@rejot-dev/sqlparser";
 
 import type {
   PostgresConsumerSchemaValidationErrorInfo,
@@ -89,9 +89,22 @@ export async function validatePublicSchema(
     return result;
   }
 
+  await initSqlparser();
+
   for (let i = 0; i < publicSchema.config.transformations.length; i++) {
     const transformation = publicSchema.config.transformations[i];
     const sql = transformation.sql;
+
+    try {
+      parseSql(sql);
+    } catch (error) {
+      result.isValid = false;
+      result.errors.push({
+        message: `Invalid SQL: ${error?.toString()}`,
+        info: { type: "INVALID_SQL", sql },
+      });
+      return result;
+    }
 
     if (await isMixingPositionalAndNamedPlaceholders(sql)) {
       result.isValid = false;
@@ -135,6 +148,19 @@ async function validateConsumerQuery(
     message: string;
     info: PostgresConsumerSchemaValidationErrorInfo;
   }[] = [];
+
+  await initSqlparser();
+
+  try {
+    parseSql(sql);
+  } catch (error) {
+    errors.push({
+      message: `Invalid SQL in query ${inQuery}: ${error?.toString()}`,
+      info: { type: "INVALID_SQL", sql },
+    });
+    return { errors };
+  }
+
   if (await isMixingPositionalAndNamedPlaceholders(sql)) {
     errors.push({
       message:

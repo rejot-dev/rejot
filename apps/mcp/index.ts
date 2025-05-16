@@ -1,5 +1,5 @@
 import { FileFinder } from "@rejot-dev/contract-tools/collect/file-finder";
-import { SchemaCollector } from "@rejot-dev/contract-tools/collect/schema-collector";
+import { TypescriptSchemaCollector } from "@rejot-dev/contract-tools/collect/schema-collector";
 import { VibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
 import { ManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest";
 import { ManifestFileManager } from "@rejot-dev/contract-tools/manifest/manifest-file-manager";
@@ -129,7 +129,7 @@ const workspaceService = new WorkspaceService(new ManifestWorkspaceResolver());
 const manifestFileManager = new ManifestFileManager();
 
 const vibeCollector = new VibeCollector(
-  new SchemaCollector(new TypeStripper()),
+  new TypescriptSchemaCollector(new TypeStripper()),
   new FileFinder(),
   manifestFileManager,
 );

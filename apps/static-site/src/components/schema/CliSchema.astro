@@ -16,7 +16,11 @@ const { bin = "rejot-cli", command } = Astro.props as Props;
       <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">{command.id}</h3>
       {
         command.description && (
-          <p class="mt-1 text-gray-600 dark:text-gray-300">{command.description}</p>
+          <p class="mt-1 text-gray-600 dark:text-gray-300">
+            {command.description
+              .replace(/<%= config\.bin %>/g, bin)
+              .replace(/<%= command\.id %>/g, command.id.replace(/:/g, " "))}
+          </p>
         )
       }
     </div>
