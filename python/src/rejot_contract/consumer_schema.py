@@ -39,6 +39,18 @@ class ConsumerSchemaData(BaseModel):
 T = TypeVar('T', bound=BaseModel)
 
 def validate_consumer_schema(source: SourceManifest, config: ConsumerSchemaConfig, definitionFile: Optional[str] = None) -> None:
+    """
+    Validate the consumer schema configuration.
+
+    Args:
+        source: The source manifest for the public schema.
+        config: The configuration for the consumer schema.
+        definitionFile: The file path to the definition file for the consumer schema.
+
+    Raises:
+        InvalidConsumerSchemaError: If the consumer schema configuration is invalid.
+    """
+
     if not source.manifestSlug or len(source.manifestSlug) == 0:
         raise InvalidConsumerSchemaError("Source manifest slug cannot be empty")
     if not source.publicSchema.name or len(source.publicSchema.name) == 0:
@@ -54,6 +66,19 @@ def create_consumer_schema(
     config: ConsumerSchemaConfig,
     definitionFile: Optional[str] = None
 ) -> dict[str, Any]:
+    """
+    Create a consumer schema definition for consuming and transforming data.
+
+    Args:
+        name: The name of the consumer schema.
+        source: The source manifest for the public schema.
+        config: The configuration for the consumer schema.
+        definitionFile: The file path to the definition file for the consumer schema.
+
+    Returns:
+        A json schema dictionary representing the consumer schema.
+    """
+    
     validate_consumer_schema(source, config, definitionFile)
     return ConsumerSchemaData(
         name=name,
