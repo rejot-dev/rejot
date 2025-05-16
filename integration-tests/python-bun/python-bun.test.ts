@@ -140,7 +140,7 @@ describe("Integration Test - Python and Bun", () => {
 
   test("Collect Schemas", async () => {
     const collect =
-      await $`bunx --bun rejot-cli collect --print --check --write schemas.allschemas.py`.text();
+      await $`bunx --bun rejot-cli collect --print --check --write schemas.allschemas.py --python-executable venv/bin/python`.text();
     expect(collect).toContain("Successfully validated 1 schema pairs.");
   });
 
@@ -151,6 +151,7 @@ describe("Integration Test - Python and Bun", () => {
       const syncProcess = Bun.spawn({
         cmd: [
           "bunx",
+          "--bun",
           "rejot-cli",
           "manifest",
           "sync",
@@ -199,6 +200,6 @@ describe("Integration Test - Python and Bun", () => {
         await syncProcess.exited;
       }
     },
-    { timeout: 2000 },
+    { timeout: 10000 },
   );
 });

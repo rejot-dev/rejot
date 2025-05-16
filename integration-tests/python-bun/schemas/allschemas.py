@@ -62,7 +62,7 @@ consume_python_bun_person_schema = create_consumer_schema(
         consumerSchemaType="postgres",
         destinationDataStoreSlug="main-connection",
         sql='''
-              INSERT INTO rejot_integration_tests_one.destination_person_email 
+              INSERT INTO rejot_integration_tests_python_bun.destination_person_email 
         (id, name, emails)
       VALUES 
         (:id, :firstName || ' ' || :lastName, array_to_string(:emails::text[], ','))
