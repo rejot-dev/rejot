@@ -1,19 +1,22 @@
 ---
+import ArrowPath from "astro-heroicons/outline/ArrowPath.astro";
+import CodeBracket from "astro-heroicons/outline/CodeBracket.astro";
+import Newspaper from "astro-heroicons/outline/Newspaper.astro";
 import ArrowRight from "astro-heroicons/solid/ArrowRight.astro";
 
 import BackgroundGradient from "@/components/index/BackgroundGradient.astro";
 import ConsumerSchemaDefinition from "@/components/index/ConsumerSchemaDefinition.astro";
+import FeatureItem from "@/components/index/FeatureItem.astro";
 import Hero from "@/components/index/Hero.astro";
 import HowWeDoItGrid from "@/components/index/HowWeDoItGrid.astro";
 import Microservice from "@/components/index/Microservice.astro";
 import PublicSchemaDefinition from "@/components/index/PublicSchemaDefinition.astro";
+import LinkButton from "@/components/LinkButton.astro";
 import NewsletterForm from "@/components/NewsletterForm.astro";
+import { pageTitle, REJOT_DESCRIPTION, REJOT_TAG_LINE } from "@/consts";
+import Base from "@/layouts/Base.astro";
 
-import LinkButton from "../components/LinkButton.astro";
-import { pageTitle, REJOT_DESCRIPTION, REJOT_TAG_LINE } from "../consts";
-import Base from "../layouts/Base.astro";
-
-// const iconProps = { class: "-ml-2 size-14 text-rejot-red-600 md:size-18", "stroke-width": "1" };
+const iconProps = { class: "-ml-2 size-14 text-rejot-red-600 md:size-18", "stroke-width": "1" };
 const description = `${REJOT_TAG_LINE}: ${REJOT_DESCRIPTION}`;
 ---
 
@@ -28,67 +31,28 @@ const description = `${REJOT_TAG_LINE}: ${REJOT_DESCRIPTION}`;
       <span class="min-h-full self-center">Backed by Y Combinator</span>
     </div>
 
-    <div class="gap-12 space-y-4 px-6 md:flex-row md:px-8">
-      <h2 class="text-center text-4xl font-bold xl:text-5xl xl:leading-tight">Why ReJot?</h2>
-      <p class="mx-auto max-w-prose text-center text-lg text-gray-600 dark:text-gray-400">
-        ReJot addresses latency and reliability issues in microservice architectures by replacing
-        synchronous API calls with asynchronous replication. Developer-defined data contracts give
-        developers control over data flows and help uphold domain boundaries. ReJot integrates with
-        your applications using the database tooling you're already using.
-      </p>
-    </div>
-    <hr class="dark:border-gray-600" />
-
-    <!-- <div id="steps" class="flex flex-col justify-between gap-12 px-6 md:flex-row md:px-8">
-      <FeatureItem title="Define">
-        <Newspaper {...iconProps} slot="icon" />
-        Teams own their data like they own their code. Data owners define a contract, add transformations,
-        and apply access control rules. Ownership leads to autonomy and speed.
-      </FeatureItem>
-
-      <FeatureItem title="Integrate">
-        <ArrowDownOnSquareStack {...iconProps} slot="icon" />
-        Integrators find data in the catalog. They create derived data from it to enhance their products.
-        Deep integration creates a cohesive platform.
-      </FeatureItem>
-
-      <FeatureItem title="Synchronize">
+    <div id="steps" class="flex flex-col justify-between gap-12 px-6 md:flex-row md:px-8">
+      <FeatureItem title="Asynchronous">
         <ArrowPath {...iconProps} slot="icon" />
-        ReJot's synchronization engine moves data between teams as soon as it's created. Manual data
-        fetching and integration tasks are a thing of the past.
-      </FeatureItem>
-    </div> -->
-
-    <!--     <hr class="dark:border-gray-600" />
-
-    <div class="space-y-4">
-      <h1 class="text-center text-4xl font-bold">Benefits</h1>
-      <p class="mx-auto max-w-prose text-center text-lg text-gray-600 dark:text-gray-400">
-        Your organization will benefit from ReJot in these ways.
-      </p>
-    </div>
-
-    <div id="value-proposition" class="flex flex-col justify-between gap-12 md:flex-row">
-      <FeatureItem title="Operate as One Platform">
-        <Cloud {...iconProps} slot="icon" />
-        Deeply integrate all aspects of your product catalog to create one cohesive platform.
+        Stop chaining fragile service calls. ReJot decouples communication by letting data flow asynchronously
+        between services, using your database's changelog as the queue. It's reliable, resilient, and
+        naturally tolerant to failure unlike synchronous APIs.
       </FeatureItem>
 
-      <FeatureItem title="Fearless Product Evolution">
-        <PresentationChartLine {...iconProps} slot="icon" />
-        Empower teams to change their product and implementation without worrying about dependent business
-        units.
+      <FeatureItem title="Lightweight by Design">
+        <Newspaper {...iconProps} slot="icon" />
+        No brokers, no partitions, no outboxes. ReJot avoids the operational weight of event streaming
+        platforms by reusing your existing infrastructure. You get the benefits of asynchronous communication,
+        without the overhead or complexity.
       </FeatureItem>
 
-      <FeatureItem title="Boost Developer Productivity">
-        <Forward {...iconProps} slot="icon" />
-        Speed up development cycles by cutting down on repetitive integration tasks. Define your data
-        contracts, and we'll make sure there are no breaches.
+      <FeatureItem title="Developer-Defined">
+        <CodeBracket {...iconProps} slot="icon" />
+        With ReJot, you define what to publish and consume using your database's query language, similar
+        to defining your tables or writing a migration. It lives in your codebase and fits naturally
+        into your dev workflow.
       </FeatureItem>
     </div>
-
-    <hr class="dark:border-gray-600" />
-    <SayGoodbye />  -->
 
     <div class="mx-6 md:mx-8">
       <Microservice />
