@@ -4,7 +4,7 @@ from rejot_contract.public_schema import (
     create_public_schema, Source, Version, PublicSchemaConfig, create_postgres_public_schema_transformation
 )
 from rejot_contract.consumer_schema import (
-    create_consumer_schema, SourceManifest, PublicSchema, Version as ConsumerVersion, ConsumerSchemaConfig
+    create_consumer_schema, SourceManifest, PublicSchema, ConsumerSchemaConfig
 )
 
 # Output schema for the public schema
@@ -62,9 +62,9 @@ consume_python_bun_person_schema = create_consumer_schema(
         consumerSchemaType="postgres",
         destinationDataStoreSlug="main-connection",
         sql='''
-              INSERT INTO rejot_integration_tests_python_bun.destination_person_email 
+              INSERT INTO rejot_integration_tests_python_bun.destination_person_email
         (id, name, emails)
-      VALUES 
+      VALUES
         (:id, :firstName || ' ' || :lastName, array_to_string(:emails::text[], ','))
             ON CONFLICT (id) DO UPDATE
                 SET name = :firstName || ' ' || :lastName,

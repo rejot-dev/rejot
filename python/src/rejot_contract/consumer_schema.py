@@ -78,7 +78,7 @@ def create_consumer_schema(
     Returns:
         A json schema dictionary representing the consumer schema.
     """
-    
+  
     validate_consumer_schema(source, config, definitionFile)
     return ConsumerSchemaData(
         name=name,
