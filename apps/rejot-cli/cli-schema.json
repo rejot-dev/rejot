@@ -87,8 +87,8 @@
       "id": "manifest:init",
       "description": "Initialize a new manifest file",
       "examples": [
-        "<%= config.bin %> manifest init",
-        "<%= config.bin %> manifest init --manifest ./custom-manifest.json"
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --manifest ./custom-manifest.json"
       ],
       "flags": {
         "manifest": {
@@ -110,8 +110,8 @@
       "id": "manifest:connection:add",
       "description": "Add a connection to the manifest file",
       "examples": [
-        "<%= config.bin %> manifest connection add --slug my-db --connection-string \"postgresql://user:pass@host:5432/db\"",
-        "<%= config.bin %> manifest connection add --slug my-db --type postgres --host localhost --port 5432 --user postgres --password secret --database mydb"
+        "<%= config.bin %> <%= command.id %> --slug my-db --connection-string \"postgresql://user:pass@host:5432/db\"",
+        "<%= config.bin %> <%= command.id %> --slug my-db --type postgres --host localhost --port 5432 --user postgres --password secret --database mydb"
       ],
       "flags": {
         "manifest": {
@@ -178,7 +178,7 @@
       "id": "manifest:connection:remove",
       "description": "Remove a connection from the manifest file",
       "examples": [
-        "<%= config.bin %> manifest connection remove my-db"
+        "<%= config.bin %> <%= command.id %> my-db"
       ],
       "args": {
         "slug": {
@@ -201,7 +201,7 @@
       "id": "manifest:connection:list",
       "description": "List all connections in the manifest file",
       "examples": [
-        "<%= config.bin %> manifest connection list"
+        "<%= config.bin %> <%= command.id %>"
       ],
       "flags": {
         "manifest": {
@@ -217,8 +217,8 @@
       "id": "manifest:connection:update",
       "description": "Update an existing connection in the manifest file",
       "examples": [
-        "<%= config.bin %> manifest connection update my-db --connection-string \"postgresql://user:pass@host:5432/db\"",
-        "<%= config.bin %> manifest connection update my-db --type postgres --host localhost --port 5432 --user postgres --password secret --database mydb"
+        "<%= config.bin %> <%= command.id %> my-db --connection-string \"postgresql://user:pass@host:5432/db\"",
+        "<%= config.bin %> <%= command.id %> my-db --type postgres --host localhost --port 5432 --user postgres --password secret --database mydb"
       ],
       "args": {
         "slug": {
@@ -286,7 +286,7 @@
       "id": "manifest:datastore:add",
       "description": "Add a data store to the manifest file",
       "examples": [
-        "<%= config.bin %> manifest datastore add --connection my-db --publication my-pub"
+        "<%= config.bin %> <%= command.id %> --connection my-db --publication my-pub"
       ],
       "flags": {
         "manifest": {
@@ -320,7 +320,7 @@
       "id": "manifest:datastore:remove",
       "description": "Remove a data store from the manifest file",
       "examples": [
-        "<%= config.bin %> manifest datastore remove my-db"
+        "<%= config.bin %> <%= command.id %> my-db"
       ],
       "args": {
         "connectionSlug": {
@@ -361,7 +361,7 @@
       "id": "manifest:datastore:list",
       "description": "List all data stores in the manifest file",
       "examples": [
-        "<%= config.bin %> manifest datastore list"
+        "<%= config.bin %> <%= command.id %>"
       ],
       "flags": {
         "manifest": {
@@ -395,7 +395,7 @@
       "id": "manifest:eventstore:add",
       "description": "Add an event store to the manifest file",
       "examples": [
-        "<%= config.bin %> manifest eventstore add --connection my-db"
+        "<%= config.bin %> <%= command.id %> --connection my-db"
       ],
       "flags": {
         "manifest": {
@@ -417,7 +417,7 @@
       "id": "manifest:eventstore:remove",
       "description": "Remove an event store from the manifest file",
       "examples": [
-        "<%= config.bin %> manifest:eventstore:remove my-db"
+        "<%= config.bin %> <%= command.id %> my-db"
       ],
       "args": {
         "slug": {
@@ -440,7 +440,7 @@
       "id": "manifest:eventstore:list",
       "description": "List event stores in the manifest file",
       "examples": [
-        "<%= config.bin %> manifest:eventstore:list"
+        "<%= config.bin %> <%= command.id %>"
       ],
       "flags": {
         "manifest": {
@@ -456,8 +456,8 @@
       "id": "manifest:sync",
       "description": "Start syncing based on one or more manifest files.\n\n    Opens replication slots in the source data stores, transforms writes using public schemas,\n    and stores the events in the configured event store.",
       "examples": [
-        "<%= config.bin %> manifest sync ./rejot-manifest.json",
-        "<%= config.bin %> manifest sync ./manifest1.json ./manifest2.json"
+        "<%= config.bin %> <%= command.id %> ./rejot-manifest.json",
+        "<%= config.bin %> <%= command.id %> ./manifest1.json ./manifest2.json"
       ],
       "args": {
         "manifest": {
@@ -510,8 +510,8 @@
       "id": "workspace:info",
       "description": "Display information about the current workspace configuration and diagnostics",
       "examples": [
-        "<%= config.bin %> workspace info",
-        "<%= config.bin %> workspace info --filename custom-manifest.json"
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --filename custom-manifest.json"
       ],
       "flags": {
         "filename": {
@@ -526,8 +526,8 @@
       "id": "workspace:init",
       "description": "Initialize a new ReJot workspace",
       "examples": [
-        "<%= config.bin %> workspace init --slug @myorg/",
-        "<%= config.bin %> workspace init --slug @myorg/ --filename custom-manifest.json"
+        "<%= config.bin %> <%= command.id %> --slug @myorg/",
+        "<%= config.bin %> <%= command.id %> --slug @myorg/ --filename custom-manifest.json"
       ],
       "flags": {
         "filename": {

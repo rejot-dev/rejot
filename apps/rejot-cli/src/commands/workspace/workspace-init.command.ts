@@ -5,12 +5,12 @@ import { initManifest } from "@rejot-dev/contract-tools/manifest";
 import { Command, Flags } from "@oclif/core";
 
 export class WorkspaceInitCommand extends Command {
-  static override id = "workspace:init";
+  static override id = "workspace init";
   static override description = "Initialize a new ReJot workspace";
 
   static override examples = [
-    "<%= config.bin %> workspace init --slug @myorg/",
-    "<%= config.bin %> workspace init --slug @myorg/ --filename custom-manifest.json",
+    "<%= config.bin %> <%= command.id %> --slug @myorg/",
+    "<%= config.bin %> <%= command.id %> --slug @myorg/ --filename custom-manifest.json",
   ];
 
   static override flags = {
@@ -33,12 +33,16 @@ export class WorkspaceInitCommand extends Command {
       await initManifest(manifestPath, slug);
       this.log(`Created new workspace at ${manifestPath}`);
       this.log("\nNext steps:");
-      this.log("1. Add a connection:    rejot manifest connection add --slug my-db ...");
-      this.log("2. Add a data store:    rejot manifest datastore add --connection my-db ...");
       this.log(
-        "3. Add sub-manifests:   Edit the manifest and add relative paths to other manifest files in the 'workspaces' array",
+        `1. Add a connection:    ${this.config.bin} manifest connection add --slug my-db ...`,
       );
-      this.log("4. View workspace info: rejot workspace:info");
+      this.log(
+        `2. Add a data store:    ${this.config.bin} manifest datastore add --connection my-db ...`,
+      );
+      this.log(
+        `3. Add sub-manifests:   Edit the manifest and add relative paths to other manifest files in the 'workspaces' array`,
+      );
+      this.log(`4. View workspace info: ${this.config.bin} workspace info`);
     } catch (error) {
       if (error instanceof Error) {
         if ("code" in error && error.code === "EEXIST") {

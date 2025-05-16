@@ -8,7 +8,7 @@ export class ManifestConnectionListCommand extends Command {
   static override id = "manifest connection list";
   static override description = "List all connections in the manifest file";
 
-  static override examples = ["<%= config.bin %> manifest connection list"];
+  static override examples = ["<%= config.bin %> <%= command.id %>"];
 
   static override flags = {
     manifest: Flags.string({

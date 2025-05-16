@@ -10,10 +10,10 @@ import { Args, Command } from "@oclif/core";
 import { manifestFlags, validateDataStoreExists } from "./manifest-datastore-config.ts";
 
 export class ManifestDataStoreRemoveCommand extends Command {
-  static override id = "manifest:datastore:remove";
+  static override id = "manifest datastore remove";
   static override description = "Remove a data store from the manifest file";
 
-  static override examples = ["<%= config.bin %> manifest datastore remove my-db"];
+  static override examples = ["<%= config.bin %> <%= command.id %> my-db"];
 
   static override flags = manifestFlags;
 
