@@ -76,8 +76,6 @@ export class PythonSchemaCollector implements ISchemaCollector {
     // Module path without .py, and without the cwd
     const modulePathWithoutPy = modulePath.replace(/\.py$/, "");
 
-    // TODO: Add a flag to change the python executable path.
-
     // Call wrapper.py and pass the module path as an argument
     const pythonProcess = spawn(
       this.#pythonExecutable,
