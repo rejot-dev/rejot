@@ -33,10 +33,15 @@ export default class Collect extends Command {
 
   static strict = false;
 
-  static override description = "Collect public and consumer schemas from TypeScript files.";
+  static override description = `Collect public and consumer schemas from TypeScript/Python files. 
+
+  For python packages, use the python import syntax, with .py at the end. For example:
+  For a python file in schemas/test/allschemas.py, use the following command; <%= config.bin %> <%= command.id %> schemas.test.allschemas.py
+  `;
   static override examples = [
     "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --print",
     "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --write --check",
+    "<%= config.bin %> <%= command.id %> schema1.allschemas.py --python-executable venv/bin/python",
   ];
   static override flags = {
     "log-level": Flags.string({
@@ -67,8 +72,7 @@ export default class Collect extends Command {
     "python-executable": Flags.string({
       description: "The Python executable to use.",
       required: false,
-
-      aliases: ["py"],
+      default: "python3",
     }),
   };
 
@@ -129,7 +133,7 @@ export default class Collect extends Command {
           collector = new TypescriptSchemaCollector(new TypeStripper());
           break;
         case "py":
-          collector = new PythonSchemaCollector(pythonExecutable ?? "python3");
+          collector = new PythonSchemaCollector(pythonExecutable);
           break;
         default:
           this.error(`Unsupported schema file extension: '${extension}'.`);

@@ -258,18 +258,6 @@ jobs:
           REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
         run: bun test
 
-      - name: Run integration test one
-        working-directory: integration-tests/one
-        env:
-          REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
-        run: bun test
-
-      - name: Run python-bun integration test
-        working-directory: integration-tests/python-bun
-        env:
-          REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
-        run: bun test
-
       - name: Run mcp integration test
         working-directory: apps/mcp
         env:
@@ -278,6 +266,12 @@ jobs:
 
       - name: Run integration test one
         working-directory: integration-tests/one
+        env:
+          REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
+        run: bun test
+
+      - name: Run python-bun integration test
+        working-directory: integration-tests/python-bun
         env:
           REJOT_SYNC_CLI_TEST_CONNECTION: postgresql://postgres:postgres@localhost:5432/test
         run: bun test
