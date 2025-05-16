@@ -44,6 +44,7 @@
       "identifier": "commands"
     },
     "dirname": "rejot-cli",
-    "topicSeparator": " "
+    "topicSeparator": " ",
+    "description": "rejot-cli is a command line tool for managing ReJot Manifests and Sync Services.\nCheck out our quickstart guide at https://rejot.dev/docs/start/quickstart/"
   }
 }
