@@ -11,11 +11,11 @@ import {
 } from "./manifest-datastore-config.ts";
 
 export class ManifestDataStoreAddCommand extends Command {
-  static override id = "manifest:datastore:add";
+  static override id = "manifest datastore add";
   static override description = "Add a data store to the manifest file";
 
   static override examples = [
-    "<%= config.bin %> manifest datastore add --connection my-db --publication my-pub",
+    "<%= config.bin %> <%= command.id %> --connection my-db --publication my-pub",
   ];
 
   static override flags = manifestFlags;

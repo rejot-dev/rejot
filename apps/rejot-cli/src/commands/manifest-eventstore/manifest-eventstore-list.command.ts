@@ -5,10 +5,10 @@ import { readManifestOrGetEmpty } from "@rejot-dev/contract-tools/manifest";
 import { Command, Flags } from "@oclif/core";
 
 export class ManifestEventStoreListCommand extends Command {
-  static override id = "manifest:eventstore:list";
+  static override id = "manifest eventstore list";
   static override description = "List event stores in the manifest file";
 
-  static override examples = ["<%= config.bin %> manifest:eventstore:list"];
+  static override examples = ["<%= config.bin %> <%= command.id %>"];
 
   static override flags = {
     manifest: Flags.string({

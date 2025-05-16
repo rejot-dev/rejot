@@ -5,10 +5,10 @@ import { readManifestOrGetEmpty, writeManifest } from "@rejot-dev/contract-tools
 import { Args, Command, Flags } from "@oclif/core";
 
 export class ManifestEventStoreRemoveCommand extends Command {
-  static override id = "manifest:eventstore:remove";
+  static override id = "manifest eventstore remove";
   static override description = "Remove an event store from the manifest file";
 
-  static override examples = ["<%= config.bin %> manifest:eventstore:remove my-db"];
+  static override examples = ["<%= config.bin %> <%= command.id %> my-db"];
 
   static override flags = {
     manifest: Flags.string({

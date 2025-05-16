@@ -12,9 +12,9 @@ export class ManifestConnectionUpdateCommand extends Command {
 
   static override examples = [
     // Connection string examples
-    '<%= config.bin %> manifest connection update my-db --connection-string "postgresql://user:pass@host:5432/db"',
+    '<%= config.bin %> <%= command.id %> my-db --connection-string "postgresql://user:pass@host:5432/db"',
     // Individual parameter examples
-    "<%= config.bin %> manifest connection update my-db --type postgres --host localhost --port 5432 --user postgres --password secret --database mydb",
+    "<%= config.bin %> <%= command.id %> my-db --type postgres --host localhost --port 5432 --user postgres --password secret --database mydb",
   ];
 
   static override flags = {

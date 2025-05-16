@@ -6,13 +6,13 @@ import { ManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest/ma
 import { Command, Flags } from "@oclif/core";
 
 export class WorkspaceInfoCommand extends Command {
-  static override id = "workspace:info";
+  static override id = "workspace info";
   static override description =
     "Display information about the current workspace configuration and diagnostics";
 
   static override examples = [
-    "<%= config.bin %> workspace info",
-    "<%= config.bin %> workspace info --filename custom-manifest.json",
+    "<%= config.bin %> <%= command.id %>",
+    "<%= config.bin %> <%= command.id %> --filename custom-manifest.json",
   ];
 
   static override flags = {

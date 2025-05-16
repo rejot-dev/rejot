@@ -29,15 +29,15 @@ import { Args, Command, Flags } from "@oclif/core";
 const log = getLogger(import.meta.url);
 
 export class ManifestSyncCommand extends Command {
-  static override id = "manifest:sync";
+  static override id = "manifest sync";
 
   static override description = `Start syncing based on one or more manifest files.\n
     Opens replication slots in the source data stores, transforms writes using public schemas,
     and stores the events in the configured event store.`;
 
   static override examples = [
-    "<%= config.bin %> manifest sync ./rejot-manifest.json",
-    "<%= config.bin %> manifest sync ./manifest1.json ./manifest2.json",
+    "<%= config.bin %> <%= command.id %> ./rejot-manifest.json",
+    "<%= config.bin %> <%= command.id %> ./manifest1.json ./manifest2.json",
   ];
 
   static override flags = {

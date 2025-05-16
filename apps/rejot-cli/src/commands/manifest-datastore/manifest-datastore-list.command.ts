@@ -7,10 +7,10 @@ import { Command } from "@oclif/core";
 import { manifestFlags } from "./manifest-datastore-config.ts";
 
 export class ManifestDataStoreListCommand extends Command {
-  static override id = "manifest:datastore:list";
+  static override id = "manifest datastore list";
   static override description = "List all data stores in the manifest file";
 
-  static override examples = ["<%= config.bin %> manifest datastore list"];
+  static override examples = ["<%= config.bin %> <%= command.id %>"];
 
   static override flags = manifestFlags;
 

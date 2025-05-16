@@ -8,7 +8,7 @@ export class ManifestConnectionRemoveCommand extends Command {
   static override id = "manifest connection remove";
   static override description = "Remove a connection from the manifest file";
 
-  static override examples = ["<%= config.bin %> manifest connection remove my-db"];
+  static override examples = ["<%= config.bin %> <%= command.id %> my-db"];
 
   static override flags = {
     manifest: Flags.string({
