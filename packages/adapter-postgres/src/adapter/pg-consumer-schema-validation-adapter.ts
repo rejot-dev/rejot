@@ -20,11 +20,13 @@ import {
 
 export type PostgresPublicSchemaValidationErrorInfo =
   | { type: "NO_TRANSFORMATION_FOUND" }
+  | { type: "INVALID_SQL"; sql: string }
   | { type: "MIXING_POSITIONAL_AND_NAMED_PLACEHOLDERS"; sql: string }
   | { type: "POSITIONAL_PLACEHOLDER_NOT_SEQUENTIAL"; sql: string; placeholders: string[] };
 
 export type PostgresConsumerSchemaValidationErrorInfo =
   | { type: "NO_TRANSFORMATION_FOUND" }
+  | { type: "INVALID_SQL"; sql: string }
   | {
       type: "MIXING_POSITIONAL_AND_NAMED_PLACEHOLDERS";
       sql: string;
