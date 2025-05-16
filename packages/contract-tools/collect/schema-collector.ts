@@ -13,8 +13,9 @@ import type { ITypeStripper } from "../type-stripper/type-stripper.ts";
 const pythonWrapper = (modulePath: string) => `
 import json
 import sys
+import importlib
 
-module = __import__("${modulePath}")
+module = importlib.import_module("${modulePath}")
 
 for key, value in module.__dict__.items():
     if not key.startswith('_') and (isinstance(value, dict) or isinstance(value, list)):

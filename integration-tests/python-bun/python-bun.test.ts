@@ -33,8 +33,7 @@ describe("Integration Test - Python and Bun", () => {
 
     // Install python dependencies
     await $`python -m venv venv`.text();
-    await $`source venv/bin/activate`.text();
-    await $`pip install ../../python`.text();
+    await $`venv/bin/pip install ../../python`.text(); // Relative path to our python package
 
     // Create the test schema and tables
     const postgresConfig = parsePostgresConnectionString(connectionString);
@@ -43,7 +42,7 @@ describe("Integration Test - Python and Bun", () => {
 
     try {
       await client.query(
-        `DELETE FROM rejot_data_store.public_schema_state WHERE manifest_slug = '@rejot-dev/integration-tests-one'`,
+        `DELETE FROM rejot_data_store.public_schema_state WHERE manifest_slug = 'python-bun'`,
       );
     } catch {
       // ignore if the table doesn't exist
@@ -98,6 +97,7 @@ describe("Integration Test - Python and Bun", () => {
   afterAll(async () => {
     if (shouldCleanUp) {
       await rm("rejot-manifest.json", { force: true });
+      await rm("venv", { recursive: true, force: true });
 
       await client.tx(async (tx) => {
         await tx.query(`DROP SCHEMA IF EXISTS rejot_integration_tests_python_bun CASCADE`);
@@ -116,8 +116,7 @@ describe("Integration Test - Python and Bun", () => {
   });
 
   test("Initialize Manifest", async () => {
-    const manifest =
-      await $`bunx rejot-cli manifest init --slug @rejot-dev/integration-tests-one`.text();
+    const manifest = await $`bunx rejot-cli manifest init --slug python-bun`.text();
     expect(manifest).toBeDefined();
   });
 
@@ -141,7 +140,7 @@ describe("Integration Test - Python and Bun", () => {
 
   test("Collect Schemas", async () => {
     const collect =
-      await $`bunx rejot-cli collect --print --check --write schemas/python-schema.py`.text();
+      await $`bunx rejot-cli collect --print --check --write schemas.allschemas.py`.text();
     expect(collect).toContain("Successfully validated 1 schema pairs.");
   });
 
@@ -200,6 +199,6 @@ describe("Integration Test - Python and Bun", () => {
         await syncProcess.exited;
       }
     },
-    { timeout: 10000 },
+    { timeout: 2000 },
   );
 });
