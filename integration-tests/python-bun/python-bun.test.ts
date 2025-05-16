@@ -116,31 +116,31 @@ describe("Integration Test - Python and Bun", () => {
   });
 
   test("Initialize Manifest", async () => {
-    const manifest = await $`bunx rejot-cli manifest init --slug python-bun`.text();
+    const manifest = await $`bunx --bun rejot-cli manifest init --slug python-bun`.text();
     expect(manifest).toBeDefined();
   });
 
   test("Add a database connection", async () => {
     const connector =
-      await $`bunx rejot-cli manifest connection add --slug main-connection --connection-string ${connectionString}`.text();
+      await $`bunx --bun rejot-cli manifest connection add --slug main-connection --connection-string ${connectionString}`.text();
     expect(connector).toBeDefined();
   });
 
   test("Add a data store", async () => {
     const dataStore =
-      await $`bunx rejot-cli manifest datastore add --connection main-connection --publication rejot_integration_tests_python_bun --slot rejot_integration_tests_python_bun_data_store`.text();
+      await $`bunx --bun rejot-cli manifest datastore add --connection main-connection --publication rejot_integration_tests_python_bun --slot rejot_integration_tests_python_bun_data_store`.text();
     expect(dataStore).toBeDefined();
   });
 
   test("Add an event store", async () => {
     const eventStore =
-      await $`bunx rejot-cli manifest eventstore add --connection main-connection`.text();
+      await $`bunx --bun rejot-cli manifest eventstore add --connection main-connection`.text();
     expect(eventStore).toBeDefined();
   });
 
   test("Collect Schemas", async () => {
     const collect =
-      await $`bunx rejot-cli collect --print --check --write schemas.allschemas.py`.text();
+      await $`bunx --bun rejot-cli collect --print --check --write schemas.allschemas.py`.text();
     expect(collect).toContain("Successfully validated 1 schema pairs.");
   });
 
