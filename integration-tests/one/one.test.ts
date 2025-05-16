@@ -182,6 +182,20 @@ describe("Integration Test - One", () => {
 
         expect(result).not.toBeNull();
         expect(result!.rows.length).toBeGreaterThan(0);
+
+        // Delete row from the source
+        await client.query(
+          `DELETE FROM rejot_integration_tests_one.person_email WHERE email = $1`,
+          ["alice@work.com"],
+        );
+
+        // Poll for the destination to update (row should be updated or removed)
+        const deleted = await pollForResult(
+          () => client.query(`SELECT * FROM rejot_integration_tests_one.destination_person_email`),
+          (res) => res.rows.length === 0,
+        );
+
+        expect(deleted).toBeNull();
       } finally {
         // Ensure the sync process is stopped (gracefully)
         syncProcess.kill("SIGINT");
