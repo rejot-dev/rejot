@@ -2,6 +2,7 @@
 import Bars3 from "astro-heroicons/outline/Bars3.astro";
 import XMark from "astro-heroicons/outline/XMark.astro";
 
+import GitHubRound from "../icons/GitHubRound.astro";
 import ReJotLogo from "../icons/ReJotLogo.astro";
 import HeaderLink from "./HeaderLink.astro";
 import ScreenSizeIndicator from "./ScreenSizeIndicator.astro";
@@ -42,6 +43,13 @@ import ScreenSizeIndicator from "./ScreenSizeIndicator.astro";
         <HeaderLink href="/blog" activeClass="border-b-rejot-red-600">Blog</HeaderLink>
         <HeaderLink href="/about" activeClass="border-b-rejot-red-600">About</HeaderLink>
         <HeaderLink href="/contact" activeClass="border-b-rejot-red-600">Contact</HeaderLink>
+        <a
+          href="https://github.com/rejot-dev/rejot/"
+          class={`border-b-4 border-transparent px-2 py-4 text-black no-underline dark:text-white`}
+        >
+          <GitHubRound class="size-6" />
+        </a>
+
         <!-- <HeaderLink href="/docs" activeClass="border-b-rejot-red-600"> Docs </HeaderLink> -->
         <!-- <LinkButton href="https://app.rejot.dev" target="_blank" rel="noreferrer">
           <ArrowTopRightOnSquare class="size-4" />
