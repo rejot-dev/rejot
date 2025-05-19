@@ -1,8 +1,9 @@
 ---
-import Base from "../layouts/Base.astro";
-import { pageTitle } from "../consts";
-import Prose from "../components/Prose.astro";
 import ArrowRight from "astro-heroicons/solid/ArrowRight.astro";
+
+import Prose from "../components/Prose.astro";
+import { pageTitle } from "../consts";
+import Base from "../layouts/Base.astro";
 ---
 
 <Base title={pageTitle("About")} description="About ReJot">
@@ -11,12 +12,11 @@ import ArrowRight from "astro-heroicons/solid/ArrowRight.astro";
       <h1 class="mb-4 text-4xl font-bold">About</h1>
       <p class="text-lg text-gray-600 dark:text-gray-400">
         Learn more about the mission and the people behind <span
-          class="font-bold text-rejot-red-500">ReJot</span
+          class="font-semibold text-rejot-red-500">ReJot</span
         >.
       </p>
-      <div class="mt-8 flex justify-center gap-4"></div>
     </div>
-    <Prose>
+    <Prose class="p-2 md:p-0">
       <p>
         ReJot was founded with a mission to make managing operational data at scale seamless. If the
         data model is not taken care of, maintainability will suffer. Without a focus on
