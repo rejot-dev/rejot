@@ -1,8 +1,8 @@
 export const REJOT_TITLE = "ReJot";
-export const REJOT_TAG_LINE = "Developer Defined Replication";
+export const REJOT_TAG_LINE = "Supercharged Replication for Developers";
 export const REJOT_DESCRIPTION =
-  // "Open source database to database sync engine for enterprises with distributed architectures and teams.";
-  "Open source database replication defined from your code";
+  "Turn the write-ahead log of your database into an asynchronous communication channel for your services";
+
 export function pageTitle(title: string) {
   const titleLength = title.length;
 
