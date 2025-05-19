@@ -4,7 +4,7 @@ import Newspaper from "astro-heroicons/outline/Newspaper.astro";
 
 import RejotIcon from "@/components/icons/ReJotIcon.astro";
 import DatabaseNode from "@/components/index/hero/DatabaseNode.astro";
-import { REJOT_DESCRIPTION, REJOT_TAG_LINE } from "@/consts";
+import { REJOT_DESCRIPTION } from "@/consts";
 
 import GithubIcon from "../icons/GithubIcon.astro";
 import LinkButton from "../LinkButton.astro";
@@ -22,7 +22,10 @@ import InstallHint from "./hero/InstallHint.astro";
 
       <div class="space-y-4 text-center">
         <h1 class="bg-clip-text text-4xl font-bold xl:text-5xl xl:leading-tight">
-          {REJOT_TAG_LINE}
+          <span
+            class="bg-gradient-to-r from-rejot-red-600 to-rejot-orange-500 bg-clip-text text-transparent"
+            >Supercharged</span
+          > Replication for Developers
         </h1>
 
         <p class="text-xl text-gray-600 xl:text-2xl dark:text-gray-400">
