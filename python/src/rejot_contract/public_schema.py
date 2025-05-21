@@ -1,4 +1,4 @@
-from typing import List, Literal, Type, TypeVar, Any
+from typing import List, Literal, Type, TypeVar, Any, Union
 from pydantic import BaseModel
 
 class InvalidPublicSchemaError(Exception):
@@ -63,7 +63,7 @@ def create_postgres_public_schema_transformation(
 def create_public_schema(
     public_schema_name: str,
     source: Source,
-    output_schema: Type[T],
+    output_schema: Union[Type[T], dict[str, Any]],
     version: Version,
     config: PublicSchemaConfig
 ) -> dict[str, Any]:
@@ -73,7 +73,7 @@ def create_public_schema(
     Args:
         public_schema_name: The name of the public schema.
         source: The source of the public schema.
-        output_schema: The output schema of the public schema.
+        output_schema: The output schema of the public schema (Pydantic model class or raw JSON schema dict).
         version: The version of the public schema.
         config: The configuration of the public schema.
 
@@ -84,7 +84,10 @@ def create_public_schema(
     if not config.transformations:
         raise InvalidPublicSchemaError("Public schema must have at least one transformation")
 
-    json_schema = output_schema.schema()
+    if isinstance(output_schema, dict):
+        json_schema = output_schema
+    else:
+        json_schema = output_schema.schema()
 
     return PublicSchemaData(
         name=public_schema_name,

@@ -42,7 +42,7 @@ transformations = create_postgres_public_schema_transformation(
 public = create_public_schema(
     public_schema_name="public-account",
     source=Source(dataStoreSlug="default-postgres"),
-    output_schema=Account,
+    output_schema=Account, # Or a JSON schema dict
     version=Version(major=1, minor=0),
     config=PublicSchemaConfig(
         publicSchemaType="postgres",
@@ -85,7 +85,7 @@ Create a public schema definition for publishing data.
 def create_public_schema(
     public_schema_name: str,
     source: Source,
-    output_schema: Type[BaseModel],
+    output_schema: Union[Type[BaseModel], dict[str, Any]],
     version: Version,
     config: PublicSchemaConfig
 ) -> dict[str, Any]

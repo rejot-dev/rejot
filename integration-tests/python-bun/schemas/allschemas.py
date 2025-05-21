@@ -14,13 +14,29 @@ class OnePerson(BaseModel):
     lastName: str
     emails: List[str]
 
-# Public schema definition
-one_person_schema = create_public_schema(
-    public_schema_name="one-person",
-    source=Source(dataStoreSlug="main-connection"),
-    output_schema=OnePerson,
-    version=Version(major=1, minor=0),
-    config=PublicSchemaConfig(
+one_person_schema_json = {
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["id", "firstName", "lastName", "emails"]
+}
+
+postgres_config = PublicSchemaConfig(
         publicSchemaType="postgres",
         transformations=[
             *create_postgres_public_schema_transformation(
@@ -49,6 +65,23 @@ one_person_schema = create_public_schema(
             ),
         ]
     )
+
+
+one_person_schema_from_json = create_public_schema(
+  public_schema_name="one-person-json",
+  source=Source(dataStoreSlug="main-connection"),
+  output_schema=one_person_schema_json,
+  version=Version(major=1, minor=0),
+  config=postgres_config
+)
+
+# Public schema definition
+one_person_schema = create_public_schema(
+    public_schema_name="one-person",
+    source=Source(dataStoreSlug="main-connection"),
+    output_schema=OnePerson,
+    version=Version(major=1, minor=0),
+    config=postgres_config
 )
 
 # Consumer schema definition

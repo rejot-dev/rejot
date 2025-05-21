@@ -2,7 +2,8 @@
 
 This directory contains the Python variant for defining and working with ReJot public and consumer
 schemas. It is intended for use in projects that need to define data contracts and transformations
-for use with the ReJot platform.
+for use with the ReJot platform. For the latest documentation, see the
+[ReJot Python Contracts](https://rejot.dev/docs/reference/python).
 
 ## Features
 
@@ -46,7 +47,7 @@ transformations = create_postgres_public_schema_transformation(
 public = create_public_schema(
     public_schema_name="public-account",
     source=Source(dataStoreSlug="default-postgres"),
-    output_schema=Account,
+    output_schema=Account, # Or a JSON schema dict
     version=Version(major=1, minor=0),
     config=PublicSchemaConfig(
         publicSchemaType="postgres",
