@@ -32,7 +32,7 @@ manifest requires a unique slug, which is used to identify where public schemas 
 where sync services can locate them on the network.
 
 ```bash
-rejot-cli manifest init --slug "@my-org/my-sync-slug"
+rejot-cli manifest init --slug "my-sync-slug"
 ```
 
 ## Setting Up Data and Event Stores
@@ -146,7 +146,7 @@ relative path to other manifest files.
 
 ```json
 {
-  "slug": "@my-org/my-sync-slug",
+  "slug": "my-sync-slug",
   "workspaces": ["./service-one/rejot-manifest.json", "./service-two/rejot-manifest.json"]
 }
 ```
