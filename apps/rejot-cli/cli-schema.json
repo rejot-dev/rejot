@@ -62,7 +62,7 @@
         },
         "python-executable": {
           "name": "python-executable",
-          "description": "The Python executable to use.",
+          "description": "The Python executable to use. By default, the command 'python3' is used, which means the local venv will be used if present.",
           "required": false,
           "default": "python3",
           "type": "string"

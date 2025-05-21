@@ -27,6 +27,24 @@ First, add the required dependencies to your project:
 <LanguageVariants
   languages={[
     {
+      title: "NPM",
+      lang: "bash",
+      code: `npm install --save @rejot-dev/contract @rejot-dev/adapter-postgres`,
+    },
+    {
+      title: "Bun",
+      lang: "bash",
+      code: `bun add @rejot-dev/contract @rejot-dev/adapter-postgres`,
+    },
+  ]}
+/>
+## Creating Public and Consumer Schema Definitions
+
+Create a new file called `schemas.ts` that will contain your public and consumer schemas:
+
+<LanguageVariants
+  languages={[
+    {
       title: "TypeScript",
       lang: "ts",
       code: rawSchemaTextTs,
@@ -38,6 +56,11 @@ First, add the required dependencies to your project:
     },
   ]}
 />
+
+<Notice type="TIP">
+  Make sure you adjust the data store and manifest slugs in this example to the manifest you've
+  created.
+</Notice>
 
 ### Transformations
 
@@ -75,6 +98,13 @@ Here's an example of a public schema transformation:
     },
   ]}
 />
+
+<Notice type="IMPORTANT">
+  The row returned from the transformation query must exactly match the public schema's output
+  structure, including casing in column names. In Postgres, when not double-quoting column names,
+  they are always returned in lowercase. It's recommended to always add an explicit "AS" statement,
+  to ensure the casing is correct. E.g. `SELECT id, first_name AS "firstName" FROM my_table`.
+</Notice>
 
 #### Multi-table transformations
 

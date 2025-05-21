@@ -5,12 +5,15 @@ title: "Language Bindings"
 Language bindings enable developers to define public and consumer schemas using their preferred
 programming language and existing package management infrastructure.
 
-| Language              | Contracts (Public/Consumer Schema)  | Transformations                       |
-| --------------------- | ----------------------------------- | ------------------------------------- |
-| JavaScript/TypeScript | [@rejot-dev/contract][npm-contract] | [@rejot-dev/adapter-postgres][npm-pg] |
-| Python                | [Python API][python-api]            | Pydantic, SQL                         |
+| Language              | Contracts (Public/Consumer Schema)  | Additional utilities                                                         |
+| --------------------- | ----------------------------------- | ---------------------------------------------------------------------------- |
+| JavaScript/TypeScript | [@rejot-dev/contract][npm-contract] | Helper for Postgres transformations in [@rejot-dev/adapter-postgres][npm-pg] |
+| Python                | [rejot-contract][python-api]        |                                                                              |
 
-Python bindings are currently in development.
+> Note: Both Python and JavaScript/TypeScript support Postgres transformations. The
+> [@rejot-dev/adapter-postgres][npm-pg] package provides additional utilities for Node.js
+> environments. The ReJot runtime itself is currently implemented in Node.js, so queries and
+> transformations are executed in a Node.js environment.
 
 ## Requesting Additional Language Support
 

@@ -70,7 +70,8 @@ export default class Collect extends Command {
       required: false,
     }),
     "python-executable": Flags.string({
-      description: "The Python executable to use.",
+      description:
+        "The Python executable to use. By default, the command 'python3' is used, which means the local venv will be used if present.",
       required: false,
       default: "python3",
     }),
