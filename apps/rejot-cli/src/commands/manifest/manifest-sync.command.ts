@@ -1,3 +1,5 @@
+import "../move-this-metricssdk.ts";
+
 import fs from "node:fs/promises";
 
 import { z } from "zod";
@@ -25,8 +27,14 @@ import { createResolver, type ISyncServiceResolver } from "@rejot-dev/sync/sync-
 import { SyncHTTPController } from "@rejot-dev/sync/sync-http-service";
 
 import { Args, Command, Flags } from "@oclif/core";
+import { metrics } from "@opentelemetry/api";
 
 const log = getLogger(import.meta.url);
+const meter = metrics.getMeter("rejot-cli");
+
+const activeManifests = meter.createGauge("active_manifests", {
+  description: "Number of active manifests",
+});
 
 export class ManifestSyncCommand extends Command {
   static override id = "manifest sync";
@@ -136,6 +144,10 @@ export class ManifestSyncCommand extends Command {
         }),
       );
 
+      activeManifests.record(manifests.length, {
+        manifests: manifests.map((manifest) => manifest.slug).join(","),
+      });
+
       log.info(`Successfully loaded ${manifests.length} manifest(s)`);
 
       const syncManifest = new SyncManifest(manifests);
@@ -220,6 +232,7 @@ export class ManifestSyncCommand extends Command {
         log.info("\nReceived SIGINT, shutting down...");
         await syncController.stop();
         await syncController.close();
+        activeManifests.record(0);
         log.info("SIGINT Handled.");
       });
 
@@ -227,6 +240,7 @@ export class ManifestSyncCommand extends Command {
         log.info("\nReceived SIGTERM, killing...");
         await syncController.stop();
         await syncController.close();
+        activeManifests.record(0);
         process.exit(0);
       });
 
