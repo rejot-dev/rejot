@@ -70,7 +70,7 @@ for (let i = 0; i < pyprojectTomlLines.length; i++) {
   const line = pyprojectTomlLines[i];
 
   if (line.startsWith("version = ")) {
-    const version = line.split("=")[1].trim();
+    const version = line.split("=")[1].replace(/"/g, "").trim();
 
     const versionParts = version.split(".");
     switch (versionType) {
