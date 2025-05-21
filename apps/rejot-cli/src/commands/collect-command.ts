@@ -1,15 +1,15 @@
 import { stat } from "node:fs/promises";
-import { resolve } from "node:path";
+import { extname, resolve } from "node:path";
 
 import { PostgresConsumerSchemaValidationAdapter } from "@rejot-dev/adapter-postgres";
 import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
 import { ConsoleLogger, getLogger, setLogger } from "@rejot-dev/contract/logger";
 import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
+import { PythonSchemaCollector } from "@rejot-dev/contract-tools/collect/python-schema-collector";
 import {
   type ISchemaCollector,
-  PythonSchemaCollector,
   TypescriptSchemaCollector,
-} from "@rejot-dev/contract-tools/collect/schema-collector";
+} from "@rejot-dev/contract-tools/collect/ts-schema-collector";
 import {
   findManifestPath,
   ManifestPrinter,
@@ -33,7 +33,7 @@ export default class Collect extends Command {
 
   static strict = false;
 
-  static override description = `Collect public and consumer schemas from TypeScript/Python files. 
+  static override description = `Collect public and consumer schemas from TypeScript/Python files.
 
   For python packages, use the python import syntax, with .py at the end. For example:
   For a python file in schemas/test/allschemas.py, use the following command; <%= config.bin %> <%= command.id %> schemas.test.allschemas.py
@@ -118,7 +118,7 @@ export default class Collect extends Command {
       let collector: ISchemaCollector;
       let path = schemaPath;
 
-      const extension = schemaPath.split(".").pop();
+      const extension = extname(schemaPath).slice(1);
       switch (extension) {
         case "ts":
         case "js":

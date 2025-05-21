@@ -2,7 +2,7 @@
   "commands": {
     "collect": {
       "id": "collect",
-      "description": "Collect public and consumer schemas from TypeScript/Python files. \n\n  For python packages, use the python import syntax, with .py at the end. For example:\n  For a python file in schemas/test/allschemas.py, use the following command; <%= config.bin %> <%= command.id %> schemas.test.allschemas.py\n  ",
+      "description": "Collect public and consumer schemas from TypeScript/Python files.\n\n  For python packages, use the python import syntax, with .py at the end. For example:\n  For a python file in schemas/test/allschemas.py, use the following command; <%= config.bin %> <%= command.id %> schemas.test.allschemas.py\n  ",
       "examples": [
         "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --print",
         "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --write --check",

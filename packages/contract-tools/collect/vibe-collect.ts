@@ -11,7 +11,7 @@ import type { IManifestFileManager } from "../manifest/manifest-file-manager.ts"
 import { ManifestPrinter } from "../manifest/manifest-printer.ts";
 import { type IFileFinder } from "./file-finder.ts";
 import { collectGitIgnore } from "./git-ignore.ts";
-import type { CollectedSchemas, ISchemaCollector } from "./schema-collector.ts";
+import type { CollectedSchemas, ISchemaCollector } from "./ts-schema-collector.ts";
 
 const log = getLogger(import.meta.url);
 

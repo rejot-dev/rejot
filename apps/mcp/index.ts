@@ -1,5 +1,5 @@
 import { FileFinder } from "@rejot-dev/contract-tools/collect/file-finder";
-import { TypescriptSchemaCollector } from "@rejot-dev/contract-tools/collect/schema-collector";
+import { TypescriptSchemaCollector } from "@rejot-dev/contract-tools/collect/ts-schema-collector";
 import { VibeCollector } from "@rejot-dev/contract-tools/collect/vibe-collect";
 import { ManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest";
 import { ManifestFileManager } from "@rejot-dev/contract-tools/manifest/manifest-file-manager";
