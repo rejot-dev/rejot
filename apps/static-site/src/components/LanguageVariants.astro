@@ -81,30 +81,47 @@ const { class: className = "", languages = [] } = Astro.props;
 </div>
 
 <script>
-  document.querySelectorAll(".rejot-language-variants").forEach((root) => {
-    const tabs = root.querySelectorAll("[data-tab]") as NodeListOf<HTMLElement>;
-    const contents = root.querySelectorAll("[data-content]") as NodeListOf<HTMLElement>;
+  // Helper to extract language from data-tab (format: lang-title)
+  function getLangFromTab(tab: Element) {
+    return (tab as HTMLElement).dataset["tab"]!.split("-")[1];
+  }
 
-    tabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
-        // Remove active class from all tabs
-        tabs.forEach((t) =>
-          t.classList.remove("text-rejot-red-600", "border-b-2", "border-rejot-red-600"),
-        );
+  document.addEventListener("click", (event) => {
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    const tab = target.closest("[data-tab]") as HTMLElement | null;
+    if (!tab) return;
 
-        // Add active class to clicked tab
-        tab.classList.add("text-rejot-red-600", "border-b-2", "border-rejot-red-600");
+    const lang = getLangFromTab(tab);
+    if (!lang) return;
 
-        // Hide all contents
-        contents.forEach((content) => content.classList.add("hidden"));
-
-        // Show selected content
-        const content = root.querySelector(`[data-content="${tab.dataset["tab"]}"]`);
-        if (content) content.classList.remove("hidden");
+    // For each language variant group
+    document.querySelectorAll(".rejot-language-variants").forEach((root) => {
+      const tabs = root.querySelectorAll("[data-tab]") as NodeListOf<HTMLElement>;
+      const contents = root.querySelectorAll("[data-content]") as NodeListOf<HTMLElement>;
+      tabs.forEach((t) => {
+        const tLang = getLangFromTab(t);
+        if (tLang === lang) {
+          // Remove active class from all tabs
+          tabs.forEach((tt) =>
+            tt.classList.remove("text-rejot-red-600", "border-b-2", "border-rejot-red-600"),
+          );
+          // Add active class to this tab
+          t.classList.add("text-rejot-red-600", "border-b-2", "border-rejot-red-600");
+          // Hide all contents
+          contents.forEach((content) => content.classList.add("hidden"));
+          // Show selected content
+          const content = root.querySelector(
+            `[data-content="${t.dataset["tab"]}"]`,
+          ) as HTMLElement | null;
+          if (content) content.classList.remove("hidden");
+        }
       });
     });
+  });
 
-    // Activate first tab by default
+  document.querySelectorAll(".rejot-language-variants").forEach((root) => {
+    const tabs = root.querySelectorAll("[data-tab]") as NodeListOf<HTMLElement>;
     if (tabs.length > 0) {
       tabs[0].click();
     }
