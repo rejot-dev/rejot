@@ -53,15 +53,20 @@
       "types": "./dist/collect/vibe-collect.d.ts",
       "default": "./dist/collect/vibe-collect.js"
     },
-    "./collect/schema-collector": {
-      "bun": "./collect/schema-collector.ts",
-      "types": "./dist/collect/schema-collector.d.ts",
-      "default": "./dist/collect/schema-collector.js"
+    "./collect/ts-schema-collector": {
+      "bun": "./collect/ts-schema-collector.ts",
+      "types": "./dist/collect/ts-schema-collector.d.ts",
+      "default": "./dist/collect/ts-schema-collector.js"
     },
     "./type-stripper": {
       "bun": "./type-stripper/type-stripper.ts",
       "types": "./dist/type-stripper/type-stripper.d.ts",
       "default": "./dist/type-stripper/type-stripper.js"
+    },
+    "./collect/python-schema-collector": {
+      "bun": "./collect/python-schema-collector.ts",
+      "types": "./dist/collect/python-schema-collector.d.ts",
+      "default": "./dist/collect/python-schema-collector.js"
     }
   },
   "type": "module",

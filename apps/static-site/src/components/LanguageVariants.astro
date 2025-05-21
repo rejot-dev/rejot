@@ -2,15 +2,21 @@
 import { Code } from "astro:components";
 import type { BuiltinLanguage } from "shiki";
 
+import PartialCode from "./PartialCode.astro";
 import PreWithCopy from "./PreWithCopy.astro";
 
 interface Props {
   class?: string;
-  languages: {
+  languages: ({
     title: string;
     lang: BuiltinLanguage;
     code: string;
-  }[];
+  } & {
+    title: string;
+    lang: BuiltinLanguage;
+    code: string;
+    part: string;
+  })[];
 }
 
 const { class: className = "", languages = [] } = Astro.props;
@@ -27,6 +33,7 @@ const { class: className = "", languages = [] } = Astro.props;
       title: "Python",
       lang: "python",
       code: `foo = 'bar'`,
+      part: "consumerSchemaSql",
     },
   ]}
 />
@@ -35,7 +42,7 @@ const { class: className = "", languages = [] } = Astro.props;
 
 <!-- Use a custom color (#24292e) for the background, as it is the background of a Markdown code block. -->
 <div
-  class={`not-prose rejot-language-variants rounded-lg border border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-[#24292e] ${className}`}
+  class={`not-prose rejot-language-variants rounded-lg border border-gray-200 bg-white p-2 lg:max-w-4xl dark:border-gray-700 dark:bg-[#24292e] ${className}`}
 >
   <div class="mb-1 flex gap-2 border-b border-gray-200 dark:border-gray-700">
     {
@@ -51,17 +58,23 @@ const { class: className = "", languages = [] } = Astro.props;
   </div>
   {
     languages.map((lang) => (
-      <div class="hidden p-2" data-content={`${lang.lang}-${lang.title}`}>
-        <PreWithCopy noWrapper>
-          <Code
-            code={lang.code}
-            lang={lang.lang}
-            themes={{
-              light: "github-light",
-              dark: "github-dark",
-            }}
-          />
-        </PreWithCopy>
+      <div
+        class="hidden w-full overflow-x-auto overflow-y-hidden p-2"
+        data-content={`${lang.lang}-${lang.title}`}
+      >
+        {lang.part && <PartialCode code={lang.code} lang={lang.lang} part={lang.part} />}
+        {!lang.part && (
+          <PreWithCopy noWrapper>
+            <Code
+              code={lang.code}
+              lang={lang.lang}
+              themes={{
+                light: "github-light",
+                dark: "github-dark",
+              }}
+            />
+          </PreWithCopy>
+        )}
       </div>
     ))
   }

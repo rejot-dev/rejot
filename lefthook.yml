@@ -35,3 +35,6 @@ pre-commit:
           exit 1
         fi
       glob: "apps/rejot-cli/src/**/*.ts"
+    - name: ruff
+      run: sh -c 'ruff check; code=$?; ruff check --fix; exit $code'
+      glob: "**/*.py"

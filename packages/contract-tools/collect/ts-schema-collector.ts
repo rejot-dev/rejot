@@ -8,15 +8,17 @@ import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
 
 import type { ITypeStripper } from "../type-stripper/type-stripper.ts";
 
-const log = getLogger(import.meta.url);
-
 export interface CollectedSchemas {
   publicSchemas: (PublicSchemaData & { definitionFile: string })[];
   consumerSchemas: (ConsumerSchemaData & { definitionFile: string })[];
 }
 
 export interface ISchemaCollector {
-  collectSchemas(manifestPath: string, modulePath: string): Promise<CollectedSchemas>;
+  collectSchemas(
+    manifestPath: string,
+    modulePath: string,
+    options: CollectSchemaOptions,
+  ): Promise<CollectedSchemas>;
 }
 
 export interface CollectSchemaOptions {
@@ -28,7 +30,7 @@ interface ModuleWithDefault {
   default: any;
 }
 
-export class SchemaCollector implements ISchemaCollector {
+export class TypescriptSchemaCollector implements ISchemaCollector {
   readonly #typeStripper: ITypeStripper;
 
   constructor(typeStripper: ITypeStripper) {
@@ -75,7 +77,9 @@ export class SchemaCollector implements ISchemaCollector {
       } else {
         // No match
         if (verbose) {
-          log.user(`Skipping ${modulePath} because it doesn't contain a valid schema.`);
+          getLogger(import.meta.url).user(
+            `Skipping ${modulePath} because it doesn't contain a valid schema.`,
+          );
         }
       }
     };
@@ -97,7 +101,7 @@ export class SchemaCollector implements ISchemaCollector {
       }
     }
 
-    log.info(
+    getLogger(import.meta.url).info(
       `Collected ${result.publicSchemas.length} public and ${result.consumerSchemas.length} consumer schemas`,
     );
 
@@ -119,10 +123,10 @@ export class SchemaCollector implements ISchemaCollector {
 
         return module;
       } else if (this.#typeStripper) {
-        log.warn("Type stripping not supported.");
+        getLogger(import.meta.url).warn("Type stripping not supported.");
 
         await this.#typeStripper.stripTypes(resolvedModulePath, jsModulePath);
-        log.trace("jsModulePath", jsModulePath);
+        getLogger(import.meta.url).trace("jsModulePath", jsModulePath);
 
         const module = (await import(jsModulePath)) as ModuleWithDefault;
         // Touch the module
@@ -137,16 +141,16 @@ export class SchemaCollector implements ISchemaCollector {
           " Alternatively, Bun can be used.",
       );
     } catch (error) {
-      log.logErrorInstance(error);
+      getLogger(import.meta.url).logErrorInstance(error);
 
       if (error instanceof Error) {
-        if (error.message.includes("before initialization")) {
+        if (error.message.includes("before initialization") || error.message.includes("bun test")) {
           if (!modulePath.includes("test")) {
-            log.warn(
+            getLogger(import.meta.url).warn(
               `Skipping ${modulePath} because it couldn't be initialized. This might be because it contains test code.`,
             );
           }
-          log.warn("returning null");
+          getLogger(import.meta.url).warn("returning null");
           return { default: null };
         }
       }

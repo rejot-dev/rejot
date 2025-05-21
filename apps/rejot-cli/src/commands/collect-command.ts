@@ -1,11 +1,15 @@
 import { stat } from "node:fs/promises";
-import { resolve } from "node:path";
+import { extname, resolve } from "node:path";
 
 import { PostgresConsumerSchemaValidationAdapter } from "@rejot-dev/adapter-postgres";
 import type { ConsumerSchemaData } from "@rejot-dev/contract/consumer-schema";
 import { ConsoleLogger, getLogger, setLogger } from "@rejot-dev/contract/logger";
 import type { PublicSchemaData } from "@rejot-dev/contract/public-schema";
-import { SchemaCollector } from "@rejot-dev/contract-tools/collect/schema-collector";
+import { PythonSchemaCollector } from "@rejot-dev/contract-tools/collect/python-schema-collector";
+import {
+  type ISchemaCollector,
+  TypescriptSchemaCollector,
+} from "@rejot-dev/contract-tools/collect/ts-schema-collector";
 import {
   findManifestPath,
   ManifestPrinter,
@@ -22,17 +26,22 @@ import { Args, Command, Flags } from "@oclif/core";
 export default class Collect extends Command {
   static override args = {
     schemas: Args.string({
-      description: "The schema (TypeScript) files to collect, separated by spaces.",
+      description: "The schema (TypeScript/Python) files to collect, separated by spaces.",
       required: true,
     }),
   };
 
   static strict = false;
 
-  static override description = "Collect public and consumer schemas from TypeScript files.";
+  static override description = `Collect public and consumer schemas from TypeScript/Python files.
+
+  For python packages, use the python import syntax, with .py at the end. For example:
+  For a python file in schemas/test/allschemas.py, use the following command; <%= config.bin %> <%= command.id %> schemas.test.allschemas.py
+  `;
   static override examples = [
     "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --print",
     "<%= config.bin %> <%= command.id %> schema1.ts schema2.ts --write --check",
+    "<%= config.bin %> <%= command.id %> schema1.allschemas.py --python-executable venv/bin/python",
   ];
   static override flags = {
     "log-level": Flags.string({
@@ -60,11 +69,24 @@ export default class Collect extends Command {
       description: "Verbose output.",
       required: false,
     }),
+    "python-executable": Flags.string({
+      description:
+        "The Python executable to use. By default, the command 'python3' is used, which means the local venv will be used if present.",
+      required: false,
+      default: "python3",
+    }),
   };
 
   public async run(): Promise<void> {
     const { flags, argv } = await this.parse(Collect);
-    const { write, check, print, "log-level": logLevel, verbose } = flags;
+    const {
+      write,
+      check,
+      print,
+      "log-level": logLevel,
+      verbose,
+      "python-executable": pythonExecutable,
+    } = flags;
 
     setLogger(new ConsoleLogger(logLevel.toUpperCase()));
 
@@ -94,19 +116,37 @@ export default class Collect extends Command {
         this.error(`Invalid schema path: '${schemaPath}'.`);
       }
 
-      try {
-        await stat(schemaPath);
-      } catch {
-        log.user(`Schema file '${schemaPath}' does not exist.`);
-        continue;
+      let collector: ISchemaCollector;
+      let path = schemaPath;
+
+      const extension = extname(schemaPath).slice(1);
+      switch (extension) {
+        case "ts":
+        case "js":
+          try {
+            await stat(schemaPath);
+          } catch {
+            log.user(`Schema file '${schemaPath}' does not exist.`);
+            continue;
+          }
+
+          path = resolve(schemaPath);
+          collector = new TypescriptSchemaCollector(new TypeStripper());
+          break;
+        case "py":
+          collector = new PythonSchemaCollector(pythonExecutable);
+          break;
+        default:
+          this.error(`Unsupported schema file extension: '${extension}'.`);
       }
 
-      const resolvedPath = resolve(schemaPath);
-      const { publicSchemas, consumerSchemas } = await new SchemaCollector(
-        new TypeStripper(),
-      ).collectSchemas(manifestPath, resolvedPath, {
-        verbose,
-      });
+      const { publicSchemas, consumerSchemas } = await collector.collectSchemas(
+        manifestPath,
+        path,
+        {
+          verbose,
+        },
+      );
 
       allPublicSchemas.push(...publicSchemas);
       allConsumerSchemas.push(...consumerSchemas);
@@ -124,11 +164,15 @@ export default class Collect extends Command {
     }
 
     if (check) {
-      await validateManifest(
-        newManifest,
-        [new PostgresConsumerSchemaValidationAdapter()],
-        [new PostgresConsumerSchemaValidationAdapter()],
-      );
+      try {
+        await validateManifest(
+          newManifest,
+          [new PostgresConsumerSchemaValidationAdapter()],
+          [new PostgresConsumerSchemaValidationAdapter()],
+        );
+      } catch (error) {
+        log.error(error instanceof Error ? error.message : "Failed to validate manifest.");
+      }
     }
 
     if (write) {

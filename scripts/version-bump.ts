@@ -59,4 +59,37 @@ console.log("Updating bun.lock file...");
 // during publishing based on the lockfile not the current package.json version.
 await $`bun update`.text();
 
+console.log("Bumping python version...");
+
+// Bump the version for the python package, by updating the version in the pyproject.toml file
+const pyprojectToml = await Bun.file("python/pyproject.toml").text();
+
+const pyprojectTomlLines = pyprojectToml.split("\n");
+
+for (let i = 0; i < pyprojectTomlLines.length; i++) {
+  const line = pyprojectTomlLines[i];
+
+  if (line.startsWith("version = ")) {
+    const version = line.split("=")[1].trim();
+
+    const versionParts = version.split(".");
+    switch (versionType) {
+      case "patch":
+        versionParts[2] = (parseInt(versionParts[2]) + 1).toString();
+        break;
+      case "minor":
+        versionParts[1] = (parseInt(versionParts[1]) + 1).toString();
+        break;
+      case "major":
+        versionParts[0] = (parseInt(versionParts[0]) + 1).toString();
+        break;
+    }
+    const newVersion = versionParts.join(".");
+
+    pyprojectTomlLines[i] = `version = "${newVersion}"`;
+  }
+}
+
+await Bun.write("python/pyproject.toml", pyprojectTomlLines.join("\n"));
+
 console.log("Version bumping process completed.");

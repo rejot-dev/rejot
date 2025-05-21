@@ -11,7 +11,7 @@ import type { IManifestFileManager } from "../manifest/manifest-file-manager.ts"
 import { ManifestPrinter } from "../manifest/manifest-printer.ts";
 import { type IFileFinder } from "./file-finder.ts";
 import { collectGitIgnore } from "./git-ignore.ts";
-import type { CollectedSchemas, ISchemaCollector } from "./schema-collector.ts";
+import type { CollectedSchemas, ISchemaCollector } from "./ts-schema-collector.ts";
 
 const log = getLogger(import.meta.url);
 
@@ -84,8 +84,21 @@ export class VibeCollector implements IVibeCollector {
       { ignorePatterns, caseSensitive: true, fileExtensions: ["ts", "js", "tsx", "jsx"] },
     );
 
+    const publicPythonResults = await this.#fileFinder
+      .searchInDirectory(rootPath, ["create_public_schema", "create_consumer_schema"], {
+        ignorePatterns,
+        caseSensitive: true,
+        fileExtensions: ["py"],
+      })
+      .then((results) =>
+        results.map((result) => ({
+          ...result,
+          file: result.file.replace("/", "."),
+        })),
+      );
+
     // Extract unique file paths
-    return [...new Set(publicResults.map((result) => result.file))];
+    return [...new Set([...publicResults, ...publicPythonResults].map((result) => result.file))];
   }
 
   /**
@@ -125,6 +138,9 @@ export class VibeCollector implements IVibeCollector {
       const collectedSchemas: CollectedSchemas = await this.#schemaCollector.collectSchemas(
         nearestManifestPath,
         filePath,
+        {
+          verbose: true,
+        },
       );
 
       log.debug(

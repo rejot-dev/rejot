@@ -1,0 +1,25 @@
+{
+  "name": "@rejot-dev/integration-tests-python-bun",
+  "type": "module",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rejot-dev/rejot.git",
+    "directory": "integration-tests/python-bun"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@rejot-dev/adapter-postgres": "workspace:*",
+    "@rejot-dev/cli": "workspace:*",
+    "@rejot-dev/contract": "workspace:*",
+    "@rejot-dev/contract-tools": "workspace:*",
+    "@rejot-dev/sync": "workspace:*",
+    "pg": "^8.11.3",
+    "zod": "^3.24.2"
+  }
+}

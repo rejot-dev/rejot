@@ -1,0 +1,205 @@
+---
+title: "Python API"
+---
+
+# ReJot Python Contracts
+
+This page documents the Python package for defining and working with ReJot public and consumer
+schemas. Use this package to define data contracts and transformations for the ReJot platform.
+
+## Installation
+
+Requires Python 3.9 or higher.
+
+```bash
+pip install rejot-contract
+```
+
+## Usage Example
+
+```python
+from pydantic import BaseModel
+from rejot_contract.public_schema import (
+    create_public_schema, PublicSchemaConfig, PostgresPublicSchemaConfigTransformation, Source, Version, create_postgres_public_schema_transformation
+)
+from rejot_contract.consumer_schema import (
+    create_consumer_schema, ConsumerSchemaConfig, SourceManifest, PublicSchema
+)
+
+class Account(BaseModel):
+    id: int
+    email: str
+    name: str
+
+# Use the helper to create transformations for insertOrUpdate
+transformations = create_postgres_public_schema_transformation(
+    operation="insertOrUpdate",
+    table="account",
+    sql="INSERT INTO account (id, email, name) VALUES (:id, :email, :name)",
+)
+
+# Define a public schema
+public = create_public_schema(
+    public_schema_name="public-account",
+    source=Source(dataStoreSlug="default-postgres"),
+    output_schema=Account, # Or a JSON schema dict
+    version=Version(major=1, minor=0),
+    config=PublicSchemaConfig(
+        publicSchemaType="postgres",
+        transformations=transformations,
+    ),
+)
+
+# Define a consumer schema
+consumer = create_consumer_schema(
+    "consume-public-account",
+    source=SourceManifest(
+        manifestSlug="@rejot/",
+        publicSchema=PublicSchema(
+            name="public-account",
+            majorVersion=1,
+        ),
+    ),
+    config=ConsumerSchemaConfig(
+        consumerSchemaType="postgres",
+        destinationDataStoreSlug="default-postgres",
+        sql="INSERT INTO users_destination (id, full_name) VALUES (:id, :email || ' ' || :name) ON CONFLICT (id) DO UPDATE SET full_name = :email || ' ' || :name",
+        deleteSql="DELETE FROM users_destination WHERE id = :id",
+    ),
+)
+```
+
+---
+
+# API Reference
+
+## Public Schema
+
+### `create_public_schema`
+
+Create a public schema definition for publishing data.
+
+**Signature:**
+
+```python
+def create_public_schema(
+    public_schema_name: str,
+    source: Source,
+    output_schema: Union[Type[BaseModel], dict[str, Any]],
+    version: Version,
+    config: PublicSchemaConfig
+) -> dict[str, Any]
+```
+
+- Raises `InvalidPublicSchemaError` if no transformations are provided.
+
+### `PublicSchemaConfig`
+
+Configuration for a public schema.
+
+- `publicSchemaType`: Literal["postgres"]
+- `transformations`: List of `PostgresPublicSchemaConfigTransformation`
+
+### `PostgresPublicSchemaConfigTransformation`
+
+Defines a transformation step for Postgres.
+
+- `operation`: "insert" | "update" | "delete"
+- `table`: Target table name
+- `sql`: SQL statement for the operation
+
+### `Source`
+
+- `dataStoreSlug`: Slug of the source data store
+
+### `Version`
+
+- `major`: Major version number
+- `minor`: Minor version number
+
+### `InvalidPublicSchemaError`
+
+Raised when a public schema is invalid (e.g., missing transformations).
+
+### `create_postgres_public_schema_transformation`
+
+Helper to generate transformation steps for common Postgres operations.
+
+**Signature:**
+
+```python
+def create_postgres_public_schema_transformation(
+    operation: Literal["insertOrUpdate", "delete"],
+    table: str,
+    sql: str
+) -> List[PostgresPublicSchemaConfigTransformation]
+```
+
+- For `insertOrUpdate`, returns both insert and update transformations.
+- For `delete`, returns a delete transformation.
+- Raises `ValueError` for invalid operations.
+
+**Example:**
+
+```python
+transformations = create_postgres_public_schema_transformation(
+    operation="insertOrUpdate",
+    table="account",
+    sql="INSERT INTO account (id, email, name) VALUES (:id, :email, :name)",
+)
+```
+
+---
+
+## Consumer Schema
+
+### `create_consumer_schema`
+
+Create a consumer schema definition for consuming and transforming data.
+
+**Signature:**
+
+```python
+def create_consumer_schema(
+    name: str,
+    source: SourceManifest,
+    config: ConsumerSchemaConfig,
+    definitionFile: Optional[str] = None
+) -> dict[str, Any]
+```
+
+- Raises `InvalidConsumerSchemaError` if required fields are missing or invalid.
+
+### `ConsumerSchemaConfig`
+
+Configuration for a consumer schema.
+
+- `consumerSchemaType`: Literal["postgres"]
+- `destinationDataStoreSlug`: Slug of the destination data store
+- `sql`: SQL statement for transformation
+- `deleteSql`: Optional SQL for delete operations
+
+### `SourceManifest`
+
+Reference to a public schema in a manifest.
+
+- `manifestSlug`: Slug of the source manifest
+- `publicSchema`: `PublicSchema` reference
+
+### `PublicSchema`
+
+Reference to a public schema.
+
+- `name`: Name of the public schema
+- `majorVersion`: Major version number
+
+### `InvalidConsumerSchemaError`
+
+Raised when a consumer schema is invalid (e.g., missing required fields).
+
+---
+
+## Error Handling
+
+- Exceptions are only raised for invalid schema definitions.
+- See the exception classes above for details.
