@@ -1,6 +1,6 @@
 [project]
 name = "rejot-contract"
-version = "0.0.16"
+version = "0.1.0"
 description = "ReJot contracts for Python"
 authors = [
   { name="ReJot", email="rejot@rejot.dev" },
@@ -15,7 +15,7 @@ license = "Apache-2.0"
 license-files = ["LICEN[CS]E*"]
 
 dependencies = [
-    "pydantic>=2.11.4",
+    "pydantic>=2.0.0,<3.0.0",
 ]
 
 [project.urls]
