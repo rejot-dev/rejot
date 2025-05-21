@@ -534,8 +534,8 @@
       "id": "workspace:init",
       "description": "Initialize a new ReJot workspace",
       "examples": [
-        "<%= config.bin %> <%= command.id %> --slug @myorg/",
-        "<%= config.bin %> <%= command.id %> --slug @myorg/ --filename custom-manifest.json"
+        "<%= config.bin %> <%= command.id %> --slug myorg",
+        "<%= config.bin %> <%= command.id %> --slug myorg --filename custom-manifest.json"
       ],
       "flags": {
         "filename": {

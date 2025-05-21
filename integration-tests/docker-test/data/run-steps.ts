@@ -25,7 +25,7 @@ if (!REJOT_DB_1 || !REJOT_DB_2) {
   process.exit(1);
 }
 
-step(`rejot-cli manifest init --slug "@rejot-test/"`, "Initialize manifest");
+step(`rejot-cli manifest init --slug "rejot-test-"`, "Initialize manifest");
 step(
   `rejot-cli manifest connection add --slug source --connection-string ${REJOT_DB_1}`,
   "Add source connection",
