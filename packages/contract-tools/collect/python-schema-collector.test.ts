@@ -19,7 +19,7 @@ describe("PythonSchemaCollector", () => {
     process.chdir(tmpDir);
 
     manifestPath = join(tmpDir, "rejot-manifest.json");
-    await writeFile(manifestPath, JSON.stringify({ slug: "@test/", manifestVersion: 0 }));
+    await writeFile(manifestPath, JSON.stringify({ slug: "test", manifestVersion: 0 }));
     collector = new PythonSchemaCollector("python3");
   });
 

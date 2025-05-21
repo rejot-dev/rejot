@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import { dirname, relative } from "node:path";
 
 import { getLogger } from "@rejot-dev/contract/logger";
@@ -20,8 +21,7 @@ module = importlib.import_module("${modulePath}")
 
 for key, value in module.__dict__.items():
     if not key.startswith('_') and (isinstance(value, dict) or isinstance(value, list)):
-        print(json.dumps(value, indent=2))
-        print("--- rejot-next-schema ---")
+        print(json.dumps(value))
 `;
 
 const log = getLogger(import.meta.url);
@@ -47,9 +47,6 @@ export class PythonSchemaCollector implements ISchemaCollector {
     if (verbose) {
       log.user(`Collecting schemas from ${modulePath} using ${this.#pythonExecutable}`);
     }
-
-    // Use child_process to run the Python wrapper script
-    const { spawn } = await import("node:child_process");
 
     // Module path without .py, and without the cwd
     const modulePathWithoutPy = modulePath.replace(/\.py$/, "");
@@ -88,7 +85,7 @@ export class PythonSchemaCollector implements ISchemaCollector {
 
     let parsed: unknown[];
     try {
-      const lines = stdout.split("--- rejot-next-schema ---");
+      const lines = stdout.split("\n");
       lines.pop();
       parsed = lines.map((line) => JSON.parse(line));
     } catch (error) {
