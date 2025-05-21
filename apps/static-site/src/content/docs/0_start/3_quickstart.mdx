@@ -87,9 +87,10 @@ for transforming the internal schema to the public schema and must include a `WH
 the primary key for that table. Note that in the example query, the `:id` placeholder will be the
 primary key value for incoming updates.
 
-Public and Consumer Schemas can be created through Typescript code, create a `schemas.ts` file
-containing your schemas. See our full [guide on defining schemas](/docs/guides/defining-schemas) for
-more detailed description of the schema definition process.
+Public and Consumer Schemas can be created through Typescript or Python code, create a `schemas.ts`
+(or `schemas.py`) file containing your schemas. See our full
+[guide on defining schemas](/docs/guides/defining-schemas) for more detailed description of the
+schema definition process.
 
 <LanguageVariants
   languages={[
@@ -112,19 +113,37 @@ Before your newly defined schemas can be used, they must me collected into your 
 can do this using the `collect` command in the CLI. It might be nice to check your schemas are
 correct first using the `--check` flag.
 
-```bash
-rejot-cli collect schemas.ts --check --print
-```
+<LanguageVariants
+  languages={[
+    {
+      title: "TypeScript",
+      lang: "bash",
+      code: `rejot-cli collect schemas.ts --check --print`,
+    },
+    {
+      title: "Python",
+      lang: "bash",
+      code: `rejot-cli collect schemas.py --check --print`,
+    },
+  ]}
+/>
 
 If all looks good, you can materialize the schemas into your manifest.
 
-```bash
-rejot-cli collect schemas.ts --write
-```
-
-## Create Target Table in Destination
-
-Before launching the synchronization process, create the target table in your destination database:
+<LanguageVariants
+  languages={[
+    {
+      title: "TypeScript",
+      lang: "bash",
+      code: `rejot-cli collect schemas.ts --write`,
+    },
+    {
+      title: "Python",
+      lang: "bash",
+      code: `rejot-cli collect schemas.py --write`,
+    },
+  ]}
+/>
 
 ```sql
 CREATE TABLE target_table (id SERIAL PRIMARY KEY, api_key TEXT NOT NULL);
