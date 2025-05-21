@@ -1,6 +1,6 @@
 [project]
 name = "rejot-contract"
-version = "0.1.1"
+version = "0.1.2"
 description = "ReJot contracts for Python"
 authors = [
   { name="ReJot", email="rejot@rejot.dev" },
