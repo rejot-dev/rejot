@@ -1,4 +1,4 @@
-# schema.py
+# schemas.py
 from pydantic import BaseModel
 from rejot_contract.public_schema import (
     create_public_schema, PublicSchemaConfig, Source, Version, create_postgres_public_schema_transformation

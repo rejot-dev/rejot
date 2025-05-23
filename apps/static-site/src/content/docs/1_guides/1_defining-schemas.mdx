@@ -13,11 +13,12 @@ When using ReJot, you define Public and Consumer schemas right from your codebas
 to group related pieces of code together. In this case you can define your public schemas close to
 where you define the underlying database tables.
 
-This guide will show you how to define (Postgres) schemas in your TypeScript codebase.
+This guide will show you how to define (Postgres) schemas in your TypeScript or Python codebase.
 
 <Notice type="NOTE">
-  If you want to use ReJot with a non-TypeScript codebase, you can modify your manifest directly to
-  create schemas, or you can choose to define your schemas in TypeScript anyway.
+  If you want to use ReJot with a non-TypeScript or Python codebase, you can modify your manifest
+  directly to create schemas, or you can choose to define your schemas in TypeScript or Python
+  anyway.
 </Notice>
 
 ## Setting Up
@@ -36,11 +37,17 @@ First, add the required dependencies to your project:
       lang: "bash",
       code: `bun add @rejot-dev/contract @rejot-dev/adapter-postgres`,
     },
+    {
+      title: "Python",
+      lang: "bash",
+      code: `pip install rejot-contract`,
+    },
   ]}
 />
 ## Creating Public and Consumer Schema Definitions
 
-Create a new file called `schemas.ts` that will contain your public and consumer schemas:
+Create a new file called `schema.ts` (or `schema.py`) that will contain your public and consumer
+schemas:
 
 <LanguageVariants
   languages={[
@@ -168,9 +175,20 @@ Here's an example of a consumer schema transformation:
 Code-based schemas need to be materialized into your manifest file to be usable by sync services.
 This is done using the `collect` command:
 
-```bash
-rejot-cli collect --write --check schemas.ts
-```
+<LanguageVariants
+  languages={[
+    {
+      title: "TypeScript",
+      lang: "bash",
+      code: `rejot-cli collect --write --check schema.ts`,
+    },
+    {
+      title: "Python",
+      lang: "bash",
+      code: `rejot-cli collect --write --check schema.py`,
+    },
+  ]}
+/>
 
 This command will:
 
