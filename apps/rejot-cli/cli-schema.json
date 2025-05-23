@@ -462,7 +462,7 @@
     },
     "manifest:sync": {
       "id": "manifest:sync",
-      "description": "Start syncing based on one or more manifest files.\n\n    Opens replication slots in the source data stores, transforms writes using public schemas,\n    and stores the events in the configured event store.\n\n\n\n    Metrics can be published using OpenTelemetry, specify OTEL_EXPORTER_OTLP_ENDPOINT to enable. See https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/ for more information.",
+      "description": "Start syncing based on one or more manifest files.\n\n    Opens replication slots in the source data stores, transforms writes using public schemas,\n    and stores the events in the configured event store.\n\n\n\n    Metrics can be published using OpenTelemetry, see https://rejot.dev/docs/reference/metrics for more information.",
       "examples": [
         "<%= config.bin %> <%= command.id %> ./rejot-manifest.json",
         "<%= config.bin %> <%= command.id %> ./manifest1.json ./manifest2.json"

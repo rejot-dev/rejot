@@ -43,7 +43,7 @@ export class ManifestSyncCommand extends Command {
     Opens replication slots in the source data stores, transforms writes using public schemas,
     and stores the events in the configured event store.\n\n
 
-    Metrics can be published using OpenTelemetry, specify OTEL_EXPORTER_OTLP_ENDPOINT to enable. See https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/ for more information.`;
+    Metrics can be published using OpenTelemetry, see https://rejot.dev/docs/reference/metrics for more information.`;
 
   static override examples = [
     "<%= config.bin %> <%= command.id %> ./rejot-manifest.json",

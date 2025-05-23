@@ -9,6 +9,8 @@ import type {
 import { getLogger } from "@rejot-dev/contract/logger";
 import type { Transaction } from "@rejot-dev/contract/sync";
 
+import { metrics } from "@opentelemetry/api";
+
 import { AsyncQueue, AsyncQueueAbortedError } from "./async-queue.ts";
 import { RejotPgOutputPlugin } from "./pgoutput-plugin.ts";
 import { assertUnreachable } from "./util/asserts.ts";
@@ -86,6 +88,10 @@ type QueueItem = {
 };
 
 const log = getLogger(import.meta.url);
+const meter = metrics.getMeter("rejot-adapter-postgres");
+const heartbeatCounter = meter.createCounter("heartbeat", {
+  description: "Number of heartbeats acknowledged",
+});
 
 export class PostgresReplicationListener {
   #logicalReplicationService: LogicalReplicationService;
@@ -334,6 +340,7 @@ export class PostgresReplicationListener {
     if (this.#transactionBuffer.state === "empty" && shouldRespond) {
       log.debug("Acknowledging heartbeat", { lsn, timestamp });
       this.#logicalReplicationService.acknowledge(lsn);
+      heartbeatCounter.add(1);
     }
   }
 
