@@ -131,8 +131,13 @@ export class ManifestSyncCommand extends Command {
       const manifests = await Promise.all(
         manifestPaths.map(async (path) => {
           const content = await fs.readFile(path, "utf-8");
-          const json = JSON.parse(content);
-          return SyncManifestSchema.parse(json);
+          try {
+            const json = JSON.parse(content);
+            return SyncManifestSchema.parse(json);
+          } catch (error) {
+            log.error(`Failed to parse manifest file ${path}: ${error}`);
+            throw error;
+          }
         }),
       );
 

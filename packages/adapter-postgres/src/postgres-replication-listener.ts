@@ -117,7 +117,11 @@ export class PostgresReplicationListener {
       state: "empty",
     };
 
-    log.info("PostgresReplicationListener initialized", { database: config.database });
+    log.info("PostgresReplicationListener initialized", {
+      database: config.database,
+      host: config.host,
+      port: config.port,
+    });
   }
 
   async start(publicationName: string, slotName: string): Promise<boolean> {
