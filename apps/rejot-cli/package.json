@@ -12,7 +12,8 @@
   "scripts": {
     "test": "bun test **/*.test.ts",
     "check": "tsc --noEmit",
-    "cli:schema": "bun run src/generate-schema.ts > cli-schema.json"
+    "cli:schema": "bun run src/generate-schema.ts > cli-schema.json",
+    "build:bun": "sed -i 's|./dist/src/index.js|./src/index.ts|g' package.json"
   },
   "bin": {
     "rejot-cli": "./bin/run.js"
