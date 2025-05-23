@@ -1,5 +1,3 @@
-import "./manifest-sync.metrics-sdk.ts";
-
 import fs from "node:fs/promises";
 
 import { z } from "zod";
