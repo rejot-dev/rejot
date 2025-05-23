@@ -1,0 +1,51 @@
+---
+title: "Metrics"
+---
+
+ReJot uses OpenTelemetry to collect metrics, which can be published to a variety of backends. See
+[OpenTelemetry](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/) for more
+information. Currently, the metrics are only available in the sync command.
+
+## Metrics Exporter
+
+To enable metrics, set the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable to the URL of the
+OpenTelemetry collector.
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+```
+
+## Prometheus
+
+Another option is to use Prometheus. ReJot can publish metrics on a specific port, which can be
+scraped by Prometheus or pushed to a Prometheus server. For more information see
+[OpenTelemetry Documentation](https://opentelemetry.io/docs/languages/js/exporters/#prometheus).
+
+### Push based
+
+Configure Prometheus with the
+[OTLP receiver flag](https://prometheus.io/docs/prometheus/2.55/feature_flags/#otlp-receiver), and
+point ReJot to the Prometheus server.
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:9090/api/v1/otlp
+```
+
+### Pull based
+
+Configure Prometheus to scrape ReJot's metrics endpoint, which is enabled by the setting
+`REJOT_METRICS_PORT`.
+
+```bash
+export REJOT_METRICS_PORT=9464
+```
+
+Then configure Prometheus to scrape ReJot's metrics endpoint:
+
+```yaml
+scrape_configs:
+  - job_name: rejot-cli
+    scrape_interval: 5s
+    static_configs:
+      - targets: [localhost:9464]
+```

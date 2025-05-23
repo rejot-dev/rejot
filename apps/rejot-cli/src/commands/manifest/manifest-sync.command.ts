@@ -25,15 +25,23 @@ import { createResolver, type ISyncServiceResolver } from "@rejot-dev/sync/sync-
 import { SyncHTTPController } from "@rejot-dev/sync/sync-http-service";
 
 import { Args, Command, Flags } from "@oclif/core";
+import { metrics } from "@opentelemetry/api";
 
 const log = getLogger(import.meta.url);
+const meter = metrics.getMeter("rejot-cli-manifest-sync");
+
+const activeManifests = meter.createGauge("active_manifests", {
+  description: "Number of active manifests",
+});
 
 export class ManifestSyncCommand extends Command {
   static override id = "manifest sync";
 
   static override description = `Start syncing based on one or more manifest files.\n
     Opens replication slots in the source data stores, transforms writes using public schemas,
-    and stores the events in the configured event store.`;
+    and stores the events in the configured event store.\n\n
+
+    Metrics can be published using OpenTelemetry, see https://rejot.dev/docs/reference/metrics for more information.`;
 
   static override examples = [
     "<%= config.bin %> <%= command.id %> ./rejot-manifest.json",
@@ -136,6 +144,10 @@ export class ManifestSyncCommand extends Command {
         }),
       );
 
+      activeManifests.record(manifests.length, {
+        manifests: manifests.map((manifest) => manifest.slug).join(","),
+      });
+
       log.info(`Successfully loaded ${manifests.length} manifest(s)`);
 
       const syncManifest = new SyncManifest(manifests);
@@ -220,6 +232,7 @@ export class ManifestSyncCommand extends Command {
         log.info("\nReceived SIGINT, shutting down...");
         await syncController.stop();
         await syncController.close();
+        activeManifests.record(0);
         log.info("SIGINT Handled.");
       });
 
@@ -227,6 +240,7 @@ export class ManifestSyncCommand extends Command {
         log.info("\nReceived SIGTERM, killing...");
         await syncController.stop();
         await syncController.close();
+        activeManifests.record(0);
         process.exit(0);
       });
 

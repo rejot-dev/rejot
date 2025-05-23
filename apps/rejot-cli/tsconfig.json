@@ -7,6 +7,7 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    "package.json",
     "../../packages/contract/cli/cli-schema.test.ts",
     "../../packages/contract/cli/cli-schema.ts"
   ],

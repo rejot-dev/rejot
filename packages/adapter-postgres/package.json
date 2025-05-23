@@ -56,6 +56,7 @@
   },
   "type": "module",
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
     "@rejot-dev/contract": "workspace:*",
     "@rejot-dev/sqlparser": "workspace:*",
     "@rejot-dev/sync": "workspace:*",

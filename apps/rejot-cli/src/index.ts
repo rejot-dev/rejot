@@ -1,3 +1,5 @@
+import "./metrics-sdk.ts";
+
 import { ConsoleLogger } from "@rejot-dev/contract/logger";
 import { setLogger } from "@rejot-dev/contract/logger";
 
