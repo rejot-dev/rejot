@@ -1,4 +1,4 @@
-import "../move-this-metricssdk.ts";
+import "./manifest-sync.metrics-sdk.ts";
 
 import fs from "node:fs/promises";
 
@@ -30,7 +30,7 @@ import { Args, Command, Flags } from "@oclif/core";
 import { metrics } from "@opentelemetry/api";
 
 const log = getLogger(import.meta.url);
-const meter = metrics.getMeter("rejot-cli");
+const meter = metrics.getMeter("rejot-cli-manifest-sync");
 
 const activeManifests = meter.createGauge("active_manifests", {
   description: "Number of active manifests",
@@ -41,7 +41,9 @@ export class ManifestSyncCommand extends Command {
 
   static override description = `Start syncing based on one or more manifest files.\n
     Opens replication slots in the source data stores, transforms writes using public schemas,
-    and stores the events in the configured event store.`;
+    and stores the events in the configured event store.\n\n
+
+    Metrics can be published using OpenTelemetry, specify OTEL_EXPORTER_OTLP_ENDPOINT to enable. See https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/ for more information.`;
 
   static override examples = [
     "<%= config.bin %> <%= command.id %> ./rejot-manifest.json",
