@@ -150,11 +150,7 @@ export function getPublicSchemasForDataStore(
   return manifests.flatMap((manifest) =>
     (manifest.publicSchemas ?? [])
       .filter((schema) => {
-        const dataStore = (manifest.dataStores ?? []).find(
-          (ds) => ds.connectionSlug === sourceDataStoreSlug,
-        );
-        // Ensure dataStore exists and matches the source slug, and the operation table is included
-        return dataStore && schema.source.dataStoreSlug === dataStore.connectionSlug;
+        return schema.source.dataStoreSlug === sourceDataStoreSlug;
       })
       .map(({ name, source, config, version, outputSchema }) => ({
         name,

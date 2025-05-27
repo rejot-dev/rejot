@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { TransformedOperationWithSource } from "../event-store/event-store.ts";
 import { getLogger } from "../logger/logger.ts";
+import type { ManifestWithPath } from "../workspace/workspace.ts";
 import {
   type ConnectionConfigSchema,
   ConsumerSchemaSchema,
@@ -24,7 +25,7 @@ import {
 import {
   type ExternalPublicSchemaReference,
   type VerificationResult,
-  verifyManifests,
+  verifyManifestsWithPaths,
 } from "./verify-manifest.ts";
 
 const log = getLogger(import.meta.url);
@@ -61,11 +62,11 @@ export interface SyncManifestOptions {
 }
 
 export class SyncManifest {
-  readonly #manifests: Manifest[];
+  readonly #manifests: ManifestWithPath[];
   readonly #externalSchemaReferences: ExternalPublicSchemaReference[];
 
-  constructor(manifests: Manifest[], options: SyncManifestOptions = {}) {
-    const verificationResult: VerificationResult = verifyManifests(
+  constructor(manifests: ManifestWithPath[], options: SyncManifestOptions = {}) {
+    const verificationResult: VerificationResult = verifyManifestsWithPaths(
       manifests,
       options.checkPublicSchemaReferences,
     );
@@ -109,31 +110,31 @@ export class SyncManifest {
   }
 
   get manifests(): Manifest[] {
-    return this.#manifests;
+    return this.#manifests.map((m) => m.manifest);
   }
 
   get connections(): Connection[] {
-    return getConnectionsHelper(this.#manifests);
+    return getConnectionsHelper(this.manifests);
   }
 
   get dataStores(): NonNullable<Manifest["dataStores"]> {
-    return getDataStoresHelper(this.#manifests);
+    return getDataStoresHelper(this.manifests);
   }
 
   get eventStores(): NonNullable<Manifest["eventStores"]> {
-    return getEventStoresHelper(this.#manifests);
+    return getEventStoresHelper(this.manifests);
   }
 
   getSourceDataStores(): SourceDataStore[] {
-    return getSourceDataStoresHelper(this.#manifests);
+    return getSourceDataStoresHelper(this.manifests);
   }
 
   getDestinationDataStores(): DestinationDataStore[] {
-    return getDestinationDataStoresHelper(this.#manifests);
+    return getDestinationDataStoresHelper(this.manifests);
   }
 
   getConnectionBySlug(connectionSlug: string): Connection | undefined {
-    return getConnectionBySlugHelper(this.#manifests, connectionSlug);
+    return getConnectionBySlugHelper(this.manifests, connectionSlug);
   }
 
   get hasUnresolvedExternalReferences(): boolean {
@@ -148,23 +149,23 @@ export class SyncManifest {
    * @throws Error if the internal state is inconsistent (e.g., referenced manifest or schema not found).
    */
   getExternalConsumerSchemas(): Record<string, z.infer<typeof ConsumerSchemaSchema>[]> {
-    return getExternalConsumerSchemasHelper(this.#manifests);
+    return getExternalConsumerSchemasHelper(this.manifests);
   }
 
   getConsumerSchemasForPublicSchema(
     operation: TransformedOperationWithSource,
   ): z.infer<typeof ConsumerSchemaSchema>[] {
-    return getConsumerSchemasForPublicSchemaHelper(this.#manifests, operation);
+    return getConsumerSchemasForPublicSchemaHelper(this.manifests, operation);
   }
 
   getPublicSchemasForOperation(
     dataStoreSlug: string,
   ): (z.infer<typeof PublicSchemaSchema> & { sourceManifestSlug: string })[] {
-    return getPublicSchemasForDataStore(this.#manifests, dataStoreSlug);
+    return getPublicSchemasForDataStore(this.manifests, dataStoreSlug);
   }
 
   getPublicSchemas(): (z.infer<typeof PublicSchemaSchema> & { manifestSlug: string })[] {
-    return getPublicSchemasHelper(this.#manifests);
+    return getPublicSchemasHelper(this.manifests);
   }
 
   /**

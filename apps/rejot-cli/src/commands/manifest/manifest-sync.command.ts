@@ -142,21 +142,23 @@ export class ManifestSyncCommand extends Command {
             }
 
             const allManifests = [workspace.ancestor, ...workspace.children];
-            return allManifests.map((manifest) => manifest.manifest);
+            return allManifests;
           }),
         )
       ).flat();
 
       log.info(`Successfully loaded ${manifests.length} manifest(s)`);
 
-      const syncManifest = new SyncManifest(manifests);
+      const syncManifest = new SyncManifest(manifests, {
+        checkPublicSchemaReferences: false,
+      });
 
       // Create adapters
       const { connectionAdapters, publicSchemaAdapters, consumerSchemaAdapters } =
         this.#getAdapters();
 
       // Create event store from the first manifest's event store config
-      const eventStore = this.#createEventStore(manifests, connectionAdapters);
+      const eventStore = this.#createEventStore(syncManifest.manifests, connectionAdapters);
 
       // There are four things we need to be doing:
       // 1. Listen for changes on source data stores and write them to an event store.
