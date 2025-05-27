@@ -1,7 +1,9 @@
 import type { ClientBase, PoolClient, QueryResult, QueryResultRow } from "pg";
-import { DatabaseError, Pool } from "pg";
+import pg from "pg";
 
 import { getLogger } from "@rejot-dev/contract/logger";
+
+const { DatabaseError, Pool } = pg;
 
 export interface PostgresConfig {
   host: string;
@@ -54,7 +56,7 @@ export function parsePostgresConnectionString(connectionString: string): Postgre
 type PoolOrClient =
   | {
       type: "pool";
-      pool: Pool;
+      pool: pg.Pool;
     }
   | {
       type: "client";
