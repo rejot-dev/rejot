@@ -228,6 +228,9 @@ export function verifyPublicSchemaReferences(
     dataStoreMap.set(manifest.slug, storeNames);
   });
 
+  console.log("dataStoreMap");
+  console.log(dataStoreMap);
+
   // Build a map of data stores with configs
   const dataStoreConfigMap = new Map<string, Map<string, boolean>>();
   manifests.forEach(({ manifest }) => {
