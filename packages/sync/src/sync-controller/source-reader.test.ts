@@ -10,27 +10,30 @@ describe("SourceReader", () => {
   const createTestManifest = () =>
     new SyncManifest([
       {
-        slug: "test-manifest",
-        manifestVersion: 1,
-        connections: [
-          {
-            slug: "test-connection",
-            config: {
-              connectionType: "in-memory" as const,
+        path: "test-manifest.json",
+        manifest: {
+          slug: "test-manifest",
+          manifestVersion: 1,
+          connections: [
+            {
+              slug: "test-connection",
+              config: {
+                connectionType: "in-memory" as const,
+              },
             },
-          },
-        ],
-        dataStores: [
-          {
-            connectionSlug: "test-connection",
-            config: {
-              connectionType: "in-memory" as const,
+          ],
+          dataStores: [
+            {
+              connectionSlug: "test-connection",
+              config: {
+                connectionType: "in-memory" as const,
+              },
             },
-          },
-        ],
-        eventStores: [],
-        publicSchemas: [],
-        consumerSchemas: [],
+          ],
+          eventStores: [],
+          publicSchemas: [],
+          consumerSchemas: [],
+        },
       },
     ]);
 
@@ -43,34 +46,37 @@ describe("SourceReader", () => {
   test("should throw error if no adapter found for connection type", () => {
     const manifest = new SyncManifest([
       {
-        slug: "test-manifest",
-        manifestVersion: 1,
-        connections: [
-          {
-            slug: "test-connection",
-            config: {
-              connectionType: "postgres" as const,
-              host: "localhost",
-              port: 5432,
-              user: "postgres",
-              password: "postgres",
-              database: "postgres",
+        path: "test-manifest.json",
+        manifest: {
+          slug: "test-manifest",
+          manifestVersion: 1,
+          connections: [
+            {
+              slug: "test-connection",
+              config: {
+                connectionType: "postgres" as const,
+                host: "localhost",
+                port: 5432,
+                user: "postgres",
+                password: "postgres",
+                database: "postgres",
+              },
             },
-          },
-        ],
-        dataStores: [
-          {
-            connectionSlug: "test-connection",
-            config: {
-              connectionType: "postgres" as const,
-              publicationName: "test-publication",
-              slotName: "test-slot",
+          ],
+          dataStores: [
+            {
+              connectionSlug: "test-connection",
+              config: {
+                connectionType: "postgres" as const,
+                publicationName: "test-publication",
+                slotName: "test-slot",
+              },
             },
-          },
-        ],
-        eventStores: [],
-        publicSchemas: [],
-        consumerSchemas: [],
+          ],
+          eventStores: [],
+          publicSchemas: [],
+          consumerSchemas: [],
+        },
       },
     ]);
 

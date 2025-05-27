@@ -59,27 +59,30 @@ describe("ExternalSyncMessageBus", () => {
     const manifest = new SyncManifest(
       [
         {
-          slug: "local",
-          manifestVersion: 1,
-          connections: [],
-          dataStores: [],
-          eventStores: [],
-          publicSchemas: [],
-          consumerSchemas: [
-            {
-              name: "test-consumer",
-              sourceManifestSlug: "test",
-              publicSchema: {
-                name: "test",
-                majorVersion: 1,
+          path: "test-manifest.json",
+          manifest: {
+            slug: "local",
+            manifestVersion: 1,
+            connections: [],
+            dataStores: [],
+            eventStores: [],
+            publicSchemas: [],
+            consumerSchemas: [
+              {
+                name: "test-consumer",
+                sourceManifestSlug: "test",
+                publicSchema: {
+                  name: "test",
+                  majorVersion: 1,
+                },
+                config: {
+                  consumerSchemaType: "postgres",
+                  destinationDataStoreSlug: "test-store",
+                  sql: "SELECT * FROM test",
+                },
               },
-              config: {
-                consumerSchemaType: "postgres",
-                destinationDataStoreSlug: "test-store",
-                sql: "SELECT * FROM test",
-              },
-            },
-          ],
+            ],
+          },
         },
       ],
       { checkPublicSchemaReferences: false },
@@ -145,27 +148,30 @@ describe("ExternalSyncMessageBus", () => {
     const manifest = new SyncManifest(
       [
         {
-          slug: "local",
-          manifestVersion: 1,
-          connections: [],
-          dataStores: [],
-          eventStores: [],
-          publicSchemas: [],
-          consumerSchemas: [
-            {
-              name: "test-consumer",
-              sourceManifestSlug: "test",
-              publicSchema: {
-                name: "test",
-                majorVersion: 1,
+          path: "test-manifest.json",
+          manifest: {
+            slug: "local",
+            manifestVersion: 1,
+            connections: [],
+            dataStores: [],
+            eventStores: [],
+            publicSchemas: [],
+            consumerSchemas: [
+              {
+                name: "test-consumer",
+                sourceManifestSlug: "test",
+                publicSchema: {
+                  name: "test",
+                  majorVersion: 1,
+                },
+                config: {
+                  consumerSchemaType: "postgres",
+                  destinationDataStoreSlug: "test-store",
+                  sql: "SELECT * FROM test",
+                },
               },
-              config: {
-                consumerSchemaType: "postgres",
-                destinationDataStoreSlug: "test-store",
-                sql: "SELECT * FROM test",
-              },
-            },
-          ],
+            ],
+          },
         },
       ],
       { checkPublicSchemaReferences: false },
@@ -214,27 +220,30 @@ describe("ExternalSyncMessageBus", () => {
     const manifest = new SyncManifest(
       [
         {
-          slug: "local",
-          manifestVersion: 1,
-          connections: [],
-          dataStores: [],
-          eventStores: [],
-          publicSchemas: [],
-          consumerSchemas: [
-            {
-              name: "test-consumer",
-              sourceManifestSlug: "test",
-              publicSchema: {
-                name: "test",
-                majorVersion: 1,
+          path: "test-manifest.json",
+          manifest: {
+            slug: "local",
+            manifestVersion: 1,
+            connections: [],
+            dataStores: [],
+            eventStores: [],
+            publicSchemas: [],
+            consumerSchemas: [
+              {
+                name: "test-consumer",
+                sourceManifestSlug: "test",
+                publicSchema: {
+                  name: "test",
+                  majorVersion: 1,
+                },
+                config: {
+                  consumerSchemaType: "postgres",
+                  destinationDataStoreSlug: "test-store",
+                  sql: "SELECT * FROM test",
+                },
               },
-              config: {
-                consumerSchemaType: "postgres",
-                destinationDataStoreSlug: "test-store",
-                sql: "SELECT * FROM test",
-              },
-            },
-          ],
+            ],
+          },
         },
       ],
       { checkPublicSchemaReferences: false },
@@ -269,27 +278,30 @@ describe("ExternalSyncMessageBus", () => {
     const manifest = new SyncManifest(
       [
         {
-          slug: "local",
-          manifestVersion: 1,
-          connections: [],
-          dataStores: [],
-          eventStores: [],
-          publicSchemas: [],
-          consumerSchemas: [
-            {
-              name: "test-consumer",
-              sourceManifestSlug: "test",
-              publicSchema: {
-                name: "test",
-                majorVersion: 1,
+          path: "test-manifest.json",
+          manifest: {
+            slug: "local",
+            manifestVersion: 1,
+            connections: [],
+            dataStores: [],
+            eventStores: [],
+            publicSchemas: [],
+            consumerSchemas: [
+              {
+                name: "test-consumer",
+                sourceManifestSlug: "test",
+                publicSchema: {
+                  name: "test",
+                  majorVersion: 1,
+                },
+                config: {
+                  consumerSchemaType: "postgres",
+                  destinationDataStoreSlug: "test-store",
+                  sql: "SELECT * FROM test",
+                },
               },
-              config: {
-                consumerSchemaType: "postgres",
-                destinationDataStoreSlug: "test-store",
-                sql: "SELECT * FROM test",
-              },
-            },
-          ],
+            ],
+          },
         },
       ],
       { checkPublicSchemaReferences: false },
