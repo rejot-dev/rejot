@@ -139,7 +139,8 @@ Event Stores (Replication Targets):
 
 A ReJot workspace is a collection of manifests that are managed together. It's useful for local
 development use cases where you're typically only using a single event store and only want to run a
-single sync service.
+single sync service. It can also be used to combine for example secrets and other configuration
+across multiple manifests.
 
 A manifest can link to other manifests using the `workspaces` field. This field should contain the
 relative path to other manifest files.

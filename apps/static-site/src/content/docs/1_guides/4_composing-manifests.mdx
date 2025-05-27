@@ -35,7 +35,6 @@ base manifest won't specify any connections:
 // rejot-manifest.base.json
 {
   "connections": [],
-  "dataStores": ...,
   "publicSchemas": ...,
 }
 // rejot-manifest.dev.json
@@ -46,7 +45,13 @@ base manifest won't specify any connections:
       "host": "localhost",
       ...
     }
-  }]
+  }],
+  "dataStores": [
+    {
+      "connectionSlug": "conn-datastore-a",
+      ...
+    }
+  ]
 }
 
 // rejot-manifest.prod.json
@@ -57,7 +62,13 @@ base manifest won't specify any connections:
       "host": "my-datastore-a.europe-west4.domain.com",
       ...
     }
-  }]
+  }],
+  "dataStores": [
+    {
+      "connectionSlug": "conn-datastore-a",
+      ...
+    }
+  ]
 }
 ```
 
@@ -74,4 +85,20 @@ rejot-cli manifest sync rejot-manifest.base.json rejot-manifest.prod.json
 ## Workspaces
 
 Use the [`workspaces`](/docs/spec/manifest) key in your manifest to include other Manifest files
-automatically.
+automatically. This can simplify the management of multiple manifests, for example when you have
+multiple services that need to share the same connection configuration.
+
+For example, workspace file `rejot-workspace.json` might look like this:
+
+```json
+{
+  "workspaces": ["./service-one/rejot-manifest.json", "./service-two/rejot-manifest.json"]
+}
+```
+
+And call the sync service with multiple manifests:
+
+```bash
+# Development
+rejot-cli manifest sync rejot-workspace.json
+```
