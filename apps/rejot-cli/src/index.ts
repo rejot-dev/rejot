@@ -47,7 +47,7 @@ setLogger(new ConsoleLogger("DEBUG"));
 // We need to cast it to the PJSON type to avoid type errors, as our package.json contains the oclif field, bun just doesn't know about it.
 const pjson = packagejson as unknown as PJSON;
 
-class PreloadedRejotCli extends Plugin {
+export class PreloadedRejotCli extends Plugin {
   /**
    * This plugin is used to preload the rejot-cli commands, so we do not have to rely on oclif's dynamic loading (which requires the package.json to be present in the root of the project).
    * This also means we can now use bun compile to build the rejot-cli binary, and it will work out of the box.
@@ -90,7 +90,6 @@ export async function run() {
       isRoot: true,
       pjson,
       root: import.meta.url,
-      topics: plugin.topics,
       pluginAdditions: {
         core: [PreloadedRejotCli.name],
       },
