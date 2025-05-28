@@ -7,7 +7,7 @@ import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-pri
 import { Command, Flags } from "@oclif/core";
 
 export class ManifestInfoCommand extends Command {
-  static override id = "manifest";
+  static override id = "manifest info";
   static override description = `Display and manage Rejot manifest file for configuring data synchronization.
   
   The manifest file defines:
