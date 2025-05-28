@@ -19,6 +19,7 @@ import type {
   ResourceTemplate,
   ToolCallback,
 } from "./interfaces/mcp-server.interface.ts";
+import packageJson from "./package.json" with { type: "json" };
 import { rejotErrorToCallToolContent, rejotErrorToReadResourceContent } from "./state/mcp-error.ts";
 import { McpState } from "./state/mcp-state.ts";
 
@@ -205,7 +206,9 @@ export class RejotMcp implements IRejotMcp {
     // Only proceed with registration if state is ready
     await this.#register();
 
-    log.info(`ReJot MCP server initialized for project ${this.workspaceDirectoryPath}`);
+    log.info(
+      `ReJot MCP server (Version ${packageJson.version}) initialized for project ${this.workspaceDirectoryPath}`,
+    );
     await this.#server.connect(transport);
     log.info(`ReJot MCP server connected to ${this.workspaceDirectoryPath}`);
 

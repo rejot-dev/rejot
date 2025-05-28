@@ -95,7 +95,7 @@ export default class Collect extends Command {
       flags.manifest ??
         (await findManifestPath()) ??
         this.error(
-          "No manifest file found. Please specify one with --manifest or create one with 'rejot manifest init'",
+          `No manifest file found. Please specify one with --manifest or create one with '${this.config.bin} manifest init'`,
         ),
     );
 

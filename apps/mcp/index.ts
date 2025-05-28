@@ -9,6 +9,7 @@ import { TypeStripper } from "@rejot-dev/contract-tools/type-stripper";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { CollectTool } from "./collect/collect.tool.ts";
+import packageJson from "./package.json" with { type: "json" };
 import { RejotMcp } from "./rejot-mcp.ts";
 import { DbIntrospectionTool } from "./tools/db-introspection/db-introspection.tool.ts";
 import { ManifestInfoTool } from "./tools/manifest/manifest-info.tool.ts";
@@ -22,7 +23,7 @@ import { WorkspaceTool } from "./workspace/workspace.tool.ts";
 const server = new McpServer(
   {
     name: "@rejot-dev/mcp",
-    version: "0.0.14",
+    version: packageJson.version,
   },
   {
     instructions: `
@@ -52,8 +53,8 @@ manifest.
 contain relative path references to manifests in sub-directories.
 
 ## Working with Schemas
-- Schemas are defined in code. E.g. in TypeScript files. 
-- The collect command will scan the  workspace to find these schemas and add them to the manifest. 
+- Schemas are defined in code. E.g. in TypeScript or Python files. 
+- The collect command will scan the workspace to find these schemas and add them to the manifest. 
 - You SHALL NEVER edit schemas in the manifest file directly.
 - You MUST modify the underlying source which is referenced by the 'definitionFile' property. 
 - Run the collect command to update the manifest after editing the source.

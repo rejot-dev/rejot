@@ -51,6 +51,7 @@ export class ManifestPrinter {
   static printManifest(manifest: Manifest): string[] {
     const output: string[] = ["Manifest Configuration:\n"];
 
+    output.push(`Manifest slug: ${manifest.slug}\n`);
     output.push(...this.printConnections(manifest.connections ?? []));
     output.push("");
     output.push(...this.printDataStores(manifest));

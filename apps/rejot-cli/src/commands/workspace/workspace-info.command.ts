@@ -33,7 +33,7 @@ export class WorkspaceInfoCommand extends Command {
 
     if (!workspaceFilePath) {
       this.error(
-        `Workspace manifest file not found. Use 'rejot manifest init --slug <slug>' to create one.`,
+        `Workspace manifest file not found. Use '${this.config.bin} workspace init --slug <slug>' to create one.`,
       );
     }
 
@@ -45,7 +45,9 @@ export class WorkspaceInfoCommand extends Command {
     });
 
     if (!workspace) {
-      this.error(`No workspace found. Use 'rejot manifest init --slug <slug>' to create one.`);
+      this.error(
+        `No workspace found. Use '${this.config.bin} workspace init --slug <slug>' to create one.`,
+      );
     }
 
     // Print workspace information
