@@ -219,6 +219,10 @@ jobs:
             **/.astro
           key: ${{ runner.os }}-modules-${{ hashFiles('**/bun.lock') }}
 
+      - name: Switch rejot-cli to bun
+        working-directory: apps/rejot-cli
+        run: bun run build:bun
+
       - name: Create Database Schema
         working-directory: apps/controller
         run: bunx drizzle-kit --config=_ci/ci-test-drizzle.config.ts migrate
