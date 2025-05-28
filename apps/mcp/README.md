@@ -2,6 +2,10 @@
 
 The ReJot MCP is a tool that allows you to manage the ReJot manifest file.
 
+## Inspecting
+
+- To start inspecting the mcp, use `bun run inspect`
+
 ## Testing
 
 - The `.cursor/mcp.json` file in this repository should automatically be picked up by Cursor. You

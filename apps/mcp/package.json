@@ -19,7 +19,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "test": "bun test **/*.test.ts",
-    "inspect": "mcp-inspector bun run \"$PWD/index.ts\" --project \"$PWD/../..\""
+    "inspect": "mcp-inspector bun run \"$PWD/bin/run.js\" --project \"$PWD/../..\""
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^0.8.2",
