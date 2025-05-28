@@ -69,7 +69,7 @@ export class PostgresSource implements IDataSource {
     }
 
     // TODO(jan): required for backfill support, don't impose additional schema on users for now.
-    // await this.#ensureWatermarkTable();
+    await this.#ensureWatermarkTable();
 
     await ensurePublication(this.#client, this.#publicationName, this.#createPublication);
 
@@ -132,8 +132,6 @@ export class PostgresSource implements IDataSource {
     return result.rows;
   }
 
-  // @ts-expect-error: required for backfill support but unused for now
-  // eslint-disable-next-line no-unused-private-class-members
   async #ensureWatermarkTable(): Promise<void> {
     await this.#client.query(`CREATE SCHEMA IF NOT EXISTS rejot`);
     await this.#client.query(`

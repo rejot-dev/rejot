@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import type { IEventStore } from "@rejot-dev/contract/event-store";
 
 import { FastifyHttpController } from "../http-controller/fastify-http-controller.ts";
@@ -52,6 +54,36 @@ export class SyncHTTPController implements ISyncHTTPController {
         state: this.#syncController.state,
       };
     });
+    this.#httpController.createRequest(
+      {
+        method: "GET",
+        path: "/backfill",
+        response: z.object({
+          state: z.enum(["ok", "error"]),
+          error: z.string().optional(),
+          backfillId: z.string().optional(),
+        }),
+      },
+      async () => {
+        try {
+          const backfillId = await this.#syncController.startBackfill(
+            "accounts-schema",
+            1,
+            "SELECT * FROM accounts",
+            [],
+          );
+          return {
+            state: "ok" as const,
+            backfillId,
+          };
+        } catch (error) {
+          return {
+            state: "error" as const,
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+        }
+      },
+    );
   }
 
   async start(): Promise<void> {

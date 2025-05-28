@@ -87,6 +87,11 @@ export class SinkWriter {
 
       for (const [consumerSchemaType, operationSchemaPairs] of operationsByType.entries()) {
         const adapter = this.#getConsumerSchemaAdapter(consumerSchemaType);
+        log.trace("writing", {
+          destinationSlug,
+          consumerSchemaType,
+          operationSchemaPairs: operationSchemaPairs.map((pair) => pair.operation),
+        });
 
         allPromises.push(
           adapter.applyConsumerSchemaTransformation(

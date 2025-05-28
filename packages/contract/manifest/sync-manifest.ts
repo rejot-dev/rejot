@@ -168,6 +168,26 @@ export class SyncManifest {
     return getPublicSchemasHelper(this.manifests);
   }
 
+  getDataStoreByPublicSchemaSlug(
+    publicSchemaSlug: string,
+    publicSchemaMajorVersion: number,
+  ): NonNullable<Manifest["dataStores"]>[number] | undefined {
+    const publicSchema = this.getPublicSchemas().find(
+      (schema) =>
+        schema.name === publicSchemaSlug && schema.version.major === publicSchemaMajorVersion,
+    );
+    if (!publicSchema) {
+      return undefined;
+    }
+    const dataStore = this.dataStores.find(
+      (dataStore) => dataStore.connectionSlug === publicSchema.source.dataStoreSlug,
+    );
+    if (!dataStore) {
+      return undefined;
+    }
+    return dataStore;
+  }
+
   /**
    * Get the list of identified external schema references.
    * These are consumer schemas that reference a public schema in a manifest

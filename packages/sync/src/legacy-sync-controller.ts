@@ -141,6 +141,8 @@ export class LegacySyncController {
       if (watermark.type === "low") {
         this.#backfillLowMarkerSeen = true;
       } else {
+        // Is high, so we've completed the backfill
+        // Push all records to the sink, that we have not seen in the previous transactions.
         this.#backfillLowMarkerSeen = false;
         await this.#flushResultSet();
       }

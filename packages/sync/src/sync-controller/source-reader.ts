@@ -38,6 +38,20 @@ export class SourceReader {
     this.#createSources();
   }
 
+  getSourceByPublicSchemaSlug(
+    publicSchemaSlug: string,
+    publicSchemaMajorVersion: number,
+  ): SourceDataStore | undefined {
+    const dataStore = this.#syncManifest.getDataStoreByPublicSchemaSlug(
+      publicSchemaSlug,
+      publicSchemaMajorVersion,
+    );
+    if (!dataStore) {
+      return undefined;
+    }
+    return this.#sources.get(dataStore.connectionSlug);
+  }
+
   get hasSources() {
     return this.#sources.size > 0;
   }

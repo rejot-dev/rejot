@@ -13,7 +13,7 @@ tables matches a row in the backfill. We match on the primary key values.
   Example:
   Source tables: account(id, name), address(id, street)
   Public schema: {account_id, address_id, name, street}
-   
+
   BackfillSource[]: [{
     tableRef: "public.account",
     primaryKeyAliases: {"id": "account_id"}
@@ -27,25 +27,27 @@ export type BackfillSource = {
   primaryKeyAliases: Map<string, string>;
 };
 
-type PrimaryKeyColumns = string[];
-type PrimaryKeyRecord = [PrimaryKeyColumns, Record<string, unknown>];
-
 export class ResultSetStore {
-  #records: PrimaryKeyRecord[] = [];
+  #records: Record<string, unknown>[] = [];
   #keyToRecordIndex: Map<ResultSetKey, number> = new Map();
   #dropKeys: Set<ResultSetKey> = new Set();
 
   constructor() {}
 
+  /**
+   * We receive a batch of records from a backfill.
+   * Each of them gets added to our state: this.#records
+   *
+   * We have to keep track of all primary keys that were modified, so we know which records to drop from the backfill.
+   *
+   * @param backfillSources
+   * @param records
+   */
+
   addRecords(backfillSources: BackfillSource[], records: Record<string, unknown>[]) {
     for (const record of records) {
       const recordIndex = this.#records.length;
-      this.#records.push([
-        // Primary key columns for public schema
-        backfillSources.flatMap((s) => Array.from(s.primaryKeyAliases.values())),
-        record,
-      ]);
-
+      this.#records.push(record);
       const resultSetKeys = this.getResultSetKeysForBackfill(backfillSources, record);
 
       // There is a key for each table used within the backfill
@@ -56,6 +58,7 @@ export class ResultSetStore {
   }
 
   addDropKey(op: TableOperation) {
+    console.log("addDropKey", op, this.getResultSetKeyForTableOperation(op));
     this.#dropKeys.add(this.getResultSetKeyForTableOperation(op));
   }
 
@@ -67,6 +70,16 @@ export class ResultSetStore {
     return this.#records.filter((_, index) => !excludedRecordIndexes.has(index));
   }
 
+  /**
+   * A single result transformation consists of one or more source tables.
+   * We want to invalidate the entire record, if any of the source tables have been modified.
+   *
+   * This method receives a record from a backfill, so with the transformation already applied.
+   *
+   * @param backfillSources
+   * @param record
+   * @returns
+   */
   getResultSetKeysForBackfill(
     backfillSources: BackfillSource[],
     record: Record<string, unknown>,
@@ -76,11 +89,14 @@ export class ResultSetStore {
     }
 
     const resultSetKeys: string[] = [];
+    // For every one of our tables
     for (const source of backfillSources) {
+      // Check for changes in record with the source table.sourcekey = the primary key.
       const primaryKeyValues: string[] = [];
       for (const [sourceKey, resultKey] of source.primaryKeyAliases.entries()) {
         primaryKeyValues.push(`${source.tableRef}.${sourceKey}=${record[resultKey]}`);
       }
+
       resultSetKeys.push(primaryKeyValues.sort().join(","));
     }
     return resultSetKeys;
@@ -90,6 +106,7 @@ export class ResultSetStore {
     if (operation.type === "delete") {
       throw new Error("Delete operations are not supported yet");
     }
+
     const columnValues = operation.keyColumns
       .sort()
       .map((column) => `${operation.table}.${column}=${operation.new[column]}`);
