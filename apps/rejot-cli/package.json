@@ -13,7 +13,13 @@
     "test": "bun test **/*.test.ts",
     "check": "tsc --noEmit",
     "cli:schema": "bun run src/generate-schema.ts > cli-schema.json",
-    "build:bun": "sed -i 's|./dist/src/index.js|./src/index.ts|g' package.json"
+    "build:bun": "sed -i 's|./dist/src/index.js|./src/index.ts|g' bin/run.js",
+    "compile:linux": "bun build --target bun-linux-x64 --outfile rejot-cli --compile ./bin/run.js --production",
+    "compile:windows": "bun build --target bun-windows-x64 --outfile rejot-cli.exe --compile ./bin/run.js --production",
+    "compile:macos": "bun build --target bun-darwin-x64 --outfile rejot-cli --compile ./bin/run.js --production",
+    "compile:linux-arm": "bun build --target bun-linux-arm64 --outfile rejot-cli --compile ./bin/run.js --production",
+    "compile:macos-arm": "bun build --target bun-darwin-arm64 --outfile rejot-cli --compile ./bin/run.js --production",
+    "compile:all": "bun run compile:linux && bun run compile:windows && bun run compile:macos && bun run compile:linux-arm && bun run compile:macos-arm"
   },
   "bin": {
     "rejot-cli": "./bin/run.js"
@@ -39,12 +45,6 @@
   },
   "oclif": {
     "bin": "rejot-cli",
-    "commands": {
-      "strategy": "explicit",
-      "target": "./dist/src/index.js",
-      "identifier": "commands"
-    },
-    "dirname": "rejot-cli",
     "topicSeparator": " ",
     "description": "rejot-cli is a command line tool for managing ReJot Manifests and Sync Services.\nCheck out our quickstart guide at https://rejot.dev/docs/start/quickstart/"
   }
