@@ -1,5 +1,9 @@
+import { runCommand } from "@oclif/test";
+
 import { ConsoleLogger } from "@rejot-dev/contract/logger";
 import { setLogger } from "@rejot-dev/contract/logger";
+
+import { Command } from "@oclif/core";
 
 import CollectCommand from "./commands/collect-command.ts";
 import { ManifestInfoCommand } from "./commands/manifest/manifest-info.command.ts";
@@ -38,3 +42,24 @@ export const commands = {
 };
 
 setLogger(new ConsoleLogger("DEBUG"));
+
+export async function runCommandFromMCP(
+  command: typeof Command,
+  args: string[],
+): Promise<{ output: string; exitCode: number }> {
+  const result = await runCommand([command.id.replace(" ", ":"), ...args]);
+
+  const combinedOutput = `${result.stdout}\n${result.stderr}${result.error?.message || ""}`;
+
+  if (result.error) {
+    return {
+      output: combinedOutput,
+      exitCode: result.error.oclif?.exit ?? 1,
+    };
+  }
+
+  return {
+    output: combinedOutput,
+    exitCode: 0,
+  };
+}

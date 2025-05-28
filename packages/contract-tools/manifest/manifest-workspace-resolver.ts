@@ -31,7 +31,10 @@ export interface IManifestWorkspaceResolver {
 }
 
 export interface IWorkspaceService {
-  resolveWorkspace(projectDir: string): Promise<{ workspace: WorkspaceDefinition }>;
+  resolveWorkspace(
+    projectDir: string,
+    filename?: string,
+  ): Promise<{ workspace: WorkspaceDefinition }>;
 }
 
 export class WorkspaceInitializationError extends ReJotError {
@@ -47,9 +50,13 @@ export class WorkspaceService implements IWorkspaceService {
     this.#workspaceResolver = workspaceResolver;
   }
 
-  async resolveWorkspace(projectDir: string): Promise<{ workspace: WorkspaceDefinition }> {
+  async resolveWorkspace(
+    projectDir: string,
+    filename?: string,
+  ): Promise<{ workspace: WorkspaceDefinition }> {
     const workspace = await this.#workspaceResolver.resolveWorkspace({
       startDir: projectDir,
+      filename,
     });
 
     if (!workspace) {

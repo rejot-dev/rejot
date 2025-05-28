@@ -139,7 +139,7 @@ const rejotMcp = new RejotMcp(server, [
   new WorkspaceResources(workspaceService),
   new DbIntrospectionTool(workspaceService),
   new ManifestInfoTool(),
-  new WorkspaceTool(workspaceService),
+  new WorkspaceTool(),
   new ManifestConnectionTool(workspaceService),
   new ManifestInitTool(workspaceService),
   new CollectTool(workspaceService, vibeCollector),

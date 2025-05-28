@@ -2,14 +2,9 @@ import { join } from "node:path";
 
 import { z } from "zod";
 
+import { commands as cliCommands, runCommandFromMCP } from "@rejot-dev/cli/src";
 import { getLogger } from "@rejot-dev/contract/logger";
-import { verifyManifests } from "@rejot-dev/contract/manifest";
-import { workspaceToManifests } from "@rejot-dev/contract/manifest-helpers";
 import { initManifest } from "@rejot-dev/contract-tools/manifest";
-import { ManifestPrinter } from "@rejot-dev/contract-tools/manifest/manifest-printer";
-import type { IWorkspaceService } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
-
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 import type { IFactory, IRejotMcp } from "../rejot-mcp.ts";
 import type { McpState } from "../state/mcp-state.ts";
@@ -17,12 +12,6 @@ import type { McpState } from "../state/mcp-state.ts";
 const log = getLogger(import.meta.url);
 
 export class WorkspaceTool implements IFactory {
-  readonly #workspaceService: IWorkspaceService;
-
-  constructor(workspaceService: IWorkspaceService) {
-    this.#workspaceService = workspaceService;
-  }
-
   async initialize(_state: McpState): Promise<void> {
     // No state initialization needed
   }
@@ -70,40 +59,60 @@ export class WorkspaceTool implements IFactory {
     mcp.registerTool(
       "rejot_workspace_info",
       "Display information about the current workspace configuration.",
-      {},
-      async () => {
+      {
+        filename: z.string().default("rejot-manifest.json"),
+      },
+      async ({ filename }) => {
         log.debug("rejot_workspace_info", {
           workspaceDirectoryPath: mcp.state.workspaceDirectoryPath,
+          filename,
         });
 
-        const { workspace } = await this.#workspaceService.resolveWorkspace(
-          mcp.state.workspaceDirectoryPath,
-        );
-        const workspaceInfo = ManifestPrinter.printWorkspace(workspace);
+        const { output, exitCode } = await runCommandFromMCP(cliCommands["workspace:info"], [
+          "--manifest",
+          filename,
+        ]);
 
-        const content: CallToolResult["content"] = [
-          {
-            type: "text",
-            text: workspaceInfo.join("\n"),
-          },
-        ];
+        log.debug("rejot_workspace_info", {
+          output,
+          exitCode,
+        });
 
-        const diagnostics = verifyManifests(workspaceToManifests(workspace));
-
-        if (diagnostics.diagnostics.length > 0) {
-          content.push({
-            type: "text",
-            text: ManifestPrinter.printManifestDiagnostics(diagnostics.diagnostics).join("\n"),
-          });
-          content.push({
-            type: "text",
-            text: "To fix these diagnostics, DO NOT edit the manifest. Update the underlying definition file and run collect.",
-          });
+        if (exitCode !== 0) {
+          return {
+            content: [{ type: "text", text: `Error: ${output}`, isError: true }],
+          };
         }
 
         return {
-          content,
+          content: [{ type: "text", text: output }],
         };
+
+        // const workspaceInfo = ManifestPrinter.printWorkspace(workspace);
+
+        // const content: CallToolResult["content"] = [
+        //   {
+        //     type: "text",
+        //     text: workspaceInfo.join("\n"),
+        //   },
+        // ];
+
+        // const diagnostics = verifyManifests(workspaceToManifests(workspace));
+
+        // if (diagnostics.diagnostics.length > 0) {
+        //   content.push({
+        //     type: "text",
+        //     text: ManifestPrinter.printManifestDiagnostics(diagnostics.diagnostics).join("\n"),
+        //   });
+        //   content.push({
+        //     type: "text",
+        //     text: "To fix these diagnostics, DO NOT edit the manifest. Update the underlying definition file and run collect.",
+        //   });
+        // }
+
+        // return {
+        //   content,
+        // };
       },
     );
   }

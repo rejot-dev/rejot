@@ -35,6 +35,8 @@
     "@rejot-dev/contract": "workspace:*",
     "@rejot-dev/contract-tools": "workspace:*",
     "@rejot-dev/sync": "workspace:*",
+    "@rejot-dev/cli": "workspace:*",
+    "@oclif/test": "^4.1.12",
     "pg": "^8.14.1"
   },
   "bin": {

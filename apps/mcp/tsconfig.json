@@ -19,6 +19,9 @@
     },
     {
       "path": "../../packages/adapter-postgres"
+    },
+    {
+      "path": "../rejot-cli"
     }
   ]
 }
