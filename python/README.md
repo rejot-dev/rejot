@@ -40,7 +40,7 @@ class Account(BaseModel):
 transformations = create_postgres_public_schema_transformation(
     operation="insertOrUpdate",
     table="account",
-    sql="INSERT INTO account (id, email, name) VALUES (:id, :email, :name)",
+    sql="SELECT id, email, name FROM account WHERE id = :id",
 )
 
 # Define a public schema
@@ -117,7 +117,7 @@ def create_postgres_public_schema_transformation(
 transformations = create_postgres_public_schema_transformation(
     operation="insertOrUpdate",
     table="account",
-    sql="INSERT INTO account (id, email, name) VALUES (:id, :email, :name)",
+    sql="SELECT id, email, name FROM account WHERE id = :id",
 )
 ```
 
