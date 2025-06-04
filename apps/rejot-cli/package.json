@@ -13,7 +13,7 @@
     "test": "bun test **/*.test.ts",
     "check": "tsc --noEmit",
     "cli:schema": "bun run src/generate-schema.ts > cli-schema.json",
-    "build:bun": "sed -i 's|./dist/src/index.js|./src/index.ts|g' bin/run.js",
+    "prepack": "sed -i 's|./src/index.ts|./dist/src/index.js|g' bin/run.js",
     "compile:linux": "bun build --target bun-linux-x64 --outfile rejot-cli --compile ./bin/run.js --production",
     "compile:windows": "bun build --target bun-windows-x64 --outfile rejot-cli.exe --compile ./bin/run.js --production",
     "compile:macos": "bun build --target bun-darwin-x64 --outfile rejot-cli --compile ./bin/run.js --production",

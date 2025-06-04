@@ -42,7 +42,7 @@ COPY entrypoint.sh /entrypoint.sh
 USER root
 RUN if [ "${REJOT_APP}" = "rejot-cli" ]; then \
   echo '#!/bin/bash\nexec bun run /opt/apps/rejot-cli/bin/run.js "$@"' > /usr/local/bin/rejot-cli && \
-  cd /opt/apps/rejot-cli && bun run build:bun && \
+  cd /opt/apps/rejot-cli && \
   chmod +x /usr/local/bin/rejot-cli; \
   fi
 USER bun

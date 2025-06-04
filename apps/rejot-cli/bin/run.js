@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import { run } from "../dist/src/index.js";
+import { run } from "../src/index.ts";
 
 await run();
