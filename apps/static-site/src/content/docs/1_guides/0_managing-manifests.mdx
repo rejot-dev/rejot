@@ -142,6 +142,11 @@ development use cases where you're typically only using a single event store and
 single sync service. It can also be used to combine for example secrets and other configuration
 across multiple manifests.
 
+<Notice type="TIP">
+  Data stores are shared across all manifests in a workspace. This means they have to have unique
+  names across all manifests in a workspace.
+</Notice>
+
 A manifest can link to other manifests using the `workspaces` field. This field should contain the
 relative path to other manifest files.
 
