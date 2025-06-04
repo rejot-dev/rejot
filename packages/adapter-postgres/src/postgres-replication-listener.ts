@@ -89,7 +89,7 @@ type QueueItem = {
 
 const log = getLogger(import.meta.url);
 const meter = metrics.getMeter("rejot-adapter-postgres");
-const heartbeatCounter = meter.createCounter("heartbeat", {
+const heartbeatCounter = meter.createCounter("rejot_heartbeat", {
   description: "Number of heartbeats acknowledged",
 });
 

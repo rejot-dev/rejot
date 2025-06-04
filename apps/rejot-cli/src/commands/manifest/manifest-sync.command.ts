@@ -30,7 +30,7 @@ import { metrics } from "@opentelemetry/api";
 const log = getLogger(import.meta.url);
 const meter = metrics.getMeter("rejot-cli-manifest-sync");
 
-const activeManifests = meter.createGauge("active_manifests", {
+const activeManifests = meter.createGauge("rejot_active_manifests", {
   description: "Number of active manifests",
 });
 

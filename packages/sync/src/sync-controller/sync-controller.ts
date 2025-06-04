@@ -20,22 +20,22 @@ import { SinkWriter } from "./sink-writer.ts";
 import { SourceReader } from "./source-reader.ts";
 
 const log = getLogger(import.meta.url);
-const tracer = trace.getTracer("sync-controller");
+const tracer = trace.getTracer("rejot_sync-controller");
 
-const meter = metrics.getMeter("sync-controller");
-const transactionsProcessedCounter = meter.createCounter("sync_transactions_processed", {
+const meter = metrics.getMeter("rejot_sync-controller");
+const transactionsProcessedCounter = meter.createCounter("rejot_sync_transactions_processed", {
   description: "Number of source transactions processed",
 });
-const transformationsSuccessCounter = meter.createCounter("sync_transformations_success", {
+const transformationsSuccessCounter = meter.createCounter("rejot_sync_transformations_success", {
   description: "Number of successful public schema transformations",
 });
-const transformationsFailureCounter = meter.createCounter("sync_transformations_failure", {
+const transformationsFailureCounter = meter.createCounter("rejot_sync_transformations_failure", {
   description: "Number of failed public schema transformations",
 });
-const messagesPublishedCounter = meter.createCounter("sync_messages_published", {
+const messagesPublishedCounter = meter.createCounter("rejot_sync_messages_published", {
   description: "Number of messages published to the message bus",
 });
-const messagesWrittenCounter = meter.createCounter("sync_messages_written", {
+const messagesWrittenCounter = meter.createCounter("rejot_sync_messages_written", {
   description: "Number of messages written to sinks",
 });
 

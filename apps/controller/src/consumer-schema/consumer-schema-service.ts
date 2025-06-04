@@ -1,7 +1,8 @@
+import { generateCodeForEntity } from "@/codes/codes.ts";
 import type { Counter } from "@opentelemetry/api";
 import { metrics } from "@opentelemetry/api";
+
 import type { IConsumerSchemaRepository } from "./consumer-schema-repository.ts";
-import { generateCodeForEntity } from "@/codes/codes.ts";
 
 export type CreateConsumerSchema = {
   name: string;
@@ -62,7 +63,7 @@ export class ConsumerSchemaService implements IConsumerSchemaService {
 
     // Metric Initialization
     const meter = metrics.getMeter("consumer-schema.service");
-    this.#createdCounter = meter.createCounter("consumer_schemas_created");
+    this.#createdCounter = meter.createCounter("rejot_consumer_schemas_created");
   }
 
   async createConsumerSchema(
