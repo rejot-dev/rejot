@@ -1,0 +1,36 @@
+name: gcp-deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - gcp
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Index.html
+        run: |
+          mkdir dist && echo "<html><body><h1>Hello, World!</h1></body></html>" > dist/index.html
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          service_account: github-actions@rejot-staging-aac662ad.iam.gserviceaccount.com
+          workload_identity_provider: projects/181101353198/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          project: rejot-staging-aac662ad
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      - name: GCP Whoami
+        run: gcloud auth list
+      - name: Upload to GCS
+        env:
+          GSUTIL_DEBUG: true
+        run: gsutil -m rsync -r ./dist/ gs://3d43e4f791c8755c-yeet-frontend/
