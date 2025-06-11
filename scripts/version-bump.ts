@@ -79,9 +79,12 @@ for (let i = 0; i < pyprojectTomlLines.length; i++) {
         break;
       case "minor":
         versionParts[1] = (parseInt(versionParts[1]) + 1).toString();
+        versionParts[2] = "0";
         break;
       case "major":
         versionParts[0] = (parseInt(versionParts[0]) + 1).toString();
+        versionParts[1] = "0";
+        versionParts[2] = "0";
         break;
     }
     const newVersion = versionParts.join(".");
