@@ -21,7 +21,10 @@ module = importlib.import_module("${modulePath}")
 
 for key, value in module.__dict__.items():
     if not key.startswith('_') and (isinstance(value, dict) or isinstance(value, list)):
-        print(json.dumps(value))
+        try:
+            print(json.dumps(value))
+        except Exception as e:
+            print(f"Error dumping value: {e}", file=sys.stderr)
 `;
 
 const log = getLogger(import.meta.url);
