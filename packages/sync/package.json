@@ -60,6 +60,7 @@
   },
   "type": "module",
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
     "@rejot-dev/contract": "workspace:*",
     "fastify": "^5.3.2"
   }

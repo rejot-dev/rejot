@@ -12,12 +12,32 @@ import { getNullCursorsForConsumingPublicSchemas } from "@rejot-dev/contract/man
 import type { IPublishMessageBus, ISubscribeMessageBus } from "@rejot-dev/contract/message-bus";
 import type { SyncManifest } from "@rejot-dev/contract/sync-manifest";
 
+import { metrics, SpanStatusCode, trace } from "@opentelemetry/api";
+
 import type { ISyncHTTPController } from "../sync-http-service/sync-http-service.ts";
 import { PublicSchemaTransformer } from "./public-schema-transformer.ts";
 import { SinkWriter } from "./sink-writer.ts";
 import { SourceReader } from "./source-reader.ts";
 
 const log = getLogger(import.meta.url);
+const tracer = trace.getTracer("rejot_sync-controller");
+
+const meter = metrics.getMeter("rejot_sync-controller");
+const transactionsProcessedCounter = meter.createCounter("rejot_sync_transactions_processed", {
+  description: "Number of source transactions processed",
+});
+const transformationsSuccessCounter = meter.createCounter("rejot_sync_transformations_success", {
+  description: "Number of successful public schema transformations",
+});
+const transformationsFailureCounter = meter.createCounter("rejot_sync_transformations_failure", {
+  description: "Number of failed public schema transformations",
+});
+const messagesPublishedCounter = meter.createCounter("rejot_sync_messages_published", {
+  description: "Number of messages published to the message bus",
+});
+const messagesWrittenCounter = meter.createCounter("rejot_sync_messages_written", {
+  description: "Number of messages written to sinks",
+});
 
 export interface ISyncController {
   getCursors(): Promise<Cursors>;
@@ -109,23 +129,62 @@ export class SyncController implements ISyncController {
     for await (const transactionMessage of this.#sourceReader.start()) {
       const { sourceDataStoreSlug, transaction } = transactionMessage;
 
-      try {
-        const operations = await this.#publicSchemaTransformer.transformToPublicSchema(
-          sourceDataStoreSlug,
-          transaction,
-        );
-
-        log.trace("Transformed operations", operations);
-
-        await this.#publishMessageBus.publish({
-          transactionId: transaction.id,
-          operations,
+      await tracer.startActiveSpan("process_transaction", async (processSpan) => {
+        processSpan.setAttributes({
+          source_data_store_slug: sourceDataStoreSlug,
+          transaction_id: transaction.id,
         });
-        transaction.ack(true);
-      } catch (error) {
-        log.error("Error transforming transaction", { error });
-        transaction.ack(false);
-      }
+
+        transactionsProcessedCounter.add(1);
+        try {
+          const operations = await tracer.startActiveSpan(
+            "transform_to_public_schema",
+            async (transformSpan) => {
+              transformSpan.setAttributes({
+                source_data_store_slug: sourceDataStoreSlug,
+                transaction_id: transaction.id,
+              });
+
+              const operations = await this.#publicSchemaTransformer.transformToPublicSchema(
+                sourceDataStoreSlug,
+                transaction,
+              );
+
+              transformationsSuccessCounter.add(1);
+              log.trace("Transformed operations", operations);
+              transformSpan.end();
+              return operations;
+            },
+          );
+
+          await tracer.startActiveSpan("publish_message", async (publishSpan) => {
+            publishSpan.setAttributes({
+              transaction_id: transaction.id,
+              operation_count: operations.length,
+            });
+
+            await this.#publishMessageBus.publish({
+              transactionId: transaction.id,
+              operations,
+            });
+
+            messagesPublishedCounter.add(1);
+            transaction.ack(true);
+            publishSpan.end();
+          });
+        } catch (error) {
+          transformationsFailureCounter.add(1);
+          log.error("Error transforming transaction", { error });
+          transaction.ack(false);
+          if (error instanceof Error) {
+            processSpan.recordException(error);
+          }
+          processSpan.setStatus({ code: SpanStatusCode.ERROR });
+        } finally {
+          processSpan.setStatus({ code: SpanStatusCode.OK });
+          processSpan.end();
+        }
+      });
     }
 
     log.debug("startIterateSourceReader completed");
@@ -139,7 +198,16 @@ export class SyncController implements ISyncController {
     messageBus.setInitialCursors(cursors.toArray());
 
     for await (const message of messageBus.subscribe()) {
-      await this.#sinkWriter.write(message);
+      await tracer.startActiveSpan("write_to_sink", async (writeSpan) => {
+        writeSpan.setAttributes({
+          transaction_id: message.transactionId,
+          operation_count: message.operations.length,
+        });
+
+        await this.#sinkWriter.write(message);
+        messagesWrittenCounter.add(1);
+        writeSpan.end();
+      });
     }
 
     log.debug("startIterateMessageBus completed");

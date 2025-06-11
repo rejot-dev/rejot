@@ -1,8 +1,9 @@
+import { generateCodeForEntity } from "@/codes/codes.ts";
 import type { Counter } from "@opentelemetry/api";
 import { metrics } from "@opentelemetry/api";
-import type { IPublicSchemaRepository } from "./public-schema-repository.ts";
+
 import type { SchemaDefinition } from "./public-schema.ts";
-import { generateCodeForEntity } from "@/codes/codes.ts";
+import type { IPublicSchemaRepository } from "./public-schema-repository.ts";
 
 export type CreatePublicSchema = {
   name: string;
@@ -63,7 +64,7 @@ export class PublicSchemaService implements IPublicSchemaService {
 
     // Metric Initialization
     const meter = metrics.getMeter("public-schema.service");
-    this.#createdCounter = meter.createCounter("public_schemas_created");
+    this.#createdCounter = meter.createCounter("rejot_public_schemas_created");
   }
 
   async createPublicSchema(
