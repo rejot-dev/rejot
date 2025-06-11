@@ -332,7 +332,7 @@ describe("verifyManifests - multiple", () => {
       ...createBasicManifest("manifest2"),
       connections: [
         {
-          slug: "ds1",
+          slug: "ds2",
           config: {
             connectionType: "postgres",
             host: "localhost",
@@ -345,7 +345,7 @@ describe("verifyManifests - multiple", () => {
       ],
       dataStores: [
         {
-          connectionSlug: "ds1",
+          connectionSlug: "ds2",
           config: {
             connectionType: "postgres",
             slotName: "pub1",
@@ -376,6 +376,257 @@ describe("verifyManifests - multiple", () => {
     expect(result.diagnostics[0].severity).toBe("error");
     expect(result.diagnostics[0].message).toContain("test-manifest");
     expect(result.diagnostics[0].location.manifestSlug).toBe("test-manifest");
+  });
+
+  test("data store in another manifest but connection is missing", () => {
+    const manifest1: Manifest = {
+      ...createBasicManifest("fromaccounts"),
+      publicSchemas: [
+        {
+          name: "accounts-schema",
+          source: {
+            dataStoreSlug: "accounts",
+          },
+          outputSchema: {
+            type: "object",
+            properties: {
+              id: { type: "number" },
+              name: { type: "string" },
+              email: { type: "string" },
+            },
+            required: ["id", "name", "email"],
+            additionalProperties: false,
+            $schema: "http://json-schema.org/draft-07/schema#",
+          },
+          version: { major: 1, minor: 0 },
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [],
+          },
+          definitionFile: "packages/sync-models/src/account-schema.ts",
+        },
+      ],
+    };
+
+    const manifest2: Manifest = {
+      ...createBasicManifest("from-accounts-docker"),
+      dataStores: [
+        {
+          connectionSlug: "accounts",
+          config: {
+            connectionType: "postgres",
+            slotName: "rejot_slot",
+            publicationName: "rejot_publication",
+          },
+        },
+      ],
+      // No connections defined!
+    };
+
+    const result = verifyManifests([manifest1, manifest2]);
+    expect(result.isValid).toBe(false);
+    const connectionError = result.diagnostics.find(
+      (e) => e.type === "CONNECTION_NOT_FOUND" && e.message.includes("accounts"),
+    );
+    expect(connectionError).toBeDefined();
+  });
+
+  test("public schema references non-existent data store across manifests", () => {
+    const manifest1: Manifest = {
+      ...createBasicManifest("fromaccounts"),
+      publicSchemas: [
+        {
+          name: "accounts-schema",
+          source: {
+            dataStoreSlug: "nonexistent",
+          },
+          outputSchema: {
+            type: "object",
+            properties: {
+              id: { type: "number" },
+              name: { type: "string" },
+              email: { type: "string" },
+            },
+            required: ["id", "name", "email"],
+            additionalProperties: false,
+            $schema: "http://json-schema.org/draft-07/schema#",
+          },
+          version: { major: 1, minor: 0 },
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [],
+          },
+          definitionFile: "packages/sync-models/src/account-schema.ts",
+        },
+      ],
+    };
+
+    const manifest2: Manifest = {
+      ...createBasicManifest("from-accounts-docker"),
+      // No dataStores with slug "nonexistent"
+    };
+
+    const result = verifyManifests([manifest1, manifest2]);
+    expect(result.isValid).toBe(false);
+    const dataStoreError = result.diagnostics.find(
+      (e) => e.type === "DATA_STORE_NOT_FOUND" && e.message.includes("nonexistent"),
+    );
+    expect(dataStoreError).toBeDefined();
+  });
+
+  test("public schema can reference data store in a different manifest", () => {
+    // Manifest 1: defines the public schema, references a data store not defined here
+    const manifest1: Manifest = {
+      ...createBasicManifest("fromaccounts"),
+      publicSchemas: [
+        {
+          name: "accounts-schema",
+          source: {
+            dataStoreSlug: "accounts",
+          },
+          outputSchema: {
+            type: "object",
+            properties: {
+              id: { type: "number" },
+              name: { type: "string" },
+              email: { type: "string" },
+            },
+            required: ["id", "name", "email"],
+            additionalProperties: false,
+            $schema: "http://json-schema.org/draft-07/schema#",
+          },
+          version: { major: 1, minor: 0 },
+          config: {
+            publicSchemaType: "postgres",
+            transformations: [
+              {
+                operation: "insert",
+                table: "accounts",
+                sql: 'SELECT a.id, a.name as "name", a.email as "email" FROM accounts a WHERE a.id = :id',
+              },
+              {
+                operation: "update",
+                table: "accounts",
+                sql: 'SELECT a.id, a.name as "name", a.email as "email" FROM accounts a WHERE a.id = :id',
+              },
+            ],
+          },
+          definitionFile: "packages/sync-models/src/account-schema.ts",
+        },
+      ],
+    };
+
+    // Manifest 2: defines the data store
+    const manifest2: Manifest = {
+      ...createBasicManifest("from-accounts-docker"),
+      connections: [
+        {
+          slug: "accounts",
+          config: {
+            connectionType: "postgres",
+            host: "db-accounts",
+            port: 5432,
+            user: "postgres",
+            password: "postgres",
+            database: "postgres",
+          },
+        },
+        {
+          slug: "eventstore",
+          config: {
+            connectionType: "postgres",
+            host: "db-eventstore",
+            port: 5432,
+            user: "postgres",
+            password: "postgres",
+            database: "postgres",
+          },
+        },
+      ],
+      dataStores: [
+        {
+          connectionSlug: "accounts",
+          config: {
+            connectionType: "postgres",
+            slotName: "rejot_slot",
+            publicationName: "rejot_publication",
+          },
+        },
+      ],
+      eventStores: [
+        {
+          connectionSlug: "eventstore",
+        },
+      ],
+    };
+
+    const result = verifyManifests([manifest1, manifest2]);
+    expect(result.isValid).toBe(true);
+    expect(result.diagnostics).toHaveLength(0);
+  });
+
+  test("multiple data stores with the same slug", () => {
+    const manifest1: Manifest = {
+      ...createBasicManifest("manifest1"),
+      connections: [
+        {
+          slug: "conn1",
+          config: {
+            connectionType: "postgres",
+            host: "localhost",
+            port: 5432,
+            database: "test",
+            user: "user",
+            password: "pass",
+          },
+        },
+      ],
+      dataStores: [
+        {
+          connectionSlug: "conn1",
+          config: {
+            connectionType: "postgres",
+            slotName: "pub1",
+            publicationName: "pub1",
+          },
+        },
+      ],
+    };
+
+    const manifest2: Manifest = {
+      ...createBasicManifest("manifest2"),
+      connections: [
+        {
+          slug: "conn1",
+          config: {
+            connectionType: "postgres",
+            host: "localhost",
+            port: 5432,
+            database: "test",
+            user: "user",
+            password: "pass",
+          },
+        },
+      ],
+      dataStores: [
+        {
+          connectionSlug: "conn1",
+          config: {
+            connectionType: "postgres",
+            slotName: "pub1",
+            publicationName: "pub1",
+          },
+        },
+      ],
+    };
+
+    const result = verifyManifests([manifest1, manifest2]);
+    expect(result.isValid).toBe(false);
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0].type).toBe("DUPLICATE_DATA_STORE");
+    expect(result.diagnostics[0].severity).toBe("error");
+    expect(result.diagnostics[0].message).toContain("conn1");
+    expect(result.diagnostics[0].location.manifestSlug).toBe("manifest2");
   });
 
   test("handles both errors and external references", () => {

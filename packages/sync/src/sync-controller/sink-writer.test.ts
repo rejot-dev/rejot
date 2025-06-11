@@ -100,77 +100,80 @@ describe("SinkWriter", () => {
   const createTestManifest = () =>
     new SyncManifest([
       {
-        slug: "test-manifest",
-        manifestVersion: 1,
-        connections: [
-          {
-            slug: "test-connection",
-            config: {
-              connectionType: "postgres" as const,
-              host: "localhost",
-              port: 5432,
-              database: "test",
-              user: "test",
-              password: "test",
-            },
-          },
-        ],
-        dataStores: [
-          {
-            connectionSlug: "test-connection",
-            config: {
-              connectionType: "postgres" as const,
-              publicationName: "test-publication",
-              slotName: "test-slot",
-            },
-          },
-        ],
-        eventStores: [],
-        publicSchemas: [
-          {
-            name: "test-schema",
-            source: {
-              dataStoreSlug: "test-connection",
-            },
-            outputSchema: {
-              type: "object",
-              properties: {
-                id: { type: "number" },
-                name: { type: "string" },
+        path: "test-manifest.json",
+        manifest: {
+          slug: "test-manifest",
+          manifestVersion: 1,
+          connections: [
+            {
+              slug: "test-connection",
+              config: {
+                connectionType: "postgres" as const,
+                host: "localhost",
+                port: 5432,
+                database: "test",
+                user: "test",
+                password: "test",
               },
-              required: ["id", "name"],
             },
-            config: {
-              publicSchemaType: "postgres" as const,
-              transformations: [
-                {
-                  operation: "insert" as const,
-                  table: "test_table",
-                  sql: "SELECT * FROM test_table WHERE id = $1",
-                },
-              ],
+          ],
+          dataStores: [
+            {
+              connectionSlug: "test-connection",
+              config: {
+                connectionType: "postgres" as const,
+                publicationName: "test-publication",
+                slotName: "test-slot",
+              },
             },
-            version: {
-              major: 1,
-              minor: 0,
-            },
-          },
-        ],
-        consumerSchemas: [
-          {
-            name: "test-consumer-schema",
-            sourceManifestSlug: "test-manifest",
-            publicSchema: {
+          ],
+          eventStores: [],
+          publicSchemas: [
+            {
               name: "test-schema",
-              majorVersion: 1,
+              source: {
+                dataStoreSlug: "test-connection",
+              },
+              outputSchema: {
+                type: "object",
+                properties: {
+                  id: { type: "number" },
+                  name: { type: "string" },
+                },
+                required: ["id", "name"],
+              },
+              config: {
+                publicSchemaType: "postgres" as const,
+                transformations: [
+                  {
+                    operation: "insert" as const,
+                    table: "test_table",
+                    sql: "SELECT * FROM test_table WHERE id = $1",
+                  },
+                ],
+              },
+              version: {
+                major: 1,
+                minor: 0,
+              },
             },
-            config: {
-              consumerSchemaType: "postgres" as const,
-              destinationDataStoreSlug: "test-connection",
-              sql: "INSERT INTO test_table (id, name) VALUES ($1, $2)",
+          ],
+          consumerSchemas: [
+            {
+              name: "test-consumer-schema",
+              sourceManifestSlug: "test-manifest",
+              publicSchema: {
+                name: "test-schema",
+                majorVersion: 1,
+              },
+              config: {
+                consumerSchemaType: "postgres" as const,
+                destinationDataStoreSlug: "test-connection",
+                sql: "INSERT INTO test_table (id, name) VALUES ($1, $2)",
+              },
             },
-          },
-        ],
+          ],
+        },
       },
     ]);
 

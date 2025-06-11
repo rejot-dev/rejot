@@ -7,6 +7,7 @@ export type ManifestDiagnosticSeverity = "error" | "warning";
 
 export type ManifestDiagnostic = {
   type:
+    | "DUPLICATE_DATA_STORE"
     | "CONNECTION_NOT_FOUND"
     | "CONNECTION_TYPE_MISMATCH"
     | "DATA_STORE_MISSING_CONFIG"
@@ -222,10 +223,23 @@ export function verifyPublicSchemaReferences(
   });
 
   // Build a map of all data stores
-  const dataStoreMap = new Map<string, Set<string>>();
+  const dataStoreMap = new Set<string>();
   manifests.forEach(({ manifest }) => {
-    const storeNames = new Set(manifest.dataStores?.map((ds) => ds.connectionSlug) ?? []);
-    dataStoreMap.set(manifest.slug, storeNames);
+    manifest.dataStores?.forEach((ds) => {
+      if (dataStoreMap.has(ds.connectionSlug)) {
+        errors.push({
+          type: "DUPLICATE_DATA_STORE",
+          severity: "error",
+          message: `Data store '${ds.connectionSlug}' is defined multiple times`,
+          location: {
+            manifestSlug: manifest.slug,
+            context: `dataStore.connectionSlug: ${ds.connectionSlug}`,
+          },
+        });
+      } else {
+        dataStoreMap.add(ds.connectionSlug);
+      }
+    });
   });
 
   // Build a map of data stores with configs
@@ -243,8 +257,7 @@ export function verifyPublicSchemaReferences(
   // Verify public schemas reference valid data stores
   manifests.forEach(({ manifest, path: manifestPath }) => {
     manifest.publicSchemas?.forEach((publicSchema, index) => {
-      const manifestDataStores = dataStoreMap.get(manifest.slug);
-      if (manifestDataStores && !manifestDataStores.has(publicSchema.source.dataStoreSlug)) {
+      if (!dataStoreMap.has(publicSchema.source.dataStoreSlug)) {
         errors.push({
           type: "DATA_STORE_NOT_FOUND",
           severity: "error",
@@ -351,17 +364,7 @@ export function verifyPublicSchemaReferences(
 
       // Check if referenced data store exists in ANY manifest
       // The destination data store could be in any manifest, not just the consumer's or source's
-      let dataStoreFound = false;
-
-      // Search across all manifests for the data store
-      for (const [_manifestSlug, stores] of dataStoreMap.entries()) {
-        if (stores.has(consumerSchema.config.destinationDataStoreSlug)) {
-          dataStoreFound = true;
-          break;
-        }
-      }
-
-      if (!dataStoreFound) {
+      if (!dataStoreMap.has(consumerSchema.config.destinationDataStoreSlug)) {
         errors.push({
           type: "DATA_STORE_NOT_FOUND",
           severity: "error",

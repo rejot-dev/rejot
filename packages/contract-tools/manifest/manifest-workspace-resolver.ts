@@ -137,10 +137,7 @@ export function workspaceToSyncManifest(
   workspace: WorkspaceDefinition,
   options: SyncManifestOptions = {},
 ): SyncManifest {
-  return new SyncManifest(
-    [workspace.ancestor.manifest, ...workspace.children.map((child) => child.manifest)],
-    options,
-  );
+  return new SyncManifest([workspace.ancestor, ...workspace.children], options);
 }
 
 export function getManifestBySlug(

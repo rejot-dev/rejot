@@ -1,5 +1,3 @@
-import fs from "node:fs/promises";
-
 import { z } from "zod";
 
 import {
@@ -19,6 +17,7 @@ import { ConsoleLogger, getLogger, setLogger } from "@rejot-dev/contract/logger"
 import { SyncManifestSchema } from "@rejot-dev/contract/manifest";
 import type { ISubscribeMessageBus } from "@rejot-dev/contract/message-bus";
 import { SyncManifest } from "@rejot-dev/contract/sync-manifest";
+import { ManifestWorkspaceResolver } from "@rejot-dev/contract-tools/manifest/manifest-workspace-resolver";
 import { ExternalSyncMessageBus } from "@rejot-dev/sync/external-sync-message-bus";
 import { SyncController } from "@rejot-dev/sync/sync-controller-new";
 import { createResolver, type ISyncServiceResolver } from "@rejot-dev/sync/sync-http-resolver";
@@ -125,27 +124,41 @@ export class ManifestSyncCommand extends Command {
     const manifestPaths = z.array(z.string()).parse(argv);
 
     setLogger(new ConsoleLogger(logLevel.toUpperCase()));
+    const workspaceResolver = new ManifestWorkspaceResolver();
 
     try {
       // Read and parse manifest files
-      const manifests = await Promise.all(
-        manifestPaths.map(async (path) => {
-          const content = await fs.readFile(path, "utf-8");
-          const json = JSON.parse(content);
-          return SyncManifestSchema.parse(json);
-        }),
-      );
+      const manifests = (
+        await Promise.all(
+          manifestPaths.flatMap(async (path) => {
+            const workspace = await workspaceResolver.resolveWorkspace({
+              startDir: process.cwd(),
+              filename: path,
+            });
+
+            if (!workspace) {
+              log.warn(`No workspace/manifests found in ${path}`);
+              return [];
+            }
+
+            const allManifests = [workspace.ancestor, ...workspace.children];
+            return allManifests;
+          }),
+        )
+      ).flat();
 
       log.info(`Successfully loaded ${manifests.length} manifest(s)`);
 
-      const syncManifest = new SyncManifest(manifests);
+      const syncManifest = new SyncManifest(manifests, {
+        checkPublicSchemaReferences: false,
+      });
 
       // Create adapters
       const { connectionAdapters, publicSchemaAdapters, consumerSchemaAdapters } =
         this.#getAdapters();
 
       // Create event store from the first manifest's event store config
-      const eventStore = this.#createEventStore(manifests, connectionAdapters);
+      const eventStore = this.#createEventStore(syncManifest.manifests, connectionAdapters);
 
       // There are four things we need to be doing:
       // 1. Listen for changes on source data stores and write them to an event store.

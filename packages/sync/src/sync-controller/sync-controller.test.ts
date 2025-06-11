@@ -11,27 +11,30 @@ describe("SyncController", () => {
   const createTestManifest = () =>
     new SyncManifest([
       {
-        slug: "test-manifest",
-        manifestVersion: 1,
-        connections: [
-          {
-            slug: "test-connection",
-            config: {
-              connectionType: "in-memory" as const,
+        path: "test-manifest.json",
+        manifest: {
+          slug: "test-manifest",
+          manifestVersion: 1,
+          connections: [
+            {
+              slug: "test-connection",
+              config: {
+                connectionType: "in-memory" as const,
+              },
             },
-          },
-        ],
-        dataStores: [
-          {
-            connectionSlug: "test-connection",
-            config: {
-              connectionType: "in-memory",
+          ],
+          dataStores: [
+            {
+              connectionSlug: "test-connection",
+              config: {
+                connectionType: "in-memory",
+              },
             },
-          },
-        ],
-        eventStores: [],
-        publicSchemas: [],
-        consumerSchemas: [],
+          ],
+          eventStores: [],
+          publicSchemas: [],
+          consumerSchemas: [],
+        },
       },
     ]);
 

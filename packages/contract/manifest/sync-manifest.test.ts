@@ -108,7 +108,16 @@ describe("SyncManifest", () => {
     } satisfies Manifest;
 
     // Initialize SyncManifest with both manifests
-    const syncManifest = new SyncManifest([manifestAWithPublicSchema, manifestBWithConsumer]);
+    const syncManifest = new SyncManifest([
+      {
+        path: "test-manifest.json",
+        manifest: manifestAWithPublicSchema,
+      },
+      {
+        path: "test-manifest2.json",
+        manifest: manifestBWithConsumer,
+      },
+    ]);
 
     // There should be no external schemas since all references are resolved internally
     const externalSchemas = syncManifest.getExternalConsumerSchemas();
@@ -134,9 +143,17 @@ describe("SyncManifest", () => {
     );
 
     // Initialize SyncManifest with just our local manifest
-    const syncManifest = new SyncManifest([manifestWithExternalReferences], {
-      checkPublicSchemaReferences: false,
-    });
+    const syncManifest = new SyncManifest(
+      [
+        {
+          path: "test-manifest.json",
+          manifest: manifestWithExternalReferences,
+        },
+      ],
+      {
+        checkPublicSchemaReferences: false,
+      },
+    );
 
     // Get external consumer schemas
     const externalSchemas = syncManifest.getExternalConsumerSchemas();
@@ -176,9 +193,17 @@ describe("SyncManifest", () => {
     );
 
     // Initialize SyncManifest with our local manifest
-    const syncManifest = new SyncManifest([manifestWithExternalReferences], {
-      checkPublicSchemaReferences: false,
-    });
+    const syncManifest = new SyncManifest(
+      [
+        {
+          path: "test-manifest.json",
+          manifest: manifestWithExternalReferences,
+        },
+      ],
+      {
+        checkPublicSchemaReferences: false,
+      },
+    );
 
     // Get external consumer schemas
     const externalSchemas = syncManifest.getExternalConsumerSchemas();

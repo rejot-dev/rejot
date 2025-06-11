@@ -1,5 +1,9 @@
-import type { ClientBase, QueryResult, QueryResultRow } from "pg";
-import { DatabaseError, Pool } from "pg";
+import type { ClientBase, PoolClient, QueryResult, QueryResultRow } from "pg";
+import pg from "pg";
+
+import { getLogger } from "@rejot-dev/contract/logger";
+
+const { DatabaseError, Pool } = pg;
 
 export interface PostgresConfig {
   host: string;
@@ -8,6 +12,8 @@ export interface PostgresConfig {
   password: string;
   database: string;
 }
+
+const log = getLogger(import.meta.url);
 
 /**
  * Parses a Postgres connection string into a PostgresConfig object.
@@ -50,7 +56,7 @@ export function parsePostgresConnectionString(connectionString: string): Postgre
 type PoolOrClient =
   | {
       type: "pool";
-      pool: Pool;
+      pool: pg.Pool;
     }
   | {
       type: "client";
@@ -140,7 +146,16 @@ export class PostgresClient implements IPostgresClient {
     const poolOrClient = this.#poolOrClient;
 
     if (poolOrClient.type === "pool") {
-      const client = await poolOrClient.pool.connect();
+      let client: PoolClient;
+      try {
+        client = await poolOrClient.pool.connect();
+      } catch (error) {
+        log.error(
+          `Failed to connect to Postgres, connection string: ${this.#config.host}:${this.#config.port}/${this.#config.database}`,
+        );
+        throw error;
+      }
+
       try {
         return await this.#query(client, queryText, values);
       } finally {
