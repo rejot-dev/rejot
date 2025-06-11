@@ -1,0 +1,132 @@
+---
+title: "ReJot v0.2"
+description: "Release of ReJot v0.2, including Observability and Python support"
+author: "Wilco Kruijer"
+publicationDate: "June 11 2025"
+heroImage: "/rejot-logo-on-white.webp"
+---
+
+We are excited to announce the release of ReJot v0.2! ReJot is a replication engine that helps
+developers share data between their microservices in a asynchronous and resilient way.
+
+This release introduces a host of new features and improvements, with a major focus on expanding our
+language support and enhancing observability.
+
+## Python Support
+
+The biggest addition in v0.2 is the introduction of a Python collector. You can now use ReJot to
+collect schemas from your Python applications! This means you can now communicate between a Python
+microservice and a TypeScript microservice.
+
+Getting started with the Python collector is simple. Check out our
+[updated documentation](/docs/reference/python) for instructions on how to integrate it into your
+projects. A short example, of an account microservice in Python, that is replicated to a TypeScript
+microservice follows.
+
+You start by defining a public schema in Python. This schema contains information about the data
+that is being replicated, and how it should be transformed.
+
+```python
+# Some file in: modules/schemas/users/account.py
+from pydantic import BaseModel
+from rejot_contract.public_schema import (
+    create_public_schema, PublicSchemaConfig, PostgresPublicSchemaConfigTransformation, Source, Version, create_postgres_public_schema_transformation
+)
+
+class Account(BaseModel):
+    id: int
+    email: str
+    name: str
+
+# Use the helper to create transformations for insertOrUpdate
+transformations = create_postgres_public_schema_transformation(
+    operation="insertOrUpdate",
+    table="account",
+    sql="SELECT id, email, name FROM account WHERE id = :id",
+)
+
+# Define a public schema
+public = create_public_schema(
+    public_schema_name="public-account",
+    source=Source(dataStoreSlug="default-postgres"),
+    output_schema=Account, # Or a JSON schema dict
+    version=Version(major=1, minor=0),
+    config=PublicSchemaConfig(
+        publicSchemaType="postgres",
+        transformations=transformations,
+    ),
+)
+```
+
+The consumer schema is defined in TypeScript. This schema will be used to consume the data from the
+Python microservice. It can apply a transformation to the data before it is inserted into the
+destination database, or it can just insert the data as is.
+
+```typescript
+// Some file in: typescript/modules/external/account.ts
+import { z } from "zod";
+
+import { createConsumerSchema } from "@rejot-dev/contract/consumer-schema";
+
+const myConsumerSchema = createConsumerSchema("consumer-account", {
+  source: {
+    manifestSlug: "manifest-account",
+    publicSchema: {
+      name: "public-account",
+      majorVersion: 1,
+    },
+  },
+  config: {
+    consumerSchemaType: "postgres",
+    destinationDataStoreSlug: "default-postgres",
+    sql: "INSERT INTO destination_account (id, email, name) VALUES (:id, :email, :name) ON CONFLICT (id) DO UPDATE SET email = :email, name = :name",
+  },
+});
+
+export default { myConsumerSchema };
+```
+
+These schemas can then be collected using the ReJot CLI:
+
+```bash
+rejot-cli collect modules.schemas.users.account.py typescript/modules/external/account.ts --print --check
+```
+
+## Enhanced Observability
+
+In our ongoing effort to provide you with the best tools for monitoring and understanding your
+systems, we've introduced a dedicated observability feature. This will give you deeper insights into
+your data, making it easier to track, debug, and optimize your applications. Learn more about our
+observability features in our [documentation](/docs/reference/metrics).
+
+A quick overview can be seen in the following images:
+
+<div class="flex flex-col gap-4">
+  <div class="flex flex-col items-center gap-4">
+    <p class="text-lg font-bold">Metrics</p>
+    <img src="/content/blog/v0.2/metrics.png" alt="Metrics Overview" />
+  </div>
+  <div class="flex flex-col items-center gap-4">
+    <p class="text-lg font-bold">Traces</p>
+    <img src="/content/blog/v0.2/traces.png" alt="Traces Overview" />
+  </div>
+</div>
+
+## Updated example
+
+The [example project](https://github.com/rejot-dev/example-microservice-ts) has been updated to
+provide a more complete example of how to use ReJot, including workspaces, and observability.
+
+## Other Improvements
+
+Alongside these major features, v0.2 includes several other notable updates:
+
+- **ARM64 Support**: We now provide `arm64` builds for our CLI, which is great news for developers
+  using Apple Silicon Macs.
+- **CLI Workspaces**: The `sync` command in our CLI now supports workspaces, making it more flexible
+  for different project structures. The example project has been updated to use workspaces.
+- **Documentation**: We've made numerous improvements to our documentation to make it clearer and
+  more helpful. You can find the updated documentation [here](/docs).
+
+We're proud of the progress in v0.2 and believe these updates will significantly improve your
+experience with ReJot. As always, we welcome your feedback and contributions.
