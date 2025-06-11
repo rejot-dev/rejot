@@ -1,4 +1,3 @@
-import { runCommand } from "@oclif/test";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
 import { mkdtemp, readFile, rm } from "node:fs/promises";
@@ -6,6 +5,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { initManifest } from "@rejot-dev/contract-tools/manifest";
+
+import { runCommand } from "../../runTestCommand.ts";
 
 describe("ManifestDataStore commands", () => {
   let tmpDir: string;
@@ -28,9 +29,10 @@ describe("ManifestDataStore commands", () => {
 
   describe("add datastore", () => {
     test("add datastore with valid connection", async () => {
-      await runCommand(
+      const result = await runCommand(
         `manifest:datastore:add --manifest ${manifestPath} --connection test-connection --publication test_pub --slot test_slot`,
       );
+      console.log(result.stderr);
 
       // Read and verify manifest contents
       const manifestContent = JSON.parse(await readFile(manifestPath, "utf-8"));

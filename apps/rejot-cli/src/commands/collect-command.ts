@@ -24,6 +24,8 @@ const log = getLogger(import.meta.url);
 import { Args, Command, Flags } from "@oclif/core";
 
 export default class Collect extends Command {
+  static id = "collect";
+
   static override args = {
     schemas: Args.string({
       description: "The schema (TypeScript/Python) files to collect, separated by spaces.",

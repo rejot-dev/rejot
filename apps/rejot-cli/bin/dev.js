@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
 
-import { execute } from "@oclif/core";
+import { run } from "../src/index.ts";
 
-await execute({ development: true, dir: import.meta.url });
+await run();

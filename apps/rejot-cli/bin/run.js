@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import { execute } from "@oclif/core";
+import { run } from "../src/index.ts";
 
-await execute({ dir: import.meta.url });
+await run();
