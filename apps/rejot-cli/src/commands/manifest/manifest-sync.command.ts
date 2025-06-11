@@ -156,7 +156,7 @@ export class ManifestSyncCommand extends Command {
       ).flat();
 
       activeManifests.record(manifests.length, {
-        manifests: manifests.map((manifest) => manifest.slug).join(","),
+        manifests: manifests.map((manifest) => manifest.manifest.slug).join(","),
       });
 
       log.info(`Successfully loaded ${manifests.length} manifest(s)`);
