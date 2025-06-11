@@ -6,7 +6,7 @@ import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
 
-import pkg from "../package.json" assert { type: "json" };
+import pkg from "../package.json" with { type: "json" };
 
 const metricsPort = process.env["REJOT_METRICS_PORT"];
 const otlpEndpoint = process.env["OTEL_EXPORTER_OTLP_ENDPOINT"];
