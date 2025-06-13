@@ -104,3 +104,18 @@ export const statusRoute = {
     state: z.enum(["initial", "prepared", "started", "stopped", "closed"]),
   }),
 } satisfies RouteConfig;
+
+export const backfillRoute = {
+  method: "POST",
+  path: "/backfill",
+  jsonBody: z.object({
+    publicSchemaSlug: z.string(),
+    publicSchemaMajorVersion: z.number(),
+    filterValues: z.record(z.any()),
+  }),
+  response: z.object({
+    state: z.enum(["ok", "error"]),
+    error: z.string().optional(),
+    backfillId: z.string().optional(),
+  }),
+} satisfies RouteConfig;

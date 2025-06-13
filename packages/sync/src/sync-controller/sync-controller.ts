@@ -56,8 +56,7 @@ export interface ISyncController {
   startBackfill(
     publicSchemaSlug: string,
     publicSchemaMajorVersion: number,
-    sql: string,
-    values?: unknown[],
+    filterValues: Record<string, unknown>,
   ): Promise<string>;
   state: SyncControllerState;
 }
@@ -355,22 +354,23 @@ export class SyncController implements ISyncController {
   }
 
   /**
-   * Given a public schema
+   * Given a public schema, backfill all records from the source to the event store.
+   *
+   * This is done by:
    * 1. Write a low watermark
    * 2. Fetch records from that specific source
    * 3. Add records to the result set store
    * 4. Write a high watermark
    *
-   * @param sourceTables
-   * @param sql
-   * @param values
+   * @param publicSchemaSlug The slug of the public schema to backfill.
+   * @param publicSchemaMajorVersion The major version of the public schema to backfill.
+   * @param filterValues A record of values to be used for filtering the records to backfill.
    * @returns
    */
   async startBackfill(
     publicSchemaSlug: string,
     publicSchemaMajorVersion: number,
-    sql: string,
-    values?: unknown[],
+    filterValues: Record<string, unknown>,
   ): Promise<string> {
     if (this.#backfillState) {
       throw new Error("Starting new backfill while we haven't completed a previous one!");
@@ -378,6 +378,44 @@ export class SyncController implements ISyncController {
     if (this.state !== "started") {
       throw new Error(
         "Sync controller not ready, a replication slot must have been created before starting backfill process.",
+      );
+    }
+
+    const publicSchema = this.#syncManifest
+      .getPublicSchemas()
+      .find(
+        (schema) =>
+          schema.name === publicSchemaSlug && schema.version.major === publicSchemaMajorVersion,
+      );
+    if (!publicSchema) {
+      throw new Error(
+        `Public schema ${publicSchemaSlug} version ${publicSchemaMajorVersion} not found`,
+      );
+    }
+    // TODO: We actually want to abstract away any postgres specific logic here.
+    const insertQuery = publicSchema.config.transformations.find(
+      (transformation) => transformation.operation === "insert",
+    );
+    if (!insertQuery) {
+      throw new Error(
+        `No insert query found for public schema ${publicSchemaSlug} version ${publicSchemaMajorVersion}`,
+      );
+    }
+
+    if (!insertQuery.filter) {
+      // TODO: Duidelijkere beschrijving hoe je dit dan moet doen.
+      throw new Error(
+        `No filter query found for public schema ${publicSchemaSlug} version ${publicSchemaMajorVersion}`,
+      );
+    }
+
+    const datastore = this.#sourceReader.getSourceByPublicSchemaSlug(
+      publicSchemaSlug,
+      publicSchemaMajorVersion,
+    );
+    if (!datastore) {
+      throw new Error(
+        `Data store not found for public schema ${publicSchemaSlug} version ${publicSchemaMajorVersion}`,
       );
     }
 
@@ -390,32 +428,22 @@ export class SyncController implements ISyncController {
       lowMarkerSeen: false,
       resultSetStore: new ResultSetStore(),
       sourcePublicSchema: {
-        name: publicSchemaSlug,
+        name: publicSchema.name,
         version: {
-          major: publicSchemaMajorVersion,
-          minor: 0,
+          major: publicSchema.version.major,
+          minor: publicSchema.version.minor,
         },
       },
-      sourceManifestSlug: "default",
+      sourceManifestSlug: publicSchema.manifestSlug,
     };
 
     log.info(`Starting backfill ${backfillId} at ${this.#backfillState.startTime}`);
-
-    const datastore = this.#sourceReader.getSourceByPublicSchemaSlug(
-      publicSchemaSlug,
-      publicSchemaMajorVersion,
-    );
-    if (!datastore) {
-      throw new Error(
-        `Data store not found for public schema ${publicSchemaSlug} version ${publicSchemaMajorVersion}`,
-      );
-    }
 
     const { source } = datastore;
     await source.writeWatermark("low", backfillId);
 
     log.trace(`Fetching records for backfill ${backfillId}`);
-    const result = await source.getBackfillRecords(sql, values);
+    const result = await source.getBackfillRecords(insertQuery, filterValues);
     log.trace(`Fetched ${result.length} records for backfill ${backfillId}`);
     this.#backfillState.resultSetStore.addRecords(
       [

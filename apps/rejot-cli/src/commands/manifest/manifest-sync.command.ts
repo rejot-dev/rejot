@@ -178,17 +178,6 @@ export class ManifestSyncCommand extends Command {
       // 3. Expose an (HTTP) API to allow other sync services to obtain our public schemas
       // 4. Listen for changes on external sync services and apply them to the consumer schemas.
 
-      // const syncController = new SyncManifestController(
-      //   manifests,
-      //   connectionAdapters,
-      //   publicSchemaTransformationAdapters,
-      //   consumerSchemaTransformationAdapters,
-      //   eventStore,
-      //   httpController,
-      //   syncServiceResolver,
-      // );
-
-      // const messageBus = new InMemoryMessageBus();
       const eventStoreMessageBus = new EventStoreMessageBus(eventStore);
 
       const subscribeMessageBuses: ISubscribeMessageBus[] = [eventStoreMessageBus];

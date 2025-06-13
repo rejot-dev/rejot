@@ -47,6 +47,12 @@ export const PostgresPublicSchemaTransformationSchema = z.object({
         " This query supports positional query parameters ($1, $2), or named parameters (:name), but not both at the same time." +
         " Note that positional parameters will be ordered according to the column order in the table definition.",
     ),
+  filter: z
+    .string()
+    .optional()
+    .describe(
+      "The SQL query to use for filtering the records to backfill. It supports only named parameters (:name), which will be replaced with the values provided when starting a backfill. Only used for insert operations.",
+    ),
 });
 
 export const PostgresPublicSchemaConfigSchema = z.object({

@@ -160,7 +160,7 @@ export class PostgresPublicSchemaTransformationAdapter
           if (isPostgresError(error, PG_PROTOCOL_VIOLATION)) {
             throw new Error(
               `Protocol violation while applying public schema transformation: ${JSON.stringify(transformation)}. ` +
-                `You probably forgot to add parameters to your query. Example: 'WHERE id = $1'. Underlying error: ${error.message}`,
+                `You probably forgot to add parameters to your query. Example: 'WHERE id = :id'. Underlying error: ${error.message}`,
             );
           }
           throw error;

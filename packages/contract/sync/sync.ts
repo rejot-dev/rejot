@@ -1,6 +1,9 @@
 import type { z } from "zod";
 
-import type { ConnectionConfigSchema } from "../manifest/manifest.ts";
+import type {
+  ConnectionConfigSchema,
+  PostgresPublicSchemaTransformationSchema,
+} from "../manifest/manifest.ts";
 
 type OperationType = "insert" | "update" | "delete";
 
@@ -107,10 +110,14 @@ export interface IDataSource {
 
   /**
    * Execute query to get backfill records
-   * @param sql The SQL query to use for the backfill
-   * @param values The values to bind to the query
+   * @param originalQuery The original query that is used for public schema transformations
+   * @param filterSql The SQL query to use for filtering the records to backfill
+   * @param filterValues The values to bind to the filter query
    */
-  getBackfillRecords(sql: string, values?: unknown[]): Promise<Record<string, unknown>[]>;
+  getBackfillRecords(
+    insertOperation: z.infer<typeof PostgresPublicSchemaTransformationSchema>,
+    filterValues: Record<string, unknown>,
+  ): Promise<Record<string, unknown>[]>;
 
   /**
    * Apply a transformations to the data

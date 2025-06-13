@@ -6,6 +6,7 @@ import { FastifyHttpController } from "../http-controller/fastify-http-controlle
 import { HttpController } from "../http-controller/http-controller.ts";
 import type { ISyncController } from "../sync-controller/sync-controller.ts";
 import {
+  backfillRoute,
   dataStoreCursorsRoute,
   indexRoute,
   publicSchemasRoute,
@@ -54,36 +55,24 @@ export class SyncHTTPController implements ISyncHTTPController {
         state: this.#syncController.state,
       };
     });
-    this.#httpController.createRequest(
-      {
-        method: "GET",
-        path: "/backfill",
-        response: z.object({
-          state: z.enum(["ok", "error"]),
-          error: z.string().optional(),
-          backfillId: z.string().optional(),
-        }),
-      },
-      async () => {
-        try {
-          const backfillId = await this.#syncController.startBackfill(
-            "accounts-schema",
-            1,
-            "SELECT * FROM accounts",
-            [],
-          );
-          return {
-            state: "ok" as const,
-            backfillId,
-          };
-        } catch (error) {
-          return {
-            state: "error" as const,
-            error: error instanceof Error ? error.message : "Unknown error",
-          };
-        }
-      },
-    );
+    this.#httpController.createRequest(backfillRoute, async ({ jsonBody }) => {
+      try {
+        const backfillId = await this.#syncController.startBackfill(
+          jsonBody.publicSchemaSlug,
+          jsonBody.publicSchemaMajorVersion,
+          jsonBody.filterValues,
+        );
+        return {
+          state: "ok" as const,
+          backfillId,
+        };
+      } catch (error) {
+        return {
+          state: "error" as const,
+          error: error instanceof Error ? error.message : "Unknown error",
+        };
+      }
+    });
   }
 
   async start(): Promise<void> {

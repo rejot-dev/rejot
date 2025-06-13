@@ -1,4 +1,5 @@
 import { getLogger } from "@rejot-dev/contract/logger";
+import type { PostgresPublicSchemaTransformationSchema } from "@rejot-dev/contract/manifest";
 import type {
   IDataSource,
   TableOperation,
@@ -13,6 +14,7 @@ import {
 } from "./data-store/pg-replication-repository.ts";
 import { DEFAULT_PUBLICATION_NAME, DEFAULT_SLOT_NAME } from "./postgres-consts.ts";
 import { PostgresReplicationListener } from "./postgres-replication-listener.ts";
+import { convertNamedToPositionalPlaceholders } from "./sql-transformer/sql-transformer.ts";
 import { type IPostgresClient } from "./util/postgres-client.ts";
 
 const log = getLogger(import.meta.url);
@@ -68,7 +70,6 @@ export class PostgresSource implements IDataSource {
       );
     }
 
-    // TODO(jan): required for backfill support, don't impose additional schema on users for now.
     await this.#ensureWatermarkTable();
 
     await ensurePublication(this.#client, this.#publicationName, this.#createPublication);
@@ -127,8 +128,25 @@ export class PostgresSource implements IDataSource {
     );
   }
 
-  async getBackfillRecords(sql: string, values?: unknown[]): Promise<Record<string, unknown>[]> {
-    const result = await this.#client.query(sql, values);
+  async getBackfillRecords(
+    insertOperation: z.infer<typeof PostgresPublicSchemaTransformationSchema>,
+    filterValues: Record<string, unknown>,
+  ): Promise<Record<string, unknown>[]> {
+    const filterSql = insertOperation.filter;
+
+    const { sql: filterQuery, values: queryValues } = await convertNamedToPositionalPlaceholders(
+      filterSql,
+      filterValues,
+    );
+
+    log.trace(`Filter query: ${filterQuery}, with values: ${JSON.stringify(queryValues)}`);
+
+    // Replace the :id placeholder in the insert query with the actual filter query
+    // TODO: This is a hack, we should use a proper SQL parser to replace the placeholder and it can always be something else than :id.
+    const insertSql = insertOperation.sql.replace(":id", `(${filterQuery})`);
+    log.trace(`Final query: ${insertSql}, with values: ${JSON.stringify(queryValues)}`);
+
+    const result = await this.#client.query(insertSql, queryValues);
     return result.rows;
   }
 
