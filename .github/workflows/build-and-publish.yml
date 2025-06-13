@@ -211,12 +211,13 @@ jobs:
 
       - name: Deploy to Cloud Run
         env:
-          SERVICE_NAME:
-            ${{ env.STAGING_BUILD && secrets.STAGING_SERVICE_NAME || secrets.PRODUCTION_SERVICE_NAME
-            }}
+          CLOUDRUN_SERVICE_NAME:
+            ${{ env.STAGING_BUILD && secrets.STAGING_CLOUDRUN_SERVICE_NAME ||
+            secrets.PRODUCTION_CLOUDRUN_SERVICE_NAME }}
           REGION: ${{ env.STAGING_BUILD && secrets.STAGING_REGION || secrets.PRODUCTION_REGION }}
-          APP_VERSION: ${{ github.event_name == 'create' && github.ref_name || github.sha }}
+          APP_VERSION:
+            ${{ github.event_name == 'create' && github.ref_name || format('sha-{0}', github.sha) }}
         run:
-          gcloud run deploy ${{ env.SERVICE_NAME }} --image
+          gcloud run deploy ${{ env.CLOUDRUN_SERVICE_NAME }} --image
           us-central1-docker.pkg.dev/rejot-staging-aac662ad/ghcr/${{ env.REPOSITORY
           }}/controller:${{ env.APP_VERSION }} --region ${{ env.REGION }}
