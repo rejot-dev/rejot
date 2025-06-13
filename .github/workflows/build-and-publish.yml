@@ -160,8 +160,8 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
       - name: Upload to GCS
         run:
-          gsutil -m rsync -r ./dist/ gs://${{ env.STAGING_BUILD && secrets.STAGING_BUCKET ||
-          secrets.PRODUCTION_BUCKET }}/
+          gsutil -m rsync -r apps/controller-spa/dist/ gs://${{ env.STAGING_BUILD &&
+          secrets.STAGING_BUCKET || secrets.PRODUCTION_BUCKET }}/
 
   deploy-controller-to-cloud-run:
     runs-on: ubuntu-latest
@@ -193,5 +193,6 @@ jobs:
           REGION: ${{ env.STAGING_BUILD && secrets.STAGING_REGION || secrets.PRODUCTION_REGION }}
           APP_VERSION: ${{ github.event_name == 'create' && github.ref_name || github.sha }}
         run:
-          gcloud run deploy ${{ env.SERVICE_NAME }} --image ${{ env.REGISTRY }}/${{ env.REPOSITORY
+          gcloud run deploy ${{ env.SERVICE_NAME }} --image
+          us-central1-docker.pkg.dev/rejot-staging-aac662ad/ghcr/${{ env.REPOSITORY
           }}/controller:${{ env.APP_VERSION }} --region ${{ env.REGION }}
