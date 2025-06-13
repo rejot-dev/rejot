@@ -2,7 +2,7 @@ name: Build and Publish Container Images
 
 on:
   push:
-    branches: ["main", "move-to-githubactions"]
+    branches: ["main"]
     tags: ["v*"]
 
 env:
@@ -160,7 +160,6 @@ jobs:
       id-token: write
     needs: build-controller-spa
     steps:
-      # Copy previous build files from artifact registry
       - name: Download build files
         uses: actions/download-artifact@v4
         with:
