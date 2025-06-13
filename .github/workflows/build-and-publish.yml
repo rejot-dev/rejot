@@ -9,22 +9,6 @@ env:
   REGISTRY: ghcr.io
   REPOSITORY: ${{ github.repository_owner }}
   STAGING_BUILD: ${{ github.event_name == 'create' }}
-  DOMAIN: ${{ env.STAGING_BUILD && secrets.STAGING_DOMAIN || secrets.PRODUCTION_DOMAIN }}
-  CONTROLLER_API_URL: ${{ env.DOMAIN }}/api
-  CLERK_PUBLISHABLE_KEY:
-    ${{ env.STAGING_BUILD && secrets.STAGING_CLERK_PUBLISHABLE_KEY ||
-    secrets.PRODUCTION_CLERK_PUBLISHABLE_KEY }}
-  APP_VERSION: ${{ github.event_name == 'create' && github.ref_name || github.sha }}
-  BUCKET: ${{ env.STAGING_BUILD && secrets.STAGING_BUCKET || secrets.PRODUCTION_BUCKET }}
-  SERVICE_NAME:
-    ${{ env.STAGING_BUILD && secrets.STAGING_SERVICE_NAME || secrets.PRODUCTION_SERVICE_NAME }}
-  REGION: ${{ env.STAGING_BUILD && secrets.STAGING_REGION || secrets.PRODUCTION_REGION }}
-  SERVICE_ACCOUNT:
-    ${{ env.STAGING_BUILD && secrets.STAGING_SERVICE_ACCOUNT || secrets.PRODUCTION_SERVICE_ACCOUNT
-    }}
-  WORKLOAD_IDENTITY_PROVIDER:
-    ${{ env.STAGING_BUILD && secrets.STAGING_WORKLOAD_IDENTITY_PROVIDER ||
-    secrets.PRODUCTION_WORKLOAD_IDENTITY_PROVIDER }}
 
 jobs:
   build-and-push-images:
@@ -117,7 +101,6 @@ jobs:
       packages: write
       attestations: write
       id-token: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -133,9 +116,12 @@ jobs:
       - name: Build controller-spa
         working-directory: apps/controller-spa
         env:
-          CONTROLLER_API_URL: ${{ env.CONTROLLER_API_URL }}
-          VITE_CLERK_PUBLISHABLE_KEY: ${{ env.CLERK_PUBLISHABLE_KEY }}
-          APP_VERSION: ${{ env.APP_VERSION }}
+          CONTROLLER_API_URL:
+            ${{ env.STAGING_BUILD && secrets.STAGING_DOMAIN || secrets.PRODUCTION_DOMAIN }}/api
+          VITE_CLERK_PUBLISHABLE_KEY:
+            ${{ env.STAGING_BUILD && secrets.STAGING_CLERK_PUBLISHABLE_KEY ||
+            secrets.PRODUCTION_CLERK_PUBLISHABLE_KEY }}
+          APP_VERSION: ${{ github.event_name == 'create' && github.ref_name || github.sha }}
         run: bun run build
 
       - name: Push build files to artifact registry
@@ -163,13 +149,19 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          service_account: ${{ env.SERVICE_ACCOUNT }}
-          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account:
+            ${{ env.STAGING_BUILD && secrets.STAGING_SERVICE_ACCOUNT ||
+            secrets.PRODUCTION_SERVICE_ACCOUNT }}
+          workload_identity_provider:
+            ${{ env.STAGING_BUILD && secrets.STAGING_WORKLOAD_IDENTITY_PROVIDER ||
+            secrets.PRODUCTION_WORKLOAD_IDENTITY_PROVIDER }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
       - name: Upload to GCS
-        run: gsutil -m rsync -r ./dist/ gs://${{ env.BUCKET }}/
+        run:
+          gsutil -m rsync -r ./dist/ gs://${{ env.STAGING_BUILD && secrets.STAGING_BUCKET ||
+          secrets.PRODUCTION_BUCKET }}/
 
   deploy-controller-to-cloud-run:
     runs-on: ubuntu-latest
@@ -183,13 +175,23 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          service_account: ${{ env.SERVICE_ACCOUNT }}
-          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account:
+            ${{ env.STAGING_BUILD && secrets.STAGING_SERVICE_ACCOUNT ||
+            secrets.PRODUCTION_SERVICE_ACCOUNT }}
+          workload_identity_provider:
+            ${{ env.STAGING_BUILD && secrets.STAGING_WORKLOAD_IDENTITY_PROVIDER ||
+            secrets.PRODUCTION_WORKLOAD_IDENTITY_PROVIDER }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Deploy to Cloud Run
+        env:
+          SERVICE_NAME:
+            ${{ env.STAGING_BUILD && secrets.STAGING_SERVICE_NAME || secrets.PRODUCTION_SERVICE_NAME
+            }}
+          REGION: ${{ env.STAGING_BUILD && secrets.STAGING_REGION || secrets.PRODUCTION_REGION }}
+          APP_VERSION: ${{ github.event_name == 'create' && github.ref_name || github.sha }}
         run:
           gcloud run deploy ${{ env.SERVICE_NAME }} --image ${{ env.REGISTRY }}/${{ env.REPOSITORY
           }}/controller:${{ env.APP_VERSION }} --region ${{ env.REGION }}
