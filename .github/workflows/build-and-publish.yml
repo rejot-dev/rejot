@@ -8,10 +8,10 @@ on:
 env:
   REGISTRY: ghcr.io
   REPOSITORY: ${{ github.repository_owner }}
-  IMAGE_NAME: rejot-cli
+  STAGING_BUILD: ${{ github.event_name == 'create' }}
 
 jobs:
-  build-and-push-images:
+  build-and-push-rejot-controller:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,12 +33,63 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build and push rejot-cli image
-      - name: Extract metadata for rejot-cli image
-        id: meta
+      - name: Extract metadata for rejot-controller image
+        id: meta-controller
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/controller
+          tags: |
+            type=sha,format=long
+            type=ref,event=branch
+            type=ref,event=tag
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+
+      - name: Build and push rejot-controller image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            REJOT_APP=controller
+          tags: ${{ steps.meta-controller.outputs.tags }}
+          labels: ${{ steps.meta-controller.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+
+      - name: Generate artifact attestation for rejot-controller
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/controller
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  build-and-push-rejot-cli:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata for rejot-cli image
+        id: meta-cli
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/rejot-cli
           tags: |
             type=sha,format=long
             type=ref,event=branch
@@ -53,13 +104,121 @@ jobs:
           push: true
           build-args: |
             REJOT_APP=rejot-cli
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-cli.outputs.tags }}
+          labels: ${{ steps.meta-cli.outputs.labels }}
           platforms: linux/amd64,linux/arm64
 
       - name: Generate artifact attestation for rejot-cli
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}
+          subject-name: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/rejot-cli
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
+
+  build-controller-spa:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build controller-spa
+        working-directory: apps/controller-spa
+        env:
+          CONTROLLER_API_URL:
+            ${{ env.STAGING_BUILD && secrets.STAGING_DOMAIN || secrets.PRODUCTION_DOMAIN }}/api
+          VITE_CLERK_PUBLISHABLE_KEY:
+            ${{ env.STAGING_BUILD && secrets.STAGING_CLERK_PUBLISHABLE_KEY ||
+            secrets.PRODUCTION_CLERK_PUBLISHABLE_KEY }}
+          APP_VERSION: ${{ github.event_name == 'create' && github.ref_name || github.sha }}
+        run: bun run build
+
+      - name: Push build files to artifact registry
+        uses: actions/upload-artifact@v4
+        with:
+          name: controller-spa
+          path: apps/controller-spa/dist
+
+  push-spa-to-gcp:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    needs: build-controller-spa
+    steps:
+      - name: Download build files
+        uses: actions/download-artifact@v4
+        with:
+          name: controller-spa
+          path: apps/controller-spa/dist
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          service_account:
+            ${{ env.STAGING_BUILD && secrets.STAGING_SERVICE_ACCOUNT ||
+            secrets.PRODUCTION_SERVICE_ACCOUNT }}
+          workload_identity_provider:
+            ${{ env.STAGING_BUILD && secrets.STAGING_WORKLOAD_IDENTITY_PROVIDER ||
+            secrets.PRODUCTION_WORKLOAD_IDENTITY_PROVIDER }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Upload to GCS
+        run:
+          gsutil -m rsync -r apps/controller-spa/dist/ gs://${{ env.STAGING_BUILD &&
+          secrets.STAGING_BUCKET || secrets.PRODUCTION_BUCKET }}/
+
+  deploy-controller-to-cloud-run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    needs: build-and-push-rejot-controller
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          service_account:
+            ${{ env.STAGING_BUILD && secrets.STAGING_SERVICE_ACCOUNT ||
+            secrets.PRODUCTION_SERVICE_ACCOUNT }}
+          workload_identity_provider:
+            ${{ env.STAGING_BUILD && secrets.STAGING_WORKLOAD_IDENTITY_PROVIDER ||
+            secrets.PRODUCTION_WORKLOAD_IDENTITY_PROVIDER }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
+        env:
+          CLOUDRUN_SERVICE_NAME:
+            ${{ env.STAGING_BUILD && secrets.STAGING_CLOUDRUN_SERVICE_NAME ||
+            secrets.PRODUCTION_CLOUDRUN_SERVICE_NAME }}
+          REGION: ${{ env.STAGING_BUILD && secrets.STAGING_REGION || secrets.PRODUCTION_REGION }}
+          APP_VERSION:
+            ${{ github.event_name == 'create' && github.ref_name || format('sha-{0}', github.sha) }}
+          PROJECT_ID:
+            ${{ env.STAGING_BUILD && secrets.STAGING_PROJECT_ID || secrets.PRODUCTION_PROJECT_ID }}
+        run:
+          gcloud run deploy ${{ env.CLOUDRUN_SERVICE_NAME }} --image ${{ env.REGION
+          }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr/${{ env.REPOSITORY }}/controller:${{
+          env.APP_VERSION }} --region ${{ env.REGION }}
