@@ -126,6 +126,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup env
+        run: |
+          if [ "$STAGING_BUILD" = "true" ]; then
+            echo "CONTROLLER_API_URL=${{ secrets.STAGING_DOMAIN }}/api" >> $GITHUB_ENV
+            echo "VITE_CLERK_PUBLISHABLE_KEY=${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}" >> $GITHUB_ENV
+            echo "Using staging env"
+          else
+            echo "CONTROLLER_API_URL=${{ secrets.PRODUCTION_DOMAIN }}/api" >> $GITHUB_ENV
+            echo "VITE_CLERK_PUBLISHABLE_KEY=${{ secrets.PRODUCTION_CLERK_PUBLISHABLE_KEY }}" >> $GITHUB_ENV
+            echo "Using production env"
+          fi
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -137,11 +149,6 @@ jobs:
       - name: Build controller-spa
         working-directory: apps/controller-spa
         env:
-          CONTROLLER_API_URL:
-            ${{ env.STAGING_BUILD && secrets.STAGING_DOMAIN || secrets.PRODUCTION_DOMAIN }}/api
-          VITE_CLERK_PUBLISHABLE_KEY:
-            ${{ env.STAGING_BUILD && secrets.STAGING_CLERK_PUBLISHABLE_KEY ||
-            secrets.PRODUCTION_CLERK_PUBLISHABLE_KEY }}
           APP_VERSION: ${{ github.event_name == 'create' && github.ref_name || github.sha }}
         run: bun run build
 
@@ -166,22 +173,29 @@ jobs:
           name: controller-spa
           path: apps/controller-spa/dist
 
+      - name: Setup env
+        run: |
+          if [ "$STAGING_BUILD" = "true" ]; then
+            echo "SERVICE_ACCOUNT=${{ secrets.STAGING_SERVICE_ACCOUNT }}" >> $GITHUB_ENV
+            echo "WORKLOAD_IDENTITY_PROVIDER=${{ secrets.STAGING_WORKLOAD_IDENTITY_PROVIDER }}" >> $GITHUB_ENV
+            echo "BUCKET=${{ secrets.STAGING_BUCKET }}" >> $GITHUB_ENV
+            echo "Using staging env"
+          else
+            echo "SERVICE_ACCOUNT=${{ secrets.PRODUCTION_SERVICE_ACCOUNT }}" >> $GITHUB_ENV
+            echo "WORKLOAD_IDENTITY_PROVIDER=${{ secrets.PRODUCTION_WORKLOAD_IDENTITY_PROVIDER }}" >> $GITHUB_ENV
+            echo "BUCKET=${{ secrets.PRODUCTION_BUCKET }}" >> $GITHUB_ENV
+            echo "Using production env"
+          fi
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          service_account:
-            ${{ env.STAGING_BUILD && secrets.STAGING_SERVICE_ACCOUNT ||
-            secrets.PRODUCTION_SERVICE_ACCOUNT }}
-          workload_identity_provider:
-            ${{ env.STAGING_BUILD && secrets.STAGING_WORKLOAD_IDENTITY_PROVIDER ||
-            secrets.PRODUCTION_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
       - name: Upload to GCS
-        run:
-          gsutil -m rsync -r apps/controller-spa/dist/ gs://${{ env.STAGING_BUILD &&
-          secrets.STAGING_BUCKET || secrets.PRODUCTION_BUCKET }}/
+        run: gsutil -m rsync -r apps/controller-spa/dist/ gs://${{ env.BUCKET }}/
 
   deploy-controller-to-cloud-run:
     runs-on: ubuntu-latest
@@ -195,29 +209,38 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup env
+
+        run: |
+          if [ "$STAGING_BUILD" = "true" ]; then
+            echo "SERVICE_ACCOUNT=${{ secrets.STAGING_SERVICE_ACCOUNT }}" >> $GITHUB_ENV
+            echo "WORKLOAD_IDENTITY_PROVIDER=${{ secrets.STAGING_WORKLOAD_IDENTITY_PROVIDER }}" >> $GITHUB_ENV
+            echo "PROJECT_ID=${{ secrets.STAGING_PROJECT_ID }}" >> $GITHUB_ENV
+            echo "REGION=${{ secrets.STAGING_REGION }}" >> $GITHUB_ENV
+            echo "CLOUDRUN_SERVICE_NAME=${{ secrets.STAGING_CLOUDRUN_SERVICE_NAME }}" >> $GITHUB_ENV
+            echo "Using staging env"
+          else
+            echo "SERVICE_ACCOUNT=${{ secrets.PRODUCTION_SERVICE_ACCOUNT }}" >> $GITHUB_ENV
+            echo "WORKLOAD_IDENTITY_PROVIDER=${{ secrets.PRODUCTION_WORKLOAD_IDENTITY_PROVIDER }}" >> $GITHUB_ENV
+            echo "PROJECT_ID=${{ secrets.PRODUCTION_PROJECT_ID }}" >> $GITHUB_ENV
+            echo "REGION=${{ secrets.PRODUCTION_REGION }}" >> $GITHUB_ENV
+            echo "CLOUDRUN_SERVICE_NAME=${{ secrets.PRODUCTION_CLOUDRUN_SERVICE_NAME }}" >> $GITHUB_ENV
+            echo "Using production env"
+          fi
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          service_account:
-            ${{ env.STAGING_BUILD && secrets.STAGING_SERVICE_ACCOUNT ||
-            secrets.PRODUCTION_SERVICE_ACCOUNT }}
-          workload_identity_provider:
-            ${{ env.STAGING_BUILD && secrets.STAGING_WORKLOAD_IDENTITY_PROVIDER ||
-            secrets.PRODUCTION_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Deploy to Cloud Run
         env:
-          CLOUDRUN_SERVICE_NAME:
-            ${{ env.STAGING_BUILD && secrets.STAGING_CLOUDRUN_SERVICE_NAME ||
-            secrets.PRODUCTION_CLOUDRUN_SERVICE_NAME }}
-          REGION: ${{ env.STAGING_BUILD && secrets.STAGING_REGION || secrets.PRODUCTION_REGION }}
           APP_VERSION:
             ${{ github.event_name == 'create' && github.ref_name || format('sha-{0}', github.sha) }}
-          PROJECT_ID:
-            ${{ env.STAGING_BUILD && secrets.STAGING_PROJECT_ID || secrets.PRODUCTION_PROJECT_ID }}
         run:
           gcloud run deploy ${{ env.CLOUDRUN_SERVICE_NAME }} --image ${{ env.REGION
           }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr/${{ env.REPOSITORY }}/controller:${{
