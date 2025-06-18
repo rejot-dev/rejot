@@ -216,7 +216,9 @@ jobs:
           REGION: ${{ env.STAGING_BUILD && secrets.STAGING_REGION || secrets.PRODUCTION_REGION }}
           APP_VERSION:
             ${{ github.event_name == 'create' && github.ref_name || format('sha-{0}', github.sha) }}
+          PROJECT_ID:
+            ${{ env.STAGING_BUILD && secrets.STAGING_PROJECT_ID || secrets.PRODUCTION_PROJECT_ID }}
         run:
-          gcloud run deploy ${{ env.CLOUDRUN_SERVICE_NAME }} --image
-          us-central1-docker.pkg.dev/rejot-staging-aac662ad/ghcr/${{ env.REPOSITORY
-          }}/controller:${{ env.APP_VERSION }} --region ${{ env.REGION }}
+          gcloud run deploy ${{ env.CLOUDRUN_SERVICE_NAME }} --image ${{ env.REGION
+          }}-docker.pkg.dev/${{ env.PROJECT_ID }}/ghcr/${{ env.REPOSITORY }}/controller:${{
+          env.APP_VERSION }} --region ${{ env.REGION }}
