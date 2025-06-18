@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   REPOSITORY: ${{ github.repository_owner }}
-  STAGING_BUILD: ${{ github.event_name == 'create' }}
+  STAGING_BUILD: ${{ github.ref == 'refs/heads/main' }}
 
 jobs:
   build-and-push-rejot-controller:
@@ -131,10 +131,12 @@ jobs:
           if [ "$STAGING_BUILD" = "true" ]; then
             echo "CONTROLLER_API_URL=${{ secrets.STAGING_DOMAIN }}/api" >> $GITHUB_ENV
             echo "VITE_CLERK_PUBLISHABLE_KEY=${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}" >> $GITHUB_ENV
+            echo "APP_VERSION=${GITHUB_SHA::7}" >> $GITHUB_ENV
             echo "Using staging env"
           else
             echo "CONTROLLER_API_URL=${{ secrets.PRODUCTION_DOMAIN }}/api" >> $GITHUB_ENV
             echo "VITE_CLERK_PUBLISHABLE_KEY=${{ secrets.PRODUCTION_CLERK_PUBLISHABLE_KEY }}" >> $GITHUB_ENV
+            echo "APP_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
             echo "Using production env"
           fi
 
@@ -148,8 +150,6 @@ jobs:
 
       - name: Build controller-spa
         working-directory: apps/controller-spa
-        env:
-          APP_VERSION: ${{ github.event_name == 'create' && github.ref_name || github.sha }}
         run: bun run build
 
       - name: Push build files to artifact registry
